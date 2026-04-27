@@ -6,13 +6,29 @@ const workoutSchema = new mongoose.Schema({
     ref: 'User',
     required: true,
   },
-  name: {
+  exercise: {
     type: String,
     required: true,
   },
-  completed: {
-    type: Boolean,
-    default: false,
+  sets: {
+    type: Number,
+    required: true,
+  },
+  reps: {
+    type: Number,
+    required: true,
+  },
+  weight: {
+    type: Number,
+  },
+  type: {
+    type: String,
+    enum: ['Strength', 'Cardio', 'HIIT', 'Yoga'],
+    default: 'Strength',
+  },
+  duration: {
+    type: Number,
+    default: 0,
   },
   date: {
     type: Date,
