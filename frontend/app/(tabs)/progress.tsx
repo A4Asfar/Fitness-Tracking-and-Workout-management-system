@@ -441,6 +441,7 @@ const styles = StyleSheet.create({
     borderWidth: 1, borderColor: '#252525',
     shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 6,
   },
+  chartTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
   compareBlock: { marginBottom: 18 },
   compareTopRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 },
   compareLabel: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 },
