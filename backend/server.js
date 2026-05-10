@@ -3,6 +3,15 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
+// Environment Variable Validation (Fail-fast for production stability)
+const requiredEnv = ['MONGO_URI', 'JWT_SECRET'];
+requiredEnv.forEach(env => {
+  if (!process.env[env]) {
+    console.error(`❌ CRITICAL ERROR: Missing environment variable ${env}`);
+    process.exit(1);
+  }
+});
+
 const authRoutes = require('./routes/auth');
 const workoutRoutes = require('./routes/workouts');
 const mealRoutes = require('./routes/meals');
@@ -24,7 +33,7 @@ app.use(cors({
 
 connectDB();
 
-// Health Check Route for Render
+// Production Health Check Route (Used for deployment verification)
 app.get('/', (req, res) => {
   res.send('Fitness Tracker Backend Running');
 });
