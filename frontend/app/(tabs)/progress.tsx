@@ -202,15 +202,10 @@ export default function ProgressAnalyticsScreen() {
           <>
             {/* ── Bar Chart ── */}
             <View style={styles.chartCard}>
-              {/* Subtle horizontal grid lines */}
-              {[0.25, 0.5, 0.75, 1].map(f => (
-                <View key={f} style={[styles.gridLine, { bottom: f * MAX_BAR_H + 36 }]} />
-              ))}
-
-              <View style={styles.chartTopRow}>
+              <View style={styles.chartHeader}>
                 <View>
-                  <Text style={styles.cardTitle}>Volume Chart</Text>
-                  <Text style={styles.cardSub}>Last 7 days · kg lifted</Text>
+                  <Text style={styles.cardTitle}>Calories Burned</Text>
+                  <Text style={styles.cardSub}>Daily energy expenditure</Text>
                 </View>
                 <View style={[styles.trendBadge, { backgroundColor: isPos ? '#4CAF5018' : '#F4433618', borderColor: isPos ? '#4CAF5030' : '#F4433630' }]}>
                   {isPos ? <ArrowUpRight size={13} color="#4CAF50" /> : <ArrowDownRight size={13} color="#F44336" />}
@@ -218,25 +213,43 @@ export default function ProgressAnalyticsScreen() {
                 </View>
               </View>
 
-              <View style={styles.chartBars}>
-                {chartData.map((day: any, i: number) => {
-                  const h = Math.max((day.volume / maxVol) * MAX_BAR_H, day.volume > 0 ? 8 : 3);
-                  const isToday = i === chartData.length - 1;
-                  return (
-                    <View key={i} style={styles.barCol}>
-                      <Bar h={h} isActive={day.volume > 0} isToday={isToday} delay={i * 55} />
-                      {isToday && <View style={styles.barDot} />}
-                      <Text style={[styles.barLabel, isToday && { color: Colors.primary, fontWeight: '700' }]}>
-                        {dayLabel(day.date)}
-                      </Text>
-                    </View>
-                  );
-                })}
-              </View>
+              <View style={styles.chartContainer}>
+                {/* Y-Axis Labels */}
+                <View style={styles.yAxis}>
+                  {['3000', '2250', '1500', '750', '0'].map((label, idx) => (
+                    <Text key={idx} style={styles.yAxisLabel}>{label}</Text>
+                  ))}
+                </View>
 
-              <View style={styles.chartFooter}>
-                <Text style={styles.chartMeta}>Peak: {fmt(maxVol)} kg</Text>
-                <Text style={styles.chartMeta}>Week total: {fmt(thisVol)} kg</Text>
+                {/* Graph Area */}
+                <View style={styles.graphArea}>
+                  {/* Dotted Grid Lines */}
+                  {[0, 0.25, 0.5, 0.75, 1].map(f => (
+                    <View key={f} style={[styles.dottedLine, { bottom: f * MAX_BAR_H }]} />
+                  ))}
+
+                  <View style={styles.chartBars}>
+                    {chartData.map((day: any, i: number) => {
+                      const calories = day.calories || (day.volume * 0.5) || 0; 
+                      const h = Math.min((calories / 3000) * MAX_BAR_H, MAX_BAR_H);
+                      const isToday = i === chartData.length - 1;
+                      
+                      return (
+                        <View key={i} style={styles.barCol}>
+                          <View style={[styles.barWrapper, { height: Math.max(h, 4) }]}>
+                            <LinearGradient
+                              colors={isToday ? [Colors.primary, Colors.secondary] : [Colors.primary + '60', Colors.primary + '15']}
+                              style={styles.barFill}
+                            />
+                          </View>
+                          <Text style={[styles.barLabel, isToday && { color: Colors.primary, fontWeight: '900' }]}>
+                            {dayLabel(day.date)}
+                          </Text>
+                        </View>
+                      );
+                    })}
+                  </View>
+                </View>
               </View>
             </View>
 
@@ -384,25 +397,35 @@ const styles = StyleSheet.create({
 
   /* Chart Card */
   chartCard: {
-    backgroundColor: '#181818', borderRadius: 24, padding: SPACING.lg, marginBottom: SPACING.xl,
-    borderWidth: 1, borderColor: '#252525', position: 'relative', overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 14, elevation: 10,
+    backgroundColor: '#181818', borderRadius: 28, padding: 24, marginBottom: 28,
+    borderWidth: 1.5, borderColor: '#252525',
+    shadowColor: '#000', shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.4, shadowRadius: 20, elevation: 12,
   },
-  gridLine: { position: 'absolute', left: 22, right: 22, height: 1, backgroundColor: '#222' },
-  chartTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 },
-  cardTitle: { color: Colors.text, fontSize: 17, fontWeight: '800' },
-  cardSub: { color: Colors.textSecondary, fontSize: 12, marginTop: 3 },
+  chartHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 24 },
+  cardTitle: { color: Colors.text, fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
+  cardSub: { color: Colors.textSecondary, fontSize: 12, fontWeight: '500', marginTop: 4 },
+  
+  chartContainer: { flexDirection: 'row', height: MAX_BAR_H + 40 },
+  yAxis: { width: 35, justifyContent: 'space-between', paddingBottom: 28 },
+  yAxisLabel: { color: Colors.textSecondary, fontSize: 10, fontWeight: '700', textAlign: 'right', paddingRight: 8 },
+  
+  graphArea: { flex: 1, position: 'relative' },
+  dottedLine: {
+    position: 'absolute', left: 0, right: 0, height: 1,
+    borderStyle: 'dashed', borderWidth: 1, borderColor: '#2A2A2A', opacity: 0.5,
+  },
+  
+  chartBars: { flexDirection: 'row', alignItems: 'flex-end', flex: 1, paddingBottom: 28 },
+  barCol: { flex: 1, alignItems: 'center' },
+  barWrapper: { width: 32, backgroundColor: '#222', borderRadius: 8, overflow: 'hidden', justifyContent: 'flex-end' },
+  barFill: { width: '100%', borderRadius: 8 },
+  barLabel: { color: Colors.textSecondary, fontSize: 11, fontWeight: '700', marginTop: 12 },
+
   trendBadge: {
     flexDirection: 'row', alignItems: 'center', gap: 4,
     paddingHorizontal: 10, paddingVertical: 5, borderRadius: 12, borderWidth: 1,
   },
   trendText: { fontSize: 13, fontWeight: '900' },
-  chartBars: { flexDirection: 'row', alignItems: 'flex-end', height: MAX_BAR_H + 24, paddingBottom: 8 },
-  barCol: { flex: 1, alignItems: 'center' },
-  barDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: Colors.primary, marginTop: 4, marginBottom: -4 },
-  barLabel: { color: Colors.textSecondary, fontSize: 10, fontWeight: '600', marginTop: 8 },
-  chartFooter: { flexDirection: 'row', justifyContent: 'space-between', paddingTop: 14, marginTop: 6, borderTopWidth: 1, borderTopColor: '#232323' },
-  chartMeta: { color: Colors.textSecondary, fontSize: 11, fontWeight: '600' },
 
   /* Week Pills */
   weekRow: { flexDirection: 'row', gap: GAP, marginBottom: 28 },
