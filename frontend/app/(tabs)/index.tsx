@@ -197,12 +197,12 @@ const ACTIONS = [
 
 const QUOTES = [
   { text: "Discipline beats motivation every single time.", author: "Proverb" },
-  { text: "Push harder than yesterday if you want a different tomorrow.", author: "Unknown" },
-  { text: "Success starts with self-discipline and daily habits.", author: "Unknown" },
-  { text: "Your body can stand almost anything. Convince your mind.", author: "Unknown" },
-  { text: "Every rep counts, every drop of sweat is progress.", author: "Athlete" },
+  { text: "Push harder than yesterday if you want a different tomorrow.", author: "Elite Mindset" },
+  { text: "Success starts with self-discipline and daily habits.", author: "High Performance" },
+  { text: "Your body can stand almost anything. Convince your mind.", author: "Daily Growth" },
+  { text: "Every rep counts, every drop of sweat is progress.", author: "Pro Athlete" },
   { text: "Don't stop when you're tired. Stop when you're done.", author: "David Goggins" },
-  { text: "The only bad workout is the one that didn't happen.", author: "Unknown" },
+  { text: "The only bad workout is the one that didn't happen.", author: "Consistency" },
 ];
 
 function getGreeting() {
@@ -748,8 +748,8 @@ const s = StyleSheet.create({
     lineHeight: 23, fontStyle: 'italic', letterSpacing: 0.1,
   },
   quoteAuthor: {
-    color: Colors.primary, fontSize: 11, fontWeight: '800',
-    marginTop: 10, letterSpacing: 0.8, textTransform: 'uppercase',
+    color: Colors.textSecondary, fontSize: 13, fontWeight: '700',
+    marginTop: 12, letterSpacing: 0.5, textTransform: 'uppercase',
   },
 
   /* ── Recent Activity ── */
