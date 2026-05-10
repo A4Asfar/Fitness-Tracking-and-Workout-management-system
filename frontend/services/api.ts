@@ -1,23 +1,19 @@
 import axios from 'axios';
-import { Platform } from 'react-native';
 import Storage from '@/utils/storage';
 
 /**
  * Base API configuration
- * Optimized for Same-Laptop Presentation Mode:
- * - Web/iOS: uses localhost
- * - Android Emulator: uses 10.0.2.2 (host bridge)
+ * Optimized for Production Deployment
  */
 const getBaseUrl = () => {
   if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
   
-  // Detection for laptop-based presentation
-  const host = Platform.OS === 'android' ? '10.0.2.2' : 'localhost';
-  return `http://${host}:5000/api`;
+  // Production fallback URL
+  return 'https://YOUR-RENDER-BACKEND.onrender.com/api';
 };
 
 export const API_URL = getBaseUrl();
-console.log('🚀 Presentation Mode API URL:', API_URL);
+console.log('🚀 Production API URL:', API_URL);
 
 const api = axios.create({
   baseURL: API_URL,
@@ -68,6 +64,14 @@ api.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
+
+    // Handle Network Errors & Timeouts
+    if (error.code === 'ECONNABORTED' || error.message.includes('timeout')) {
+      return Promise.reject(new Error('Connection timed out. The server might be waking up or your network is unstable.'));
+    }
+    if (!error.response) {
+      return Promise.reject(new Error('Unable to connect to the server. Please check your network connection.'));
+    }
 
     // Handle 401 Unauthorized (Expired or Invalid token)
     if (error.response?.status === 401 && !originalRequest._retry) {

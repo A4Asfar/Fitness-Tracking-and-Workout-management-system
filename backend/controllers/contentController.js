@@ -1,4 +1,6 @@
 const Meal = require('../models/Meal');
+const DailyPlan = require('../models/DailyPlan');
+const User = require('../models/User');
 const TRAINERS = [
   {
     id: 'marcus-vane',
@@ -170,61 +172,119 @@ exports.getTrainerById = async (req, res) => {
 
 exports.getDailyPlan = async (req, res) => {
   try {
-    const { goal, level, focus } = req.query;
-    
-    // Nutrition Plan from DB
-    let query = {};
-    if (goal?.includes('Loss')) query.recommendedFor = 'Weight Loss';
-    else if (goal?.includes('Gain')) query.recommendedFor = 'Muscle Gain';
-    else if (goal?.includes('Maintain')) query.recommendedFor = 'Maintain Fitness';
-    else if (goal?.includes('Endurance')) query.recommendedFor = 'Endurance';
-    
-    const dbMeals = await Meal.find(query);
-    const nutritionList = dbMeals.length > 0 ? dbMeals : await Meal.find({}); // Fallback to all if goal not found
-    
-    const randomNutrition = [...nutritionList].sort(() => 0.5 - Math.random()).slice(0, 4);
-    
-    const nutritionPlan = {};
-    ['Breakfast', 'Lunch', 'Dinner', 'Snack'].forEach(type => {
-      const match = randomNutrition.find(s => s.category === type) || 
-                    nutritionList.find(s => s.category === type) || 
-                    nutritionList[0];
-      
-      // Map DB fields to what frontend expects if necessary
-      nutritionPlan[type] = match ? {
-        name: match.mealName,
-        note: match.benefit || 'Optimized for your goals.',
-        type: match.category,
-        icon: match.icon,
-        calories: match.calories,
-        protein: match.protein,
-        carbs: match.carbs,
-        fats: match.fats,
-        benefit: match.benefit
-      } : null;
-    });
+    const userId = req.userId;
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ message: 'User not found' });
 
-    // Workout Plan
-    const safeLevel = level || 'Beginner';
-    const safeFocus = focus || 'Strength';
-    const levelGroup = WORKOUT_DATABASE[safeLevel] || WORKOUT_DATABASE['Beginner'];
-    let workoutSuggestions = levelGroup[safeFocus] || levelGroup['Strength'] || [];
+    const generatedDate = new Date().toISOString().split('T')[0];
     
-    if (workoutSuggestions.length < 2) {
-      const fallback = levelGroup['Strength'] || [];
-      workoutSuggestions = [...workoutSuggestions, ...fallback.filter(s => !workoutSuggestions.includes(s))];
+    // 1. Check if plan already exists for today
+    let plan = await DailyPlan.findOne({ userId, generatedDate });
+    if (plan) {
+      return res.json(plan);
     }
-    
-    workoutSuggestions = [...workoutSuggestions].sort(() => 0.5 - Math.random()).slice(0, 3);
 
-    res.json({
-      nutritionPlan,
-      workoutSuggestions,
-      motivation: getMotivation(goal)
+    // 2. Generate a new plan dynamically
+    const goal = user.fitnessGoal || 'general_fitness';
+    const level = user.trainingLevel || 'beginner';
+    const weight = user.weight || 70; // fallback 70kg
+    
+    // Customize based on goal
+    let estimatedCalories = 0;
+    let warmup = [];
+    let exercises = [];
+    let recovery = "";
+    let proteinTarget = "";
+    let motivation = getMotivation(goal);
+
+    if (goal === 'weight_loss') {
+      estimatedCalories = Math.round(weight * 6.5);
+      warmup = [
+        { exercise: 'Jumping Jacks', duration: '2 mins' },
+        { exercise: 'High Knees', duration: '1 min' },
+        { exercise: 'Arm Circles', duration: '1 min' }
+      ];
+      exercises = [
+        { name: 'Burpees', sets: 4, reps: '15', rest: '45s', notes: 'Keep a fast pace', icon: 'Flame' },
+        { name: 'Mountain Climbers', sets: 4, reps: '20 each leg', rest: '45s', notes: 'Keep hips low', icon: 'Zap' },
+        { name: 'Jump Squats', sets: 3, reps: '15', rest: '60s', notes: 'Explosive jump', icon: 'Zap' },
+        { name: 'Plank', sets: 3, reps: '60s', rest: '30s', notes: 'Core tight', icon: 'Dumbbell' }
+      ];
+      recovery = "10 minutes of light walking followed by full-body stretching focusing on legs.";
+      proteinTarget = `${Math.round(weight * 1.6)}g`;
+    } else if (goal === 'muscle_gain') {
+      estimatedCalories = Math.round(weight * 4.5);
+      warmup = [
+        { exercise: 'Dynamic Stretching', duration: '3 mins' },
+        { exercise: 'Light Pushups', duration: '1 min' },
+        { exercise: 'Bodyweight Squats', duration: '2 mins' }
+      ];
+      exercises = [
+        { name: 'Bench Press / Push Ups', sets: 4, reps: '8-10', rest: '90s', notes: 'Focus on slow eccentric', icon: 'Dumbbell' },
+        { name: 'Pull Ups / Rows', sets: 4, reps: '8-10', rest: '90s', notes: 'Squeeze back at the top', icon: 'Dumbbell' },
+        { name: 'Heavy Squats', sets: 4, reps: '6-8', rest: '120s', notes: 'Go deep and explode up', icon: 'Dumbbell' },
+        { name: 'Overhead Press', sets: 3, reps: '8-10', rest: '90s', notes: 'Keep core tight', icon: 'Dumbbell' }
+      ];
+      recovery = "Consume a protein shake within 30 minutes. Focus on static stretching for the chest and shoulders.";
+      proteinTarget = `${Math.round(weight * 2.2)}g`;
+    } else {
+      estimatedCalories = Math.round(weight * 5.5);
+      warmup = [
+        { exercise: 'Light Jog in Place', duration: '2 mins' },
+        { exercise: 'Arm Circles', duration: '1 min' },
+        { exercise: 'Hip Rotations', duration: '1 min' }
+      ];
+      exercises = [
+        { name: 'Push Ups', sets: 3, reps: '12', rest: '60s', notes: 'Full range of motion', icon: 'Dumbbell' },
+        { name: 'Walking Lunges', sets: 3, reps: '10 each leg', rest: '60s', notes: 'Keep torso upright', icon: 'Dumbbell' },
+        { name: 'Dumbbell Rows', sets: 3, reps: '12', rest: '60s', notes: 'Pull to the hip', icon: 'Dumbbell' },
+        { name: 'Bicycle Crunches', sets: 3, reps: '20', rest: '45s', notes: 'Twist fully', icon: 'Zap' }
+      ];
+      recovery = "5 minutes of yoga flows (Downward Dog to Cobra). Stay active the rest of the day.";
+      proteinTarget = `${Math.round(weight * 1.8)}g`;
+    }
+
+    // Add daily variation (simple reverse based on day of week to prevent static feeling)
+    const dayOfWeek = new Date().getDay();
+    if (dayOfWeek % 2 !== 0 && exercises.length > 0) {
+      exercises.reverse();
+    }
+
+    // Nutrition
+    const dbMeals = await Meal.find({});
+    const randomNutrition = [...dbMeals].sort(() => 0.5 - Math.random());
+    const getMeal = (cat) => randomNutrition.find(m => m.category === cat)?.mealName || `Healthy ${cat}`;
+
+    const nutrition = {
+      breakfast: getMeal('Breakfast'),
+      lunch: getMeal('Lunch'),
+      dinner: getMeal('Dinner'),
+      snack: getMeal('Snack'),
+      hydration: `${(weight * 0.033).toFixed(1)} Liters`,
+      proteinTarget
+    };
+
+    // 3. Save to MongoDB
+    plan = new DailyPlan({
+      userId,
+      generatedDate,
+      goalType: goal,
+      level,
+      estimatedCalories,
+      warmup,
+      exercises,
+      nutrition,
+      recovery,
+      motivation
     });
+    
+    await plan.save();
+    console.log(`🤖 Generated new AI Daily Plan for user ${userId} on ${generatedDate}`);
+
+    res.json(plan);
   } catch (error) {
-    console.error('Daily plan error:', error);
-    res.status(500).json({ message: 'Server error' });
+    console.error('Daily plan generation error:', error);
+    res.status(500).json({ message: 'Server error generating plan' });
   }
 };
 
