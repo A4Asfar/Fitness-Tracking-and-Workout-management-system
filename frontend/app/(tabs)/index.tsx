@@ -287,6 +287,10 @@ export default function HomeDashboard() {
       if (user?.membershipType === 'premium' || user?.membershipType === 'admin') {
         const insightsRes = await api.get('/workouts/home-insights');
         setInsights(insightsRes.data);
+      } else {
+        setInsights({
+          advice: "Upgrade to PRO to unlock advanced AI-driven training insights and personalized recovery scores."
+        });
       }
     } catch (e) {
       console.log('Home fetch error:', e);
@@ -376,7 +380,11 @@ export default function HomeDashboard() {
         </View>
 
         {/* ── AI Insight Card ── */}
-        <TouchableOpacity style={s.aiCard} activeOpacity={0.9}>
+        <TouchableOpacity 
+          style={s.aiCard} 
+          activeOpacity={0.9} 
+          onPress={() => router.push((user?.membershipType === 'premium' || user?.membershipType === 'admin') ? '/insights' : '/upgrade' as any)}
+        >
           <LinearGradient 
             colors={[Colors.primary + '25', Colors.primary + '05']} 
             style={s.aiGrad}
@@ -390,10 +398,12 @@ export default function HomeDashboard() {
                    <Text style={s.aiTitle}>AI Insight</Text>
                    <View style={s.newBadge}><Text style={s.newBadgeText}>NEW</Text></View>
                  </View>
-                  <Text style={s.aiDesc}>You&apos;re 85% more active on weekdays. Consider adding a weekend workout.</Text>
-               </View>
-            </View>
-            <Text style={s.aiLink}>View Recommendations →</Text>
+                  <Text style={s.aiDesc}>{insights?.advice || 'Loading personalized coaching tips based on your recent activity...'}</Text>
+                </View>
+             </View>
+             <Text style={s.aiLink}>
+               {(user?.membershipType === 'premium' || user?.membershipType === 'admin') ? 'View Recommendations →' : 'Unlock Full Access →'}
+             </Text>
           </LinearGradient>
         </TouchableOpacity>
 

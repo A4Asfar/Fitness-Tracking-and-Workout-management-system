@@ -201,6 +201,13 @@ export default function BodyHealthScreen() {
     return Math.max(0, Math.round(100 * (1 - deviation / maxDeviation)));
   }, [weight, idealWeightLow, idealWeightHigh, idealCenter, hasData]);
 
+  const weightLbs = Math.round(weight * 2.20462);
+  const totalInches = height / 2.54;
+  const feet = Math.floor(totalInches / 12);
+  const inches = Math.round(totalInches % 12);
+  const heightStr = `${feet}'${inches}"`;
+  const weightToIdealLbs = Math.abs(Math.round(weightToIdeal * 2.20462));
+
   return (
     <View style={SharedStyles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -237,39 +244,44 @@ export default function BodyHealthScreen() {
                  decelerationRate="fast"
                >
                  <View style={s.hStatCard}>
-                   <Text style={s.hStatValue}>{weight} lbs</Text>
+                   <Text style={s.hStatValue}>{weightLbs} lbs</Text>
                    <Text style={s.hStatLabel}>Weight</Text>
-                   <Text style={s.hStatSub}>Target: 160 lbs</Text>
+                   <Text style={s.hStatSub}>{weight} kg</Text>
                  </View>
                  <View style={s.hStatCard}>
-                   <Text style={s.hStatValue}>{"5'10\""}</Text>
+                   <Text style={s.hStatValue}>{heightStr}</Text>
                    <Text style={s.hStatLabel}>Height</Text>
-                   <Text style={s.hStatSub}>BMI: {bmi?.toFixed(1)}</Text>
+                   <Text style={s.hStatSub}>{height} cm</Text>
                  </View>
                  <View style={s.hStatCard}>
-                   <Text style={s.hStatValue}>28 yrs</Text>
-                   <Text style={s.hStatLabel}>Age</Text>
-                   <Text style={s.hStatSub}>Level: High</Text>
+                   <Text style={s.hStatValue}>{bmi?.toFixed(1)}</Text>
+                   <Text style={s.hStatLabel}>BMI Index</Text>
+                   <Text style={s.hStatSub}>{category?.label}</Text>
+                 </View>
+                 <View style={s.hStatCard}>
+                   <Text style={s.hStatValue}>24 yrs</Text>
+                   <Text style={s.hStatLabel}>Age Group</Text>
+                   <Text style={s.hStatSub}>Focus: High</Text>
                  </View>
                </ScrollView>
             </View>
 
             {/* ── Your Goals ── */}
-            <View style={s.sectionPad}>
-               <Text style={s.sectionTitleLarge}>Your Goals</Text>
-               <View style={s.goalCard}>
-                  <View style={s.goalHeader}>
-                    <Text style={s.goalTitle}>Lose Weight</Text>
-                    <Text style={s.goalStatus}>3.5/5 lbs</Text>
-                  </View>
-                  <View style={s.goalTrack}>
-                    <LinearGradient 
-                      colors={[Colors.primary, Colors.secondary]} 
-                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                      style={[s.goalFill, { width: '70%' }]} 
-                    />
-                  </View>
-               </View>
+             <View style={s.sectionPad}>
+                <Text style={s.sectionTitleLarge}>Your Goals</Text>
+                <View style={s.goalCard}>
+                   <View style={s.goalHeader}>
+                     <Text style={s.goalTitle}>{weightToIdeal > 0 ? 'Weight Loss Goal' : weightToIdeal < 0 ? 'Weight Gain Goal' : 'Weight Maintenance'}</Text>
+                     <Text style={s.goalStatus}>{weightToIdeal === 0 ? 'Achieved!' : `${weightToIdealLbs} lbs to target`}</Text>
+                   </View>
+                   <View style={s.goalTrack}>
+                     <LinearGradient 
+                       colors={[Colors.primary, Colors.secondary]} 
+                       start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                       style={[s.goalFill, { width: weightToIdeal === 0 ? '100%' : '65%' }]} 
+                     />
+                   </View>
+                </View>
 
                <View style={s.goalCard}>
                   <View style={s.goalHeader}>
