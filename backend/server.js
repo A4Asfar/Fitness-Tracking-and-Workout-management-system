@@ -26,11 +26,9 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
-connectDB();
-
 // Health Check Route
 app.get('/', (req, res) => {
-  res.send('Fitness Tracker API is running locally');
+  res.send('Fitness Tracker API is running smoothly');
 });
 
 app.use('/api/auth', authRoutes);
@@ -49,6 +47,16 @@ app.use(notFound);
 app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
-});
+
+(async () => {
+  try {
+    await connectDB();
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+      console.log(`🔗 Local access: http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error('❌ Failed to start server:', error.message);
+    process.exit(1);
+  }
+})();
