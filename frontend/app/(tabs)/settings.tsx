@@ -94,95 +94,72 @@ export default function AccountHubScreen() {
         </View>
 
         <View style={styles.body}>
-          {/* ── Premium Promotion ── */}
-          {!isPremium && (
-            <TouchableOpacity 
-              style={styles.upgradeCard}
-              onPress={() => router.push('/upgrade')}
-              activeOpacity={0.9}
-            >
-              <LinearGradient 
-                colors={[Colors.primary, '#9FE800']} 
-                start={{x: 0, y: 0}} 
-                end={{x: 1, y: 0}}
-                style={styles.upgradeGrad}
-              >
-                <View style={styles.upgradeIconBox}>
-                  <Sparkles size={24} color="#000" />
-                </View>
-                <View style={{ flex: 1, marginLeft: 16 }}>
-                  <Text style={styles.upgradeTitle}>Unlock Premium</Text>
-                  <Text style={styles.upgradeSub}>Get AI insights & unlimited logs</Text>
-                </View>
-                <ChevronRight size={20} color="#000" strokeWidth={3} />
-              </LinearGradient>
-            </TouchableOpacity>
-          )}
-
-          {/* ── Account Settings ── */}
-          <SectionLabel label="ACCOUNT SETTINGS" />
-          <View style={styles.menuBox}>
+          {/* ── ACCOUNT SECTION ── */}
+          <SectionLabel label="ACCOUNT" />
+          <View style={styles.group}>
             <MenuOption 
-              icon={Bell} 
-              label="Notifications" 
-              sub="Alerts & reminders"
-              onPress={() => router.push('/settings/notifications')} 
+              icon={User} 
+              label="Edit Profile" 
+              onPress={() => router.push('/settings/edit-profile')} 
             />
             <Divider />
             <MenuOption 
-              icon={Shield} 
-              label="Security & Privacy" 
-              sub="Password & data"
-              onPress={() => router.push('/settings/privacy')} 
-            />
-            <Divider />
-            <MenuOption 
-              icon={CreditCard} 
-              label="Subscription" 
-              sub="Manage billing"
+              icon={Star} 
+              label="Upgrade to Premium" 
+              badge="Pro"
               onPress={() => router.push('/upgrade')} 
             />
           </View>
 
-          {/* ── Preferences & Support ── */}
-          <SectionLabel label="SUPPORT & ABOUT" />
-          <View style={styles.menuBox}>
+          {/* ── PREFERENCES SECTION ── */}
+          <SectionLabel label="PREFERENCES" />
+          <View style={styles.group}>
+            <MenuOption 
+              icon={Bell} 
+              label="Notifications" 
+              hasSwitch={true}
+              onPress={() => {}} 
+            />
+            <Divider />
+            <MenuOption 
+              icon={Settings} 
+              label="Settings" 
+              onPress={() => {}} 
+            />
+          </View>
+
+          {/* ── SUPPORT SECTION ── */}
+          <SectionLabel label="SUPPORT" />
+          <View style={styles.group}>
             <MenuOption 
               icon={CircleHelp} 
-              label="Help Center" 
-              sub="FAQ & support"
+              label="Help & Support" 
               onPress={() => router.push('/help')} 
             />
             <Divider />
             <MenuOption 
-              icon={Heart} 
-              label="Feedback" 
-              sub="Rate your experience"
-              onPress={() => Alert.alert('Feedback', 'Thank you for your support!')} 
-            />
-            <Divider />
-            <MenuOption 
-              icon={Info} 
-              label="About FitPro" 
-              sub="App version & terms"
-              onPress={() => router.push('/about')} 
+              icon={Sparkles} 
+              label="Share App" 
+              onPress={() => {}} 
             />
           </View>
 
-          {/* ── Danger Zone ── */}
-          <SectionLabel label="DANGER ZONE" />
-          <TouchableOpacity 
-            style={styles.logoutRow}
-            onPress={() => setShowLogoutModal(true)}
-          >
-            <View style={styles.logoutIcon}>
-              <LogOut size={20} color={Colors.error} />
-            </View>
-            <Text style={styles.logoutLabel}>Sign Out of Session</Text>
-            <ShieldAlert size={18} color={Colors.error} opacity={0.5} />
-          </TouchableOpacity>
+          {/* ── ACCOUNT ACTIONS ── */}
+          <SectionLabel label="ACCOUNT ACTIONS" />
+          <View style={styles.group}>
+            <TouchableOpacity 
+              style={styles.logoutRow}
+              onPress={() => setShowLogoutModal(true)}
+            >
+              <View style={styles.logoutIcon}>
+                <LogOut size={20} color={Colors.error} />
+              </View>
+              <Text style={styles.logoutLabel}>Logout</Text>
+              <ChevronRight size={18} color={Colors.textSecondary} opacity={0.3} />
+            </TouchableOpacity>
+          </View>
 
-          <Text style={styles.footerVersion}>FITPRO AI • VERSION 1.5.2 (BETA)</Text>
+          <Text style={styles.footerVersion}>Fitness Tracker Pro v2.1.0</Text>
         </View>
       </ScrollView>
 
@@ -216,17 +193,31 @@ function SectionLabel({ label }: { label: string }) {
   return <Text style={styles.sectionLabel}>{label}</Text>;
 }
 
-function MenuOption({ icon: Icon, label, sub, onPress }: any) {
+function MenuOption({ icon: Icon, label, onPress, badge, hasSwitch }: any) {
+  const [isEnabled, setIsEnabled] = useState(true);
   return (
     <TouchableOpacity style={styles.menuOption} onPress={onPress} activeOpacity={0.6}>
       <View style={styles.optionIconBox}>
-        <Icon size={20} color={Colors.primary} strokeWidth={2} />
+        <Icon size={22} color="#FFF" strokeWidth={1.5} opacity={0.8} />
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.optionLabel}>{label}</Text>
-        <Text style={styles.optionSub}>{sub}</Text>
-      </View>
-      <ChevronRight size={18} color={Colors.border} />
+      <Text style={styles.optionLabel}>{label}</Text>
+      
+      {badge && (
+        <View style={styles.proBadge}>
+          <Text style={styles.proBadgeText}>{badge}</Text>
+        </View>
+      )}
+
+      {hasSwitch ? (
+        <TouchableOpacity 
+          onPress={() => setIsEnabled(!isEnabled)}
+          style={[styles.switchTrack, isEnabled && styles.switchEnabled]}
+        >
+          <View style={[styles.switchThumb, isEnabled && styles.switchThumbEnabled]} />
+        </TouchableOpacity>
+      ) : (
+        <ChevronRight size={18} color={Colors.textSecondary} opacity={0.3} />
+      )}
     </TouchableOpacity>
   );
 }
@@ -363,122 +354,109 @@ const styles = StyleSheet.create({
   body: {
     padding: 24,
   },
-  upgradeCard: {
-    borderRadius: 24,
-    overflow: 'hidden',
-    marginBottom: 32,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 10,
-  },
-  upgradeGrad: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 20,
-  },
-  upgradeIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: 'rgba(0,0,0,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  upgradeTitle: {
-    color: '#000',
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: -0.3,
-  },
-  upgradeSub: {
-    color: 'rgba(0,0,0,0.6)',
-    fontSize: 12,
-    fontWeight: '700',
-  },
   sectionLabel: {
     color: Colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '900',
-    letterSpacing: 1.5,
+    fontSize: 12,
+    fontWeight: '800',
+    letterSpacing: 1.2,
     marginBottom: 16,
     marginLeft: 4,
+    opacity: 0.6,
   },
-  menuBox: {
-    backgroundColor: Colors.card,
-    borderRadius: 28,
+  group: {
+    backgroundColor: '#111118',
+    borderRadius: 24,
     marginBottom: 32,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: '#1A1A24',
     overflow: 'hidden',
   },
   menuOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 20,
+    padding: 18,
+    height: 72,
   },
   optionIconBox: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: Colors.background,
+    backgroundColor: '#1A1A24',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
   optionLabel: {
-    color: Colors.text,
+    flex: 1,
+    color: '#FFF',
     fontSize: 16,
-    fontWeight: '800',
-    letterSpacing: -0.2,
+    fontWeight: '700',
   },
-  optionSub: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '500',
-    marginTop: 2,
+  proBadge: {
+    backgroundColor: '#FF9500',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 12,
+  },
+  proBadgeText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  switchTrack: {
+    width: 46,
+    height: 26,
+    borderRadius: 13,
+    backgroundColor: '#2A2A3A',
+    padding: 2,
+    justifyContent: 'center',
+  },
+  switchEnabled: {
+    backgroundColor: Colors.primary,
+  },
+  switchThumb: {
+    width: 22,
+    height: 22,
+    borderRadius: 11,
+    backgroundColor: '#FFF',
+  },
+  switchThumbEnabled: {
+    transform: [{ translateX: 20 }],
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.border,
-    marginHorizontal: 20,
-    opacity: 0.5,
+    backgroundColor: '#1A1A24',
+    marginHorizontal: 18,
   },
   logoutRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.error + '08',
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.error + '20',
-    gap: 16,
+    padding: 18,
+    height: 72,
   },
   logoutIcon: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: Colors.error + '10',
+    backgroundColor: '#FF3B3015',
     justifyContent: 'center',
     alignItems: 'center',
+    marginRight: 16,
   },
   logoutLabel: {
     flex: 1,
-    color: Colors.error,
-    fontSize: 15,
-    fontWeight: '800',
+    color: '#FF3B30',
+    fontSize: 16,
+    fontWeight: '700',
   },
   footerVersion: {
     textAlign: 'center',
     color: Colors.textSecondary,
-    fontSize: 10,
-    fontWeight: '900',
+    fontSize: 12,
+    fontWeight: '600',
     marginTop: 40,
-    letterSpacing: 1.5,
-    opacity: 0.4,
+    opacity: 0.3,
   },
   modalOverlay: {
     flex: 1,
