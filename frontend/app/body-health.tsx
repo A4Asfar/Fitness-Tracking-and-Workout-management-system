@@ -226,53 +226,64 @@ export default function BodyHealthScreen() {
       >
         {hasData ? (
           <>
-            {/* ── BMI Gauge ── */}
-            <Animated.View style={[s.gaugeSection, { opacity: gaugeOp, transform: [{ scale: gaugeScale }] }]}>
-              <View style={s.gaugeContainer}>
-                <Svg width={GAUGE_SIZE} height={GAUGE_SIZE} style={{ transform: [{ rotate: '-90deg' }] }}>
-                  {/* Track */}
-                  <Circle
-                    cx={GAUGE_SIZE / 2}
-                    cy={GAUGE_SIZE / 2}
-                    r={RADIUS}
-                    stroke="#1C1C1C"
-                    strokeWidth={STROKE_WIDTH}
-                    fill="none"
-                  />
-                  {/* Filled arc */}
-                  <Circle
-                    cx={GAUGE_SIZE / 2}
-                    cy={GAUGE_SIZE / 2}
-                    r={RADIUS}
-                    stroke={category?.color || Colors.primary}
-                    strokeWidth={STROKE_WIDTH}
-                    fill="none"
-                    strokeDasharray={`${CIRCUMFERENCE}`}
-                    strokeDashoffset={strokeDashoffset}
-                    strokeLinecap="round"
-                  />
-                </Svg>
-                {/* Center content */}
-                <View style={s.gaugeCenter}>
-                  <Text style={[s.gaugeBMI, { color: category?.color }]}>
-                    {bmi!.toFixed(1)}
-                  </Text>
-                  <Text style={s.gaugeBMILabel}>BMI</Text>
-                </View>
-              </View>
+            {/* ── Top Stats Hub (Horizontal Scroll) ── */}
+            <View style={s.topHub}>
+               <LinearGradient colors={['#A855F730', 'transparent']} style={StyleSheet.absoluteFill} />
+               <ScrollView 
+                 horizontal 
+                 showsHorizontalScrollIndicator={false}
+                 contentContainerStyle={s.hScrollContent}
+                 snapToInterval={width * 0.75 + 16}
+                 decelerationRate="fast"
+               >
+                 <View style={s.hStatCard}>
+                   <Text style={s.hStatValue}>{weight} lbs</Text>
+                   <Text style={s.hStatLabel}>Weight</Text>
+                   <Text style={s.hStatSub}>Target: 160 lbs</Text>
+                 </View>
+                 <View style={s.hStatCard}>
+                   <Text style={s.hStatValue}>5'10"</Text>
+                   <Text style={s.hStatLabel}>Height</Text>
+                   <Text style={s.hStatSub}>BMI: {bmi?.toFixed(1)}</Text>
+                 </View>
+                 <View style={s.hStatCard}>
+                   <Text style={s.hStatValue}>28 yrs</Text>
+                   <Text style={s.hStatLabel}>Age</Text>
+                   <Text style={s.hStatSub}>Level: High</Text>
+                 </View>
+               </ScrollView>
+            </View>
 
-              {/* Category badge */}
-              <View style={[s.categoryBadge, { borderColor: category?.color + '50', backgroundColor: category?.color + '12' }]}>
-                {category && React.createElement(category.icon, { size: 14, color: category.color })}
-                <Text style={[s.categoryText, { color: category?.color }]}>{category?.label}</Text>
-              </View>
-            </Animated.View>
+            {/* ── Your Goals ── */}
+            <View style={s.sectionPad}>
+               <Text style={s.sectionTitleLarge}>Your Goals</Text>
+               <View style={s.goalCard}>
+                  <View style={s.goalHeader}>
+                    <Text style={s.goalTitle}>Lose Weight</Text>
+                    <Text style={s.goalStatus}>3.5/5 lbs</Text>
+                  </View>
+                  <View style={s.goalTrack}>
+                    <LinearGradient 
+                      colors={[Colors.primary, Colors.secondary]} 
+                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                      style={[s.goalFill, { width: '70%' }]} 
+                    />
+                  </View>
+               </View>
 
-            {/* ── Stats Row ── */}
-            <View style={s.statsRow}>
-              <StatCard icon={Scale} label="Weight" value={weight.toString()} unit="kg" accent="#FF6B3B" delay={200} />
-              <StatCard icon={Ruler} label="Height" value={height.toString()} unit="cm" accent="#00D1FF" delay={300} />
-              <StatCard icon={Target} label="Ideal" value={`${idealWeightLow}–${idealWeightHigh}`} unit="kg" accent={Colors.primary} delay={400} />
+               <View style={s.goalCard}>
+                  <View style={s.goalHeader}>
+                    <Text style={s.goalTitle}>Body Fat</Text>
+                    <Text style={s.goalStatus}>12/15 %</Text>
+                  </View>
+                  <View style={s.goalTrack}>
+                    <LinearGradient 
+                      colors={['#00D1FF', '#0095FF']} 
+                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+                      style={[s.goalFill, { width: '80%' }]} 
+                    />
+                  </View>
+               </View>
             </View>
 
             {/* ── Health Insight Card ── */}
@@ -291,99 +302,7 @@ export default function BodyHealthScreen() {
                   <Heart size={22} color={category?.color || Colors.primary} strokeWidth={1.8} />
                 </View>
                 <Text style={s.insightText}>{category?.insight}</Text>
-                <View style={s.insightDivider} />
-                <View style={s.tipRow}>
-                  <View style={[s.tipDot, { backgroundColor: category?.color }]} />
-                  <Text style={s.tipText}>{category?.tip}</Text>
-                </View>
               </LinearGradient>
-            </View>
-
-            {/* ── Body Progress Indicators ── */}
-            <View style={s.sectionPad}>
-              <View style={s.sectionRow}>
-                <Text style={s.sectionTitle}>Body Status</Text>
-                <Activity size={14} color="#A855F7" style={{ marginLeft: 6 }} />
-                <View style={s.sectionLine} />
-              </View>
-
-              <View style={s.progressCard}>
-                <ProgressBar
-                  label="BMI Position"
-                  value={bmi || 0}
-                  maxValue={40}
-                  color={category?.color || Colors.primary}
-                  delay={300}
-                />
-                <ProgressBar
-                  label="Ideal Weight Proximity"
-                  value={idealProximity}
-                  maxValue={100}
-                  color={idealProximity >= 80 ? '#39FF14' : idealProximity >= 50 ? '#FFD700' : '#FF4444'}
-                  delay={450}
-                />
-                <ProgressBar
-                  label="Health Score"
-                  value={healthScore}
-                  maxValue={100}
-                  color={healthScore >= 75 ? '#39FF14' : healthScore >= 50 ? '#FFD700' : '#FF4444'}
-                  delay={600}
-                />
-              </View>
-            </View>
-
-            {/* ── Weight Delta Card ── */}
-            {weightToIdeal !== 0 && (
-              <View style={s.sectionPad}>
-                <TouchableOpacity
-                  style={s.deltaCard}
-                  activeOpacity={0.85}
-                  onPress={() => router.push('/settings/edit-profile' as any)}
-                >
-                  <LinearGradient
-                    colors={[weightToIdeal > 0 ? '#FFD70015' : '#00D1FF15', 'transparent']}
-                    style={StyleSheet.absoluteFill}
-                  />
-                  <View style={[s.deltaIconWrap, { backgroundColor: weightToIdeal > 0 ? '#FFD70018' : '#00D1FF18' }]}>
-                    <TrendingUp size={22} color={weightToIdeal > 0 ? '#FFD700' : '#00D1FF'} />
-                  </View>
-                  <View style={{ flex: 1, marginLeft: 16 }}>
-                    <Text style={s.deltaTitle}>
-                      {weightToIdeal > 0 ? `${weightToIdeal} kg above ideal range` : `${Math.abs(weightToIdeal)} kg below ideal range`}
-                    </Text>
-                    <Text style={s.deltaSub}>
-                      {weightToIdeal > 0
-                        ? 'A caloric deficit with cardio can help you reach your goal.'
-                        : 'A caloric surplus with strength training is recommended.'}
-                    </Text>
-                  </View>
-                  <ChevronRight size={18} color={Colors.textSecondary} />
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* ── BMI Scale Reference ── */}
-            <View style={s.sectionPad}>
-              <View style={s.sectionRow}>
-                <Text style={s.sectionTitle}>BMI Scale Reference</Text>
-                <ShieldCheck size={14} color={Colors.textSecondary} style={{ marginLeft: 6 }} />
-                <View style={s.sectionLine} />
-              </View>
-
-              <View style={s.scaleCard}>
-                {[
-                  { range: '< 18.5', label: 'Underweight', color: '#00D1FF' },
-                  { range: '18.5 – 24.9', label: 'Normal', color: '#39FF14' },
-                  { range: '25.0 – 29.9', label: 'Overweight', color: '#FFD700' },
-                  { range: '≥ 30.0', label: 'Obese', color: '#FF4444' },
-                ].map((item, i) => (
-                  <View key={i} style={[s.scaleRow, i < 3 && s.scaleRowBorder]}>
-                    <View style={[s.scaleDot, { backgroundColor: item.color }]} />
-                    <Text style={s.scaleLabel}>{item.label}</Text>
-                    <Text style={s.scaleRange}>{item.range}</Text>
-                  </View>
-                ))}
-              </View>
             </View>
           </>
         ) : (
@@ -422,6 +341,33 @@ export default function BodyHealthScreen() {
    STYLES
    ═══════════════════════════════════════════════ */
 const s = StyleSheet.create({
+  /* Top Stats Hub */
+  topHub: {
+    height: 180, justifyContent: 'center', marginBottom: 32,
+    backgroundColor: '#0F0F1A', overflow: 'hidden',
+  },
+  hScrollContent: { paddingHorizontal: 24, alignItems: 'center', gap: 16 },
+  hStatCard: {
+    width: width * 0.75, height: 130, backgroundColor: 'rgba(255,255,255,0.03)',
+    borderRadius: 28, padding: 24, justifyContent: 'center',
+    borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.08)',
+  },
+  hStatValue: { color: '#FFF', fontSize: 32, fontWeight: '900', letterSpacing: -1 },
+  hStatLabel: { color: Colors.textSecondary, fontSize: 14, fontWeight: '700', marginTop: 4 },
+  hStatSub: { color: Colors.primary, fontSize: 11, fontWeight: '800', marginTop: 8, textTransform: 'uppercase', letterSpacing: 0.5 },
+
+  /* Goals */
+  sectionTitleLarge: { color: '#FFF', fontSize: 24, fontWeight: '900', marginBottom: 24, letterSpacing: -0.5 },
+  goalCard: {
+    backgroundColor: '#161616', borderRadius: 24, padding: 24,
+    borderWidth: 1.5, borderColor: '#222', marginBottom: 16,
+  },
+  goalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  goalTitle: { color: '#FFF', fontSize: 17, fontWeight: '800' },
+  goalStatus: { color: Colors.textSecondary, fontSize: 13, fontWeight: '700' },
+  goalTrack: { height: 10, backgroundColor: '#222', borderRadius: 5, overflow: 'hidden' },
+  goalFill: { height: '100%', borderRadius: 5 },
+
   /* Header */
   header: {
     flexDirection: 'row',
@@ -441,67 +387,14 @@ const s = StyleSheet.create({
     color: Colors.text, fontSize: 20, fontWeight: '900', letterSpacing: -0.5,
   },
 
-  /* Gauge */
-  gaugeSection: {
-    alignItems: 'center', paddingTop: 28, paddingBottom: 16,
-  },
-  gaugeContainer: {
-    width: GAUGE_SIZE, height: GAUGE_SIZE,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  gaugeCenter: {
-    position: 'absolute', justifyContent: 'center', alignItems: 'center',
-  },
-  gaugeBMI: {
-    fontSize: 42, fontWeight: '900', letterSpacing: -2,
-  },
-  gaugeBMILabel: {
-    fontSize: 12, fontWeight: '800', color: Colors.textSecondary,
-    letterSpacing: 2, textTransform: 'uppercase', marginTop: 2,
-  },
-  categoryBadge: {
-    flexDirection: 'row', alignItems: 'center', gap: 8,
-    paddingHorizontal: 18, paddingVertical: 8, borderRadius: 14,
-    borderWidth: 1.5, marginTop: 18,
-  },
-  categoryText: {
-    fontSize: 14, fontWeight: '900', letterSpacing: 0.5,
-  },
-
-  /* Stats Row */
-  statsRow: {
-    flexDirection: 'row', gap: 12,
-    paddingHorizontal: SPACING.lg, marginTop: 24,
-  },
-  statCard: {
-    flex: 1, backgroundColor: '#161616', borderRadius: 22, padding: 16,
-    alignItems: 'center', borderWidth: 1.5, borderColor: '#1F1F1F',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.45, shadowRadius: 16, elevation: 12,
-  },
-  statIconWrap: {
-    width: 38, height: 38, borderRadius: 12,
-    justifyContent: 'center', alignItems: 'center', marginBottom: 10,
-  },
-  statLabel: {
-    color: Colors.textSecondary, fontSize: 9, fontWeight: '800',
-    textTransform: 'uppercase', letterSpacing: 1.2, marginBottom: 6,
-  },
-  statValue: {
-    color: Colors.text, fontSize: 18, fontWeight: '900', letterSpacing: -0.5,
-  },
-  statUnit: {
-    fontSize: 10, fontWeight: '800', marginLeft: 3, letterSpacing: 0.5,
-  },
-
   /* Sections */
-  sectionPad: { paddingHorizontal: SPACING.lg, marginTop: 28 },
+  sectionPad: { paddingHorizontal: SPACING.lg, marginBottom: 32 },
   sectionRow: {
     flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16,
   },
   sectionTitle: {
-    color: Colors.text, fontSize: 15, fontWeight: '900',
-    letterSpacing: 0.2, textTransform: 'uppercase',
+    color: Colors.text, fontSize: 13, fontWeight: '900',
+    letterSpacing: 1.2, textTransform: 'uppercase', opacity: 0.8
   },
   sectionLine: { flex: 1, height: 1, backgroundColor: '#1C1C1C' },
 
@@ -510,95 +403,20 @@ const s = StyleSheet.create({
     borderRadius: 28, padding: 24,
     borderWidth: 1.5, borderColor: '#1E1E1E',
     overflow: 'hidden',
+    alignItems: 'center',
   },
   insightIconWrap: {
     width: 52, height: 52, borderRadius: 18,
     justifyContent: 'center', alignItems: 'center', marginBottom: 18,
-    alignSelf: 'center',
   },
   insightText: {
     color: Colors.text, fontSize: 15, fontWeight: '600',
     lineHeight: 24, textAlign: 'center', letterSpacing: 0.1,
   },
-  insightDivider: {
-    height: 1, backgroundColor: '#222', marginVertical: 18,
-  },
-  tipRow: {
-    flexDirection: 'row', alignItems: 'flex-start', gap: 12,
-  },
-  tipDot: {
-    width: 8, height: 8, borderRadius: 4, marginTop: 6,
-  },
-  tipText: {
-    flex: 1, color: Colors.textSecondary, fontSize: 13,
-    fontWeight: '500', lineHeight: 21,
-  },
-
-  /* Progress Bars */
-  progressCard: {
-    backgroundColor: '#161616', borderRadius: 24, padding: 22,
-    borderWidth: 1.5, borderColor: '#1F1F1F', gap: 20,
-  },
-  progressRow: {},
-  progressLabelRow: {
-    flexDirection: 'row', justifyContent: 'space-between',
-    marginBottom: 8,
-  },
-  progressLabel: {
-    color: Colors.textSecondary, fontSize: 12, fontWeight: '700',
-  },
-  progressPct: {
-    fontSize: 12, fontWeight: '900',
-  },
-  progressTrack: {
-    height: 8, borderRadius: 4, backgroundColor: '#222', overflow: 'hidden',
-  },
-  progressFill: {
-    height: '100%', borderRadius: 4,
-  },
-
-  /* Delta Card */
-  deltaCard: {
-    backgroundColor: '#161616', borderRadius: 24, padding: 20,
-    flexDirection: 'row', alignItems: 'center',
-    borderWidth: 1.5, borderColor: '#1F1F1F', overflow: 'hidden',
-  },
-  deltaIconWrap: {
-    width: 50, height: 50, borderRadius: 16,
-    justifyContent: 'center', alignItems: 'center',
-  },
-  deltaTitle: {
-    color: Colors.text, fontSize: 15, fontWeight: '800', letterSpacing: -0.3,
-  },
-  deltaSub: {
-    color: Colors.textSecondary, fontSize: 12, fontWeight: '500',
-    marginTop: 4, lineHeight: 18,
-  },
-
-  /* BMI Scale Reference */
-  scaleCard: {
-    backgroundColor: '#161616', borderRadius: 24, padding: 20,
-    borderWidth: 1.5, borderColor: '#1F1F1F',
-  },
-  scaleRow: {
-    flexDirection: 'row', alignItems: 'center', paddingVertical: 14,
-  },
-  scaleRowBorder: {
-    borderBottomWidth: 1, borderBottomColor: '#222',
-  },
-  scaleDot: {
-    width: 10, height: 10, borderRadius: 5, marginRight: 14,
-  },
-  scaleLabel: {
-    flex: 1, color: Colors.text, fontSize: 14, fontWeight: '700',
-  },
-  scaleRange: {
-    color: Colors.textSecondary, fontSize: 13, fontWeight: '600',
-  },
 
   /* Empty State */
   emptyWrap: {
-    paddingHorizontal: SPACING.lg, paddingTop: 60,
+    paddingHorizontal: SPACING.lg, paddingTop: 40,
   },
   emptyCard: {
     borderRadius: 32, padding: 36, alignItems: 'center',
