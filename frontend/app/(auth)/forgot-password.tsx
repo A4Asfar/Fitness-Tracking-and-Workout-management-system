@@ -82,7 +82,7 @@ export default function ForgotPasswordScreen() {
 
             <View style={s.card}>
               <Text style={s.title}>Reset Password</Text>
-              <Text style={s.subtitle}>Enter your email and we'll send you instructions to reset your password.</Text>
+              <Text style={s.subtitle}>Enter your email and we&apos;ll send you instructions to reset your password.</Text>
 
               {/* Input */}
               <View style={s.inputContainer}>
@@ -142,7 +142,7 @@ export default function ForgotPasswordScreen() {
             <Text style={s.subtitle}>
               If an account exists for{' '}
               <Text style={{ color: Colors.text, fontWeight: '700' }}>{email}</Text>
-              {' '}you'll receive a reset link shortly. Check your inbox.
+              {' '}you&apos;ll receive a reset link shortly. Check your inbox.
             </Text>
             <TouchableOpacity onPress={() => safeBack('/(auth)/login' as any)}>
               <LinearGradient

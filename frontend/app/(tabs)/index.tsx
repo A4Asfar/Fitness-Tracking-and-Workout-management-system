@@ -390,7 +390,7 @@ export default function HomeDashboard() {
                    <Text style={s.aiTitle}>AI Insight</Text>
                    <View style={s.newBadge}><Text style={s.newBadgeText}>NEW</Text></View>
                  </View>
-                 <Text style={s.aiDesc}>You're 85% more active on weekdays. Consider adding a weekend workout.</Text>
+                  <Text style={s.aiDesc}>You&apos;re 85% more active on weekdays. Consider adding a weekend workout.</Text>
                </View>
             </View>
             <Text style={s.aiLink}>View Recommendations →</Text>

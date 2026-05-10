@@ -147,7 +147,7 @@ export default function TrainerDetailScreen() {
             colors={[Colors.primary + '15', Colors.primary + '05']}
             style={styles.noteCard}
           >
-            <Text style={styles.noteText}>"{trainer.supportNote}"</Text>
+            <Text style={styles.noteText}>&quot;{trainer.supportNote}&quot;</Text>
           </LinearGradient>
         </DetailSection>
       </ScrollView>

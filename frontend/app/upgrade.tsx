@@ -173,7 +173,7 @@ export default function PremiumDashboard() {
         ) : (
           <View style={styles.premiumFooter}>
             <CheckCircle2 size={24} color={Colors.primary} />
-            <Text style={styles.premiumFooterText}>You're all set! Enjoy the elite experience.</Text>
+            <Text style={styles.premiumFooterText}>You&apos;re all set! Enjoy the elite experience.</Text>
           </View>
         )}
       </ScrollView>

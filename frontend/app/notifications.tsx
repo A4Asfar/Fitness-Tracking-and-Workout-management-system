@@ -114,7 +114,7 @@ export default function NotificationsScreen() {
           <View style={styles.emptyState}>
             <Bell size={64} color="#222" strokeWidth={1} />
             <Text style={styles.emptyTitle}>All caught up!</Text>
-            <Text style={styles.emptySub}>When you have new updates, they'll appear here.</Text>
+            <Text style={styles.emptySub}>When you have new updates, they&apos;ll appear here.</Text>
           </View>
         ) : (
           notifications.map((item) => (

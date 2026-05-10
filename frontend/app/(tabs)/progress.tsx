@@ -168,7 +168,7 @@ export default function ProgressAnalyticsScreen() {
             <Text style={styles.heroBadgeText}>ANALYTICS DASHBOARD</Text>
           </View>
           <Text style={styles.heroTitle}>Your Progress</Text>
-          <Text style={styles.heroSub}>Track how far you've come, {user?.name?.split(' ')[0] || 'Athlete'}</Text>
+          <Text style={styles.heroSub}>Track how far you&apos;ve come, {user?.name?.split(' ')[0] || 'Athlete'}</Text>
         </Animated.View>
       </View>
 

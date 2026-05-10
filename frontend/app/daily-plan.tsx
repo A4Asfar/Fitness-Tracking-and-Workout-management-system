@@ -77,7 +77,7 @@ export default function DailyPlanScreen() {
         {/* ── Hero ── */}
         <View style={styles.hero}>
           <Text style={styles.dateText}>{dateStr.toUpperCase()}</Text>
-          <Text style={styles.greeting}>Today's Routine</Text>
+          <Text style={styles.greeting}>Today&apos;s Routine</Text>
           <Text style={styles.subGreeting}>Optimized for {user?.fitnessGoal?.replace('_', ' ') || 'General Fitness'}</Text>
         </View>
 
@@ -98,7 +98,7 @@ export default function DailyPlanScreen() {
 
         {/* ── Motivation Quote ── */}
         <View style={styles.quoteBox}>
-          <Text style={styles.quoteText}>"{plan.motivation}"</Text>
+          <Text style={styles.quoteText}>&quot;{plan.motivation}&quot;</Text>
         </View>
 
         {/* ── Warmup Section ── */}

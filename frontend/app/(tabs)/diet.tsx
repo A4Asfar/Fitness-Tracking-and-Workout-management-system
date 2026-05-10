@@ -324,7 +324,7 @@ export default function DietScreen() {
         {/* ── Daily Log ── */}
         <View style={styles.logHeader}>
           <Utensils size={18} color={Colors.primary} />
-          <Text style={styles.logTitle}>Today's Nutrition Log</Text>
+          <Text style={styles.logTitle}>Today&apos;s Nutrition Log</Text>
         </View>
 
         {meals.length === 0 ? (

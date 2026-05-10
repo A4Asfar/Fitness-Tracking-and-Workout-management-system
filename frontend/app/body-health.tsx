@@ -242,7 +242,7 @@ export default function BodyHealthScreen() {
                    <Text style={s.hStatSub}>Target: 160 lbs</Text>
                  </View>
                  <View style={s.hStatCard}>
-                   <Text style={s.hStatValue}>5'10"</Text>
+                   <Text style={s.hStatValue}>{"5'10\""}</Text>
                    <Text style={s.hStatLabel}>Height</Text>
                    <Text style={s.hStatSub}>BMI: {bmi?.toFixed(1)}</Text>
                  </View>
