@@ -8,6 +8,10 @@ import { Colors, SPACING } from '@/constants/Theme';
 import api from '@/services/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
+  Trophy, Calendar, Flame, PlusCircle,
+  History as HistoryIcon, User as UserIcon,
+  ChevronRight, TrendingUp, Settings, Dumbbell,
+  Zap, Quote, Bell, Sparkles, Activity, ShieldCheck, Users, HeartPulse,
   Brain, ArrowUpRight, Scale, Target
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
