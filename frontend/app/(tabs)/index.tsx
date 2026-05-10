@@ -8,11 +8,7 @@ import { Colors, SPACING } from '@/constants/Theme';
 import api from '@/services/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  Trophy, Calendar, Flame, PlusCircle,
-  History as HistoryIcon, User as UserIcon,
-  ChevronRight, TrendingUp, Settings, Dumbbell,
-  Zap, Quote, Bell, Sparkles, Activity, ShieldCheck, Users, HeartPulse,
-  Brain, ArrowUpRight, Scale
+  Brain, ArrowUpRight, Scale, Target
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -212,6 +208,52 @@ function getGreeting() {
   return 'Good Evening';
 }
 
+/* ─── Activity Ring ─── */
+function ActivityRing({ icon: Icon, value, label, color, progress }: any) {
+  return (
+    <View style={s.ringContainer}>
+      <View style={[s.ringOuter, { borderColor: color + '20' }]}>
+        <View style={[s.ringFill, { borderColor: color, transform: [{ rotate: '-90deg' }] }]} />
+        <View style={s.ringIconInner}>
+          <Icon size={20} color={color} />
+        </View>
+      </View>
+      <Text style={s.ringValue}>{value}</Text>
+      <Text style={s.ringLabel}>{label}</Text>
+    </View>
+  );
+}
+
+/* ─── Quick Stat Card ─── */
+function QuickStat({ label, value, accent }: any) {
+  return (
+    <View style={s.statBox}>
+      <Text style={s.statValueLarge}>{value}</Text>
+      <Text style={s.statLabelSmall}>{label}</Text>
+      <View style={[s.statAccent, { backgroundColor: accent }]} />
+    </View>
+  );
+}
+
+/* ─── Activity Item ─── */
+function ActivityItem({ title, time, calories, duration, color }: any) {
+  return (
+    <View style={s.activityRow}>
+      <View style={s.activityInfo}>
+        <Text style={s.activityTitleText}>{title}</Text>
+        <Text style={s.activityTimeText}>{time}</Text>
+        <View style={s.activityStats}>
+           <Flame size={12} color={Colors.textSecondary} />
+           <Text style={s.activityStatText}>{calories} cal</Text>
+           <Zap size={12} color={Colors.textSecondary} style={{ marginLeft: 8 }} />
+           <Text style={s.activityStatText}>{duration}</Text>
+        </View>
+      </View>
+      <View style={[s.activityDot, { backgroundColor: color }]} />
+    </View>
+  );
+}
+
 export default function HomeDashboard() {
   const { user, isNewUser } = useAuth();
   const router = useRouter();
@@ -296,313 +338,80 @@ export default function HomeDashboard() {
       showsVerticalScrollIndicator={false}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
     >
-        {/* ── Daily Plan Quick Access ── */}
-        <TouchableOpacity 
-          style={s.dailyPlanCard}
-          onPress={() => router.push('/daily-plan' as any)}
-          activeOpacity={0.9}
-        >
-          <LinearGradient
-            colors={[Colors.primary, '#9FE800']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={s.dailyPlanGrad}
-          >
-            <View style={s.dailyPlanContent}>
-              <View style={{ flex: 1 }}>
-                <View style={s.dailyPlanTag}>
-                  <Sparkles size={12} color="#000" fill="#000" />
-                  <Text style={s.dailyPlanTagText}>AI GENERATED</Text>
-                </View>
-                <Text style={s.dailyPlanTitle}>Today's Personalized Plan</Text>
-                <Text style={s.dailyPlanSub}>Check your custom workout & meal plan</Text>
-              </View>
-              <View style={s.dailyPlanArrow}>
-                <ChevronRight size={24} color="#000" strokeWidth={3} />
-              </View>
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-
-        {/* ── Progress Comparison Highlight ── */}
-        <TouchableOpacity 
-          style={s.progressHighlight}
-          onPress={() => router.push('/progress-comparison' as any)}
-          activeOpacity={0.85}
-        >
-          <LinearGradient
-            colors={['#1A1A1A', '#121212']}
-            style={s.progressHighlightGrad}
-          >
-            <View style={s.progressHighlightLeft}>
-              <View style={s.progressIconWrap}>
-                <TrendingUp size={24} color={Colors.primary} />
-              </View>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.progressHighlightTitle}>Digital Progress Comparison</Text>
-              <Text style={s.progressHighlightSub}>Monitor your weekly improvements</Text>
-            </View>
-            <View style={s.progressTrend}>
-              <ArrowUpRight size={16} color={stats?.comparison?.percentage >= 0 ? Colors.primary : '#FF4B4B'} />
-              <Text style={[s.progressTrendText, { color: stats?.comparison?.percentage >= 0 ? Colors.primary : '#FF4B4B' }]}>
-                {stats?.comparison?.percentage !== undefined 
-                  ? `${stats.comparison.percentage >= 0 ? '+' : ''}${Math.round(stats.comparison.percentage)}%`
-                  : 'N/A'}
-              </Text>
-            </View>
-          </LinearGradient>
-        </TouchableOpacity>
-
       {/* ── Hero Header ── */}
-      <View style={s.heroWrap}>
-        <LinearGradient
-          colors={[Colors.primary + '25', Colors.primary + '08', 'transparent']}
-          style={StyleSheet.absoluteFill}
-        />
-        <Animated.View style={[s.heroInner, { opacity: heroOp, transform: [{ translateY: heroTy }], paddingTop: insets.top + SPACING.md }]}>
-          <View style={s.heroTop}>
-            <View>
-              <Text style={s.heroGreeting}>{isNewUser ? '👋 Welcome,' : getGreeting() + ','}</Text>
-              <Text style={s.heroName}>{firstName}</Text>
-              <Text style={s.heroSub}>Stay consistent. Stay strong. 💪</Text>
-              <Text style={{ color: Colors.primary, fontSize: 10, fontWeight: '700', marginTop: 4, textTransform: 'uppercase', letterSpacing: 1 }}>
-                Membership: {user?.membershipType}
-              </Text>
-            </View>
-            <View style={s.headerActions}>
-              <TouchableOpacity
-                style={s.heroNotif}
-                onPress={() => router.push('/notifications' as any)}
-              >
-                <LinearGradient colors={[Colors.primary + '30', Colors.primary + '10']} style={s.heroAvatarGrad}>
-                  <Bell size={24} color={Colors.primary} strokeWidth={2} />
-                  <View style={s.notifBadge} />
-                </LinearGradient>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={s.heroAvatar}
-                onPress={() => router.push('/(tabs)/settings')}
-              >
-                <LinearGradient colors={[Colors.primary + '40', Colors.primary + '15']} style={s.heroAvatarGrad}>
-                  <UserIcon size={26} color={Colors.primary} strokeWidth={1.8} />
-                </LinearGradient>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </Animated.View>
+      <View style={[s.hero, { paddingTop: insets.top + 24 }]}>
+        <Text style={s.heroGreeting}>Good Morning 👋</Text>
+        <Text style={s.heroName}>{user?.name || 'Athlete'}</Text>
       </View>
 
       <View style={s.body}>
-
-        {/* ── Admin Control Center ── */}
-        {isAdmin && (
-          <>
-            <View style={[s.sectionRow, { marginTop: 10 }]}>
-              <Text style={s.sectionTitle}>Admin Control Center</Text>
-              <ShieldCheck size={14} color="#FF3B30" style={{ marginLeft: 8 }} />
-              <View style={s.sectionLine} />
-            </View>
-
-            <TouchableOpacity 
-              style={s.adminCard} 
-              activeOpacity={0.85}
-              onPress={() => router.push('/admin-dashboard' as any)}
-            >
-              <LinearGradient colors={['#FF3B3020', '#FF3B3005']} style={s.adminCardGrad}>
-                <View style={s.adminCardHeader}>
-                <View style={s.adminIconBox}>
-                  <Users size={24} color="#FF3B30" />
-                </View>
-                  <View style={s.adminTag}>
-                    <Text style={s.adminTagText}>ROOT ACCESS</Text>
-                  </View>
-                </View>
-                <Text style={s.adminCardTitle}>User Management System</Text>
-                <Text style={s.adminCardDesc}>
-                  Access system-wide analytics, manage user memberships, and monitor platform health metrics.
-                </Text>
-                <View style={s.adminFooter}>
-                  <Text style={s.adminFooterText}>Launch Admin Console</Text>
-                  <ChevronRight size={14} color="#FF3B30" />
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
-          </>
-        )}
-
-        {/* ── Metrics Row ── */}
-        <View style={s.metricsRow}>
-          <MetricPill
-            icon={Trophy} accent={Colors.primary}
-            value={stats?.totalWorkouts?.toString() ?? '0'}
-            label="Workouts" delay={0}
-          />
-          <MetricPill
-            icon={Flame} accent="#FF6B3B"
-            value={`${stats?.workoutsThisWeek ?? 0}`}
-            label="This Week" delay={80}
-          />
-          <MetricPill
-            icon={Calendar} accent="#00D1FF"
-            value={fmt(stats?.lastWorkoutDate)}
-            label="Last Session" delay={160}
-          />
-          {isPremium && (
-            <MetricPill
-              icon={TrendingUp} accent="#A855F7"
-              value={stats?.totalVolume > 1000 ? `${(stats.totalVolume/1000).toFixed(1)}k` : stats?.totalVolume?.toString() ?? '0'}
-              label="Volume (kg)" delay={240}
+        {/* ── Daily Activity Hub ── */}
+        <View style={s.activityHub}>
+          <Text style={s.hubTitle}>Daily Activity</Text>
+          <View style={s.ringsRow}>
+            <ActivityRing 
+              icon={Target} value="8,547" label="Steps" 
+              color={Colors.primary} progress={0.7} 
             />
-          )}
+            <ActivityRing 
+              icon={Flame} value="1,842" label="Calories" 
+              color="#FF4B4B" progress={0.6} 
+            />
+            <ActivityRing 
+              icon={Zap} value="45" label="Active Min" 
+              color="#A855F7" progress={0.8} 
+            />
+          </View>
         </View>
 
-        {/* ── Section title ── */}
-        <View style={s.sectionRow}>
-          <Text style={s.sectionTitle}>Command Center</Text>
-          <View style={s.sectionLine} />
+        {/* ── Quick Stats Row ── */}
+        <View style={s.quickStats}>
+           <QuickStat label="Streak" value={stats?.streak?.toString() ?? '0'} accent={Colors.primary} />
+           <QuickStat label="Workouts" value={stats?.totalWorkouts?.toString() ?? '0'} accent="#00D1FF" />
+           <QuickStat label="Achievements" value="24" accent="#FFD700" />
         </View>
 
-        {/* ── Full-width Log Workout card ── */}
-        {(() => {
-          const a = filteredActions[0];
-          if (!a) return null;
-          return (
-            <PressCard onPress={() => router.push(a.route as any)} style={{ marginBottom: GAP }}>
-              <LinearGradient colors={[Colors.primary + '30', Colors.primary + '0A']} style={s.fullCard}>
-                <LinearGradient colors={[Colors.primary + '50', Colors.primary + '20']} style={s.fullCardIcon}>
-                  <a.icon size={32} color={Colors.primary} strokeWidth={1.8} />
-                </LinearGradient>
-                <View style={s.fullCardBody}>
-                  <Text style={s.fullCardTitle}>{a.title}</Text>
-                  <Text style={s.fullCardDesc}>{a.desc}</Text>
-                </View>
-                <LinearGradient colors={[Colors.primary, '#9FE800']} style={s.fullCardChevron}>
-                  <ChevronRight size={20} color="#000" strokeWidth={2.5} />
-                </LinearGradient>
-              </LinearGradient>
-            </PressCard>
-          );
-        })()}
-
-        {/* ── 2-column grid ── */}
-        <View style={s.grid}>
-          {filteredActions.slice(1).map((a, i) => (
-            <PressCard key={i} onPress={() => router.push(a.route as any)} style={s.gridItem}>
-              <LinearGradient colors={a.grad} style={s.gridCard}>
-                {a.premium && (
-                  <PremiumBadge style={s.badgePos} />
-                )}
-                <View style={[s.gridCardIcon, { backgroundColor: a.accent + '20' }]}>
-                  <a.icon size={24} color={a.accent} strokeWidth={2} />
-                </View>
-                <Text style={s.gridCardTitle}>{a.title}</Text>
-                <Text style={s.gridCardDesc}>{a.desc}</Text>
-                <View style={[s.gridCardArrow, { backgroundColor: a.accent + '18' }]}>
-                  <ChevronRight size={14} color={a.accent} />
-                </View>
-              </LinearGradient>
-            </PressCard>
-          ))}
-        </View>
-
-        {/* ── Premium Insights Section ── */}
-        {isPremium && (
-          <>
-            <View style={[s.sectionRow, { marginTop: 20 }]}>
-              <Text style={s.sectionTitle}>Premium Insights</Text>
-              <PremiumBadge style={{ marginLeft: 8 }} />
-              <View style={s.sectionLine} />
-            </View>
-
-            <TouchableOpacity 
-              style={s.premiumCard} 
-              activeOpacity={0.85}
-              onPress={() => router.push('/insights' as any)}
-            >
-              <LinearGradient 
-                colors={[Colors.primary + '20', Colors.primary + '05']} 
-                style={s.premiumCardGrad}
-              >
-                <View style={s.premiumCardHeader}>
-                  <View style={s.premiumIconBox}>
-                    <Activity size={24} color={Colors.primary} />
-                  </View>
-                  <View style={s.premiumTag}>
-                    <Text style={s.premiumTagText}>EXCLUSIVE</Text>
-                  </View>
-                </View>
-                <Text style={s.premiumCardTitle}>Recovery: {insights?.recoveryScore ?? 'Analyzing...'}</Text>
-                <Text style={s.premiumCardDesc}>
-                  {insights?.advice ?? 'Gathering session data to provide tailored recovery advice...'}
-                </Text>
-                <View style={s.premiumFooter}>
-                  <Text style={s.premiumFooterText}>Analyze {insights?.intensityLevel ?? 'Volume'} Trends</Text>
-                  <ChevronRight size={14} color={Colors.primary} />
-                </View>
-              </LinearGradient>
-            </TouchableOpacity>
-          </>
-        )}
-
-        {/* ── Daily Motivation Banner ── */}
-        <View style={s.sectionRow}>
-          <Text style={s.sectionTitle}>Daily Motivation</Text>
-          <View style={s.sectionLine} />
-        </View>
-
-        <Animated.View style={{ opacity: quoteOp }}>
-          <LinearGradient
-            colors={['#1A1A1A', '#161616']}
-            style={s.quoteBanner}
+        {/* ── AI Insight Card ── */}
+        <TouchableOpacity style={s.aiCard} activeOpacity={0.9}>
+          <LinearGradient 
+            colors={[Colors.primary + '25', Colors.primary + '05']} 
+            style={s.aiGrad}
           >
-            <LinearGradient colors={[Colors.primary + '18', 'transparent']} style={StyleSheet.absoluteFill} />
-            <View style={s.quoteIconWrap}>
-              <Quote size={22} color={Colors.primary} strokeWidth={1.6} />
+            <View style={s.aiHeader}>
+               <View style={s.aiIconWrap}>
+                  <Brain size={24} color={Colors.primary} />
+               </View>
+               <View>
+                 <View style={s.aiBadgeRow}>
+                   <Text style={s.aiTitle}>AI Insight</Text>
+                   <View style={s.newBadge}><Text style={s.newBadgeText}>NEW</Text></View>
+                 </View>
+                 <Text style={s.aiDesc}>You're 85% more active on weekdays. Consider adding a weekend workout.</Text>
+               </View>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.quoteText}>"{quote.text}"</Text>
-              <Text style={s.quoteAuthor}>— {quote.author}</Text>
-            </View>
+            <Text style={s.aiLink}>View Recommendations →</Text>
           </LinearGradient>
-        </Animated.View>
+        </TouchableOpacity>
 
-        {/* ── Recent Activity Preview ── */}
-        {recent && (
-          <>
-            <View style={[s.sectionRow, { marginTop: 28 }]}>
-              <Text style={s.sectionTitle}>Recent Activity</Text>
-              <View style={s.sectionLine} />
-              <TouchableOpacity onPress={() => router.push('/(tabs)/workouts' as any)}>
-                <Text style={s.seeAll}>See All</Text>
-              </TouchableOpacity>
-            </View>
+        {/* ── Recent Activities ── */}
+        <View style={s.sectionHeader}>
+           <Text style={s.sectionTitleLarge}>Recent Activities</Text>
+           <TouchableOpacity onPress={() => router.push('/(tabs)/workouts' as any)}>
+             <Text style={s.viewAll}>View All</Text>
+           </TouchableOpacity>
+        </View>
 
-            <TouchableOpacity
-              style={s.recentCard}
-              onPress={() => router.push(`/workout/${recent._id}` as any)}
-              activeOpacity={0.8}
-            >
-              {/* accent bar */}
-              <View style={[s.recentAccentBar, { backgroundColor: Colors.primary }]} />
-              <View style={[s.recentIconWrap, { backgroundColor: Colors.primary + '18' }]}>
-                <Dumbbell size={22} color={Colors.primary} strokeWidth={1.8} />
-              </View>
-              <View style={s.recentBody}>
-                <Text style={s.recentExercise}>{recent.exercise}</Text>
-                <View style={s.recentMeta}>
-                  <Text style={s.recentChip}>{recent.sets} sets</Text>
-                  <Text style={s.recentChip}>{recent.reps} reps</Text>
-                  {recent.weight > 0 && <Text style={s.recentChip}>{recent.weight} kg</Text>}
-                </View>
-              </View>
-              <View style={s.recentRight}>
-                <Text style={s.recentDate}>{fmt(recent.date)}</Text>
-                <ChevronRight size={18} color={Colors.textSecondary} />
-              </View>
-            </TouchableOpacity>
-          </>
-        )}
+        <View style={s.recentList}>
+           <ActivityItem 
+             title="Morning HIIT" time="2h ago" 
+             calories="320" duration="30 min" color="#FF4B4B" 
+           />
+           <ActivityItem 
+             title="Upper Body" time="1d ago" 
+             calories="280" duration="45 min" color="#00D1FF" 
+           />
+        </View>
+      </View>
 
         {/* No workouts yet nudge */}
         {!recent && !loading && (
@@ -620,354 +429,91 @@ export default function HomeDashboard() {
             <ChevronRight size={20} color={Colors.primary} />
           </TouchableOpacity>
         )}
-      </View>
     </ScrollView>
   );
 }
 
 const s = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
+  root: { flex: 1, backgroundColor: '#000' },
+  hero: { paddingHorizontal: 24, paddingBottom: 16 },
+  heroGreeting: { color: Colors.textSecondary, fontSize: 13, fontWeight: '700', marginBottom: 4 },
+  heroName: { color: '#FFF', fontSize: 32, fontWeight: '900', letterSpacing: -1 },
+  body: { paddingHorizontal: 24 },
 
-  /* ── Hero ── */
-  heroWrap: { overflow: 'hidden', position: 'relative' },
-  heroInner: { paddingBottom: 32, paddingHorizontal: PAD },
-  heroTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  heroGreeting: {
-    color: Colors.textSecondary, fontSize: 13, fontWeight: '700',
-    marginBottom: 6, letterSpacing: 0.3,
+  /* Hub */
+  activityHub: { 
+    backgroundColor: '#111118', borderRadius: 32, padding: 24,
+    borderWidth: 1.5, borderColor: '#1A1A24', marginBottom: 20,
   },
-  heroName: {
-    color: Colors.text, fontSize: 34, fontWeight: '900',
-    letterSpacing: -1.4, lineHeight: 38,
+  hubTitle: { color: '#FFF', fontSize: 18, fontWeight: '800', marginBottom: 24 },
+  ringsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  ringContainer: { alignItems: 'center' },
+  ringOuter: { 
+    width: 68, height: 68, borderRadius: 34, borderWidth: 4,
+    justifyContent: 'center', alignItems: 'center', marginBottom: 12,
   },
-  heroSub: {
-    color: Colors.textSecondary, fontSize: 14, fontWeight: '500',
-    marginTop: 10, letterSpacing: 0.1, lineHeight: 20,
+  ringFill: {
+    position: 'absolute', width: 68, height: 68, borderRadius: 34,
+    borderWidth: 4, borderTopColor: 'transparent', borderLeftColor: 'transparent',
   },
-  heroAvatar: { marginTop: 2 },
-  heroAvatarGrad: {
-    width: 58, height: 58, borderRadius: 20,
-    justifyContent: 'center', alignItems: 'center',
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4, shadowRadius: 16, elevation: 12,
-    borderWidth: 1.5, borderColor: Colors.primary + '35',
-  },
+  ringIconInner: { width: 32, height: 32, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  ringValue: { color: '#FFF', fontSize: 15, fontWeight: '900' },
+  ringLabel: { color: Colors.textSecondary, fontSize: 10, fontWeight: '700', marginTop: 2 },
 
-  /* ── Body ── */
-  body: { paddingHorizontal: PAD, paddingTop: 24 },
-  sectionRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 18 },
-  sectionTitle: {
-    color: Colors.text, fontSize: 15, fontWeight: '900',
-    letterSpacing: 0.2, textTransform: 'uppercase',
+  /* Quick Stats */
+  quickStats: { flexDirection: 'row', gap: 12, marginBottom: 20 },
+  statBox: { 
+    flex: 1, height: 80, backgroundColor: '#111118', borderRadius: 20,
+    padding: 16, justifyContent: 'center', overflow: 'hidden',
+    borderWidth: 1.5, borderColor: '#1A1A24',
   },
-  sectionLine: { flex: 1, height: 1, backgroundColor: '#1C1C1C' },
-  seeAll: { color: Colors.primary, fontSize: 12, fontWeight: '800', letterSpacing: 0.3 },
+  statValueLarge: { color: '#FFF', fontSize: 20, fontWeight: '900' },
+  statLabelSmall: { color: Colors.textSecondary, fontSize: 11, fontWeight: '600', marginTop: 2 },
+  statAccent: { position: 'absolute', right: -4, top: 20, bottom: 20, width: 8, borderRadius: 4 },
 
-  /* ── Metrics ── */
-  metricsRow: { flexDirection: 'row', gap: GAP, marginBottom: SPACING.xl },
-
-  /* ── Full-width Log Workout card ── */
-  fullCard: {
-    flexDirection: 'row', alignItems: 'center',
-    backgroundColor: '#141414', borderRadius: 24, padding: SPACING.lg,
-    borderWidth: 1.5, borderColor: Colors.primary + '35',
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.28, shadowRadius: 24, elevation: 14,
-    overflow: 'hidden', gap: SPACING.md,
-  },
-  fullCardIcon: {
-    width: 70, height: 70, borderRadius: 22,
-    justifyContent: 'center', alignItems: 'center',
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3, shadowRadius: 10, elevation: 6,
-  },
-  fullCardBody: { flex: 1 },
-  fullCardTitle: {
-    color: Colors.text, fontSize: 22, fontWeight: '900',
-    letterSpacing: -0.7, lineHeight: 26,
-  },
-  fullCardDesc: {
-    color: Colors.textSecondary, fontSize: 13, fontWeight: '500',
-    marginTop: 5, lineHeight: 18,
-  },
-  fullCardChevron: {
-    width: 44, height: 44, borderRadius: 15,
-    justifyContent: 'center', alignItems: 'center',
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.5, shadowRadius: 14, elevation: 8,
-  },
-
-  /* ── 2-col Grid ── */
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: GAP, marginBottom: SPACING.xl },
-  gridItem: { width: HALF },
-  gridCard: {
-    borderRadius: 24, padding: SPACING.md, minHeight: 162,
-    backgroundColor: '#141414', borderWidth: 1.5, borderColor: '#1E1E1E',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4, shadowRadius: 18, elevation: 12,
-    overflow: 'hidden', justifyContent: 'space-between',
-  },
-  gridCardIcon: {
-    width: 54, height: 54, borderRadius: 17,
-    justifyContent: 'center', alignItems: 'center', marginBottom: 14,
-    shadowColor: '#000', shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.2, shadowRadius: 6, elevation: 4,
-  },
-  gridCardTitle: {
-    color: Colors.text, fontSize: 15, fontWeight: '900',
-    letterSpacing: -0.4, lineHeight: 20,
-  },
-  gridCardDesc: {
-    color: Colors.textSecondary, fontSize: 11, fontWeight: '500',
-    marginTop: 5, lineHeight: 17,
-  },
-  gridCardArrow: {
-    width: 32, height: 32, borderRadius: 11,
-    justifyContent: 'center', alignItems: 'center',
-    marginTop: 14, alignSelf: 'flex-end',
-  },
-
-  /* ── Quote Banner ── */
-  quoteBanner: {
-    borderRadius: 28, padding: 24, flexDirection: 'row',
-    alignItems: 'flex-start', gap: 18,
-    borderWidth: 1.5, borderColor: Colors.primary + '28', overflow: 'hidden',
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12, shadowRadius: 18, elevation: 8, marginBottom: 4,
-  },
-  quoteIconWrap: {
-    width: 50, height: 50, borderRadius: 16,
-    backgroundColor: Colors.primary + '20',
-    justifyContent: 'center', alignItems: 'center',
-    borderWidth: 1, borderColor: Colors.primary + '30',
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2, shadowRadius: 10, elevation: 5,
-  },
-  quoteText: {
-    color: Colors.text, fontSize: 14, fontWeight: '700',
-    lineHeight: 23, fontStyle: 'italic', letterSpacing: 0.1,
-  },
-  quoteAuthor: {
-    color: Colors.textSecondary, fontSize: 13, fontWeight: '700',
-    marginTop: 12, letterSpacing: 0.5, textTransform: 'uppercase',
-  },
-
-  /* ── Recent Activity ── */
-  recentCard: {
-    backgroundColor: '#141414', borderRadius: 24, padding: 18,
-    flexDirection: 'row', alignItems: 'center', gap: 14,
-    borderWidth: 1.5, borderColor: '#1E1E1E', overflow: 'hidden',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.4, shadowRadius: 16, elevation: 12,
-  },
-  recentAccentBar: {
-    position: 'absolute', left: 0, top: 0, bottom: 0,
-    width: 4, borderRadius: 4,
-  },
-  recentIconWrap: {
-    width: 50, height: 50, borderRadius: 16,
+  /* AI Card */
+  aiCard: { marginBottom: 32, borderRadius: 28, overflow: 'hidden' },
+  aiGrad: { padding: 24 },
+  aiHeader: { flexDirection: 'row', gap: 16, marginBottom: 16 },
+  aiIconWrap: { 
+    width: 48, height: 48, borderRadius: 16, backgroundColor: Colors.primary + '20',
     justifyContent: 'center', alignItems: 'center',
   },
-  recentBody: { flex: 1 },
-  recentExercise: {
-    color: Colors.text, fontSize: 17, fontWeight: '900', letterSpacing: -0.4,
-  },
-  recentMeta: { flexDirection: 'row', gap: 6, marginTop: 8, flexWrap: 'wrap' },
-  recentChip: {
-    backgroundColor: '#222', borderRadius: 9, paddingHorizontal: 9,
-    paddingVertical: 4, color: Colors.textSecondary, fontSize: 11, fontWeight: '700',
-    borderWidth: 1, borderColor: '#2A2A2A',
-  },
-  recentRight: { alignItems: 'flex-end', gap: 8 },
-  recentDate: { color: Colors.textSecondary, fontSize: 11, fontWeight: '700', letterSpacing: 0.2 },
+  aiBadgeRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 },
+  aiTitle: { color: '#FFF', fontSize: 17, fontWeight: '800' },
+  newBadge: { backgroundColor: Colors.primary, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
+  newBadgeText: { color: '#000', fontSize: 9, fontWeight: '900' },
+  aiDesc: { color: Colors.textSecondary, fontSize: 13, lineHeight: 20, fontWeight: '500' },
+  aiLink: { color: Colors.primary, fontSize: 14, fontWeight: '800' },
 
-  /* ── Empty State Nudge ── */
+  /* Activities */
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 },
+  sectionTitleLarge: { color: '#FFF', fontSize: 20, fontWeight: '900' },
+  viewAll: { color: Colors.primary, fontSize: 14, fontWeight: '700' },
+  recentList: { gap: 12 },
+  activityRow: { 
+    backgroundColor: '#111118', borderRadius: 24, padding: 20,
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    borderWidth: 1.5, borderColor: '#1A1A24',
+  },
+  activityInfo: { flex: 1 },
+  activityTitleText: { color: '#FFF', fontSize: 16, fontWeight: '800', marginBottom: 4 },
+  activityTimeText: { color: Colors.textSecondary, fontSize: 12, fontWeight: '600', marginBottom: 12 },
+  activityStats: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  activityStatText: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700' },
+  activityDot: { width: 8, height: 8, borderRadius: 4 },
+
   emptyNudge: {
     borderRadius: 24, padding: 22, flexDirection: 'row', alignItems: 'center',
     borderWidth: 1.5, borderColor: Colors.primary + '40', overflow: 'hidden',
     marginTop: 24,
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.12, shadowRadius: 14, elevation: 6,
   },
   emptyNudgeTitle: {
     color: Colors.text, fontSize: 17, fontWeight: '900',
-    marginLeft: 16, letterSpacing: -0.3,
+    marginLeft: 16,
   },
   emptyNudgeDesc: {
     color: Colors.textSecondary, fontSize: 12, fontWeight: '500',
     marginTop: 4, marginLeft: 16, lineHeight: 18,
-  },
-
-  /* ── Premium ── */
-  premiumCard: {
-    marginBottom: 28,
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: Colors.primary + '40',
-    backgroundColor: '#161616',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 8,
-  },
-  premiumCardGrad: { padding: 20 },
-  premiumCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  premiumIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: Colors.primary + '18', justifyContent: 'center', alignItems: 'center' },
-  premiumTag: { backgroundColor: Colors.primary, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  premiumTagText: { color: '#000', fontSize: 9, fontWeight: '900', letterSpacing: 1 },
-  premiumCardTitle: { color: Colors.text, fontSize: 20, fontWeight: '900', marginBottom: 8, letterSpacing: -0.5 },
-  premiumCardDesc: { color: Colors.textSecondary, fontSize: 14, lineHeight: 22, fontWeight: '500', marginBottom: 16 },
-  premiumFooter: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  premiumFooterText: { color: Colors.primary, fontSize: 14, fontWeight: '700' },
-  badgePos: { position: 'absolute', top: 12, right: 12 },
-
-  /* ── Admin ── */
-  adminCard: {
-    marginBottom: 28,
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: '#FF3B3040',
-    backgroundColor: '#161616',
-  },
-  adminCardGrad: { padding: 20 },
-  adminCardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  adminIconBox: { width: 48, height: 48, borderRadius: 16, backgroundColor: '#FF3B3018', justifyContent: 'center', alignItems: 'center' },
-  adminTag: { backgroundColor: '#FF3B30', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
-  adminTagText: { color: '#FFF', fontSize: 9, fontWeight: '900', letterSpacing: 1 },
-  adminCardTitle: { color: Colors.text, fontSize: 20, fontWeight: '900', marginBottom: 8, letterSpacing: -0.5 },
-  adminCardDesc: { color: Colors.textSecondary, fontSize: 14, lineHeight: 22, fontWeight: '500', marginBottom: 16 },
-  adminFooter: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  adminFooterText: { color: '#FF3B30', fontSize: 14, fontWeight: '700' },
-
-  /* ── Daily Plan ── */
-  dailyPlanCard: {
-    marginBottom: 24,
-    borderRadius: 28,
-    overflow: 'hidden',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 12,
-  },
-  dailyPlanGrad: {
-    padding: 24,
-  },
-  dailyPlanContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  dailyPlanTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: 'rgba(0,0,0,0.15)',
-    paddingHorizontal: 10,
-    paddingVertical: 5,
-    borderRadius: 10,
-    alignSelf: 'flex-start',
-    gap: 6,
-    marginBottom: 12,
-  },
-  dailyPlanTagText: {
-    color: '#000',
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-  dailyPlanTitle: {
-    color: '#000',
-    fontSize: 22,
-    fontWeight: '900',
-    letterSpacing: -0.6,
-  },
-  dailyPlanSub: {
-    color: 'rgba(0,0,0,0.6)',
-    fontSize: 13,
-    fontWeight: '600',
-    marginTop: 4,
-  },
-  dailyPlanArrow: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.3)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  progressHighlight: {
-    marginBottom: 24,
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: Colors.primary + '25',
-    backgroundColor: '#161616',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
-    shadowRadius: 16,
-    elevation: 8,
-  },
-  progressHighlightGrad: {
-    padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-  },
-  progressHighlightLeft: {},
-  progressIconWrap: {
-    width: 50,
-    height: 50,
-    borderRadius: 16,
-    backgroundColor: Colors.primary + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  progressHighlightTitle: {
-    color: Colors.text,
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: -0.3,
-  },
-  progressHighlightSub: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '500',
-    marginTop: 2,
-  },
-  progressTrend: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary + '15',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    gap: 2,
-  },
-  progressTrendText: {
-    color: Colors.primary,
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  headerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  heroNotif: {
-    position: 'relative',
-  },
-  notifBadge: {
-    position: 'absolute',
-    top: 14,
-    right: 14,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: '#FF3B30',
-    borderWidth: 2,
-    borderColor: Colors.background,
   },
 });
