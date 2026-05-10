@@ -5,15 +5,12 @@ import Storage from '@/utils/storage';
  * Base API configuration
  * Optimized for Production Deployment
  */
-const getBaseUrl = () => {
-  if (process.env.EXPO_PUBLIC_API_URL) return process.env.EXPO_PUBLIC_API_URL;
-  
-  // Production fallback URL
-  return 'https://YOUR-RENDER-BACKEND.onrender.com/api';
-};
-
-export const API_URL = getBaseUrl();
-console.log('🚀 Production API URL:', API_URL);
+/**
+ * Base API configuration
+ * Simplified for Local Development
+ */
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api';
+console.log('🚀 Local API URL:', API_URL);
 
 const api = axios.create({
   baseURL: API_URL,

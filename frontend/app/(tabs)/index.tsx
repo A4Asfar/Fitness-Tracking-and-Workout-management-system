@@ -218,6 +218,7 @@ export default function HomeDashboard() {
   const insets = useSafeAreaInsets();
   const [stats, setStats] = useState<any>(null);
   const [recent, setRecent] = useState<any>(null);
+  const [insights, setInsights] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -235,6 +236,12 @@ export default function HomeDashboard() {
       ]);
       setStats(statsRes.data);
       if (workoutsRes.data?.length > 0) setRecent(workoutsRes.data[0]);
+
+      // Fetch premium insights if applicable
+      if (user?.membershipType === 'premium' || user?.membershipType === 'admin') {
+        const insightsRes = await api.get('/workouts/home-insights');
+        setInsights(insightsRes.data);
+      }
     } catch (e) {
       console.log('Home fetch error:', e);
     } finally {
@@ -337,8 +344,12 @@ export default function HomeDashboard() {
               <Text style={s.progressHighlightSub}>Monitor your weekly improvements</Text>
             </View>
             <View style={s.progressTrend}>
-              <ArrowUpRight size={16} color={Colors.primary} />
-              <Text style={s.progressTrendText}>+20%</Text>
+              <ArrowUpRight size={16} color={stats?.comparison?.percentage >= 0 ? Colors.primary : '#FF4B4B'} />
+              <Text style={[s.progressTrendText, { color: stats?.comparison?.percentage >= 0 ? Colors.primary : '#FF4B4B' }]}>
+                {stats?.comparison?.percentage !== undefined 
+                  ? `${stats.comparison.percentage >= 0 ? '+' : ''}${Math.round(stats.comparison.percentage)}%`
+                  : 'N/A'}
+              </Text>
             </View>
           </LinearGradient>
         </TouchableOpacity>
@@ -521,12 +532,12 @@ export default function HomeDashboard() {
                     <Text style={s.premiumTagText}>EXCLUSIVE</Text>
                   </View>
                 </View>
-                <Text style={s.premiumCardTitle}>Recovery Score: Optimal</Text>
+                <Text style={s.premiumCardTitle}>Recovery: {insights?.recoveryScore ?? 'Analyzing...'}</Text>
                 <Text style={s.premiumCardDesc}>
-                  Your intensity last session was high. Based on your history, today is perfect for a heavy strength block.
+                  {insights?.advice ?? 'Gathering session data to provide tailored recovery advice...'}
                 </Text>
                 <View style={s.premiumFooter}>
-                  <Text style={s.premiumFooterText}>Analyze Volume Trends</Text>
+                  <Text style={s.premiumFooterText}>Analyze {insights?.intensityLevel ?? 'Volume'} Trends</Text>
                   <ChevronRight size={14} color={Colors.primary} />
                 </View>
               </LinearGradient>

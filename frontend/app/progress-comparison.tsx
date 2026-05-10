@@ -63,13 +63,13 @@ export default function ProgressComparisonScreen() {
     );
   }
 
-  // Mock data fallbacks if real data is missing or incomplete
-  const thisWeekCount = data?.weeklyStats?.count ?? 6;
-  const lastWeekCount = data?.lastWeekStats?.count ?? 5;
-  const improvementPct = lastWeekCount > 0 ? ((thisWeekCount - lastWeekCount) / lastWeekCount * 100) : 20;
+  // Real data from analytics
+  const thisWeekCount = data?.weeklyStats?.count ?? 0;
+  const lastWeekCount = data?.lastWeekStats?.count ?? 0;
+  const improvementPct = lastWeekCount > 0 ? ((thisWeekCount - lastWeekCount) / lastWeekCount * 100) : (thisWeekCount > 0 ? 100 : 0);
   
-  const thisVolume = data?.weeklyStats?.volume ?? 12500;
-  const lastVolume = data?.lastWeekStats?.volume ?? 10800;
+  const thisVolume = data?.weeklyStats?.volume ?? 0;
+  const lastVolume = data?.lastWeekStats?.volume ?? 0;
   const volumeDiff = thisVolume - lastVolume;
 
   const maxCount = Math.max(thisWeekCount, lastWeekCount, 1);

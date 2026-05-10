@@ -180,3 +180,59 @@ exports.getWorkoutAnalytics = asyncHandler(async (req, res) => {
       totalWorkouts, totalSets, totalWeight: Math.round(totalWeight), insight,
     });
 });
+
+exports.getHomeInsights = asyncHandler(async (req, res) => {
+  const userId = req.userId;
+  const lastWorkouts = await Workout.find({ userId }).sort({ date: -1 }).limit(3);
+  
+  if (lastWorkouts.length === 0) {
+    return res.json({
+      recoveryScore: 'N/A',
+      intensityLevel: 'Low',
+      advice: 'Log your first workout to see recovery insights and tailored advice.',
+      recoveryStatus: 'Ready'
+    });
+  }
+
+  const lastWorkout = lastWorkouts[0];
+  const hoursSinceLast = (new Date() - new Date(lastWorkout.date)) / 3600000;
+  
+  let recoveryScore = 85;
+  let status = 'Optimal';
+  let advice = 'Your energy levels should be peaked. Today is a great day for a heavy session!';
+  let recoveryStatus = 'Fully Recovered';
+
+  if (hoursSinceLast < 24) {
+    recoveryScore = 45;
+    status = 'Recovering';
+    advice = 'Your muscles are still repairing. Focus on light mobility or active recovery today.';
+    recoveryStatus = 'In Progress';
+  } else if (hoursSinceLast < 48) {
+    recoveryScore = 70;
+    status = 'Moderate';
+    advice = 'Most tissues are recovered. A moderate intensity workout is recommended.';
+    recoveryStatus = 'Near Complete';
+  }
+
+  // Calculate intensity based on volume vs average
+  const totalVolume = lastWorkouts.reduce((acc, w) => acc + (w.sets * w.reps * (w.weight || 1)), 0);
+  const avgVolume = totalVolume / lastWorkouts.length;
+  const lastVolume = lastWorkout.sets * lastWorkout.reps * (lastWorkout.weight || 1);
+  
+  let intensityLevel = 'Balanced';
+  if (lastVolume > avgVolume * 1.2) {
+    intensityLevel = 'High Intensity';
+    if (hoursSinceLast < 48) advice = 'Last session was very intense. Ensure you prioritize sleep and protein intake.';
+  } else if (lastVolume < avgVolume * 0.8) {
+    intensityLevel = 'Light Activity';
+  }
+
+  res.json({
+    recoveryScore: `${recoveryScore}%`,
+    intensityLevel,
+    advice,
+    recoveryStatus: status,
+    lastVolume
+  });
+});
+

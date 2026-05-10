@@ -3,12 +3,11 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 
-// Environment Variable Validation (Fail-fast for production stability)
+// Environment Variable Validation (Soft check for local development)
 const requiredEnv = ['MONGO_URI', 'JWT_SECRET'];
 requiredEnv.forEach(env => {
   if (!process.env[env]) {
-    console.error(`❌ CRITICAL ERROR: Missing environment variable ${env}`);
-    process.exit(1);
+    console.warn(`⚠️ WARNING: Missing environment variable ${env} in .env file`);
   }
 });
 
@@ -25,17 +24,13 @@ const { errorHandler, notFound } = require('./middleware/errorMiddleware');
 const app = express();
 
 app.use(express.json());
-app.use(cors({
-  origin: '*',
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization']
-}));
+app.use(cors());
 
 connectDB();
 
-// Production Health Check Route (Used for deployment verification)
+// Health Check Route
 app.get('/', (req, res) => {
-  res.send('Fitness Tracker Backend Running');
+  res.send('Fitness Tracker API is running locally');
 });
 
 app.use('/api/auth', authRoutes);
@@ -55,5 +50,5 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`🚀 Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  console.log(`🚀 Server running on http://localhost:${PORT}`);
 });
