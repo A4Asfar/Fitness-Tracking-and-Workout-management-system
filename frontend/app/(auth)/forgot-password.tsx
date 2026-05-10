@@ -9,12 +9,14 @@ import { Colors } from '@/constants/Theme';
 import { Mail, ArrowLeft, Send, ShieldCheck } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '@/services/api';
+import { safeBack } from '@/utils/navigation';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [sent, setSent] = useState(false);
   const [focused, setFocused] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const btnScale = useRef(new Animated.Value(1)).current;
@@ -22,15 +24,22 @@ export default function ForgotPasswordScreen() {
   const pressOut = () => Animated.spring(btnScale, { toValue: 1,    useNativeDriver: true, speed: 30 }).start();
 
   const handleReset = async () => {
-    if (!email.trim()) { Alert.alert('Required', 'Please enter your email address.'); return; }
-    if (!/\S+@\S+\.\S+/.test(email)) { Alert.alert('Invalid Email', 'Enter a valid email address.'); return; }
+    if (!email.trim()) { 
+      setError('Email address is required'); 
+      return; 
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) { 
+      setError('Enter a valid email address'); 
+      return; 
+    }
     
+    setError(null);
     setLoading(true);
     try {
       await api.post('/auth/forgot-password', { email });
       setSent(true);
     } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to send reset link');
+      setError(error.message || 'Failed to send reset link');
     } finally {
       setLoading(false);
     }
@@ -49,7 +58,7 @@ export default function ForgotPasswordScreen() {
       {/* Back button */}
       <TouchableOpacity
         style={s.backBtn}
-        onPress={() => router.back()}
+        onPress={() => safeBack('/(auth)/login' as any)}
         hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
       >
         <View style={s.backBtnInner}>
@@ -76,22 +85,29 @@ export default function ForgotPasswordScreen() {
               <Text style={s.subtitle}>Enter your email and we'll send you instructions to reset your password.</Text>
 
               {/* Input */}
-              <View style={[s.inputWrap, focused && s.inputWrapFocused]}>
-                <View style={s.inputIcon}>
-                  <Mail size={19} color={focused ? Colors.primary : Colors.textSecondary} strokeWidth={2} />
+              <View style={s.inputContainer}>
+                <View style={s.labelRow}>
+                  <Text style={s.label}>Email Address</Text>
+                  <Text style={s.asterisk}>*</Text>
                 </View>
-                <TextInput
-                  style={s.input}
-                  placeholder="Email Address"
-                  placeholderTextColor={Colors.textSecondary}
-                  value={email}
-                  onChangeText={setEmail}
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  onFocus={() => setFocused(true)}
-                  onBlur={() => setFocused(false)}
-                  selectionColor={Colors.primary}
-                />
+                <View style={[s.inputWrap, focused && s.inputWrapFocused, error && s.inputWrapError]}>
+                  <View style={s.inputIcon}>
+                    <Mail size={19} color={error ? '#FF4B4B' : (focused ? Colors.primary : Colors.textSecondary)} strokeWidth={2} />
+                  </View>
+                  <TextInput
+                    style={s.input}
+                    placeholder="e.g. john@example.com"
+                    placeholderTextColor={Colors.textSecondary}
+                    value={email}
+                    onChangeText={(t) => { setEmail(t); if (error) setError(null); }}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    onFocus={() => setFocused(true)}
+                    onBlur={() => setFocused(false)}
+                    selectionColor={error ? '#FF4B4B' : Colors.primary}
+                  />
+                </View>
+                {error && <Text style={s.errorText}>{error}</Text>}
               </View>
 
               {/* Primary button */}
@@ -111,7 +127,7 @@ export default function ForgotPasswordScreen() {
                 </TouchableOpacity>
               </Animated.View>
 
-              <TouchableOpacity style={s.backLink} onPress={() => router.back()}>
+              <TouchableOpacity style={s.backLink} onPress={() => safeBack('/(auth)/login' as any)}>
                 <Text style={s.backLinkText}>Back to Sign In</Text>
               </TouchableOpacity>
             </View>
@@ -128,7 +144,7 @@ export default function ForgotPasswordScreen() {
               <Text style={{ color: Colors.text, fontWeight: '700' }}>{email}</Text>
               {' '}you'll receive a reset link shortly. Check your inbox.
             </Text>
-            <TouchableOpacity onPress={() => router.back()}>
+            <TouchableOpacity onPress={() => safeBack('/(auth)/login' as any)}>
               <LinearGradient
                 colors={[Colors.primary, '#9FE800']}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
@@ -180,15 +196,21 @@ const s = StyleSheet.create({
     textAlign: 'center', lineHeight: 22, marginBottom: 28,
   },
 
+  inputContainer: { marginBottom: 20 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4 },
+  label: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700', letterSpacing: 0.5, textTransform: 'uppercase' },
+  asterisk: { color: '#FF4B4B', fontSize: 14, fontWeight: 'bold', marginLeft: 4 },
   inputWrap: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: Colors.inputBg, borderRadius: 18,
-    paddingHorizontal: 16, marginBottom: 20,
+    paddingHorizontal: 16,
     borderWidth: 1.5, borderColor: Colors.border, height: 58,
   },
   inputWrapFocused: { borderColor: Colors.primary + '70', backgroundColor: Colors.primary + '08' },
+  inputWrapError: { borderColor: '#FF4B4B', backgroundColor: '#FF4B4B10' },
   inputIcon: { marginRight: 12 },
   input: { flex: 1, color: Colors.text, fontSize: 16, fontWeight: '500', paddingVertical: 0 },
+  errorText: { color: '#FF4B4B', fontSize: 11, fontWeight: '600', marginTop: 4, marginLeft: 8 },
 
   btn: {
     height: 62, borderRadius: 20, flexDirection: 'row',

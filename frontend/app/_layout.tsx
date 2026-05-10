@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useFrameworkReady } from '@/hooks/useFrameworkReady';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { ToastProvider } from '@/components/Toast';
 import { View, ActivityIndicator } from 'react-native';
 import { Colors } from '@/constants/Theme';
 import SplashScreen from '@/components/SplashScreen';
@@ -26,11 +26,23 @@ function NavigationHandler() {
     const inAuthGroup = segments[0] === '(auth)';
 
     if (!user && !inAuthGroup) {
-      // Redirect to the login page if the user is not authenticated
       router.replace('/(auth)/login');
     } else if (user && inAuthGroup) {
-      // Redirect to the home page if the user is authenticated
-      router.replace('/(tabs)/' as any);
+      if (user.membershipType === 'admin') {
+        router.replace('/admin-dashboard' as any);
+      } else {
+        router.replace('/(tabs)/' as any);
+      }
+    } else if (user) {
+      const isPremiumScreen = segments[0] === 'insights' || segments[0] === 'reminders';
+      const isAdminScreen = segments[0] === 'admin-dashboard';
+      const isProgressTab = segments[1] === 'progress';
+
+      if (user.membershipType === 'free' && (isPremiumScreen || isProgressTab)) {
+        router.replace('/upgrade');
+      } else if (user.membershipType !== 'admin' && isAdminScreen) {
+        router.replace('/(tabs)/' as any);
+      }
     }
   }, [user, loading, segments]);
 
@@ -42,21 +54,22 @@ function NavigationHandler() {
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="log-workout" options={{ presentation: 'modal' }} />
-      <Stack.Screen name="history" options={{ presentation: 'card' }} />
-      <Stack.Screen name="support" options={{ presentation: 'card' }} />
+      <Stack.Screen name="create-workout" options={{ presentation: 'modal', title: 'Log Workout' }} />
+      <Stack.Screen name="help" options={{ presentation: 'card' }} />
+      <Stack.Screen name="body-health" options={{ presentation: 'card' }} />
       <Stack.Screen name="+not-found" />
     </Stack>
   );
 }
 
 export default function RootLayout() {
-  useFrameworkReady();
 
   return (
     <AuthProvider>
-      <NavigationHandler />
-      <StatusBar style="light" />
+      <ToastProvider>
+        <NavigationHandler />
+        <StatusBar style="light" />
+      </ToastProvider>
     </AuthProvider>
   );
 }

@@ -1,6 +1,8 @@
 const jwt = require('jsonwebtoken');
 
-const auth = (req, res, next) => {
+const User = require('../models/User');
+
+const auth = async (req, res, next) => {
   const token = req.header('Authorization')?.replace('Bearer ', '');
 
   if (!token) {
@@ -10,10 +12,24 @@ const auth = (req, res, next) => {
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.userId = decoded.userId;
+    
+    const user = await User.findById(req.userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    req.user = user;
     next();
   } catch (error) {
     res.status(401).json({ message: 'Token is not valid' });
   }
 };
 
-module.exports = auth;
+const admin = (req, res, next) => {
+  if (req.user && req.user.membershipType === 'admin') {
+    next();
+  } else {
+    res.status(403).json({ message: 'Access denied. Admin only.' });
+  }
+};
+
+module.exports = { auth, admin };

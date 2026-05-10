@@ -15,37 +15,54 @@ function AuthInput({
   icon: Icon, placeholder, value, onChangeText,
   secureTextEntry = false, keyboardType = 'default',
   autoCapitalize = 'none', editable = true,
-  rightElement,
+  rightElement, label, required, error,
 }: any) {
   const [focused, setFocused] = useState(false);
   return (
-    <View style={[ai.wrap, focused && ai.wrapFocused]}>
-      <View style={ai.iconBox}>
-        <Icon size={19} color={focused ? Colors.primary : Colors.textSecondary} strokeWidth={2} />
+    <View style={ai.container}>
+      {label && (
+        <View style={ai.labelRow}>
+          <Text style={ai.label}>{label}</Text>
+          {required && <Text style={ai.asterisk}>*</Text>}
+        </View>
+      )}
+      <View style={[
+        ai.wrap, 
+        focused && ai.wrapFocused,
+        error && ai.wrapError
+      ]}>
+        <View style={ai.iconBox}>
+          <Icon size={19} color={error ? '#FF4B4B' : (focused ? Colors.primary : Colors.textSecondary)} strokeWidth={2} />
+        </View>
+        <TextInput
+          style={ai.input}
+          placeholder={placeholder}
+          placeholderTextColor={Colors.textSecondary}
+          value={value}
+          onChangeText={onChangeText}
+          secureTextEntry={secureTextEntry}
+          keyboardType={keyboardType}
+          autoCapitalize={autoCapitalize}
+          editable={editable}
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
+          selectionColor={error ? '#FF4B4B' : Colors.primary}
+        />
+        {rightElement}
       </View>
-      <TextInput
-        style={ai.input}
-        placeholder={placeholder}
-        placeholderTextColor={Colors.textSecondary}
-        value={value}
-        onChangeText={onChangeText}
-        secureTextEntry={secureTextEntry}
-        keyboardType={keyboardType}
-        autoCapitalize={autoCapitalize}
-        editable={editable}
-        onFocus={() => setFocused(true)}
-        onBlur={() => setFocused(false)}
-        selectionColor={Colors.primary}
-      />
-      {rightElement}
+      {error && <Text style={ai.errorText}>{error}</Text>}
     </View>
   );
 }
 const ai = StyleSheet.create({
+  container: { marginBottom: 16 },
+  labelRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 8, marginLeft: 4 },
+  label: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
+  asterisk: { color: '#FF4B4B', fontSize: 14, fontWeight: 'bold', marginLeft: 4 },
   wrap: {
     flexDirection: 'row', alignItems: 'center',
     backgroundColor: Colors.inputBg, borderRadius: 18,
-    paddingHorizontal: 16, marginBottom: 14,
+    paddingHorizontal: 16,
     borderWidth: 1.5, borderColor: Colors.border,
     height: 58,
   },
@@ -53,36 +70,58 @@ const ai = StyleSheet.create({
     borderColor: Colors.primary + '70',
     backgroundColor: Colors.primary + '08',
   },
+  wrapError: { borderColor: '#FF4B4B', backgroundColor: '#FF4B4B10' },
   iconBox: { marginRight: 12 },
   input: {
     flex: 1, color: Colors.text, fontSize: 16,
     fontWeight: '500', paddingVertical: 0,
   },
+  errorText: { color: '#FF4B4B', fontSize: 11, fontWeight: '600', marginTop: 4, marginLeft: 8 },
 });
+
+import { useToast } from '@/components/Toast';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errors, setErrors] = useState<any>({});
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
   const { login, user } = useAuth();
   const router = useRouter();
   const [showWelcome, setShowWelcome] = useState(false);
+  const { showToast } = useToast();
 
   const btnScale = useRef(new Animated.Value(1)).current;
   const pressIn  = () => Animated.spring(btnScale, { toValue: 0.97, useNativeDriver: true, speed: 40 }).start();
   const pressOut = () => Animated.spring(btnScale, { toValue: 1,    useNativeDriver: true, speed: 30 }).start();
 
   const handleLogin = async () => {
-    if (!email || !password) { Alert.alert('Required', 'Please enter email and password.'); return; }
-    if (!/\S+@\S+\.\S+/.test(email)) { Alert.alert('Invalid Email', 'Enter a valid email address.'); return; }
-    if (password.length < 6) { Alert.alert('Too Short', 'Password must be at least 6 characters.'); return; }
+    const newErrors: any = {};
+    if (!email) {
+      newErrors.email = 'Email address is required';
+    } else if (!/\S+@\S+\.\S+/.test(email)) { 
+      newErrors.email = 'Enter a valid email address';
+    }
+    if (!password) {
+      newErrors.password = 'Password is required';
+    } else if (password.length < 6) { 
+      newErrors.password = 'Password must be at least 6 characters';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      showToast('Please correct the highlighted errors.', 'error'); 
+      return; 
+    }
+
+    setErrors({});
     setLoading(true);
     try {
       await login(email, password);
       setShowWelcome(true);
     } catch (error) {
-      Alert.alert('Login Failed', (error as Error).message);
+      showToast((error as Error).message, 'error');
     } finally {
       setLoading(false);
     }
@@ -116,14 +155,18 @@ export default function LoginScreen() {
           <Text style={s.subtitle}>Sign in to continue your journey</Text>
 
           <AuthInput
+            label="EMAIL ADDRESS" required
             icon={Mail} placeholder="Email Address"
-            value={email} onChangeText={setEmail}
+            value={email} onChangeText={(t: string) => { setEmail(t); if (errors.email) setErrors({...errors, email: null}); }}
             keyboardType="email-address" editable={!loading}
+            error={errors.email}
           />
           <AuthInput
+            label="PASSWORD" required
             icon={Lock} placeholder="Password"
-            value={password} onChangeText={setPassword}
+            value={password} onChangeText={(t: string) => { setPassword(t); if (errors.password) setErrors({...errors, password: null}); }}
             secureTextEntry={!showPass} editable={!loading}
+            error={errors.password}
             rightElement={
               <TouchableOpacity onPress={() => setShowPass(p => !p)} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
                 {showPass
@@ -177,7 +220,14 @@ export default function LoginScreen() {
 
       <WelcomeModal
         visible={showWelcome}
-        onClose={() => { setShowWelcome(false); router.replace('/(tabs)/' as any); }}
+        onClose={() => { 
+          setShowWelcome(false); 
+          if (user?.membershipType === 'admin') {
+            router.replace('/admin-dashboard' as any);
+          } else {
+            router.replace('/(tabs)/' as any);
+          }
+        }}
         userName={user?.name || 'Athlete'}
         isNewUser={false}
       />

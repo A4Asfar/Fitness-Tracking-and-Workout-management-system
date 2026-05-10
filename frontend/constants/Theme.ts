@@ -12,6 +12,15 @@ export const Colors = {
   inputBg:       '#1E1E1E',
 };
 
+export const SPACING = {
+  xs: 4,
+  sm: 8,
+  md: 16,
+  lg: 24,
+  xl: 32,
+  xxl: 48,
+};
+
 export const SharedStyles = StyleSheet.create({
   /* ── Full-screen container ── */
   container: {
@@ -22,8 +31,8 @@ export const SharedStyles = StyleSheet.create({
   /* ── Section card ── */
   card: {
     backgroundColor: Colors.card,
-    borderRadius: 28,
-    padding: 26,
+    borderRadius: 24,
+    padding: SPACING.lg,
     borderWidth: 1,
     borderColor: Colors.border,
     shadowColor: '#000',
@@ -35,11 +44,11 @@ export const SharedStyles = StyleSheet.create({
 
   /* ── Screen-level title ── */
   title: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: '900',
     color: Colors.text,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: SPACING.sm,
     letterSpacing: -0.8,
     lineHeight: 34,
   },
@@ -49,7 +58,7 @@ export const SharedStyles = StyleSheet.create({
     fontSize: 15,
     color: Colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: SPACING.xl,
     fontWeight: '500',
     lineHeight: 22,
     letterSpacing: 0.1,
@@ -58,25 +67,25 @@ export const SharedStyles = StyleSheet.create({
   /* ── Text input ── */
   input: {
     backgroundColor: Colors.inputBg,
-    borderRadius: 18,
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: SPACING.md,
     color: Colors.text,
     fontSize: 16,
     fontWeight: '500',
-    marginBottom: 14,
+    marginBottom: SPACING.md,
     borderWidth: 1.5,
     borderColor: Colors.border,
   },
 
-  /* ── Primary action button (use with LinearGradient child for premium feel) ── */
+  /* ── Primary action button ── */
   button: {
     backgroundColor: Colors.primary,
-    borderRadius: 20,
-    height: 60,
+    borderRadius: 16,
+    height: 56,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: 8,
+    marginTop: SPACING.sm,
     shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.4,
@@ -96,9 +105,10 @@ export const SharedStyles = StyleSheet.create({
   linkText: {
     color: Colors.primary,
     textAlign: 'center',
-    marginTop: 20,
+    marginTop: SPACING.lg,
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: 0.2,
   },
 });
+

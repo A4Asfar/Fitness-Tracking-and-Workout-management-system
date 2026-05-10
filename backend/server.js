@@ -6,8 +6,9 @@ const cors = require('cors');
 const authRoutes = require('./routes/auth');
 const workoutRoutes = require('./routes/workouts');
 const mealRoutes = require('./routes/meals');
-const progressRoutes = require('./routes/progress');
 const profileRoutes = require('./routes/profile');
+const weightRoutes = require('./routes/weight');
+const notificationRoutes = require('./routes/notifications');
 
 const connectDB = require('./config/db');
 const { errorHandler, notFound } = require('./middleware/errorMiddleware');
@@ -22,8 +23,13 @@ connectDB();
 app.use('/api/auth', authRoutes);
 app.use('/api/workouts', workoutRoutes);
 app.use('/api/meals', mealRoutes);
-app.use('/api/progress', progressRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/weight', weightRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/admin', require('./routes/admin'));
+app.use('/api/consultations', require('./routes/consultations'));
+app.use('/api/chat', require('./routes/chat'));
+app.use('/api/content', require('./routes/content'));
 
 // Error Handling Middleware
 app.use(notFound);

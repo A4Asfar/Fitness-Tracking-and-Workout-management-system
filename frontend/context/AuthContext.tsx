@@ -1,14 +1,22 @@
 import React, { createContext, useState, useCallback, useEffect, useContext } from 'react';
 import Storage from '@/utils/storage';
-import api from '@/services/api';
+import api, { setAuthToken } from '@/services/api';
 
-interface User {
+/**
+ * User Type definition matching backend schema
+ */
+export interface User {
+  _id?: string;
   id: string;
   name: string;
   email: string;
+  membershipType: 'free' | 'premium' | 'admin';
   weight: number;
   height: number;
-  fitnessGoal: string;
+  fitnessGoal: 'Weight Loss' | 'Muscle Gain' | 'Maintain Fitness' | 'Endurance' | 'General Fitness' | 'None';
+  trainingLevel: 'Beginner' | 'Intermediate' | 'Advanced' | 'Elite';
+  preferredWorkoutFocus?: 'Strength' | 'Cardio' | 'HIIT' | 'Yoga';
+  avatar: string;
 }
 
 interface AuthContextType {
@@ -17,8 +25,10 @@ interface AuthContextType {
   loading: boolean;
   isNewUser: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (name: string, email: string, password: string) => Promise<void>;
+  signup: (name: string, email: string, password: string, membershipType: string) => Promise<void>;
   logout: () => Promise<void>;
+  updateUser: (userData: Partial<User>) => void;
+  refreshUser: () => Promise<void>;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -29,65 +39,146 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
 
+  /**
+   * Session Restoration
+   * Runs on app boot to check for persisted tokens and user data
+   */
   useEffect(() => {
-    const restoreToken = async () => {
+    const restoreSession = async () => {
       try {
         const savedToken = await Storage.getItem('authToken');
+        const savedUser = await Storage.getItem('authUser');
+        
         if (savedToken) {
+          setAuthToken(savedToken);
           setToken(savedToken);
-          // Verify token and get user data
+          
+          // Optimistically set user from storage to avoid blank screens
+          if (savedUser) {
+            try {
+              setUser(JSON.parse(savedUser));
+            } catch (e) {
+              console.error('Failed to parse saved user');
+            }
+          }
+          
+          // Verify/Refresh from server in background
           const response = await api.get('/auth/me');
           setUser(response.data);
+          await Storage.setItem('authUser', JSON.stringify(response.data));
+          console.log('✅ Session synchronized for:', response.data.email);
         }
       } catch (error) {
         console.log('Session expired or no token found');
         await Storage.removeItem('authToken');
+        await Storage.removeItem('authUser');
+        setAuthToken(null);
+        setUser(null);
       } finally {
+        setIsNewUser(false);
         setLoading(false);
       }
     };
 
-    restoreToken();
+    restoreSession();
   }, []);
 
+  /**
+   * Login Action
+   */
   const login = useCallback(async (email: string, password: string) => {
     const response = await api.post('/auth/login', { email, password });
-    const { token, user } = response.data;
+    const { token: newToken, user: userData } = response.data;
     
-    setToken(token);
-    setUser(user);
+    setAuthToken(newToken);
+    setToken(newToken);
+    setUser(userData);
+    
+    await Storage.setItem('authToken', newToken);
+    await Storage.setItem('authUser', JSON.stringify(userData));
     setIsNewUser(false);
-    await Storage.setItem('authToken', token);
+    console.log('🔑 Login successful for:', userData.email);
   }, []);
 
-  const signup = useCallback(async (name: string, email: string, password: string) => {
-    const response = await api.post('/auth/register', { name, email, password });
-    const { token, user } = response.data;
+  /**
+   * Signup Action
+   */
+  const signup = useCallback(async (name: string, email: string, password: string, membershipType: string) => {
+    const response = await api.post('/auth/register', { name, email, password, membershipType });
+    const { token: newToken, user: userData } = response.data;
     
-    setToken(token);
-    setUser(user);
+    setAuthToken(newToken);
+    setToken(newToken);
+    setUser(userData);
+    
+    await Storage.setItem('authToken', newToken);
+    await Storage.setItem('authUser', JSON.stringify(userData));
     setIsNewUser(true);
-    await Storage.setItem('authToken', token);
+    console.log('✨ Account created for:', userData.email);
   }, []);
 
+  /**
+   * Logout Action
+   */
   const logout = useCallback(async () => {
+    setAuthToken(null);
     setToken(null);
     setUser(null);
-    setIsNewUser(false);
     await Storage.removeItem('authToken');
+    await Storage.removeItem('authUser');
+    console.log('🔒 Session cleared - user logged out');
+  }, []);
+  
+  /**
+   * Optimistic User Update + Persistence
+   */
+  const updateUser = useCallback((userData: Partial<User>) => {
+    setUser(prev => {
+      const newUser = prev ? { ...prev, ...userData } : null;
+      if (newUser) {
+        Storage.setItem('authUser', JSON.stringify(newUser)).catch(e => console.error('Storage update failed', e));
+      }
+      return newUser;
+    });
+  }, []);
+
+  /**
+   * Hard Refresh User Data
+   */
+  const refreshUser = useCallback(async () => {
+    try {
+      const response = await api.get('/auth/me');
+      setUser(response.data);
+      await Storage.setItem('authUser', JSON.stringify(response.data));
+    } catch (error) {
+      console.log('Failed to refresh user data');
+    }
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, isNewUser, login, signup, logout }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      token, 
+      loading, 
+      isNewUser,
+      login, 
+      signup, 
+      logout, 
+      updateUser,
+      refreshUser
+    }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
+/**
+ * useAuth Hook
+ */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within AuthProvider');
+    throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;
 };

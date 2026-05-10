@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
-import { Colors, SharedStyles } from '@/constants/Theme';
+import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Dumbbell, Clock, Flame, Save, ArrowLeft, Zap, Trophy, Activity } from 'lucide-react-native';
-import api from '@/services/api';
+import { WorkoutService } from '@/services/workoutService';
 import SuccessModal from '@/components/SuccessModal';
+import { safeBack } from '@/utils/navigation';
+import { useAuth } from '@/context/AuthContext';
 
 const EXERCISES = [
   'Bench Press', 'Squats', 'Deadlift', 'Shoulder Press', 'Bicep Curls',
@@ -22,6 +25,8 @@ const TYPES = [
 export default function CreateWorkoutScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
+  const insets = useSafeAreaInsets();
+  const { user } = useAuth();
   
   const [exercise, setExercise] = useState('');
   const [sets, setSets] = useState('');
@@ -29,31 +34,44 @@ export default function CreateWorkoutScreen() {
   const [weight, setWeight] = useState('');
   const [duration, setDuration] = useState('');
   const [type, setType] = useState((params.type as string) || 'Strength');
+  const [errors, setErrors] = useState<any>({});
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Sync type if params change
+  // Sync type and exercise if params change
   React.useEffect(() => {
     if (params.type) {
       setType(params.type as string);
     }
-  }, [params.type]);
+    if (params.exercise) {
+      setExercise(params.exercise as string);
+    }
+  }, [params.type, params.exercise]);
 
   const handleSave = async () => {
-    if (!exercise || !sets || !reps) {
-      Alert.alert('Missing Fields', 'Please fill in Exercise, Sets, and Reps.');
+    const newErrors: any = {};
+    if (!exercise.trim()) newErrors.exercise = 'Exercise name is required';
+    if (!sets.trim()) newErrors.sets = 'Sets are required';
+    if (!reps.trim()) newErrors.reps = 'Reps are required';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
+    setErrors({});
+
     setLoading(true);
     try {
-      await api.post('/workouts', {
+      await WorkoutService.logWorkout({
+        userId: user?._id || user?.id,
         exercise,
         sets: parseInt(sets),
         reps: parseInt(reps),
         weight: weight ? parseFloat(weight) : 0,
         type,
         duration: duration ? parseInt(duration) : 0,
+        date: new Date().toISOString(),
       });
       setShowSuccess(true);
     } catch (error) {
@@ -66,10 +84,10 @@ export default function CreateWorkoutScreen() {
   return (
     <KeyboardAvoidingView 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[SharedStyles.container, { paddingTop: 60 }]}
+      style={[SharedStyles.container, { paddingTop: insets.top + SPACING.sm }]}
     >
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => safeBack('/(tabs)/')} style={styles.backButton}>
           <ArrowLeft size={24} color={Colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Log Workout</Text>
@@ -97,37 +115,49 @@ export default function CreateWorkoutScreen() {
           ))}
         </View>
 
-        <Text style={styles.label}>Exercise Name</Text>
+        <View style={styles.labelRow}>
+          <Text style={styles.label}>Exercise Name</Text>
+          <Text style={styles.asterisk}>*</Text>
+        </View>
         <TextInput
-          style={SharedStyles.input}
+          style={[SharedStyles.input, errors.exercise && styles.inputError]}
           placeholder="e.g. Bench Press"
           placeholderTextColor={Colors.textSecondary}
           value={exercise}
-          onChangeText={setExercise}
+          onChangeText={(t) => { setExercise(t); if (errors.exercise) setErrors({...errors, exercise: null}); }}
         />
+        {errors.exercise && <Text style={styles.errorText}>{errors.exercise}</Text>}
 
         <View style={styles.row}>
           <View style={{ flex: 1, marginRight: 10 }}>
-            <Text style={styles.label}>Sets</Text>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Sets</Text>
+              <Text style={styles.asterisk}>*</Text>
+            </View>
             <TextInput
-              style={SharedStyles.input}
+              style={[SharedStyles.input, errors.sets && styles.inputError]}
               placeholder="0"
               placeholderTextColor={Colors.textSecondary}
               value={sets}
-              onChangeText={setSets}
+              onChangeText={(t) => { setSets(t); if (errors.sets) setErrors({...errors, sets: null}); }}
               keyboardType="numeric"
             />
+            {errors.sets && <Text style={styles.errorText}>{errors.sets}</Text>}
           </View>
           <View style={{ flex: 1, marginLeft: 10 }}>
-            <Text style={styles.label}>Reps</Text>
+            <View style={styles.labelRow}>
+              <Text style={styles.label}>Reps</Text>
+              <Text style={styles.asterisk}>*</Text>
+            </View>
             <TextInput
-              style={SharedStyles.input}
+              style={[SharedStyles.input, errors.reps && styles.inputError]}
               placeholder="0"
               placeholderTextColor={Colors.textSecondary}
               value={reps}
-              onChangeText={setReps}
+              onChangeText={(t) => { setReps(t); if (errors.reps) setErrors({...errors, reps: null}); }}
               keyboardType="numeric"
             />
+            {errors.reps && <Text style={styles.errorText}>{errors.reps}</Text>}
           </View>
         </View>
 
@@ -173,7 +203,7 @@ export default function CreateWorkoutScreen() {
         message="Your workout has been logged successfully."
         onComplete={() => {
           setShowSuccess(false);
-          router.back();
+          safeBack('/(tabs)/');
         }}
       />
     </KeyboardAvoidingView>
@@ -185,8 +215,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    marginBottom: 20,
+    paddingHorizontal: SPACING.lg,
+    marginBottom: SPACING.md,
   },
   backButton: {
     width: 40,
@@ -204,14 +234,35 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   content: {
-    padding: 20,
+    padding: SPACING.lg,
   },
   label: {
     color: Colors.text,
     fontSize: 16,
     fontWeight: '600',
+    marginBottom: 0,
+  },
+  labelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
     marginBottom: 10,
     marginTop: 15,
+  },
+  asterisk: {
+    color: '#FF4B4B',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  errorText: {
+    color: '#FF4B4B',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  inputError: {
+    borderColor: '#FF4B4B',
+    backgroundColor: '#FF4B4B08',
   },
   typeGrid: {
     flexDirection: 'row',
@@ -222,7 +273,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.card,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
     marginHorizontal: 4,
     borderWidth: 1,

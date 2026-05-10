@@ -1,56 +1,69 @@
-import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
 
-const isWeb = Platform.OS === 'web';
-
+/**
+ * Clean Storage Utility
+ * Handles persistence across Web and Native platforms
+ */
 const Storage = {
+  /**
+   * Set item in persistent storage
+   */
   setItem: async (key: string, value: string) => {
-    if (isWeb) {
-      try {
+    try {
+      if (Platform.OS === 'web') {
         localStorage.setItem(key, value);
-      } catch (e) {
-        console.error('Error saving to localStorage', e);
+      } else {
+        await AsyncStorage.setItem(key, value);
       }
-    } else {
-      try {
-        await SecureStore.setItemAsync(key, value);
-      } catch (e) {
-        console.error('Error saving to SecureStore', e);
-      }
+    } catch (error) {
+      console.error(`[Storage] Error saving ${key}:`, error);
     }
   },
 
-  getItem: async (key: string) => {
-    if (isWeb) {
-      try {
+  /**
+   * Get item from persistent storage
+   */
+  getItem: async (key: string): Promise<string | null> => {
+    try {
+      if (Platform.OS === 'web') {
         return localStorage.getItem(key);
-      } catch (e) {
-        console.error('Error reading from localStorage', e);
-        return null;
+      } else {
+        return await AsyncStorage.getItem(key);
       }
-    } else {
-      try {
-        return await SecureStore.getItemAsync(key);
-      } catch (e) {
-        console.error('Error reading from SecureStore', e);
-        return null;
-      }
+    } catch (error) {
+      console.error(`[Storage] Error reading ${key}:`, error);
+      return null;
     }
   },
 
+  /**
+   * Remove item from persistent storage
+   */
   removeItem: async (key: string) => {
-    if (isWeb) {
-      try {
+    try {
+      if (Platform.OS === 'web') {
         localStorage.removeItem(key);
-      } catch (e) {
-        console.error('Error removing from localStorage', e);
+      } else {
+        await AsyncStorage.removeItem(key);
       }
-    } else {
-      try {
-        await SecureStore.deleteItemAsync(key);
-      } catch (e) {
-        console.error('Error removing from SecureStore', e);
+    } catch (error) {
+      console.error(`[Storage] Error removing ${key}:`, error);
+    }
+  },
+
+  /**
+   * Clear all app-related storage
+   */
+  clear: async () => {
+    try {
+      if (Platform.OS === 'web') {
+        localStorage.clear();
+      } else {
+        await AsyncStorage.clear();
       }
+    } catch (error) {
+      console.error('[Storage] Error clearing storage:', error);
     }
   }
 };

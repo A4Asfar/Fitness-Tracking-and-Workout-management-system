@@ -14,6 +14,7 @@ import {
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+import { safeBack } from '@/utils/navigation';
 
 /* ─── Type badge colour map ─── */
 const TYPE_COLORS: Record<string, string> = {
@@ -105,7 +106,7 @@ export default function WorkoutDetailScreen() {
       setReps(res.data.reps?.toString() ?? '');
       setWeight(res.data.weight?.toString() ?? '');
     } catch {
-      router.back();
+      safeBack();
     } finally {
       setLoading(false);
     }
@@ -153,7 +154,7 @@ export default function WorkoutDetailScreen() {
     try {
       await api.delete(`/workouts/${id}`);
       setShowDelete(false);
-      router.back();
+      safeBack();
     } catch {
       setDeleting(false);
       setShowDelete(false);
@@ -192,7 +193,7 @@ export default function WorkoutDetailScreen() {
             </Text>
           ),
           headerLeft: () => (
-            <TouchableOpacity onPress={() => editMode ? toggleEdit(false) : router.back()} style={{ padding: 4 }}>
+            <TouchableOpacity onPress={() => editMode ? toggleEdit(false) : safeBack()} style={{ padding: 4 }}>
               {editMode
                 ? <X size={22} color={Colors.textSecondary} />
                 : <ChevronLeft size={26} color={Colors.primary} />}

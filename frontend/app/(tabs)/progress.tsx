@@ -5,7 +5,8 @@ import {
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
-import { Colors } from '@/constants/Theme';
+import { Colors, SPACING } from '@/constants/Theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   TrendingUp, Activity, Trophy, Calendar, Zap,
   Dumbbell, ArrowUpRight, ArrowDownRight, Flame, Weight, Sparkles,
@@ -14,8 +15,8 @@ import { Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
-const PAD = 20;
-const GAP = 12;
+const PAD = SPACING.lg;
+const GAP = SPACING.md;
 const CARD_W = (width - PAD * 2 - GAP) / 2;
 const MAX_BAR_H = 110;
 
@@ -92,6 +93,7 @@ export default function ProgressAnalyticsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState<any>(null);
   const { user } = useAuth();
+  const insets = useSafeAreaInsets();
   const heroSlide = useRef(new Animated.Value(-24)).current;
   const heroOpacity = useRef(new Animated.Value(0)).current;
 
@@ -160,7 +162,7 @@ export default function ProgressAnalyticsScreen() {
       {/* ── Hero ── */}
       <View style={styles.heroWrap}>
         <LinearGradient colors={[Colors.primary + '28', Colors.primary + '08', 'transparent']} style={styles.heroGrad} />
-        <Animated.View style={{ opacity: heroOpacity, transform: [{ translateY: heroSlide }], paddingHorizontal: PAD, paddingTop: 64, paddingBottom: 36 }}>
+        <Animated.View style={{ opacity: heroOpacity, transform: [{ translateY: heroSlide }], paddingHorizontal: PAD, paddingTop: insets.top + SPACING.md, paddingBottom: 36 }}>
           <View style={styles.heroBadge}>
             <TrendingUp size={12} color={Colors.primary} strokeWidth={2.5} />
             <Text style={styles.heroBadgeText}>ANALYTICS DASHBOARD</Text>
@@ -358,10 +360,10 @@ const styles = StyleSheet.create({
   sectionLine: { flex: 1, height: 1, backgroundColor: '#222' },
 
   /* Stat Cards */
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: GAP, marginBottom: 28 },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: GAP, marginBottom: SPACING.xl },
   statCard: {
-    width: CARD_W, backgroundColor: '#181818', borderRadius: 22,
-    padding: 18, overflow: 'hidden', position: 'relative',
+    width: CARD_W, backgroundColor: '#181818', borderRadius: 24,
+    padding: SPACING.md, overflow: 'hidden', position: 'relative',
     borderWidth: 1, borderColor: '#252525',
     shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.4, shadowRadius: 10, elevation: 8,
   },
@@ -382,7 +384,7 @@ const styles = StyleSheet.create({
 
   /* Chart Card */
   chartCard: {
-    backgroundColor: '#181818', borderRadius: 28, padding: 22, marginBottom: 28,
+    backgroundColor: '#181818', borderRadius: 24, padding: SPACING.lg, marginBottom: SPACING.xl,
     borderWidth: 1, borderColor: '#252525', position: 'relative', overflow: 'hidden',
     shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.35, shadowRadius: 14, elevation: 10,
   },
@@ -412,7 +414,7 @@ const styles = StyleSheet.create({
 
   /* Compare */
   compareCard: {
-    backgroundColor: '#181818', borderRadius: 26, padding: 22, marginBottom: 20,
+    backgroundColor: '#181818', borderRadius: 24, padding: SPACING.lg, marginBottom: SPACING.lg,
     borderWidth: 1, borderColor: '#252525',
     shadowColor: '#000', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 10, elevation: 6,
   },
@@ -425,8 +427,8 @@ const styles = StyleSheet.create({
 
   /* Insight */
   insightCard: {
-    borderRadius: 26, padding: 20, flexDirection: 'row', alignItems: 'center',
-    gap: 16, marginBottom: 20, borderWidth: 1, borderColor: Colors.primary + '25',
+    borderRadius: 24, padding: SPACING.md, flexDirection: 'row', alignItems: 'center',
+    gap: 16, marginBottom: SPACING.lg, borderWidth: 1, borderColor: Colors.primary + '25',
   },
   insightLeft: {},
   insightIconWrap: { width: 54, height: 54, borderRadius: 18, justifyContent: 'center', alignItems: 'center' },

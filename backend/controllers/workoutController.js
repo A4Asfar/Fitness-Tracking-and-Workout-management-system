@@ -1,4 +1,5 @@
 const Workout = require('../models/Workout');
+const Notification = require('../models/Notification');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 
 exports.getWorkouts = asyncHandler(async (req, res) => {
@@ -16,13 +17,33 @@ exports.getWorkout = asyncHandler(async (req, res) => {
 });
 
 exports.createWorkout = asyncHandler(async (req, res) => {
-  const { exercise, sets, reps, weight, type, duration } = req.body;
+  const { userId, exercise, sets, reps, weight, type, duration, date } = req.body;
   if (!exercise || !sets || !reps) {
     res.status(400);
     throw new Error('Please provide exercise, sets, and reps');
   }
-  const workout = new Workout({ userId: req.userId, exercise, sets, reps, weight, type, duration });
+  const workoutUserId = userId || req.userId;
+  const workout = new Workout({ 
+    userId: workoutUserId, 
+    exercise, 
+    sets, 
+    reps, 
+    weight, 
+    type, 
+    duration,
+    ...(date && { date })
+  });
   await workout.save();
+
+  // Generate notification
+  await Notification.create({
+    userId: workoutUserId,
+    title: 'Workout Logged',
+    message: `Strong work! You've logged your ${exercise} session. Keep it up!`,
+    type: 'workout'
+  });
+
+  console.log('🏋️ Workout saved to MongoDB for user:', workoutUserId);
   res.status(201).json(workout);
 });
 

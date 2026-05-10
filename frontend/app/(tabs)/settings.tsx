@@ -1,681 +1,562 @@
-import React, { useState, useEffect } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet, ActivityIndicator, Alert, ScrollView, KeyboardAvoidingView, Platform, Modal, Pressable, Animated } from 'react-native';
-import { useAuth } from '@/context/AuthContext';
+import React, { useState } from 'react';
+import {
+  View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  Image, Alert, Modal, Platform
+} from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import api from '@/services/api';
-import { Colors, SharedStyles } from '@/constants/Theme';
-import { User, Mail, LogOut, Save, ChevronRight, Weight, Ruler, Target, Check, ChevronDown, Bell, Shield, CircleHelp } from 'lucide-react-native';
+import { useAuth } from '@/context/AuthContext';
+import { Colors, SPACING, SharedStyles } from '@/constants/Theme';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  User, ChevronRight, Bell, Shield, 
+  CircleHelp, Info, LogOut, Settings, 
+  Star, Sparkles, CreditCard, Camera,
+  UserCheck, ShieldAlert, Heart, MessageSquare
+} from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import SuccessModal from '@/components/SuccessModal';
 
-const FITNESS_GOALS = ['Weight Loss', 'Muscle Gain', 'Maintain Fitness'];
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-
-export default function SettingsScreen() {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [weight, setWeight] = useState('');
-  const [height, setHeight] = useState('');
-  const [fitnessGoal, setFitnessGoal] = useState('Maintain Fitness');
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [showGoalModal, setShowGoalModal] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  
-  const { logout, user } = useAuth();
+export default function AccountHubScreen() {
+  const { user, logout } = useAuth();
   const router = useRouter();
-
-  const scale = new Animated.Value(1);
-
-  useEffect(() => {
-    if (user) {
-      setName(user.name || '');
-      setEmail(user.email || '');
-      setWeight(user.weight?.toString() || '');
-      setHeight(user.height?.toString() || '');
-      setFitnessGoal(user.fitnessGoal || 'Maintain Fitness');
-    }
-    setLoading(false);
-  }, [user]);
-
-  const onPressIn = () => {
-    Animated.spring(scale, {
-      toValue: 0.96,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const onPressOut = () => {
-    Animated.spring(scale, {
-      toValue: 1,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const saveProfile = async () => {
-    if (!name.trim()) {
-      Alert.alert('Error', 'Please enter your name');
-      return;
-    }
-
-    setSaving(true);
-    try {
-      await api.put('/profile', { 
-        name, 
-        weight: parseFloat(weight) || 0, 
-        height: parseFloat(height) || 0, 
-        fitnessGoal 
-      });
-      setShowSuccess(true);
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to update profile');
-    } finally {
-      setSaving(false);
-    }
-  };
+  const insets = useSafeAreaInsets();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   const handleLogout = async () => {
-    Alert.alert('Logout', 'Are you sure you want to logout?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Logout',
-        style: 'destructive',
-        onPress: async () => {
-          await logout();
-          router.replace('/(auth)/login');
-        },
-      },
-    ]);
+    setShowLogoutModal(false);
+    await logout();
+    router.replace('/(auth)/login');
   };
 
-  if (loading) {
-    return (
-      <View style={[SharedStyles.container, { justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
+  const isPremium = user?.membershipType === 'premium' || user?.membershipType === 'admin';
 
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: Colors.background }}
-    >
+    <View style={SharedStyles.container}>
+      <Stack.Screen options={{ headerShown: false }} />
+
       <ScrollView 
         style={{ flex: 1 }}
-        contentContainerStyle={{ paddingBottom: 60 }}
         showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 100 }}
       >
-        <Stack.Screen 
-          options={{ 
-            headerShown: false,
-          }} 
-        />
-
-        {/* Premium Animated Header */}
-        <View style={styles.headerContainer}>
+        {/* ── Hero Profile Header ── */}
+        <View style={[styles.hero, { paddingTop: insets.top + 20 }]}>
           <LinearGradient
             colors={[Colors.primary + '20', 'transparent']}
-            style={styles.headerBackground}
+            style={StyleSheet.absoluteFill}
           />
-          <View style={styles.avatarWrapper}>
-            <LinearGradient
-              colors={[Colors.primary, Colors.secondary]}
-              style={styles.avatarGlow}
-            />
-            <View style={styles.avatarInner}>
-              <User size={48} color={Colors.primary} strokeWidth={1.5} />
-            </View>
-          </View>
-          <Text style={styles.userName}>{name || 'Fitness Warrior'}</Text>
-          <Text style={styles.userEmail}>{email}</Text>
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>ELITE MEMBER</Text>
-          </View>
-        </View>
-
-        <View style={styles.content}>
-          {/* Section: Personal Info */}
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Fitness Profile</Text>
-            <Text style={styles.sectionSubtitle}>Complete your stats for better tracking</Text>
-          </View>
           
-          <View style={styles.card}>
-            <View style={styles.fieldRow}>
-              <View style={styles.iconCircle}>
-                <User size={20} color={Colors.primary} />
+          <View style={styles.profileHeader}>
+            <TouchableOpacity 
+              style={styles.avatarContainer}
+              onPress={() => router.push('/settings/edit-profile')}
+            >
+              <View style={styles.avatarWrap}>
+                {user?.avatar ? (
+                  <Image source={{ uri: user.avatar }} style={styles.avatarImg} />
+                ) : (
+                  <User size={32} color={Colors.primary} strokeWidth={2} />
+                )}
               </View>
-              <View style={styles.fieldContent}>
-                <Text style={styles.fieldLabel}>Full Name</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={name}
-                  onChangeText={setName}
-                  editable={!saving}
-                  placeholder="Enter your name"
-                  placeholderTextColor={Colors.textSecondary + '80'}
-                />
+              <View style={styles.avatarBadge}>
+                <Camera size={10} color="#000" />
               </View>
-            </View>
+            </TouchableOpacity>
 
-            <View style={styles.divider} />
-
-            <View style={styles.fieldRow}>
-              <View style={styles.iconCircle}>
-                <Mail size={20} color={Colors.primary} />
-              </View>
-              <View style={styles.fieldContent}>
-                <Text style={styles.fieldLabel}>Email Address</Text>
-                <Text style={styles.readOnlyText}>{email}</Text>
-              </View>
-            </View>
-          </View>
-
-          <View style={styles.statsGrid}>
-            <View style={[styles.card, styles.statCard]}>
-              <View style={styles.statHeader}>
-                <Weight size={18} color={Colors.primary} />
-                <Text style={styles.statLabel}>Weight</Text>
-              </View>
-              <View style={styles.statInputWrapper}>
-                <TextInput
-                  style={styles.statInput}
-                  value={weight}
-                  onChangeText={setWeight}
-                  keyboardType="numeric"
-                  placeholder="0"
-                  placeholderTextColor={Colors.textSecondary}
-                />
-                <Text style={styles.statUnit}>KG</Text>
-              </View>
-            </View>
-
-            <View style={[styles.card, styles.statCard]}>
-              <View style={styles.statHeader}>
-                <Ruler size={18} color={Colors.primary} />
-                <Text style={styles.statLabel}>Height</Text>
-              </View>
-              <View style={styles.statInputWrapper}>
-                <TextInput
-                  style={styles.statInput}
-                  value={height}
-                  onChangeText={setHeight}
-                  keyboardType="numeric"
-                  placeholder="0"
-                  placeholderTextColor={Colors.textSecondary}
-                />
-                <Text style={styles.statUnit}>CM</Text>
+            <View style={styles.profileMeta}>
+              <Text style={styles.userName}>{user?.name || 'Fitness Athlete'}</Text>
+              <Text style={styles.userEmail}>{user?.email || 'No email linked'}</Text>
+              
+              <View style={styles.statusRow}>
+                <View style={[styles.membershipBadge, isPremium && styles.premiumBadge]}>
+                  <Star size={10} color={isPremium ? '#000' : Colors.primary} fill={isPremium ? '#000' : Colors.primary} />
+                  <Text style={[styles.membershipText, isPremium && styles.premiumText]}>
+                    {(user?.membershipType || 'FREE').toUpperCase()}
+                  </Text>
+                </View>
+                {isPremium && (
+                  <View style={styles.verifiedBadge}>
+                    <UserCheck size={10} color={Colors.primary} />
+                    <Text style={styles.verifiedText}>VERIFIED</Text>
+                  </View>
+                )}
               </View>
             </View>
           </View>
 
           <TouchableOpacity 
-            style={[styles.card, styles.goalButton]} 
-            onPress={() => setShowGoalModal(true)}
-            activeOpacity={0.7}
+            style={styles.manageBtn}
+            onPress={() => router.push('/settings/edit-profile')}
           >
-            <View style={styles.goalIconCircle}>
-              <Target size={22} color={Colors.primary} />
-            </View>
-            <View style={{ flex: 1, marginLeft: 15 }}>
-              <Text style={styles.fieldLabel}>Current Fitness Goal</Text>
-              <Text style={styles.goalValueText}>{fitnessGoal}</Text>
-            </View>
-            <ChevronRight size={20} color={Colors.textSecondary} />
+            <Settings size={16} color="#000" strokeWidth={2.5} />
+            <Text style={styles.manageBtnText}>MANAGE PROFILE</Text>
           </TouchableOpacity>
-
-          {/* Section: App Settings */}
-          <View style={[styles.sectionHeader, { marginTop: 35 }]}>
-            <Text style={styles.sectionTitle}>Account & Privacy</Text>
-          </View>
-
-          <View style={styles.card}>
-            <TouchableOpacity style={styles.menuItem}>
-              <View style={[styles.iconCircle, { backgroundColor: '#2A2A2A' }]}>
-                <Bell size={20} color={Colors.text} />
-              </View>
-              <Text style={styles.menuItemText}>Notifications</Text>
-              <ChevronRight size={18} color={Colors.textSecondary} />
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity style={styles.menuItem}>
-              <View style={[styles.iconCircle, { backgroundColor: '#2A2A2A' }]}>
-                <Shield size={20} color={Colors.text} />
-              </View>
-              <Text style={styles.menuItemText}>Privacy Policy</Text>
-              <ChevronRight size={18} color={Colors.textSecondary} />
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity style={styles.menuItem}>
-              <View style={[styles.iconCircle, { backgroundColor: '#2A2A2A' }]}>
-                <CircleHelp size={20} color={Colors.text} />
-              </View>
-              <Text style={styles.menuItemText}>Help Center</Text>
-              <ChevronRight size={18} color={Colors.textSecondary} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Action Buttons */}
-          <View style={styles.footer}>
-            <AnimatedPressable
-              onPressIn={onPressIn}
-              onPressOut={onPressOut}
-              onPress={saveProfile}
-              disabled={saving}
-              style={{ transform: [{ scale }] }}
-            >
-              <LinearGradient
-                colors={[Colors.primary, '#9FE800']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                style={styles.primaryButton}
-              >
-                {saving ? (
-                  <ActivityIndicator color="#000" />
-                ) : (
-                  <>
-                    <Save size={20} color="#000" strokeWidth={2.5} />
-                    <Text style={styles.primaryButtonText}>SAVE CHANGES</Text>
-                  </>
-                )}
-              </LinearGradient>
-            </AnimatedPressable>
-
-            <TouchableOpacity 
-              style={styles.logoutBtn} 
-              onPress={handleLogout}
-              activeOpacity={0.6}
-            >
-              <LogOut size={20} color={Colors.error} />
-              <Text style={styles.logoutBtnText}>SIGN OUT</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
-        {/* Improved Goal Picker Modal */}
-        <Modal
-          visible={showGoalModal}
-          transparent={true}
-          animationType="fade"
-        >
-          <View style={styles.modalOverlay}>
-            <BlurView intensity={20} style={StyleSheet.absoluteFill} tint="dark" />
-            <Pressable style={styles.modalCloser} onPress={() => setShowGoalModal(false)} />
-            <View style={styles.modalSheet}>
-              <View style={styles.modalDragHandle} />
-              <Text style={styles.modalTitle}>Set Your Fitness Goal</Text>
-              <Text style={styles.modalSubtitle}>We'll personalize your workouts based on this</Text>
-              
-              {FITNESS_GOALS.map((goal) => {
-                const isSelected = fitnessGoal === goal;
-                return (
-                  <TouchableOpacity
-                    key={goal}
-                    style={[styles.goalItem, isSelected && styles.goalItemActive]}
-                    onPress={() => {
-                      setFitnessGoal(goal);
-                      setShowGoalModal(false);
-                    }}
-                  >
-                    <View style={styles.goalItemLeft}>
-                      <View style={[styles.goalRadio, isSelected && styles.goalRadioActive]}>
-                        {isSelected && <View style={styles.goalRadioInner} />}
-                      </View>
-                      <Text style={[styles.goalItemText, isSelected && styles.goalItemTextActive]}>
-                        {goal}
-                      </Text>
-                    </View>
-                    {isSelected && <Check size={20} color={Colors.primary} />}
-                  </TouchableOpacity>
-                );
-              })}
+        <View style={styles.body}>
+          {/* ── Premium Promotion ── */}
+          {!isPremium && (
+            <TouchableOpacity 
+              style={styles.upgradeCard}
+              onPress={() => router.push('/upgrade')}
+              activeOpacity={0.9}
+            >
+              <LinearGradient 
+                colors={[Colors.primary, '#9FE800']} 
+                start={{x: 0, y: 0}} 
+                end={{x: 1, y: 0}}
+                style={styles.upgradeGrad}
+              >
+                <View style={styles.upgradeIconBox}>
+                  <Sparkles size={24} color="#000" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 16 }}>
+                  <Text style={styles.upgradeTitle}>Unlock Premium</Text>
+                  <Text style={styles.upgradeSub}>Get AI insights & unlimited logs</Text>
+                </View>
+                <ChevronRight size={20} color="#000" strokeWidth={3} />
+              </LinearGradient>
+            </TouchableOpacity>
+          )}
+
+          {/* ── Account Settings ── */}
+          <SectionLabel label="ACCOUNT SETTINGS" />
+          <View style={styles.menuBox}>
+            <MenuOption 
+              icon={Bell} 
+              label="Notifications" 
+              sub="Alerts & reminders"
+              onPress={() => router.push('/settings/notifications')} 
+            />
+            <Divider />
+            <MenuOption 
+              icon={Shield} 
+              label="Security & Privacy" 
+              sub="Password & data"
+              onPress={() => router.push('/settings/privacy')} 
+            />
+            <Divider />
+            <MenuOption 
+              icon={CreditCard} 
+              label="Subscription" 
+              sub="Manage billing"
+              onPress={() => router.push('/upgrade')} 
+            />
+          </View>
+
+          {/* ── Preferences & Support ── */}
+          <SectionLabel label="SUPPORT & ABOUT" />
+          <View style={styles.menuBox}>
+            <MenuOption 
+              icon={CircleHelp} 
+              label="Help Center" 
+              sub="FAQ & support"
+              onPress={() => router.push('/help')} 
+            />
+            <Divider />
+            <MenuOption 
+              icon={Heart} 
+              label="Feedback" 
+              sub="Rate your experience"
+              onPress={() => Alert.alert('Feedback', 'Thank you for your support!')} 
+            />
+            <Divider />
+            <MenuOption 
+              icon={Info} 
+              label="About FitPro" 
+              sub="App version & terms"
+              onPress={() => router.push('/about')} 
+            />
+          </View>
+
+          {/* ── Danger Zone ── */}
+          <SectionLabel label="DANGER ZONE" />
+          <TouchableOpacity 
+            style={styles.logoutRow}
+            onPress={() => setShowLogoutModal(true)}
+          >
+            <View style={styles.logoutIcon}>
+              <LogOut size={20} color={Colors.error} />
+            </View>
+            <Text style={styles.logoutLabel}>Sign Out of Session</Text>
+            <ShieldAlert size={18} color={Colors.error} opacity={0.5} />
+          </TouchableOpacity>
+
+          <Text style={styles.footerVersion}>FITPRO AI • VERSION 1.5.2 (BETA)</Text>
+        </View>
+      </ScrollView>
+
+      {/* ── Logout Confirmation ── */}
+      <Modal visible={showLogoutModal} transparent animationType="fade">
+        <BlurView intensity={Platform.OS === 'ios' ? 30 : 100} tint="dark" style={StyleSheet.absoluteFill} />
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalIconWrap}>
+              <LogOut size={32} color={Colors.error} />
+            </View>
+            <Text style={styles.modalTitle}>Confirm Sign Out</Text>
+            <Text style={styles.modalDesc}>Are you sure you want to end your session? Your training data is safely synced to the cloud.</Text>
+            
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowLogoutModal(false)}>
+                <Text style={styles.cancelBtnText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.confirmBtn} onPress={handleLogout}>
+                <Text style={styles.confirmBtnText}>Sign Out</Text>
+              </TouchableOpacity>
             </View>
           </View>
-        </Modal>
-
-        <SuccessModal 
-          visible={showSuccess} 
-          message="Profile Updated Successfully" 
-          onComplete={() => setShowSuccess(false)} 
-        />
-      </ScrollView>
-    </KeyboardAvoidingView>
+        </View>
+      </Modal>
+    </View>
   );
 }
 
+function SectionLabel({ label }: { label: string }) {
+  return <Text style={styles.sectionLabel}>{label}</Text>;
+}
+
+function MenuOption({ icon: Icon, label, sub, onPress }: any) {
+  return (
+    <TouchableOpacity style={styles.menuOption} onPress={onPress} activeOpacity={0.6}>
+      <View style={styles.optionIconBox}>
+        <Icon size={20} color={Colors.primary} strokeWidth={2} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.optionLabel}>{label}</Text>
+        <Text style={styles.optionSub}>{sub}</Text>
+      </View>
+      <ChevronRight size={18} color={Colors.border} />
+    </TouchableOpacity>
+  );
+}
+
+function Divider() {
+  return <View style={styles.divider} />;
+}
+
 const styles = StyleSheet.create({
-  headerContainer: {
+  hero: {
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
     alignItems: 'center',
-    paddingTop: 80,
-    paddingBottom: 40,
+  },
+  profileHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 28,
+  },
+  avatarContainer: {
     position: 'relative',
   },
-  headerBackground: {
-    ...StyleSheet.absoluteFillObject,
-    borderBottomLeftRadius: 40,
-    borderBottomRightRadius: 40,
+  avatarWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    backgroundColor: Colors.card,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: Colors.border,
+    overflow: 'hidden',
   },
-  avatarWrapper: {
-    width: 120,
-    height: 120,
+  avatarImg: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarBadge: {
+    position: 'absolute',
+    bottom: -4,
+    right: -4,
+    backgroundColor: Colors.primary,
+    width: 24,
+    height: 24,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 3,
+    borderColor: Colors.background,
+  },
+  profileMeta: {
+    marginLeft: 20,
+    flex: 1,
+  },
+  userName: {
+    color: Colors.text,
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  userEmail: {
+    color: Colors.textSecondary,
+    fontSize: 13,
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  statusRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 10,
+  },
+  membershipBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary + '15',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    gap: 6,
+    borderWidth: 1,
+    borderColor: Colors.primary + '30',
+  },
+  premiumBadge: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  membershipText: {
+    color: Colors.primary,
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  premiumText: {
+    color: '#000',
+  },
+  verifiedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+  },
+  verifiedText: {
+    color: Colors.primary,
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+    opacity: 0.8,
+  },
+  manageBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    height: 50,
+    paddingHorizontal: 24,
+    borderRadius: 16,
+    gap: 10,
+    width: '100%',
+    justifyContent: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.3,
+    shadowRadius: 16,
+    elevation: 8,
+  },
+  manageBtnText: {
+    color: '#000',
+    fontSize: 13,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  body: {
+    padding: 24,
+  },
+  upgradeCard: {
+    borderRadius: 24,
+    overflow: 'hidden',
+    marginBottom: 32,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.25,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  upgradeGrad: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+  },
+  upgradeIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: 'rgba(0,0,0,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  upgradeTitle: {
+    color: '#000',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.3,
+  },
+  upgradeSub: {
+    color: 'rgba(0,0,0,0.6)',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  sectionLabel: {
+    color: Colors.textSecondary,
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 1.5,
+    marginBottom: 16,
+    marginLeft: 4,
+  },
+  menuBox: {
+    backgroundColor: Colors.card,
+    borderRadius: 28,
+    marginBottom: 32,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    overflow: 'hidden',
+  },
+  menuOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 20,
+  },
+  optionIconBox: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: Colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  optionLabel: {
+    color: Colors.text,
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: -0.2,
+  },
+  optionSub: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 2,
+  },
+  divider: {
+    height: 1,
+    backgroundColor: Colors.border,
+    marginHorizontal: 20,
+    opacity: 0.5,
+  },
+  logoutRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.error + '08',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.error + '20',
+    gap: 16,
+  },
+  logoutIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: Colors.error + '10',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  logoutLabel: {
+    flex: 1,
+    color: Colors.error,
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  footerVersion: {
+    textAlign: 'center',
+    color: Colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '900',
+    marginTop: 40,
+    letterSpacing: 1.5,
+    opacity: 0.4,
+  },
+  modalOverlay: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 24,
+  },
+  modalContent: {
+    backgroundColor: Colors.card,
+    borderRadius: 32,
+    padding: 32,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.5,
+    shadowRadius: 40,
+    elevation: 20,
+  },
+  modalIconWrap: {
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    backgroundColor: Colors.error + '10',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
   },
-  avatarGlow: {
-    position: 'absolute',
-    width: 130,
-    height: 130,
-    borderRadius: 65,
-    opacity: 0.15,
-  },
-  avatarInner: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    backgroundColor: '#1E1E1E',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 2,
-    borderColor: Colors.primary + '40',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: 0.2,
-    shadowRadius: 15,
-  },
-  userName: {
-    fontSize: 28,
-    fontWeight: '900',
+  modalTitle: {
     color: Colors.text,
+    fontSize: 22,
+    fontWeight: '900',
+    marginBottom: 12,
     letterSpacing: -0.5,
   },
-  userEmail: {
-    fontSize: 15,
+  modalDesc: {
     color: Colors.textSecondary,
-    marginTop: 4,
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 32,
     fontWeight: '500',
   },
-  badge: {
-    backgroundColor: Colors.primary + '15',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
-    marginTop: 15,
-    borderWidth: 1,
-    borderColor: Colors.primary + '30',
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
   },
-  badgeText: {
-    color: Colors.primary,
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 2,
+  cancelBtn: {
+    flex: 1,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: Colors.background,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: Colors.border,
   },
-  content: {
-    paddingHorizontal: 24,
-  },
-  sectionHeader: {
-    marginBottom: 16,
-    paddingLeft: 4,
-  },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '800',
+  cancelBtnText: {
     color: Colors.text,
-    letterSpacing: -0.2,
+    fontSize: 15,
+    fontWeight: '800',
   },
-  sectionSubtitle: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginTop: 4,
-  },
-  card: {
-    backgroundColor: '#1A1A1A',
-    borderRadius: 24,
-    padding: 20,
-    shadowColor: '#000',
+  confirmBtn: {
+    flex: 1.2,
+    height: 56,
+    borderRadius: 18,
+    backgroundColor: Colors.error,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: Colors.error,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.3,
-    shadowRadius: 12,
+    shadowRadius: 15,
     elevation: 8,
   },
-  fieldRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  iconCircle: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: Colors.primary + '10',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  fieldContent: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  fieldLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 4,
-  },
-  textInput: {
-    fontSize: 16,
-    color: Colors.text,
-    fontWeight: '600',
-    padding: 0,
-  },
-  readOnlyText: {
-    fontSize: 16,
-    color: Colors.textSecondary,
-    fontWeight: '500',
-  },
-  divider: {
-    height: 1,
-    backgroundColor: '#2A2A2A',
-    marginVertical: 16,
-    marginLeft: 60,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    marginTop: 16,
-    gap: 16,
-  },
-  statCard: {
-    flex: 1,
-    padding: 16,
-    borderRadius: 24,
-  },
-  statHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  statLabel: {
-    fontSize: 11,
-    fontWeight: '700',
-    color: Colors.textSecondary,
-    marginLeft: 8,
-    textTransform: 'uppercase',
-  },
-  statInputWrapper: {
-    flexDirection: 'row',
-    alignItems: 'baseline',
-  },
-  statInput: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: Colors.text,
-    padding: 0,
-    minWidth: 40,
-  },
-  statUnit: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.primary,
-    marginLeft: 4,
-  },
-  goalButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 16,
-    paddingVertical: 16,
-  },
-  goalIconCircle: {
-    width: 50,
-    height: 50,
-    borderRadius: 16,
-    backgroundColor: Colors.primary + '20',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  goalValueText: {
-    fontSize: 17,
-    fontWeight: '700',
-    color: Colors.text,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 12,
-  },
-  menuItemText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.text,
-    marginLeft: 16,
-  },
-  footer: {
-    marginTop: 40,
-    gap: 16,
-  },
-  primaryButton: {
-    height: 64,
-    borderRadius: 20,
-    flexDirection: 'row',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-    elevation: 10,
-  },
-  primaryButtonText: {
-    color: '#000',
-    fontSize: 16,
+  confirmBtnText: {
+    color: '#FFF',
+    fontSize: 15,
     fontWeight: '900',
-    marginLeft: 12,
-    letterSpacing: 1,
   },
-  logoutBtn: {
-    height: 64,
-    borderRadius: 20,
-    borderWidth: 1,
-    borderColor: Colors.error + '40',
-    justifyContent: 'center',
-    alignItems: 'center',
-    flexDirection: 'row',
-    backgroundColor: Colors.error + '08',
-  },
-  logoutBtnText: {
-    color: Colors.error,
-    fontSize: 14,
-    fontWeight: '800',
-    marginLeft: 10,
-    letterSpacing: 1.5,
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'flex-end',
-  },
-  modalCloser: {
-    flex: 1,
-  },
-  modalSheet: {
-    backgroundColor: '#1E1E1E',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    padding: 24,
-    paddingBottom: 50,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -10 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
-    elevation: 20,
-  },
-  modalDragHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#333',
-    borderRadius: 2,
-    alignSelf: 'center',
-    marginBottom: 24,
-  },
-  modalTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: Colors.text,
-    textAlign: 'center',
-  },
-  modalSubtitle: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    marginTop: 8,
-    marginBottom: 32,
-  },
-  goalItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: 20,
-    borderRadius: 20,
-    backgroundColor: '#262626',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  goalItemActive: {
-    borderColor: Colors.primary + '40',
-    backgroundColor: Colors.primary + '08',
-  },
-  goalItemLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  goalRadio: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    borderWidth: 2,
-    borderColor: '#444',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  goalRadioActive: {
-    borderColor: Colors.primary,
-  },
-  goalRadioInner: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: Colors.primary,
-  },
-  goalItemText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-  },
-  goalItemTextActive: {
-    color: Colors.text,
-  }
 });
