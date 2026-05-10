@@ -1,15 +1,34 @@
 # 🚀 Fitness Tracker Pro: The Ultimate AI Wellness Ecosystem
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/A4Asfar/Fitness-Tracking-and-Workout-management-system/main/backend/assets/hero.png" width="800" alt="Fitness Tracker Pro Banner" />
+  <img src="https://raw.githubusercontent.com/A4Asfar/Fitness-Tracking-and-Workout-management-system/main/backend/assets/dashboard.png" width="850" alt="Fitness Tracker Pro Dashboard" />
   
   <p align="center">
-    <b>Elevate your fitness journey with high-end AI intelligence, premium dark aesthetics, and real-time performance tracking.</b>
+    <b>Experience the real-time AI wellness ecosystem with a live, functional prototype.</b>
   </p>
 
   [![Status](https://img.shields.io/badge/Status-Live-success?style=for-the-badge&logo=rocket)](https://github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system)
   [![Tech](https://img.shields.io/badge/Stack-MERN-blue?style=for-the-badge&logo=mongodb)](https://github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system)
   [![UI](https://img.shields.io/badge/UI-Ultra_Premium-purple?style=for-the-badge&logo=figma)](https://github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system)
+</div>
+
+---
+
+## 📸 Live Prototype Showcase
+
+<div align="center">
+  <table border="0">
+    <tr>
+      <td align="center">
+        <img src="https://raw.githubusercontent.com/A4Asfar/Fitness-Tracking-and-Workout-management-system/main/backend/assets/training.png" width="400" /><br/>
+        <sub><b>Smart Training Module</b></sub>
+      </td>
+      <td align="center">
+        <img src="https://raw.githubusercontent.com/A4Asfar/Fitness-Tracking-and-Workout-management-system/main/backend/assets/insights.png" width="400" /><br/>
+        <sub><b>Data-Driven Insights</b></sub>
+      </td>
+    </tr>
+  </table>
 </div>
 
 ---
