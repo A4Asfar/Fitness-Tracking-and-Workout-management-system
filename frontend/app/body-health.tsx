@@ -455,4 +455,24 @@ const s = StyleSheet.create({
   emptyBtnText: {
     color: '#000', fontSize: 15, fontWeight: '900', letterSpacing: 0.8,
   },
+
+  /* Grid Stats */
+  statCard: {
+    flex: 1, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 24, padding: 20,
+    borderWidth: 1, borderColor: 'rgba(255,255,255,0.06)',
+  },
+  statIconWrap: {
+    width: 38, height: 38, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 12,
+  },
+  statLabel: { color: Colors.textSecondary, fontSize: 11, fontWeight: '700', marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 },
+  statValue: { color: Colors.text, fontSize: 22, fontWeight: '900' },
+  statUnit: { fontSize: 12, fontWeight: '700', marginLeft: 2 },
+
+  /* Progress */
+  progressRow: { marginBottom: 18 },
+  progressLabelRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+  progressLabel: { color: Colors.text, fontSize: 14, fontWeight: '700' },
+  progressPct: { fontSize: 13, fontWeight: '900' },
+  progressTrack: { height: 10, backgroundColor: 'rgba(255,255,255,0.06)', borderRadius: 5, overflow: 'hidden' },
+  progressFill: { height: '100%', borderRadius: 5 },
 });
