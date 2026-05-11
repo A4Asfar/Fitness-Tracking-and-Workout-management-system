@@ -53,6 +53,8 @@ Experience a state-of-the-art interface featuring **Glassmorphism**, smooth **60
 *   **Precision Logger**: High-speed entry for sets, reps, and weights with volume tracking.
 *   **Interactive Visuals**: Beautiful charts displaying your weekly progress and strength trends.
 *   **Health Status Hub**: Integrated BMI analysis and activity scoring to keep you on the peak of your game.
+*   **Secure Recovery**: Advanced OTP-based password recovery system with time-limited verification codes.
+*   **Neural AI Assistant**: A real-time chat expert ready to guide your form, diet, and motivation.
 
 ### 🥗 Culinary Architecture
 *   **Macro-Nutrition Focus**: Precise tracking of protein, fats, and carbs for every meal.
@@ -66,25 +68,36 @@ Experience a state-of-the-art interface featuring **Glassmorphism**, smooth **60
   <tr>
     <td align="center"><b>Frontend</b></td>
     <td align="center"><b>Backend</b></td>
-    <td align="center"><b>Database</b></td>
+    <td align="center"><b>Database / Cloud</b></td>
   </tr>
   <tr>
     <td>React Native (Expo)<br/>TypeScript<br/>Reanimated 3<br/>Lucide Icons</td>
-    <td>Node.js<br/>Express Framework<br/>JWT Security<br/>Bcrypt Hashing</td>
-    <td>MongoDB Atlas<br/>Mongoose ODM<br/>Persistent Storage<br/>Real-time Sync</td>
+    <td>Node.js<br/>Express Framework<br/>Nodemailer (OTP)<br/>JWT & Bcrypt</td>
+    <td>MongoDB Atlas<br/>Railway Deployment<br/>Persistent Storage<br/>Real-time Cloud Sync</td>
   </tr>
 </table>
 
 ---
 
-## 🚀 Deployment & Setup
+## 🚀 Deployment & Production Setup
 
 ### 📦 Prerequisites
 *   Node.js (LTS Version)
 *   Expo Go (for mobile preview)
 *   MongoDB Atlas cluster
+*   Gmail account (for OTP service)
 
-### 🛠️ Installation
+### 🛠️ Environment Variables (.env)
+
+| Variable | Description |
+| :--- | :--- |
+| `MONGO_URI` | Your MongoDB Atlas Connection String |
+| `JWT_SECRET` | Secure key for token generation |
+| `EMAIL_USER` | Your Gmail address (for OTP sender) |
+| `EMAIL_PASS` | Gmail **App Password** (16 characters) |
+| `EXPO_PUBLIC_API_URL` | Your Railway Production URL |
+
+### 🏁 Getting Started
 
 1.  **Clone the Repository**
     ```bash
@@ -92,19 +105,17 @@ Experience a state-of-the-art interface featuring **Glassmorphism**, smooth **60
     cd Fitness-Tracking-and-Workout-management-system
     ```
 
-2.  **Backend Initialization**
+2.  **Launch Production Server**
     ```bash
     cd backend
     npm install
-    # Setup .env with MONGO_URI, JWT_SECRET, PORT
-    npm run dev
+    npm start
     ```
 
-3.  **Frontend Initialization**
+3.  **Launch Mobile Interface**
     ```bash
     cd frontend
     npm install
-    # Setup .env with EXPO_PUBLIC_API_URL
     npx expo start
     ```
 
