@@ -7,17 +7,22 @@ import Storage from '@/utils/storage';
  */
 /**
  * Base API configuration
- * Simplified for Local Development
+ * Centralized for both Local Development and Railway Production
  */
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000/api';
-console.log('🚀 Local API URL:', API_URL);
+const FALLBACK_URL = 'http://localhost:5000/api';
+export const API_URL = process.env.EXPO_PUBLIC_API_URL || FALLBACK_URL;
+
+console.log('📡 API Connection Point:', API_URL);
+if (API_URL === FALLBACK_URL) {
+  console.warn('⚠️ API_URL is using localhost. Mobile devices on different networks will fail to connect.');
+}
 
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 10000, // 10s timeout
+  timeout: 15000, // 15s timeout for better reliability on university/mobile networks
 });
 
 /**
@@ -68,6 +73,11 @@ api.interceptors.response.use(
     }
     if (!error.response) {
       return Promise.reject(new Error('Unable to connect to the server. Please check your network connection.'));
+    }
+
+    // Handle 503 Service Unavailable (Common on Railway when app is sleeping/waking up)
+    if (error.response?.status === 503) {
+      return Promise.reject(new Error('The server is currently waking up. Please wait a few seconds and try again.'));
     }
 
     // Handle 401 Unauthorized (Expired or Invalid token)

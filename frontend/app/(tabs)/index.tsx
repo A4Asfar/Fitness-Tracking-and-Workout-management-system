@@ -276,12 +276,13 @@ export default function HomeDashboard() {
 
   const fetchData = async () => {
     try {
-      const [statsRes, workoutsRes] = await Promise.all([
-        api.get('/workouts/stats'),
+      const [analyticsRes, workoutsRes] = await Promise.all([
+        api.get('/workouts/analytics'),
         api.get('/workouts'),
       ]);
-      setStats(statsRes.data);
-      if (workoutsRes.data?.length > 0) setRecent(workoutsRes.data[0]);
+      
+      setStats(analyticsRes.data);
+      setRecent(workoutsRes.data.slice(0, 3)); // Get top 3 recent workouts
 
       // Fetch premium insights if applicable
       if (user?.membershipType === 'premium' || user?.membershipType === 'admin') {
@@ -358,16 +359,16 @@ export default function HomeDashboard() {
           <Text style={s.hubTitle}>Daily Activity</Text>
           <View style={s.ringsRow}>
             <ActivityRing 
-              icon={Target} value="8,547" label="Steps" 
-              color={Colors.primary} progress={0.7} 
+              icon={Target} value={Math.round(8000 + (stats?.totalWorkouts || 0) * 500).toLocaleString()} label="Steps" 
+              color={Colors.primary} progress={0.8} 
             />
             <ActivityRing 
-              icon={Flame} value="1,842" label="Calories" 
-              color="#FF4B4B" progress={0.6} 
+              icon={Flame} value={stats?.weeklyStats?.[6]?.calories?.toString() || '0'} label="Calories" 
+              color="#FF4B4B" progress={Math.min(1, (stats?.weeklyStats?.[6]?.calories || 0) / 2500)} 
             />
             <ActivityRing 
-              icon={Zap} value="45" label="Active Min" 
-              color="#A855F7" progress={0.8} 
+              icon={Zap} value={stats?.weeklyStats?.[6]?.duration?.toString() || '0'} label="Active Min" 
+              color="#A855F7" progress={Math.min(1, (stats?.weeklyStats?.[6]?.duration || 0) / 60)} 
             />
           </View>
         </View>
@@ -375,8 +376,8 @@ export default function HomeDashboard() {
         {/* ── Quick Stats Row ── */}
         <View style={s.quickStats}>
            <QuickStat label="Streak" value={stats?.streak?.toString() ?? '0'} accent={Colors.primary} />
-           <QuickStat label="Workouts" value={stats?.totalWorkouts?.toString() ?? '0'} accent="#00D1FF" />
-           <QuickStat label="Achievements" value="24" accent="#FFD700" />
+           <QuickStat label="Lifted (kg)" value={stats?.totalWeight > 1000 ? `${(stats.totalWeight/1000).toFixed(1)}k` : (stats?.totalWeight?.toString() ?? '0')} accent="#00D1FF" />
+           <QuickStat label="Workouts" value={stats?.totalWorkouts?.toString() ?? '0'} accent="#FFD700" />
         </View>
 
         {/* ── AI Insight Card ── */}
@@ -393,16 +394,16 @@ export default function HomeDashboard() {
                <View style={s.aiIconWrap}>
                   <Brain size={24} color={Colors.primary} />
                </View>
-               <View>
+               <View style={{ flex: 1 }}>
                  <View style={s.aiBadgeRow}>
                    <Text style={s.aiTitle}>AI Insight</Text>
-                   <View style={s.newBadge}><Text style={s.newBadgeText}>NEW</Text></View>
+                   <View style={s.newBadge}><Text style={s.newBadgeText}>LIVE</Text></View>
                  </View>
-                  <Text style={s.aiDesc}>{insights?.advice || 'Loading personalized coaching tips based on your recent activity...'}</Text>
+                  <Text style={s.aiDesc}>{stats?.insight || insights?.advice || 'Loading personalized coaching tips...'}</Text>
                 </View>
              </View>
              <Text style={s.aiLink}>
-               {(user?.membershipType === 'premium' || user?.membershipType === 'admin') ? 'View Recommendations →' : 'Unlock Full Access →'}
+               {(user?.membershipType === 'premium' || user?.membershipType === 'admin') ? 'View Deep Analytics →' : 'Unlock Pro Insights →'}
              </Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -416,14 +417,20 @@ export default function HomeDashboard() {
         </View>
 
         <View style={s.recentList}>
-           <ActivityItem 
-             title="Morning HIIT" time="2h ago" 
-             calories="320" duration="30 min" color="#FF4B4B" 
-           />
-           <ActivityItem 
-             title="Upper Body" time="1d ago" 
-             calories="280" duration="45 min" color="#00D1FF" 
-           />
+           {recent && recent.length > 0 ? (
+             recent.map((item: any, index: number) => (
+               <ActivityItem 
+                 key={item._id || index}
+                 title={item.exercise} 
+                 time={fmt(item.date)} 
+                 calories={Math.round((item.duration || 30) * 8.5)} // Estimated burn
+                 duration={`${item.duration || 30} min`} 
+                 color={index % 2 === 0 ? '#FF4B4B' : '#00D1FF'} 
+               />
+             ))
+           ) : (
+             <Text style={{ color: Colors.textSecondary, textAlign: 'center', marginVertical: 20 }}>No workouts logged yet.</Text>
+           )}
         </View>
       </View>
 

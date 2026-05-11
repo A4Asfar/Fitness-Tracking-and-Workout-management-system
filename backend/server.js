@@ -24,11 +24,41 @@ const { errorHandler, notFound } = require('./middleware/errorMiddleware');
 const app = express();
 
 app.use(express.json());
-app.use(cors());
+
+// Robust CORS configuration for Production
+const allowedOrigins = [
+  'http://localhost:19000', // Expo Go
+  'http://localhost:19006', // Expo Web
+  'http://localhost:8081',  // New Expo Default
+  /\.railway\.app$/,         // Any Railway deployment
+];
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl)
+    if (!origin) return callback(null, true);
+    
+    const isAllowed = allowedOrigins.some(allowed => {
+      if (allowed instanceof RegExp) return allowed.test(origin);
+      return allowed === origin;
+    });
+
+    if (isAllowed) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true,
+}));
 
 // Health Check Route
 app.get('/', (req, res) => {
-  res.send('Fitness Tracker API is running smoothly');
+  res.json({ 
+    status: 'online', 
+    message: 'Fitness Tracker API is running smoothly',
+    environment: process.env.NODE_ENV || 'development'
+  });
 });
 
 app.use('/api/auth', authRoutes);
@@ -52,8 +82,11 @@ const PORT = process.env.PORT || 5000;
   try {
     await connectDB();
     app.listen(PORT, '0.0.0.0', () => {
-      console.log(`🚀 Server running on port ${PORT}`);
-      console.log(`🔗 Local access: http://localhost:${PORT}`);
+      console.log(`\n=========================================`);
+      console.log(`🚀 SERVER IS LIVE ON PORT: ${PORT}`);
+      console.log(`🌍 ENVIRONMENT: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🔗 BASE URL: http://localhost:${PORT}`);
+      console.log(`=========================================\n`);
     });
   } catch (error) {
     console.error('❌ Failed to start server:', error.message);
