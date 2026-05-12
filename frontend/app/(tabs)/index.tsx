@@ -124,16 +124,6 @@ const ACTIONS = [
     premium: false,
   },
   {
-    title: 'Trainer Guidance',
-    desc: 'AI coaching & tips',
-    icon: Brain,
-    route: '/trainer-guidance',
-    accent: '#00D1FF',
-    grad: ['#00D1FF22', '#00D1FF06'] as [string, string],
-    full: false,
-    premium: false,
-  },
-  {
     title: 'Workout Reminders',
     desc: 'Daily fitness alerts',
     icon: Bell,
@@ -142,16 +132,6 @@ const ACTIONS = [
     grad: ['#FFD70022', '#FFD70006'] as [string, string],
     full: false,
     premium: true,
-  },
-  {
-    title: 'Find a Trainer',
-    desc: 'Expert human coaching',
-    icon: Users,
-    route: '/trainers',
-    accent: Colors.primary,
-    grad: [Colors.primary + '22', Colors.primary + '06'] as [string, string],
-    full: false,
-    premium: false,
   },
   {
     title: 'Body Health',

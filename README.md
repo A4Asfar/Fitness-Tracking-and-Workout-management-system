@@ -1,31 +1,35 @@
 # 🚀 Fitness Tracker Pro: The Ultimate AI Wellness Ecosystem
 
 <div align="center">
-  <img src="https://raw.githubusercontent.com/A4Asfar/Fitness-Tracking-and-Workout-management-system/main/backend/assets/dashboard.png" width="850" alt="Fitness Tracker Pro Dashboard" />
+  <img src="backend/assets/dashboard.png" width="850" alt="Fitness Tracker Pro Dashboard" />
   
   <p align="center">
-    <b>Experience the real-time AI wellness ecosystem with a live, functional prototype.</b>
+    <b>Experience a high-performance wellness ecosystem with AI-driven training and precision tracking.</b>
   </p>
 
-  [![Status](https://img.shields.io/badge/Status-Live-success?style=for-the-badge&logo=rocket)](https://github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system)
+  [![Status](https://img.shields.io/badge/Status-Production--Ready-success?style=for-the-badge&logo=rocket)](https://github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system)
   [![Tech](https://img.shields.io/badge/Stack-MERN-blue?style=for-the-badge&logo=mongodb)](https://github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system)
-  [![UI](https://img.shields.io/badge/UI-Ultra_Premium-purple?style=for-the-badge&logo=figma)](https://github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system)
+  [![UI](https://img.shields.io/badge/UI-Neon_Premium-lime?style=for-the-badge&logo=figma)](https://github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system)
 </div>
 
 ---
 
-## 📸 Live Prototype Showcase
+## 📸 Prototype Showcase
 
 <div align="center">
   <table border="0">
     <tr>
       <td align="center">
-        <img src="https://raw.githubusercontent.com/A4Asfar/Fitness-Tracking-and-Workout-management-system/main/backend/assets/training.png" width="400" /><br/>
-        <sub><b>Smart Training Module</b></sub>
+        <img src="backend/assets/dashboard.png" width="380" /><br/>
+        <sub><b>Aesthetics & Dashboard</b></sub>
       </td>
       <td align="center">
-        <img src="https://raw.githubusercontent.com/A4Asfar/Fitness-Tracking-and-Workout-management-system/main/backend/assets/insights.png" width="400" /><br/>
-        <sub><b>Data-Driven Insights</b></sub>
+        <img src="backend/assets/training.png" width="380" /><br/>
+        <sub><b>Training Programs Hub</b></sub>
+      </td>
+      <td align="center">
+        <img src="backend/assets/insights.png" width="380" /><br/>
+        <sub><b>Workout Details & Logic</b></sub>
       </td>
     </tr>
   </table>
@@ -35,28 +39,22 @@
 
 ## 💎 The Experience
 
-**Fitness Tracker Pro** isn't just another workout app; it's a high-performance ecosystem designed for elite health management. Built with a "Mobile-First" philosophy and powered by AI, it bridges the gap between digital tracking and professional coaching.
+**Fitness Tracker Pro** is an elite health management platform built for modern athletes. It features a high-fidelity "Dark Mode" interface with **Neon Green** accents, glassmorphism UI components, and seamless animations.
 
-### 🌌 Dark Mode Elegance
-Experience a state-of-the-art interface featuring **Glassmorphism**, smooth **60FPS animations**, and a meticulously crafted dark theme that feels premium at every touch.
+### ⚡ Core Pillars
 
----
-
-## ⚡ Core Pillars
-
-### 🧠 AI Intelligence Layer
-*   **Hyper-Personalized Plans**: Daily workout and nutrition blueprints tailored to your specific biomechanics and goals.
+#### 🧠 AI Intelligence Layer
+*   **Hyper-Personalized Plans**: Daily workout and nutrition blueprints tailored to your specific goals.
 *   **Neural AI Assistant**: A real-time chat expert ready to guide your form, diet, and motivation.
-*   **Predictive Analytics**: Intelligent recovery scores and intensity trends calculated from your real performance data.
+*   **AI Training Hub**: Discover specialized programs for Strength, HIIT, Yoga, and Core.
 
-### 🏋️ Training & Bio-Metrics
+#### 🏋️ Training & Bio-Metrics
 *   **Precision Logger**: High-speed entry for sets, reps, and weights with volume tracking.
-*   **Interactive Visuals**: Beautiful charts displaying your weekly progress and strength trends.
-*   **Health Status Hub**: Integrated BMI analysis and activity scoring to keep you on the peak of your game.
-*   **Secure Recovery**: Advanced OTP-based password recovery system with time-limited verification codes.
-*   **Neural AI Assistant**: A real-time chat expert ready to guide your form, diet, and motivation.
+*   **Interactive Checklists**: Follow along with detailed exercise steps and live progress bars.
+*   **Data Analytics**: Beautiful charts displaying your weekly progress and strength trends.
+*   **Activity Scoring**: Integrated BMI analysis and daily health metrics.
 
-### 🥗 Culinary Architecture
+#### 🥗 Culinary Architecture
 *   **Macro-Nutrition Focus**: Precise tracking of protein, fats, and carbs for every meal.
 *   **Goal-Aligned Recipes**: Specialized recommendations for cutting, bulking, or maintaining.
 
@@ -79,61 +77,25 @@ Experience a state-of-the-art interface featuring **Glassmorphism**, smooth **60
 
 ---
 
-## 🚀 Deployment & Production Setup
+## 🏁 Getting Started
 
-### 📦 Prerequisites
-*   Node.js (LTS Version)
-*   Expo Go (for mobile preview)
-*   MongoDB Atlas cluster
-*   Gmail account (for OTP service)
-
-### 🛠️ Environment Variables (.env)
-
-| Variable | Description |
-| :--- | :--- |
-| `MONGO_URI` | Your MongoDB Atlas Connection String |
-| `JWT_SECRET` | Secure key for token generation |
-| `EMAIL_USER` | Your Gmail address (for OTP sender) |
-| `EMAIL_PASS` | Gmail **App Password** (16 characters) |
-| `EXPO_PUBLIC_API_URL` | Your Railway Production URL |
-
-### 🏁 Getting Started
-
-1.  **Clone the Repository**
+1.  **Clone & Install**
     ```bash
     git clone https://github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system.git
-    cd Fitness-Tracking-and-Workout-management-system
+    npm install
     ```
 
-2.  **Launch Production Server**
+2.  **Launch Backend**
     ```bash
     cd backend
-    npm install
     npm start
     ```
 
 3.  **Launch Mobile Interface**
     ```bash
     cd frontend
-    npm install
     npx expo start
     ```
-
----
-
-## 📂 Project Blueprint
-
-```bash
-├── 📱 frontend/         # React Native (Expo) Application
-│   ├── 🛠️ components/   # Atomic UI System
-│   ├── 🗺️ app/          # Navigation & Screen Logic
-│   └── 🔌 services/     # API Integration Layer
-├── ⚙️ backend/          # Node.js Express API
-│   ├── 📑 models/       # Mongoose Schemas
-│   ├── 🚀 routes/       # API Controllers
-│   └── 🛡️ middleware/   # Security & Logic
-└── 📜 README.md         # Documentation
-```
 
 ---
 

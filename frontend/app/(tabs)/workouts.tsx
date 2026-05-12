@@ -1,54 +1,104 @@
-import React, { useState, useEffect, useCallback, useMemo } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Dimensions } from 'react-native';
-import { useFocusEffect } from '@react-navigation/native';
-import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, RefreshControl, Animated } from 'react-native';
+import { Colors, SPACING } from '@/constants/Theme';
 import { 
-  Dumbbell, Flame, ChevronRight, Plus, Trophy, 
-  Zap, TrendingUp, Sparkles, Target, Info
+  Dumbbell, Flame, Zap, Heart, Target, TrendingUp, Clock, Play, ChevronRight
 } from 'lucide-react-native';
-import api from '@/services/api';
 import { useRouter } from 'expo-router';
-import { useAuth } from '@/context/AuthContext';
 import { LinearGradient } from 'expo-linear-gradient';
-
-import { WorkoutSuggestion, getIconComponent } from '@/services/recommendations';
-import { ContentService } from '@/services/contentService';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useFocusEffect } from '@react-navigation/native';
+import api from '@/services/api';
 
 const { width } = Dimensions.get('window');
 
-interface Workout {
-  _id: string;
-  exercise: string;
-  sets: number;
-  reps: number;
-  weight: number;
-  type: string;
-  date: string;
-}
+const PROGRAMS = [
+  {
+    id: 'strength',
+    title: 'Strength Training',
+    type: 'Strength',
+    focus: 'Upper Body Focus',
+    exercises: 12,
+    duration: '45-60 min',
+    calories: '400-500 cal',
+    level: 'Intermediate',
+    icon: Dumbbell,
+    colors: [Colors.primary, '#9FE800'],
+    accent: Colors.primary,
+  },
+  {
+    id: 'hiit',
+    title: 'HIIT Cardio',
+    type: 'HIIT',
+    focus: 'Full Body HIIT',
+    exercises: 8,
+    duration: '20-30 min',
+    calories: '350-450 cal',
+    level: 'Intermediate',
+    icon: Zap,
+    colors: ['#39FF14', '#28CC00'],
+    accent: '#39FF14',
+  },
+  {
+    id: 'yoga',
+    title: 'Yoga & Mobility',
+    type: 'Yoga',
+    focus: 'Flexibility & Flow',
+    exercises: 15,
+    duration: '30-45 min',
+    calories: '150-200 cal',
+    level: 'Beginner',
+    icon: Heart,
+    colors: ['#00FF85', '#00B35D'],
+    accent: '#00FF85',
+  },
+  {
+    id: 'core',
+    title: 'Core Blast',
+    type: 'Strength',
+    focus: 'Abs & Core Strength',
+    exercises: 10,
+    duration: '25-35 min',
+    calories: '250-300 cal',
+    level: 'Intermediate',
+    icon: Target,
+    colors: ['#CCFF00', '#2E2E2E'],
+    accent: '#CCFF00',
+  },
+];
 
-
-export default function WorkoutsScreen() {
-  const [workouts, setWorkouts] = useState<Workout[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [recommendations, setRecommendations] = useState<WorkoutSuggestion[]>([]);
-  const router = useRouter();
-  const { user } = useAuth();
-
-  const level = user?.trainingLevel || 'Beginner';
-  const focus = user?.preferredWorkoutFocus || 'Strength';
+/* --- Animated Play Button Component --- */
+function AnimatedPlayButton({ accent, onPress }: { accent: string, onPress: () => void }) {
+  const pulse = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
-    const fetchSuggestions = async () => {
-      try {
-        const data = await ContentService.getWorkoutSuggestions({ level, focus });
-        setRecommendations(data);
-      } catch (err) {
-        console.error('Failed to fetch suggestions');
-      }
-    };
-    fetchSuggestions();
-  }, [level, focus]);
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(pulse, { toValue: 1.2, duration: 1000, useNativeDriver: true }),
+        Animated.timing(pulse, { toValue: 1, duration: 1000, useNativeDriver: true }),
+      ])
+    ).start();
+  }, []);
+
+  return (
+    <TouchableOpacity onPress={onPress} style={styles.playButtonWrapper} activeOpacity={0.8}>
+      <Animated.View style={[styles.playGlow, { backgroundColor: accent, opacity: 0.3, transform: [{ scale: pulse }] }]} />
+      <LinearGradient
+        colors={[accent, accent + 'CC']}
+        style={styles.playButton}
+      >
+        <Play size={22} color="#FFF" fill="#FFF" />
+      </LinearGradient>
+    </TouchableOpacity>
+  );
+}
+
+export default function WorkoutsScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const [workouts, setWorkouts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchWorkouts = useCallback(async () => {
     try {
@@ -73,316 +123,265 @@ export default function WorkoutsScreen() {
     fetchWorkouts();
   };
 
-  const categories = [
-    { id: 'strength', name: 'Strength', icon: Dumbbell, color: '#CCFF00' },
-    { id: 'cardio', name: 'Cardio', icon: Flame, color: '#FF4B4B' },
-    { id: 'hiit', name: 'HIIT', icon: Zap, color: '#00D1FF' },
-    { id: 'flexibility', name: 'Yoga', icon: Trophy, color: '#BD00FF' },
-  ];
-
-  const EmptyState = () => (
-    <View style={styles.emptyContainer}>
-      <View style={styles.emptyIconCircle}>
-        <Dumbbell size={48} color={Colors.primary} />
-      </View>
-      <Text style={styles.emptyTitle}>Ready to break a sweat?</Text>
-      <Text style={styles.emptySubtitle}>
-        Your training history is empty. Choose a recommendation above to start your first session!
-      </Text>
-    </View>
-  );
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  };
 
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.background }}>
+    <View style={styles.container}>
       <ScrollView 
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[styles.content, { paddingTop: insets.top + 20 }]}
+        showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00D1FF" />
         }
       >
-        {/* ── Smart Recommendation Header ── */}
-        <View style={styles.aiHeader}>
-          <View style={styles.aiTag}>
-            <Sparkles size={14} color={Colors.primary} fill={Colors.primary} />
-            <Text style={styles.aiTagText}>SMART ASSISTANT</Text>
-          </View>
-          <Text style={styles.aiTitle}>Recommended Workouts For You</Text>
-          <Text style={styles.aiSub}>Based on your {level} level and {focus} focus</Text>
+        {/* --- Header --- */}
+        <View style={styles.header}>
+          <TrendingUp size={24} color={Colors.primary} strokeWidth={3} />
+          <Text style={styles.headerTitle}>Training Programs</Text>
         </View>
 
-        {/* ── Recommendations Scroll ── */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          contentContainerStyle={styles.aiScroll}
-        >
-          {recommendations.map((rec, idx) => {
-            const SuggestionIcon = getIconComponent(rec.icon);
-            return (
-              <TouchableOpacity 
-                key={idx} 
-                style={styles.aiCard}
-                onPress={() => router.push(`/create-workout?type=${rec.type}&exercise=${rec.exercise}` as any)}
-                activeOpacity={0.8}
-              >
-                <LinearGradient
-                  colors={['#1A1A1A', '#111111']}
-                  style={styles.aiCardGrad}
-                >
-                  <View style={styles.aiCardHeader}>
-                    <View style={styles.aiIconBox}>
-                      <SuggestionIcon size={20} color={Colors.primary} />
-                    </View>
-                    <View style={styles.aiTypeTag}>
-                      <Text style={styles.aiTypeText}>{rec.type}</Text>
-                    </View>
-                  </View>
-                  <Text style={styles.aiCardName}>{rec.exercise}</Text>
-                  <View style={styles.aiReasonRow}>
-                    <Info size={12} color={Colors.textSecondary} />
-                    <Text style={styles.aiReasonText}>{rec.reason}</Text>
-                  </View>
-                  <View style={styles.aiActionBtn}>
-                    <Plus size={16} color="#000" />
-                    <Text style={styles.aiActionText}>START NOW</Text>
-                  </View>
-                </LinearGradient>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
-
-        <Text style={styles.sectionTitle}>Quick Start</Text>
-        <View style={styles.categoryGrid}>
-          {categories.map((cat) => (
+        {/* --- Programs List --- */}
+        <View style={styles.list}>
+          {PROGRAMS.map((program) => (
             <TouchableOpacity 
-              key={cat.id} 
-              style={styles.categoryCard}
-              onPress={() => {
-                router.push(`/create-workout?type=${cat.name}` as any);
-              }}
+              key={program.id} 
+              style={styles.cardWrapper}
+              activeOpacity={0.9}
+              onPress={() => router.push({
+                pathname: '/workout-details',
+                params: { 
+                  id: program.id,
+                  title: program.title,
+                  focus: program.focus,
+                  level: program.level,
+                  duration: program.duration,
+                  calories: program.calories,
+                  accent: program.accent,
+                  type: program.type
+                }
+              } as any)}
             >
-              <View style={[styles.categoryIcon, { backgroundColor: `${cat.color}20` }]}>
-                <cat.icon size={24} color={cat.color} />
-              </View>
-              <Text style={styles.categoryName}>{cat.name}</Text>
+              <LinearGradient
+                colors={program.colors as [string, string]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.card}
+              >
+                <View style={styles.cardTop}>
+                  <View style={styles.iconBox}>
+                    <program.icon size={24} color="#FFF" />
+                  </View>
+                  <View style={styles.levelBadge}>
+                    <Text style={[styles.levelText, { color: program.accent }]}>{program.level}</Text>
+                  </View>
+                </View>
+
+                <View style={styles.cardMiddle}>
+                  <Text style={styles.cardTitle}>{program.title}</Text>
+                  <Text style={styles.cardExercises}>{program.exercises} exercises</Text>
+                </View>
+
+                <View style={styles.cardBottom}>
+                  <View style={styles.statItem}>
+                    <Clock size={16} color="#FFF" opacity={0.8} />
+                    <Text style={styles.statText}>{program.duration}</Text>
+                  </View>
+                  <View style={styles.statItem}>
+                    <Flame size={16} color="#FFF" opacity={0.8} />
+                    <Text style={styles.statText}>{program.calories}</Text>
+                  </View>
+                </View>
+
+                {/* Animated Play Button */}
+                <AnimatedPlayButton 
+                  accent={program.accent} 
+                  onPress={() => router.push({
+                    pathname: '/workout-details',
+                    params: { 
+                      id: program.id,
+                      title: program.title,
+                      focus: program.focus,
+                      level: program.level,
+                      duration: program.duration,
+                      calories: program.calories,
+                      accent: program.accent,
+                      type: program.type
+                    }
+                  } as any)} 
+                />
+              </LinearGradient>
             </TouchableOpacity>
           ))}
         </View>
 
+        {/* --- Recent Sessions --- */}
         <View style={styles.historyHeader}>
-          <Text style={styles.sectionTitle}>Recent Workouts</Text>
-          <TouchableOpacity>
-            <Text style={styles.seeAll}>See All</Text>
+          <Text style={styles.sectionTitle}>Recent Sessions</Text>
+          <TouchableOpacity onPress={() => {}}>
+            <Text style={styles.seeAll}>View All</Text>
           </TouchableOpacity>
         </View>
 
-        {workouts.length === 0 ? (
-          <EmptyState />
+        {loading ? (
+          <ActivityIndicator color="#00D1FF" style={{ marginTop: 20 }} />
+        ) : workouts.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No recent workouts. Time to start one!</Text>
+          </View>
         ) : (
-          workouts.map((workout) => {
-            const typeColors: Record<string, string> = {
-              Strength: Colors.primary, Cardio: '#FF4B4B', HIIT: '#00D1FF', Yoga: '#BD00FF',
-            };
-            const accent = typeColors[workout.type] ?? Colors.primary;
-            const volume = (workout.sets ?? 0) * (workout.reps ?? 0) * (workout.weight ?? 0);
-            const dateStr = new Date(workout.date).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
-            return (
-              <TouchableOpacity
-                key={workout._id}
-                style={styles.workoutCard}
-                onPress={() => router.push(`/workout/${workout._id}` as any)}
-                activeOpacity={0.75}
-              >
-                <View style={[styles.cardAccentBar, { backgroundColor: accent }]} />
-                <View style={styles.workoutInfo}>
-                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-                    <View style={[styles.workoutTypeTag, { backgroundColor: accent + '18', borderColor: accent + '35' }]}>
-                      <Text style={[styles.workoutTypeText, { color: accent }]}>{workout.type}</Text>
-                    </View>
-                    <Text style={styles.cardDate}>{dateStr}</Text>
-                  </View>
-                  <Text style={styles.workoutName}>{workout.exercise}</Text>
-                  <View style={styles.workoutStats}>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statChip}>{workout.sets} sets</Text>
-                    </View>
-                    <View style={styles.statItem}>
-                      <Text style={styles.statChip}>{workout.reps} reps</Text>
-                    </View>
-                    {workout.weight > 0 && (
-                      <View style={styles.statItem}>
-                        <Text style={styles.statChip}>{workout.weight} kg</Text>
-                      </View>
-                    )}
-                    {volume > 0 && (
-                      <View style={styles.statItem}>
-                        <TrendingUp size={12} color={Colors.textSecondary} />
-                        <Text style={styles.statText}>{volume.toLocaleString()} kg</Text>
-                      </View>
-                    )}
-                  </View>
-                </View>
-                <ChevronRight size={20} color={Colors.textSecondary} />
-              </TouchableOpacity>
-            );
-          })
+          workouts.slice(0, 5).map((workout) => (
+            <TouchableOpacity
+              key={workout._id}
+              style={styles.historyCard}
+              onPress={() => router.push(`/workout/${workout._id}` as any)}
+            >
+              <View style={[styles.historyAccent, { backgroundColor: getAccentColor(workout.type) }]} />
+              <View style={styles.historyInfo}>
+                <Text style={styles.historyName}>{workout.exercise}</Text>
+                <Text style={styles.historyMeta}>
+                  {workout.type} • {workout.sets} sets • {formatDate(workout.date)}
+                </Text>
+              </View>
+              <ChevronRight size={20} color={Colors.textSecondary} />
+            </TouchableOpacity>
+          ))
         )}
       </ScrollView>
-
-      <TouchableOpacity 
-        style={styles.fab}
-        onPress={() => router.push('/create-workout' as any)}
-      >
-        <Plus size={30} color="#000" />
-      </TouchableOpacity>
     </View>
   );
 }
 
+const getAccentColor = (type: string) => {
+  switch (type) {
+    case 'Strength': return '#00D1FF';
+    case 'HIIT': return '#FF4B4B';
+    case 'Yoga': return '#BD00FF';
+    default: return '#CCFF00';
+  }
+};
+
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#000',
+  },
   content: {
-    padding: SPACING.lg,
-    paddingBottom: 100,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
   },
-  aiHeader: {
-    marginBottom: 20,
-  },
-  aiTag: {
+  header: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
+    gap: 12,
+    marginBottom: 24,
   },
-  aiTagText: {
-    color: Colors.primary,
-    fontSize: 10,
+  headerTitle: {
+    color: '#FFF',
+    fontSize: 24,
     fontWeight: '900',
-    letterSpacing: 1,
+    letterSpacing: -0.5,
   },
-  aiTitle: {
-    color: Colors.text,
+  list: {
+    gap: 16,
+    marginBottom: 32,
+  },
+  cardWrapper: {
+    width: '100%',
+    borderRadius: 32,
+  },
+  card: {
+    borderRadius: 32,
+    padding: 24,
+    minHeight: 200,
+    justifyContent: 'space-between',
+  },
+  cardTop: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  iconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  levelBadge: {
+    backgroundColor: 'rgba(0, 0, 0, 0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+  },
+  levelText: {
+    fontSize: 12,
+    fontWeight: '900',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  cardMiddle: {
+    marginTop: 12,
+  },
+  cardTitle: {
+    color: '#FFF',
     fontSize: 22,
     fontWeight: '900',
     letterSpacing: -0.5,
-    marginBottom: 4,
   },
-  aiSub: {
-    color: Colors.textSecondary,
+  cardExercises: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  cardBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 20,
+    marginTop: 12,
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statText: {
+    color: '#FFF',
     fontSize: 13,
-    fontWeight: '500',
-  },
-  aiScroll: {
-    paddingBottom: 32,
-    gap: 16,
-  },
-  aiCard: {
-    width: width * 0.7,
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  aiCardGrad: {
-    padding: 20,
-    flex: 1,
-  },
-  aiCardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  aiIconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: Colors.primary + '15',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  aiTypeTag: {
-    backgroundColor: Colors.card,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  aiTypeText: {
-    color: Colors.textSecondary,
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  aiCardName: {
-    color: Colors.text,
-    fontSize: 18,
-    fontWeight: '900',
-    marginBottom: 8,
-    letterSpacing: -0.3,
-  },
-  aiReasonRow: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 20,
-  },
-  aiReasonText: {
-    flex: 1,
-    color: Colors.textSecondary,
-    fontSize: 12,
-    lineHeight: 18,
-    fontWeight: '500',
-  },
-  aiActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
-    alignSelf: 'flex-start',
-    gap: 8,
-  },
-  aiActionText: {
-    color: '#000',
-    fontSize: 11,
-    fontWeight: '900',
-  },
-  sectionTitle: {
-    color: Colors.text,
-    fontSize: 18,
-    fontWeight: '900',
-    marginBottom: 20,
-    letterSpacing: -0.3,
-  },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    marginBottom: 32,
-  },
-  categoryCard: {
-    width: '48%',
-    backgroundColor: Colors.card,
-    borderRadius: 24,
-    padding: 20,
-    alignItems: 'center',
-    marginBottom: 15,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  categoryIcon: {
-    width: 55,
-    height: 55,
-    borderRadius: 18,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  categoryName: {
-    color: Colors.text,
-    fontSize: 15,
     fontWeight: '700',
+  },
+  playButtonWrapper: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 60,
+    height: 60,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  playButton: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  playGlow: {
+    position: 'absolute',
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    zIndex: 1,
   },
   historyHeader: {
     flexDirection: 'row',
@@ -390,115 +389,53 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  sectionTitle: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '800',
+  },
   seeAll: {
     color: Colors.primary,
-    fontSize: 13,
+    fontSize: 14,
     fontWeight: '700',
   },
-  emptyContainer: {
-    backgroundColor: Colors.card,
-    borderRadius: 24,
-    padding: 40,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    borderStyle: 'dashed',
-  },
-  emptyIconCircle: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    backgroundColor: 'rgba(204, 255, 0, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  emptyTitle: {
-    color: Colors.text,
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 10,
-    textAlign: 'center',
-  },
-  emptySubtitle: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 22,
-    fontWeight: '500',
-  },
-  workoutCard: {
-    backgroundColor: Colors.card,
-    borderRadius: 24,
-    paddingVertical: 16,
-    paddingRight: 16,
-    paddingLeft: 20,
+  historyCard: {
+    backgroundColor: '#111',
+    borderRadius: 20,
+    padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 12,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    overflow: 'hidden',
-  },
-  cardAccentBar: {
-    position: 'absolute',
-    left: 0, top: 0, bottom: 0,
-    width: 4,
-  },
-  workoutInfo: { flex: 1 },
-  workoutTypeTag: {
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
     borderWidth: 1,
-    marginRight: 8,
+    borderColor: '#222',
   },
-  workoutTypeText: {
-    fontSize: 9,
-    fontWeight: '900',
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
+  historyAccent: {
+    width: 4,
+    height: '100%',
+    borderRadius: 2,
+    marginRight: 16,
   },
-  cardDate: {
+  historyInfo: {
+    flex: 1,
+  },
+  historyName: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 4,
+  },
+  historyMeta: {
     color: Colors.textSecondary,
     fontSize: 12,
     fontWeight: '500',
   },
-  workoutName: {
-    color: Colors.text,
-    fontSize: 17,
-    fontWeight: '800',
-    marginBottom: 8,
-    letterSpacing: -0.2,
-  },
-  workoutStats: { flexDirection: 'row', flexWrap: 'wrap', gap: 6 },
-  statItem: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  statChip: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '700',
-    backgroundColor: '#252525',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  statText: { color: Colors.textSecondary, fontSize: 11, fontWeight: '600' },
-  fab: {
-    position: 'absolute',
-    bottom: 30,
-    right: 20,
-    backgroundColor: Colors.primary,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    justifyContent: 'center',
+  emptyState: {
+    padding: 40,
     alignItems: 'center',
-    elevation: 8,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
+  },
+  emptyText: {
+    color: Colors.textSecondary,
+    fontSize: 14,
+    textAlign: 'center',
   },
 });
-

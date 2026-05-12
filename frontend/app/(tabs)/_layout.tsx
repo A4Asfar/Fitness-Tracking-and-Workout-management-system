@@ -45,28 +45,21 @@ export default function TabLayout() {
       <Tabs.Screen
         name="workouts"
         options={{
-          title: 'Training',
+          title: 'Workouts',
           tabBarIcon: ({ color, size }) => <Dumbbell color={color} size={size} strokeWidth={2.5} />,
-        }}
-      />
-      <Tabs.Screen
-        name="diet"
-        options={{
-          title: 'Nutrition',
-          tabBarIcon: ({ color, size }) => <Apple color={color} size={size} strokeWidth={2.5} />,
         }}
       />
       <Tabs.Screen
         name="progress"
         options={{
-          title: 'Insights',
+          title: 'Progress',
           tabBarIcon: ({ color, size }) => <TrendingUp color={color} size={size} strokeWidth={2.5} />,
         }}
       />
       <Tabs.Screen
         name="settings"
         options={{
-          title: 'Account',
+          title: 'Profile',
           tabBarIcon: ({ color, size }) => <User color={color} size={size} strokeWidth={2.5} />,
         }}
       />
