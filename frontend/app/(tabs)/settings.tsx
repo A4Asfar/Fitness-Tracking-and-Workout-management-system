@@ -144,6 +144,16 @@ export default function AccountHubScreen() {
           {/* ── MENU GROUPS ── */}
           <SectionLabel label="ACCOUNT" />
           <View style={styles.menuGroup}>
+            {user?.membershipType === 'admin' && (
+              <>
+                <MenuOption 
+                  icon={ShieldCheck} 
+                  label="Admin Control Center" 
+                  onPress={() => router.push('/admin-dashboard')} 
+                />
+                <Divider />
+              </>
+            )}
             <MenuOption 
               icon={User} 
               label="Edit Profile" 
