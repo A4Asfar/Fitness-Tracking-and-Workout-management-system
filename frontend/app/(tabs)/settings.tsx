@@ -150,12 +150,22 @@ export default function AccountHubScreen() {
               onPress={() => router.push('/settings/edit-profile')} 
             />
             <Divider />
-            <MenuOption 
-              icon={Star} 
-              label="Upgrade to Premium" 
-              badge="Pro"
-              onPress={() => router.push('/upgrade')} 
-            />
+            {isPremium ? (
+              <MenuOption 
+                icon={Star} 
+                label="Premium Status" 
+                badge="Active"
+                subtitle={user?.membershipExpiresAt ? `Expires: ${new Date(user.membershipExpiresAt).toLocaleDateString()}` : 'Monthly Plan'}
+                onPress={() => router.push('/upgrade')} 
+              />
+            ) : (
+              <MenuOption 
+                icon={Star} 
+                label="Upgrade to Premium" 
+                badge="Pro"
+                onPress={() => router.push('/upgrade')} 
+              />
+            )}
           </View>
 
           <SectionLabel label="PREFERENCES" />
@@ -258,14 +268,17 @@ function SectionLabel({ label }: { label: string }) {
   return <Text style={styles.sectionLabel}>{label}</Text>;
 }
 
-function MenuOption({ icon: Icon, label, onPress, badge, hasSwitch }: any) {
+function MenuOption({ icon: Icon, label, onPress, badge, hasSwitch, subtitle }: any) {
   const [isEnabled, setIsEnabled] = useState(true);
   return (
     <TouchableOpacity style={styles.menuOption} onPress={onPress} activeOpacity={0.6}>
       <View style={styles.optionIconBox}>
         <Icon size={20} color="#FFF" opacity={0.8} />
       </View>
-      <Text style={styles.optionLabel}>{label}</Text>
+      <View style={{ flex: 1 }}>
+        <Text style={styles.optionLabel}>{label}</Text>
+        {subtitle && <Text style={styles.optionSubLabel}>{subtitle}</Text>}
+      </View>
       
       {badge && (
         <View style={styles.proBadge}>
@@ -508,6 +521,12 @@ const styles = StyleSheet.create({
     color: '#FFF',
     fontSize: 16,
     fontWeight: '600',
+  },
+  optionSubLabel: {
+    color: 'rgba(255, 255, 255, 0.4)',
+    fontSize: 12,
+    fontWeight: '500',
+    marginTop: 2,
   },
   proBadge: {
     backgroundColor: '#FF9500',

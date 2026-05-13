@@ -26,6 +26,10 @@ const userSchema = new mongoose.Schema({
     enum: ['free', 'premium', 'admin'],
     default: 'free',
   },
+  membershipExpiresAt: {
+    type: Date,
+    default: null,
+  },
   // Profile Fields
   weight: {
     type: Number,

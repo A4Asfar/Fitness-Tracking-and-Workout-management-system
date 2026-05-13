@@ -25,12 +25,18 @@ exports.updateProfile = asyncHandler(async (req, res) => {
 });
 
 exports.upgradeProfile = asyncHandler(async (req, res) => {
+  const expiryDate = new Date();
+  expiryDate.setDate(expiryDate.getDate() + 30); // 1 month subscription
+
   const user = await User.findByIdAndUpdate(
     req.userId,
-    { membershipType: 'premium' },
+    { 
+      membershipType: 'premium',
+      membershipExpiresAt: expiryDate
+    },
     { new: true }
   ).select('-password');
-  console.log('👑 User upgraded to premium:', req.userId);
+  console.log('👑 User upgraded to premium until:', expiryDate);
   res.json(user);
 });
 
