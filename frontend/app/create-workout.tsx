@@ -1,19 +1,24 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform, Alert } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { 
+  View, Text, StyleSheet, TextInput, TouchableOpacity, 
+  ScrollView, KeyboardAvoidingView, Platform, Alert, Dimensions,
+  ActivityIndicator
+} from 'react-native';
 import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
-import { useRouter, useLocalSearchParams } from 'expo-router';
+import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Dumbbell, Clock, Flame, Save, ArrowLeft, Zap, Trophy, Activity } from 'lucide-react-native';
+import { 
+  Dumbbell, Clock, Flame, Save, ArrowLeft, Zap, 
+  Trophy, Activity, Timer, ChevronRight, Check
+} from 'lucide-react-native';
 import { WorkoutService } from '@/services/workoutService';
 import SuccessModal from '@/components/SuccessModal';
 import { safeBack } from '@/utils/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { BlurView } from 'expo-blur';
 
-const EXERCISES = [
-  'Bench Press', 'Squats', 'Deadlift', 'Shoulder Press', 'Bicep Curls',
-  'Tricep Pushdown', 'Leg Press', 'Pull Ups', 'Push Ups', 'Plank',
-  'Running', 'Cycling', 'Swimming', 'Yoga Flow'
-];
+const { width } = Dimensions.get('window');
 
 const TYPES = [
   { id: 'Strength', icon: Dumbbell, color: '#CCFF00' },
@@ -38,14 +43,9 @@ export default function CreateWorkoutScreen() {
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Sync type and exercise if params change
-  React.useEffect(() => {
-    if (params.type) {
-      setType(params.type as string);
-    }
-    if (params.exercise) {
-      setExercise(params.exercise as string);
-    }
+  useEffect(() => {
+    if (params.type) setType(params.type as string);
+    if (params.exercise) setExercise(params.exercise as string);
   }, [params.type, params.exercise]);
 
   const handleSave = async () => {
@@ -60,7 +60,6 @@ export default function CreateWorkoutScreen() {
     }
 
     setErrors({});
-
     setLoading(true);
     try {
       await WorkoutService.logWorkout({
@@ -81,122 +80,164 @@ export default function CreateWorkoutScreen() {
     }
   };
 
+  const activeColor = TYPES.find(t => t.id === type)?.color || Colors.primary;
+
   return (
-    <KeyboardAvoidingView 
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[SharedStyles.container, { paddingTop: insets.top + SPACING.sm }]}
-    >
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => safeBack('/(tabs)/')} style={styles.backButton}>
-          <ArrowLeft size={24} color={Colors.text} />
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Log Workout</Text>
-        <View style={{ width: 40 }} />
-      </View>
-
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.label}>Workout Type</Text>
-        <View style={styles.typeGrid}>
-          {TYPES.map((t) => (
-            <TouchableOpacity 
-              key={t.id} 
-              style={[
-                styles.typeCard, 
-                type === t.id && { borderColor: t.color, backgroundColor: `${t.color}15` }
-              ]}
-              onPress={() => setType(t.id)}
-            >
-              <t.icon size={20} color={type === t.id ? t.color : Colors.textSecondary} />
-              <Text style={[
-                styles.typeText, 
-                type === t.id && { color: t.color, fontWeight: 'bold' }
-              ]}>{t.id}</Text>
+    <View style={[SharedStyles.container, { backgroundColor: '#000' }]}>
+      <Stack.Screen options={{ headerShown: false }} />
+      
+      <ScrollView 
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 120 }}
+      >
+        {/* ── Immersive Header ── */}
+        <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
+          <LinearGradient
+            colors={[activeColor + '40', 'transparent']}
+            style={StyleSheet.absoluteFill}
+          />
+          
+          <View style={styles.headerTop}>
+            <TouchableOpacity onPress={() => safeBack()} style={styles.backBtn}>
+              <ArrowLeft size={22} color="#FFF" />
             </TouchableOpacity>
-          ))}
-        </View>
-
-        <View style={styles.labelRow}>
-          <Text style={styles.label}>Exercise Name</Text>
-          <Text style={styles.asterisk}>*</Text>
-        </View>
-        <TextInput
-          style={[SharedStyles.input, errors.exercise && styles.inputError]}
-          placeholder="e.g. Bench Press"
-          placeholderTextColor={Colors.textSecondary}
-          value={exercise}
-          onChangeText={(t) => { setExercise(t); if (errors.exercise) setErrors({...errors, exercise: null}); }}
-        />
-        {errors.exercise && <Text style={styles.errorText}>{errors.exercise}</Text>}
-
-        <View style={styles.row}>
-          <View style={{ flex: 1, marginRight: 10 }}>
-            <View style={styles.labelRow}>
-              <Text style={styles.label}>Sets</Text>
-              <Text style={styles.asterisk}>*</Text>
+            <View style={styles.headerBadge}>
+              <View style={[styles.dot, { backgroundColor: activeColor }]} />
+              <Text style={styles.headerBadgeText}>ACTIVE SESSION</Text>
             </View>
-            <TextInput
-              style={[SharedStyles.input, errors.sets && styles.inputError]}
-              placeholder="0"
-              placeholderTextColor={Colors.textSecondary}
-              value={sets}
-              onChangeText={(t) => { setSets(t); if (errors.sets) setErrors({...errors, sets: null}); }}
-              keyboardType="numeric"
-            />
-            {errors.sets && <Text style={styles.errorText}>{errors.sets}</Text>}
+            <View style={{ width: 44 }} />
           </View>
-          <View style={{ flex: 1, marginLeft: 10 }}>
-            <View style={styles.labelRow}>
-              <Text style={styles.label}>Reps</Text>
-              <Text style={styles.asterisk}>*</Text>
+
+          <Text style={styles.headerTitle}>Log Workout</Text>
+          <Text style={styles.headerSub}>Record your training progress</Text>
+        </View>
+
+        <View style={styles.content}>
+          {/* ── Type Selection ── */}
+          <Text style={styles.sectionTitle}>Workout Type</Text>
+          <View style={styles.typeGrid}>
+            {TYPES.map((t) => (
+              <TouchableOpacity 
+                key={t.id} 
+                style={[
+                  styles.typeCard, 
+                  type === t.id && { backgroundColor: t.color + '20', borderColor: t.color }
+                ]}
+                onPress={() => setType(t.id)}
+              >
+                <t.icon size={20} color={type === t.id ? t.color : 'rgba(255,255,255,0.4)'} />
+                <Text style={[
+                  styles.typeText, 
+                  type === t.id && { color: t.color, fontWeight: '800' }
+                ]}>{t.id}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* ── Exercise Details ── */}
+          <View style={styles.formSection}>
+            <View style={styles.inputGroup}>
+              <Text style={styles.label}>Exercise Name</Text>
+              <View style={[styles.inputWrapper, errors.exercise && styles.inputError]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder="e.g. Bench Press"
+                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  value={exercise}
+                  onChangeText={(t) => { setExercise(t); if (errors.exercise) setErrors({...errors, exercise: null}); }}
+                />
+              </View>
+              {errors.exercise && <Text style={styles.errorText}>{errors.exercise}</Text>}
             </View>
-            <TextInput
-              style={[SharedStyles.input, errors.reps && styles.inputError]}
-              placeholder="0"
-              placeholderTextColor={Colors.textSecondary}
-              value={reps}
-              onChangeText={(t) => { setReps(t); if (errors.reps) setErrors({...errors, reps: null}); }}
-              keyboardType="numeric"
-            />
-            {errors.reps && <Text style={styles.errorText}>{errors.reps}</Text>}
+
+            <View style={styles.row}>
+              <View style={styles.halfInput}>
+                <Text style={styles.label}>Sets</Text>
+                <View style={[styles.inputWrapper, errors.sets && styles.inputError]}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="0"
+                    placeholderTextColor="rgba(255,255,255,0.2)"
+                    value={sets}
+                    onChangeText={(t) => { setSets(t); if (errors.sets) setErrors({...errors, sets: null}); }}
+                    keyboardType="numeric"
+                  />
+                </View>
+                {errors.sets && <Text style={styles.errorText}>{errors.sets}</Text>}
+              </View>
+
+              <View style={styles.halfInput}>
+                <Text style={styles.label}>Reps</Text>
+                <View style={[styles.inputWrapper, errors.reps && styles.inputError]}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="0"
+                    placeholderTextColor="rgba(255,255,255,0.2)"
+                    value={reps}
+                    onChangeText={(t) => { setReps(t); if (errors.reps) setErrors({...errors, reps: null}); }}
+                    keyboardType="numeric"
+                  />
+                </View>
+                {errors.reps && <Text style={styles.errorText}>{errors.reps}</Text>}
+              </View>
+            </View>
+
+            <View style={styles.row}>
+              <View style={styles.halfInput}>
+                <Text style={styles.label}>Weight (kg)</Text>
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="0"
+                    placeholderTextColor="rgba(255,255,255,0.2)"
+                    value={weight}
+                    onChangeText={setWeight}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+
+              <View style={styles.halfInput}>
+                <Text style={styles.label}>Duration (min)</Text>
+                <View style={styles.inputWrapper}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="0"
+                    placeholderTextColor="rgba(255,255,255,0.2)"
+                    value={duration}
+                    onChangeText={setDuration}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+            </View>
           </View>
         </View>
+      </ScrollView>
 
-        <View style={styles.row}>
-          <View style={{ flex: 1, marginRight: 10 }}>
-            <Text style={styles.label}>Weight (kg)</Text>
-            <TextInput
-              style={SharedStyles.input}
-              placeholder="0"
-              placeholderTextColor={Colors.textSecondary}
-              value={weight}
-              onChangeText={setWeight}
-              keyboardType="numeric"
-            />
-          </View>
-          <View style={{ flex: 1, marginLeft: 10 }}>
-            <Text style={styles.label}>Duration (min)</Text>
-            <TextInput
-              style={SharedStyles.input}
-              placeholder="0"
-              placeholderTextColor={Colors.textSecondary}
-              value={duration}
-              onChangeText={setDuration}
-              keyboardType="numeric"
-            />
-          </View>
-        </View>
-
+      {/* ── Bottom Action ── */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
         <TouchableOpacity 
-          style={[SharedStyles.button, { marginTop: 30 }, loading && { opacity: 0.7 }]}
+          style={styles.saveBtn}
           onPress={handleSave}
           disabled={loading}
         >
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Save size={20} color="#000" style={{ marginRight: 10 }} />
-            <Text style={SharedStyles.buttonText}>{loading ? 'Saving...' : 'Log Workout'}</Text>
-          </View>
+          <LinearGradient
+            colors={[activeColor, activeColor + 'CC']}
+            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
+            style={styles.saveGrad}
+          >
+            {loading ? (
+              <ActivityIndicator color="#000" />
+            ) : (
+              <>
+                <Check size={20} color="#000" strokeWidth={3} />
+                <Text style={styles.saveBtnText}>Complete Session</Text>
+              </>
+            )}
+          </LinearGradient>
         </TouchableOpacity>
-      </ScrollView>
+      </View>
 
       <SuccessModal 
         visible={showSuccess} 
@@ -206,86 +247,162 @@ export default function CreateWorkoutScreen() {
           safeBack('/(tabs)/');
         }}
       />
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   header: {
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+    marginBottom: 16,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    marginBottom: SPACING.md,
+    marginBottom: 32,
   },
-  backButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.card,
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: 'rgba(255,255,255,0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  headerTitle: {
-    color: Colors.text,
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  content: {
-    padding: SPACING.lg,
-  },
-  label: {
-    color: Colors.text,
-    fontSize: 16,
-    fontWeight: '600',
-    marginBottom: 0,
-  },
-  labelRow: {
+  headerBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginBottom: 10,
-    marginTop: 15,
+    gap: 8,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
   },
-  asterisk: {
-    color: '#FF4B4B',
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  headerBadgeText: {
+    color: '#FFF',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  headerTitle: {
+    color: '#FFF',
+    fontSize: 34,
+    fontWeight: '900',
+    letterSpacing: -1,
+  },
+  headerSub: {
+    color: 'rgba(255,255,255,0.5)',
     fontSize: 16,
-    fontWeight: 'bold',
-  },
-  errorText: {
-    color: '#FF4B4B',
-    fontSize: 12,
-    fontWeight: '600',
+    fontWeight: '500',
     marginTop: 4,
   },
-  inputError: {
-    borderColor: '#FF4B4B',
-    backgroundColor: '#FF4B4B08',
+  content: {
+    paddingHorizontal: 24,
+  },
+  sectionTitle: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '800',
+    marginBottom: 16,
   },
   typeGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 10,
+    gap: 8,
+    marginBottom: 32,
   },
   typeCard: {
     flex: 1,
-    backgroundColor: Colors.card,
-    paddingVertical: 12,
-    borderRadius: 14,
+    backgroundColor: '#111',
+    borderRadius: 16,
+    paddingVertical: 14,
     alignItems: 'center',
-    marginHorizontal: 4,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.5,
+    borderColor: '#222',
   },
   typeText: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    marginTop: 5,
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 6,
+  },
+  formSection: {
+    gap: 20,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  label: {
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 13,
+    fontWeight: '700',
+    marginLeft: 4,
+  },
+  inputWrapper: {
+    backgroundColor: '#111',
+    borderRadius: 20,
+    height: 60,
+    borderWidth: 1.5,
+    borderColor: '#222',
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+  },
+  input: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  inputError: {
+    borderColor: '#FF4B4B',
+    backgroundColor: 'rgba(255, 75, 75, 0.05)',
+  },
+  errorText: {
+    color: '#FF4B4B',
+    fontSize: 11,
+    fontWeight: '600',
+    marginLeft: 4,
   },
   row: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    gap: 16,
+  },
+  halfInput: {
+    flex: 1,
+    gap: 8,
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    paddingHorizontal: 24,
+    backgroundColor: 'rgba(0,0,0,0.8)',
+    paddingTop: 16,
+  },
+  saveBtn: {
+    height: 64,
+    borderRadius: 20,
+    overflow: 'hidden',
+  },
+  saveGrad: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 12,
+  },
+  saveBtnText: {
+    color: '#000',
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: -0.5,
   },
 });

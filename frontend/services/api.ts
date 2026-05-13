@@ -9,13 +9,10 @@ import Storage from '@/utils/storage';
  * Base API configuration
  * Centralized for both Local Development and Railway Production
  */
-const FALLBACK_URL = 'http://localhost:5000/api';
+const FALLBACK_URL = 'https://fitness-tracking-and-workout-management-system-production.up.railway.app/api';
 export const API_URL = process.env.EXPO_PUBLIC_API_URL || FALLBACK_URL;
 
 console.log('📡 API Connection Point:', API_URL);
-if (API_URL === FALLBACK_URL) {
-  console.warn('⚠️ API_URL is using localhost. Mobile devices on different networks will fail to connect.');
-}
 
 const api = axios.create({
   baseURL: API_URL,

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Alert, Modal, Platform
+  Image, Modal, Platform, Dimensions
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
@@ -10,11 +10,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   User, ChevronRight, Bell, Shield, 
   CircleHelp, Info, LogOut, Settings, 
-  Star, Sparkles, CreditCard, Camera,
-  UserCheck, ShieldAlert, Heart, MessageSquare
+  Star, Sparkles, Camera, UserCheck,
+  Play, TrendingUp, Dumbbell, Target
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
+
+const { width } = Dimensions.get('window');
 
 export default function AccountHubScreen() {
   const { user, logout } = useAuth();
@@ -30,73 +32,118 @@ export default function AccountHubScreen() {
 
   const isPremium = user?.membershipType === 'premium' || user?.membershipType === 'admin';
 
+  // Calculate real stats from user data
+  const weightKg = user?.weight || 0;
+  const heightCm = user?.height || 0;
+  const fitnessGoal = user?.fitnessGoal || 'Not set';
+
+  const bmi = (weightKg > 0 && heightCm > 0) 
+    ? (weightKg / ((heightCm / 100) ** 2)) 
+    : null;
+
+  const weightLbs = Math.round(weightKg * 2.20462);
+  const totalInches = heightCm / 2.54;
+  const feet = Math.floor(totalInches / 12);
+  const inches = Math.round(totalInches % 12);
+  const heightStr = heightCm > 0 ? `${feet}'${inches}"` : '0\'0"';
+
   return (
-    <View style={SharedStyles.container}>
+    <View style={[SharedStyles.container, { backgroundColor: '#000' }]}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <ScrollView 
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: 120 }}
       >
-        {/* ── Hero Profile Header ── */}
-        <View style={[styles.hero, { paddingTop: insets.top + 20 }]}>
-          <LinearGradient
-            colors={[Colors.primary + '20', 'transparent']}
-            style={StyleSheet.absoluteFill}
-          />
-          
-          <View style={styles.profileHeader}>
-            <TouchableOpacity 
-              style={styles.avatarContainer}
-              onPress={() => router.push('/settings/edit-profile')}
-            >
-              <View style={styles.avatarWrap}>
-                {user?.avatar ? (
-                  <Image source={{ uri: user.avatar }} style={styles.avatarImg} />
-                ) : (
-                  <User size={32} color={Colors.primary} strokeWidth={2} />
-                )}
-              </View>
-              <View style={styles.avatarBadge}>
-                <Camera size={10} color="#000" />
-              </View>
-            </TouchableOpacity>
+        {/* ── Page Header ── */}
+        <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
+          <Text style={styles.headerTitle}>Profile</Text>
+          <Text style={styles.headerSubtitle}>Manage your fitness journey</Text>
+        </View>
 
-            <View style={styles.profileMeta}>
-              <Text style={styles.userName}>{user?.name || 'Fitness Athlete'}</Text>
-              <Text style={styles.userEmail}>{user?.email || 'No email linked'}</Text>
-              
-              <View style={styles.statusRow}>
-                <View style={[styles.membershipBadge, isPremium && styles.premiumBadge]}>
-                  <Star size={10} color={isPremium ? '#000' : Colors.primary} fill={isPremium ? '#000' : Colors.primary} />
-                  <Text style={[styles.membershipText, isPremium && styles.premiumText]}>
-                    {(user?.membershipType || 'FREE').toUpperCase()}
-                  </Text>
+        {/* ── Gradient Profile Card ── */}
+        <View style={styles.cardContainer}>
+          <LinearGradient
+            colors={['#33E1FF', '#4F33FF', '#CC33FF']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.profileCard}
+          >
+            <View style={styles.profileInfo}>
+              <TouchableOpacity 
+                style={styles.avatarContainer}
+                onPress={() => router.push('/settings/edit-profile')}
+              >
+                <View style={styles.avatarWrap}>
+                  {user?.avatar ? (
+                    <Image source={{ uri: user.avatar }} style={styles.avatarImg} />
+                  ) : (
+                    <User size={40} color="#FFF" strokeWidth={1.5} />
+                  )}
                 </View>
-                {isPremium && (
-                  <View style={styles.verifiedBadge}>
-                    <UserCheck size={10} color={Colors.primary} />
-                    <Text style={styles.verifiedText}>VERIFIED</Text>
-                  </View>
-                )}
+                <View style={styles.cameraBadge}>
+                  <Camera size={12} color="#000" strokeWidth={2.5} />
+                </View>
+              </TouchableOpacity>
+
+              <View style={styles.profileText}>
+                <Text style={styles.userName}>{user?.name || 'Fitness Athlete'}</Text>
+                <Text style={styles.userRole}>{isPremium ? 'Premium Member' : 'Standard Member'}</Text>
+                <View style={styles.proTag}>
+                  <Sparkles size={10} color="#FFF" />
+                  <Text style={styles.proTagText}>{isPremium ? 'Pro Plan' : 'Free Plan'}</Text>
+                </View>
               </View>
             </View>
-          </View>
 
-          <TouchableOpacity 
-            style={styles.manageBtn}
-            onPress={() => router.push('/settings/edit-profile')}
-          >
-            <Settings size={16} color="#000" strokeWidth={2.5} />
-            <Text style={styles.manageBtnText}>MANAGE PROFILE</Text>
-          </TouchableOpacity>
+            {/* ── Stats Row ── */}
+            <View style={styles.statsRow}>
+              <StatItem 
+                label="Weight" 
+                value={weightKg > 0 ? `${weightLbs} lbs` : '--'} 
+                subValue={weightKg > 0 ? `${weightKg} kg` : 'Not set'} 
+              />
+              <StatItem 
+                label="Height" 
+                value={heightCm > 0 ? heightStr : '--'} 
+                subValue={heightCm > 0 ? `${heightCm} cm` : 'Not set'} 
+              />
+              <StatItem 
+                label="Goal" 
+                value={fitnessGoal !== 'Not set' ? fitnessGoal.split(' ')[0] : '--'} 
+                subValue={bmi ? `BMI: ${bmi.toFixed(1)}` : 'Set stats'} 
+              />
+            </View>
+          </LinearGradient>
         </View>
 
         <View style={styles.body}>
-          {/* ── ACCOUNT SECTION ── */}
+          {/* ── YOUR GOALS SECTION ── */}
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Your Goals</Text>
+          </View>
+          
+          <View style={styles.goalsGrid}>
+            <GoalCard 
+              title="Workouts" 
+              icon={Dumbbell} 
+              count="12" 
+              subtitle="This month" 
+              color="#33E1FF"
+            />
+            <GoalCard 
+              title="Progress" 
+              icon={TrendingUp} 
+              count="+4%" 
+              subtitle="Weight loss" 
+              color="#CC33FF"
+            />
+          </View>
+
+          {/* ── MENU GROUPS ── */}
           <SectionLabel label="ACCOUNT" />
-          <View style={styles.group}>
+          <View style={styles.menuGroup}>
             <MenuOption 
               icon={User} 
               label="Edit Profile" 
@@ -111,9 +158,8 @@ export default function AccountHubScreen() {
             />
           </View>
 
-          {/* ── PREFERENCES SECTION ── */}
           <SectionLabel label="PREFERENCES" />
-          <View style={styles.group}>
+          <View style={styles.menuGroup}>
             <MenuOption 
               icon={Bell} 
               label="Notifications" 
@@ -128,51 +174,45 @@ export default function AccountHubScreen() {
             />
           </View>
 
-          {/* ── SUPPORT SECTION ── */}
           <SectionLabel label="SUPPORT" />
-          <View style={styles.group}>
+          <View style={styles.menuGroup}>
             <MenuOption 
               icon={CircleHelp} 
               label="Help & Support" 
               onPress={() => router.push('/help')} 
             />
-            <Divider />
-            <MenuOption 
-              icon={Sparkles} 
-              label="Share App" 
-              onPress={() => {}} 
-            />
           </View>
 
-          {/* ── ACCOUNT ACTIONS ── */}
-          <SectionLabel label="ACCOUNT ACTIONS" />
-          <View style={styles.group}>
-            <TouchableOpacity 
-              style={styles.logoutRow}
-              onPress={() => setShowLogoutModal(true)}
-            >
-              <View style={styles.logoutIcon}>
-                <LogOut size={20} color={Colors.error} />
-              </View>
-              <Text style={styles.logoutLabel}>Logout</Text>
-              <ChevronRight size={18} color={Colors.textSecondary} opacity={0.3} />
-            </TouchableOpacity>
-          </View>
-
-          <Text style={styles.footerVersion}>Fitness Tracker Pro v2.1.0</Text>
+          <TouchableOpacity 
+            style={styles.logoutBtn}
+            onPress={() => setShowLogoutModal(true)}
+          >
+            <LogOut size={20} color="#FF3B30" />
+            <Text style={styles.logoutBtnText}>Sign Out</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
 
+      {/* ── Floating Action Button ── */}
+      <TouchableOpacity style={styles.fab}>
+        <LinearGradient
+          colors={['#CC33FF', '#4F33FF']}
+          style={styles.fabGradient}
+        >
+          <Play size={28} color="#FFF" fill="#FFF" />
+        </LinearGradient>
+      </TouchableOpacity>
+
       {/* ── Logout Confirmation ── */}
       <Modal visible={showLogoutModal} transparent animationType="fade">
-        <BlurView intensity={Platform.OS === 'ios' ? 30 : 100} tint="dark" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalIconWrap}>
               <LogOut size={32} color={Colors.error} />
             </View>
             <Text style={styles.modalTitle}>Confirm Sign Out</Text>
-            <Text style={styles.modalDesc}>Are you sure you want to end your session? Your training data is safely synced to the cloud.</Text>
+            <Text style={styles.modalDesc}>Are you sure you want to end your session?</Text>
             
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowLogoutModal(false)}>
@@ -189,6 +229,31 @@ export default function AccountHubScreen() {
   );
 }
 
+function StatItem({ label, value, subValue }: any) {
+  return (
+    <View style={styles.statItem}>
+      <Text style={styles.statValue}>{value}</Text>
+      <Text style={styles.statLabel}>{label}</Text>
+      <Text style={styles.statSubValue}>{subValue}</Text>
+    </View>
+  );
+}
+
+function GoalCard({ title, icon: Icon, count, subtitle, color }: any) {
+  return (
+    <TouchableOpacity style={styles.goalCard}>
+      <View style={[styles.goalIconBox, { backgroundColor: color + '20' }]}>
+        <Icon size={20} color={color} />
+      </View>
+      <View>
+        <Text style={styles.goalCount}>{count}</Text>
+        <Text style={styles.goalTitle}>{title}</Text>
+        <Text style={styles.goalSubtitle}>{subtitle}</Text>
+      </View>
+    </TouchableOpacity>
+  );
+}
+
 function SectionLabel({ label }: { label: string }) {
   return <Text style={styles.sectionLabel}>{label}</Text>;
 }
@@ -198,7 +263,7 @@ function MenuOption({ icon: Icon, label, onPress, badge, hasSwitch }: any) {
   return (
     <TouchableOpacity style={styles.menuOption} onPress={onPress} activeOpacity={0.6}>
       <View style={styles.optionIconBox}>
-        <Icon size={22} color="#FFF" strokeWidth={1.5} opacity={0.8} />
+        <Icon size={20} color="#FFF" opacity={0.8} />
       </View>
       <Text style={styles.optionLabel}>{label}</Text>
       
@@ -227,132 +292,184 @@ function Divider() {
 }
 
 const styles = StyleSheet.create({
-  hero: {
+  header: {
     paddingHorizontal: 24,
-    paddingBottom: 32,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    alignItems: 'center',
+    marginBottom: 24,
   },
-  profileHeader: {
+  headerTitle: {
+    color: '#FFF',
+    fontSize: 34,
+    fontWeight: '900',
+    letterSpacing: -1,
+  },
+  headerSubtitle: {
+    color: Colors.textSecondary,
+    fontSize: 16,
+    fontWeight: '500',
+    marginTop: 4,
+  },
+  cardContainer: {
+    paddingHorizontal: 20,
+    marginBottom: 32,
+  },
+  profileCard: {
+    borderRadius: 32,
+    padding: 24,
+    shadowColor: '#4F33FF',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.4,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  profileInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    width: '100%',
-    marginBottom: 28,
+    marginBottom: 32,
   },
   avatarContainer: {
     position: 'relative',
   },
   avatarWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
-    backgroundColor: Colors.card,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: 'rgba(255, 255, 255, 0.5)',
     overflow: 'hidden',
   },
   avatarImg: {
     width: '100%',
     height: '100%',
   },
-  avatarBadge: {
+  cameraBadge: {
     position: 'absolute',
-    bottom: -4,
-    right: -4,
-    backgroundColor: Colors.primary,
-    width: 24,
-    height: 24,
-    borderRadius: 10,
+    bottom: 0,
+    right: 0,
+    backgroundColor: '#33E1FF',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: Colors.background,
+    borderColor: '#4F33FF',
   },
-  profileMeta: {
-    marginLeft: 20,
+  profileText: {
+    marginLeft: 16,
     flex: 1,
   },
   userName: {
-    color: Colors.text,
-    fontSize: 22,
-    fontWeight: '900',
+    color: '#FFF',
+    fontSize: 24,
+    fontWeight: '800',
     letterSpacing: -0.5,
   },
-  userEmail: {
-    color: Colors.textSecondary,
-    fontSize: 13,
-    marginTop: 2,
+  userRole: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14,
     fontWeight: '500',
+    marginTop: 2,
   },
-  statusRow: {
+  proTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-    marginTop: 10,
-  },
-  membershipBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
-    gap: 6,
-    borderWidth: 1,
-    borderColor: Colors.primary + '30',
-  },
-  premiumBadge: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  membershipText: {
-    color: Colors.primary,
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-  premiumText: {
-    color: '#000',
-  },
-  verifiedBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    marginTop: 8,
     gap: 4,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.2)',
   },
-  verifiedText: {
-    color: Colors.primary,
-    fontSize: 9,
-    fontWeight: '800',
-    letterSpacing: 0.5,
-    opacity: 0.8,
+  proTagText: {
+    color: '#FFF',
+    fontSize: 11,
+    fontWeight: '700',
   },
-  manageBtn: {
+  statsRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary,
-    height: 50,
-    paddingHorizontal: 24,
-    borderRadius: 16,
-    gap: 10,
-    width: '100%',
-    justifyContent: 'center',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 16,
-    elevation: 8,
+    justifyContent: 'space-between',
+    gap: 12,
   },
-  manageBtnText: {
-    color: '#000',
-    fontSize: 13,
-    fontWeight: '900',
-    letterSpacing: 0.5,
+  statItem: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    borderRadius: 20,
+    padding: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  statValue: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  statLabel: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  statSubValue: {
+    color: 'rgba(255, 255, 255, 0.4)',
+    fontSize: 9,
+    fontWeight: '500',
+    marginTop: 4,
   },
   body: {
-    padding: 24,
+    paddingHorizontal: 24,
+  },
+  sectionHeader: {
+    marginBottom: 16,
+  },
+  sectionTitle: {
+    color: '#FFF',
+    fontSize: 20,
+    fontWeight: '800',
+  },
+  goalsGrid: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 32,
+  },
+  goalCard: {
+    flex: 1,
+    backgroundColor: '#111',
+    borderRadius: 24,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    borderWidth: 1,
+    borderColor: '#222',
+  },
+  goalIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  goalCount: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  goalTitle: {
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  goalSubtitle: {
+    color: 'rgba(255, 255, 255, 0.3)',
+    fontSize: 10,
+    fontWeight: '500',
   },
   sectionLabel: {
     color: Colors.textSecondary,
@@ -361,14 +478,14 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
     marginBottom: 16,
     marginLeft: 4,
-    opacity: 0.6,
+    opacity: 0.5,
   },
-  group: {
-    backgroundColor: '#111118',
+  menuGroup: {
+    backgroundColor: '#0A0A0A',
     borderRadius: 24,
     marginBottom: 32,
-    borderWidth: 1.5,
-    borderColor: '#1A1A24',
+    borderWidth: 1,
+    borderColor: '#1A1A1A',
     overflow: 'hidden',
   },
   menuOption: {
@@ -381,7 +498,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: '#1A1A24',
+    backgroundColor: '#111',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -390,7 +507,7 @@ const styles = StyleSheet.create({
     flex: 1,
     color: '#FFF',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
   },
   proBadge: {
     backgroundColor: '#FF9500',
@@ -408,12 +525,12 @@ const styles = StyleSheet.create({
     width: 46,
     height: 26,
     borderRadius: 13,
-    backgroundColor: '#2A2A3A',
+    backgroundColor: '#222',
     padding: 2,
     justifyContent: 'center',
   },
   switchEnabled: {
-    backgroundColor: Colors.primary,
+    backgroundColor: '#CCFF00',
   },
   switchThumb: {
     width: 22,
@@ -426,79 +543,77 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#1A1A24',
+    backgroundColor: '#1A1A1A',
     marginHorizontal: 18,
   },
-  logoutRow: {
+  logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 18,
-    height: 72,
-  },
-  logoutIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: '#FF3B3015',
     justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
+    gap: 10,
+    marginTop: 10,
+    marginBottom: 40,
+    opacity: 0.8,
   },
-  logoutLabel: {
-    flex: 1,
+  logoutBtnText: {
     color: '#FF3B30',
     fontSize: 16,
     fontWeight: '700',
   },
-  footerVersion: {
-    textAlign: 'center',
-    color: Colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 40,
-    opacity: 0.3,
+  fab: {
+    position: 'absolute',
+    bottom: 30,
+    right: 20,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    shadowColor: '#CC33FF',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 10,
+  },
+  fabGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     padding: 24,
+    backgroundColor: 'rgba(0,0,0,0.8)',
   },
   modalContent: {
-    backgroundColor: Colors.card,
+    backgroundColor: '#111',
     borderRadius: 32,
     padding: 32,
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 20 },
-    shadowOpacity: 0.5,
-    shadowRadius: 40,
-    elevation: 20,
+    borderWidth: 1,
+    borderColor: '#222',
   },
   modalIconWrap: {
     width: 72,
     height: 72,
     borderRadius: 24,
-    backgroundColor: Colors.error + '10',
+    backgroundColor: 'rgba(255, 68, 68, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 20,
   },
   modalTitle: {
-    color: Colors.text,
+    color: '#FFF',
     fontSize: 22,
     fontWeight: '900',
     marginBottom: 12,
-    letterSpacing: -0.5,
   },
   modalDesc: {
     color: Colors.textSecondary,
     fontSize: 14,
     textAlign: 'center',
-    lineHeight: 22,
     marginBottom: 32,
-    fontWeight: '500',
   },
   modalActions: {
     flexDirection: 'row',
@@ -508,33 +623,26 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 56,
     borderRadius: 18,
-    backgroundColor: Colors.background,
+    backgroundColor: '#1A1A1A',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: Colors.border,
   },
   cancelBtnText: {
-    color: Colors.text,
+    color: '#FFF',
     fontSize: 15,
-    fontWeight: '800',
+    fontWeight: '700',
   },
   confirmBtn: {
     flex: 1.2,
     height: 56,
     borderRadius: 18,
-    backgroundColor: Colors.error,
+    backgroundColor: '#FF3B30',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: Colors.error,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-    elevation: 8,
   },
   confirmBtnText: {
     color: '#FFF',
     fontSize: 15,
-    fontWeight: '900',
+    fontWeight: '800',
   },
 });
