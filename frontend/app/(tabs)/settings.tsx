@@ -58,6 +58,7 @@ export default function AccountHubScreen() {
       >
         {/* ── Page Header ── */}
         <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
+          <Text style={{ color: Colors.primary, fontSize: 10, fontWeight: 'bold' }}>DEBUG: {user?.email} | ROLE: {user?.membershipType}</Text>
           <Text style={styles.headerTitle}>Profile</Text>
           <Text style={styles.headerSubtitle}>Manage your fitness journey</Text>
         </View>
