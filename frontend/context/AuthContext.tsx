@@ -11,6 +11,7 @@ export interface User {
   name: string;
   email: string;
   membershipType: 'free' | 'premium' | 'admin';
+  membershipExpiresAt?: string;
   weight: number;
   height: number;
   fitnessGoal: 'Weight Loss' | 'Muscle Gain' | 'Maintain Fitness' | 'Endurance' | 'General Fitness' | 'None';
