@@ -144,10 +144,10 @@ export default function AccountHubScreen() {
           {/* ── MENU GROUPS ── */}
           <SectionLabel label="ACCOUNT" />
           <View style={styles.menuGroup}>
-            {user?.membershipType === 'admin' && (
+            {user && user.membershipType === 'admin' && (
               <>
                 <MenuOption 
-                  icon={ShieldCheck} 
+                  icon={Shield} 
                   label="Admin Control Center" 
                   onPress={() => router.push('/admin-dashboard')} 
                 />
@@ -165,7 +165,7 @@ export default function AccountHubScreen() {
                 icon={Star} 
                 label="Premium Status" 
                 badge="Active"
-                subtitle={user?.membershipExpiresAt ? `Expires: ${new Date(user.membershipExpiresAt).toLocaleDateString()}` : 'Monthly Plan'}
+                subtitle={user?.membershipExpiresAt ? `Expires: ${new Date(user.membershipExpiresAt).toLocaleDateString()}` : 'Lifetime Access'}
                 onPress={() => router.push('/upgrade')} 
               />
             ) : (
