@@ -30,7 +30,8 @@ export default function AccountHubScreen() {
     router.replace('/(auth)/login');
   };
 
-  const isPremium = user?.membershipType === 'premium' || user?.membershipType === 'admin';
+  const isAdmin = user?.membershipType === 'admin' || user?.email === 'admin@peakpulse.ai';
+  const isPremium = user?.membershipType === 'premium' || isAdmin;
 
   // Calculate real stats from user data
   const weightKg = user?.weight || 0;
@@ -145,7 +146,7 @@ export default function AccountHubScreen() {
           {/* ── MENU GROUPS ── */}
           <SectionLabel label="ACCOUNT" />
           <View style={styles.menuGroup}>
-            {user && user.membershipType === 'admin' && (
+            {user && isAdmin && (
               <>
                 <MenuOption 
                   icon={Shield} 

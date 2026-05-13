@@ -28,19 +28,21 @@ function NavigationHandler() {
     if (!user && !inAuthGroup) {
       router.replace('/(auth)/login');
     } else if (user && inAuthGroup) {
-      if (user.membershipType === 'admin') {
+      const isAdmin = user.membershipType === 'admin' || user.email === 'admin@peakpulse.ai';
+      if (isAdmin) {
         router.replace('/admin-dashboard' as any);
       } else {
         router.replace('/(tabs)/' as any);
       }
     } else if (user) {
+      const isAdmin = user.membershipType === 'admin' || user.email === 'admin@peakpulse.ai';
       const isPremiumScreen = segments[0] === 'insights' || segments[0] === 'reminders';
       const isAdminScreen = segments[0] === 'admin-dashboard';
       const isProgressTab = segments[1] === 'progress';
 
       if (user.membershipType === 'free' && (isPremiumScreen || isProgressTab)) {
         router.replace('/upgrade');
-      } else if (user.membershipType !== 'admin' && isAdminScreen) {
+      } else if (!isAdmin && isAdminScreen) {
         router.replace('/(tabs)/' as any);
       }
     }
