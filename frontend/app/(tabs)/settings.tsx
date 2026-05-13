@@ -184,13 +184,13 @@ export default function AccountHubScreen() {
               icon={Bell} 
               label="Notifications" 
               hasSwitch={true}
-              onPress={() => {}} 
+              onPress={() => router.push('/settings/notifications')} 
             />
             <Divider />
             <MenuOption 
               icon={Settings} 
               label="Settings" 
-              onPress={() => {}} 
+              onPress={() => router.push('/settings/privacy')} 
             />
           </View>
 

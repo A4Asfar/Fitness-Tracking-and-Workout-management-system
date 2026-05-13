@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, A
 import { useRouter, Stack } from 'expo-router';
 import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { 
-  ShieldCheck, 
+  Shield, 
   ArrowLeft, 
   Users, 
   UserCheck, 
@@ -107,7 +107,7 @@ export default function AdminDashboardScreen() {
           <ArrowLeft size={22} color={Colors.text} />
         </TouchableOpacity>
         <View style={styles.headerTitleWrap}>
-          <ShieldCheck size={18} color="#FF3B30" fill="#FF3B3020" />
+          <Shield size={18} color="#FF3B30" fill="#FF3B3020" />
           <Text style={styles.headerTitle}>Admin Control Center</Text>
         </View>
         <View style={{ width: 44 }} />
