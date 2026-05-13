@@ -31,6 +31,7 @@ const allowedOrigins = [
   'http://localhost:19006', // Expo Web
   'http://localhost:8081',  // New Expo Default
   /\.railway\.app$/,         // Any Railway deployment
+  /\.pages\.dev$/,           // Cloudflare Pages deployments
 ];
 
 app.use(cors({
