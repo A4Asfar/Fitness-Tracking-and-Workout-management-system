@@ -172,7 +172,7 @@ export default function SplashScreen() {
 
         {/* App title */}
         <Animated.View style={[s.titleWrap, { opacity: titleOp, transform: [{ translateY: titleTy }] }]}>
-          <Text style={s.title}>FITNESS TRACKER</Text>
+          <Text style={s.title}>PEAKPULSE</Text>
           <LinearGradient
             colors={[Colors.primary, '#9FE800', Colors.primary]}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}

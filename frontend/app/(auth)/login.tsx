@@ -146,7 +146,7 @@ export default function LoginScreen() {
           <LinearGradient colors={[Colors.primary + '30', Colors.primary + '10']} style={s.logoRing}>
             <Dumbbell size={40} color={Colors.primary} strokeWidth={1.6} />
           </LinearGradient>
-          <Text style={s.appName}>FITNESS TRACKER PRO</Text>
+          <Text style={s.appName}>PEAKPULSE</Text>
         </View>
 
         {/* Card */}

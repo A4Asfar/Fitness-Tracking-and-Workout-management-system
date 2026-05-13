@@ -76,7 +76,7 @@ export default function AboutScreen() {
               <Dumbbell size={48} color="#000" strokeWidth={1.8} />
             </LinearGradient>
           </View>
-          <Text style={styles.appName}>Fitness Tracker Pro</Text>
+          <Text style={styles.appName}>PeakPulse</Text>
           <View style={styles.versionBadge}>
             <Text style={styles.versionText}>VERSION 1.0</Text>
           </View>

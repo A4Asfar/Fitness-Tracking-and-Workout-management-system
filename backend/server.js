@@ -57,7 +57,7 @@ app.use(cors({
 app.get('/', (req, res) => {
   res.json({ 
     status: 'online', 
-    message: 'Fitness Tracker API is running smoothly',
+    message: 'PeakPulse API is running smoothly',
     environment: process.env.NODE_ENV || 'development'
   });
 });

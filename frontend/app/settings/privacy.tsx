@@ -57,7 +57,7 @@ export default function PrivacyScreen() {
 
         <Text style={styles.detailTitle}>Detailed Information</Text>
         <Text style={styles.detailText}>
-          This Privacy Policy describes how we collect, use, and process your personal data when you use the Fitness Tracker Pro mobile application.{"\n\n"}
+          This Privacy Policy describes how we collect, use, and process your personal data when you use the PeakPulse mobile application.{"\n\n"}
           1. Information We Collect: We collect your name, email address, weight, height, and fitness goals to personalize your experience.{"\n\n"}
           2. How We Use It: Your data helps our AI recommend workouts and track your consistency score.{"\n\n"}
           3. Sharing: We may share anonymized, aggregated data for research purposes, but never your identifiable personal information.

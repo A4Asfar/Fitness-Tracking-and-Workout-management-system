@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Fitness Tracker Pro",
-    "slug": "fitness-tracker-pro",
+    "name": "PeakPulse",
+    "slug": "peakpulse",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
