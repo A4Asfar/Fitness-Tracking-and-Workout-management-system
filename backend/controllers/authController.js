@@ -69,9 +69,18 @@ exports.login = asyncHandler(async (req, res) => {
     throw new Error('Please provide email and password');
   }
 
+  console.log(`🔐 Login attempt for: ${email}`);
   const user = await User.findOne({ email }).select('+password');
 
-  if (user && (await user.comparePassword(password))) {
+  if (!user) {
+    console.log(`❌ Login failed: User not found with email: ${email}`);
+    res.status(401);
+    throw new Error('Invalid email or password');
+  }
+
+  const isMatch = await user.comparePassword(password);
+  if (isMatch) {
+    console.log(`✅ Login successful for: ${email}`);
     const token = generateToken(user._id);
     
     const userData = user.toObject();
@@ -83,6 +92,7 @@ exports.login = asyncHandler(async (req, res) => {
       user: userData
     });
   } else {
+    console.log(`❌ Login failed: Password mismatch for: ${email}`);
     res.status(401);
     throw new Error('Invalid email or password');
   }
