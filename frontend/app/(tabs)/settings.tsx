@@ -8,7 +8,7 @@ import { useAuth } from '@/context/AuthContext';
 import { Colors, SPACING, SharedStyles } from '@/constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  User, ChevronRight, Bell, Shield, 
+  User, ChevronRight, Bell, Shield, ShieldCheck,
   CircleHelp, Info, LogOut, Settings, 
   Star, Sparkles, Camera, UserCheck,
   Play, TrendingUp, Dumbbell, Target
