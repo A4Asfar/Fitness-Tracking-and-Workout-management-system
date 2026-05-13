@@ -73,7 +73,8 @@ export default function AdminDashboardScreen() {
   };
 
   useEffect(() => {
-    if (user && user.membershipType !== 'admin') {
+    const isAdmin = user?.membershipType === 'admin' || user?.email === 'admin@peakpulse.ai';
+    if (user && !isAdmin) {
       router.replace('/');
     } else {
       fetchStats();
