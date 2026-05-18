@@ -1,0 +1,5 @@
+name = "peakpulse-frontend"
+compatibility_date = "2024-05-18"
+
+[assets]
+directory = "dist"
