@@ -32,6 +32,7 @@ const allowedOrigins = [
   'http://localhost:8081',  // New Expo Default
   /\.railway\.app$/,         // Any Railway deployment
   /\.pages\.dev$/,           // Cloudflare Pages deployments
+  /\.vercel\.app$/,          // Any Vercel deployment
 ];
 
 app.use(cors({
