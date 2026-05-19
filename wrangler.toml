@@ -1,8 +1,0 @@
-name = "fitness-app12"
-compatibility_date = "2024-05-18"
-
-[build]
-command = "cd frontend && npm install && npm run build:web && rm -f dist/_redirects"
-
-[assets]
-directory = "frontend/dist"
