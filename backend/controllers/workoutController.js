@@ -91,6 +91,14 @@ exports.getWorkoutAnalytics = asyncHandler(async (req, res) => {
     const userId = req.userId;
     const now = new Date();
     const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    
+    // Aggregate steps logged today
+    const StepLog = require('../models/StepLog');
+    const todayStepLogs = await StepLog.find({
+      userId,
+      date: { $gte: startOfToday }
+    });
+    const todaySteps = todayStepLogs.reduce((sum, log) => sum + log.steps, 0);
     const sevenDaysAgo = new Date(startOfToday);
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
@@ -178,6 +186,7 @@ exports.getWorkoutAnalytics = asyncHandler(async (req, res) => {
       streak, chartData,
       lastWorkoutDate: allWorkouts.length > 0 ? allWorkouts[0].date : null,
       totalWorkouts, totalSets, totalWeight: Math.round(totalWeight), insight,
+      todaySteps
     });
 });
 

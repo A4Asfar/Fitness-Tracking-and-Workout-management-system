@@ -154,6 +154,16 @@ const ACTIONS = [
     premium: false,
   },
   {
+    title: 'Step Tracker',
+    desc: 'Log & track your steps',
+    icon: Target,
+    route: '/step-logger',
+    accent: Colors.primary,
+    grad: [Colors.primary + '22', Colors.primary + '06'] as [string, string],
+    full: false,
+    premium: false,
+  },
+  {
     title: 'Notifications',
     desc: 'View your recent alerts',
     icon: Bell,
@@ -338,10 +348,12 @@ export default function HomeDashboard() {
         <View style={s.activityHub}>
           <Text style={s.hubTitle}>Daily Activity</Text>
           <View style={s.ringsRow}>
-            <ActivityRing 
-              icon={Target} value={Math.round(8000 + (stats?.totalWorkouts || 0) * 500).toLocaleString()} label="Steps" 
-              color={Colors.primary} progress={0.8} 
-            />
+            <TouchableOpacity onPress={() => router.push('/step-logger' as any)} activeOpacity={0.7}>
+              <ActivityRing 
+                icon={Target} value={(stats?.todaySteps || 0).toLocaleString()} label="Steps" 
+                color={Colors.primary} progress={Math.min(1, (stats?.todaySteps || 0) / 10000)} 
+              />
+            </TouchableOpacity>
             <ActivityRing 
               icon={Flame} value={stats?.weeklyStats?.[6]?.calories?.toString() || '0'} label="Calories" 
               color="#FF4B4B" progress={Math.min(1, (stats?.weeklyStats?.[6]?.calories || 0) / 2500)} 

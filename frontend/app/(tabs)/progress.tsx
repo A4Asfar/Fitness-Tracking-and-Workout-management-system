@@ -87,7 +87,7 @@ export default function ProgressAnalyticsScreen() {
             >
               {timeframe === 'weekly' && (
                 <LinearGradient
-                  colors={['#33E1FF', '#4F33FF']}
+                  colors={[Colors.primary, '#9FE800']}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                   style={StyleSheet.absoluteFill}
                 />
@@ -101,7 +101,7 @@ export default function ProgressAnalyticsScreen() {
             >
               {timeframe === 'monthly' && (
                 <LinearGradient
-                  colors={['#33E1FF', '#4F33FF']}
+                  colors={[Colors.primary, '#9FE800']}
                   start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                   style={StyleSheet.absoluteFill}
                 />
@@ -174,12 +174,12 @@ export default function ProgressAnalyticsScreen() {
 
           <View style={styles.insightCard}>
             <LinearGradient
-              colors={['#33E1FF20', 'transparent']}
+              colors={[Colors.primary + '20', 'transparent']}
               style={styles.insightGrad}
             >
               <View style={styles.insightHeader}>
                 <View style={styles.insightIconWrap}>
-                  <Dumbbell size={20} color="#33E1FF" />
+                  <Dumbbell size={20} color={Colors.primary} />
                 </View>
                 <Text style={styles.insightLabel}>Training Intensity</Text>
               </View>
@@ -262,7 +262,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   toggleTextActive: {
-    color: '#FFF',
+    color: '#000',
   },
   statsRow: {
     flexDirection: 'row',

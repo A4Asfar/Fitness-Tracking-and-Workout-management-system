@@ -68,6 +68,7 @@ app.use('/api/workouts', workoutRoutes);
 app.use('/api/meals', mealRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/weight', weightRoutes);
+app.use('/api/steps', require('./routes/steps'));
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/admin', require('./routes/admin'));
 app.use('/api/consultations', require('./routes/consultations'));

@@ -30,8 +30,8 @@ const SLIDES = [
     title: 'AI Fitness Suggestions',
     desc: 'Get personalized workout recommendations powered by AI. Adaptive plans that evolve with your progress.',
     icon: Sparkles,
-    color: Colors.accent,
-    grad: [Colors.accent, Colors.primary] as [string, string],
+    color: '#A855F7',
+    grad: ['#A855F7', Colors.primary] as [string, string],
   },
 ];
 

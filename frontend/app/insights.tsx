@@ -221,8 +221,8 @@ export default function AnalyticsDashboardScreen() {
             {/* Meals */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
-                <View style={[styles.iconWrap, { backgroundColor: '#00D1FF15' }]}>
-                  <Utensils size={20} color="#00D1FF" />
+                <View style={[styles.iconWrap, { backgroundColor: '#FFD70015' }]}>
+                  <Utensils size={20} color="#FFD700" />
                 </View>
                 <Text style={styles.cardTitle}>Meals Logged</Text>
               </View>

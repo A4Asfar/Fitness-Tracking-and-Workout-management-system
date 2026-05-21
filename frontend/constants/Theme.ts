@@ -1,15 +1,15 @@
 import { StyleSheet } from 'react-native';
 
 export const Colors = {
-  background:    '#0A0A0A',
-  card:          '#181818',
-  primary:       '#CCFF00',   // Neon Green
-  secondary:     '#39FF14',
+  background:    '#0F1117',
+  card:          '#1A1D24',
+  primary:       '#7C4DFF',   // Premium Accent (Purple)
+  secondary:     '#A970FF',   // Secondary Accent
   text:          '#FFFFFF',
-  textSecondary: '#8A8A8A',
+  textSecondary: '#A1A1AA',
   error:         '#FF4444',
-  border:        '#242424',
-  inputBg:       '#1E1E1E',
+  border:        '#232733',   // Elevated Surface / Border
+  inputBg:       '#232733',
 };
 
 export const SPACING = {

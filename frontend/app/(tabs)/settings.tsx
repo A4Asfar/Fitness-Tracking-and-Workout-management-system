@@ -49,7 +49,7 @@ export default function AccountHubScreen() {
   const heightStr = heightCm > 0 ? `${feet}'${inches}"` : '0\'0"';
 
   return (
-    <View style={[SharedStyles.container, { backgroundColor: '#000' }]}>
+    <View style={SharedStyles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <ScrollView 
@@ -67,7 +67,7 @@ export default function AccountHubScreen() {
         {/* ── Gradient Profile Card ── */}
         <View style={styles.cardContainer}>
           <LinearGradient
-            colors={['#33E1FF', '#4F33FF', '#CC33FF']}
+            colors={[Colors.card, Colors.background]}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
             style={styles.profileCard}
@@ -93,7 +93,7 @@ export default function AccountHubScreen() {
                 <Text style={styles.userName}>{user?.name || 'Fitness Athlete'}</Text>
                 <Text style={styles.userRole}>{isPremium ? 'Premium Member' : 'Standard Member'}</Text>
                 <View style={styles.proTag}>
-                  <Sparkles size={10} color="#FFF" />
+                  <Sparkles size={10} color={Colors.primary} />
                   <Text style={styles.proTagText}>{isPremium ? 'Pro Plan' : 'Free Plan'}</Text>
                 </View>
               </View>
@@ -132,14 +132,14 @@ export default function AccountHubScreen() {
               icon={Dumbbell} 
               count="12" 
               subtitle="This month" 
-              color="#33E1FF"
+              color={Colors.primary}
             />
             <GoalCard 
               title="Progress" 
               icon={TrendingUp} 
               count="+4%" 
               subtitle="Weight loss" 
-              color="#CC33FF"
+              color={Colors.secondary}
             />
           </View>
 
@@ -218,10 +218,10 @@ export default function AccountHubScreen() {
       {/* ── Floating Action Button ── */}
       <TouchableOpacity style={styles.fab}>
         <LinearGradient
-          colors={['#CC33FF', '#4F33FF']}
+          colors={[Colors.primary, Colors.secondary]}
           style={styles.fabGradient}
         >
-          <Play size={28} color="#FFF" fill="#FFF" />
+          <Play size={28} color="#000" fill="#000" />
         </LinearGradient>
       </TouchableOpacity>
 
@@ -340,10 +340,12 @@ const styles = StyleSheet.create({
   profileCard: {
     borderRadius: 32,
     padding: 24,
-    shadowColor: '#4F33FF',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.4,
-    shadowRadius: 20,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 16,
     elevation: 10,
   },
   profileInfo: {
@@ -358,11 +360,11 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.5)',
+    borderColor: 'rgba(255, 255, 255, 0.2)',
     overflow: 'hidden',
   },
   avatarImg: {
@@ -373,14 +375,14 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: 0,
     right: 0,
-    backgroundColor: '#33E1FF',
+    backgroundColor: Colors.primary,
     width: 28,
     height: 28,
     borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 3,
-    borderColor: '#4F33FF',
+    borderColor: Colors.card,
   },
   profileText: {
     marginLeft: 16,
@@ -393,7 +395,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   userRole: {
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: Colors.textSecondary,
     fontSize: 14,
     fontWeight: '500',
     marginTop: 2,
@@ -401,7 +403,7 @@ const styles = StyleSheet.create({
   proTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    backgroundColor: 'rgba(124, 77, 255, 0.15)',
     alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -409,10 +411,10 @@ const styles = StyleSheet.create({
     marginTop: 8,
     gap: 4,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(124, 77, 255, 0.3)',
   },
   proTagText: {
-    color: '#FFF',
+    color: Colors.primary,
     fontSize: 11,
     fontWeight: '700',
   },
@@ -423,12 +425,12 @@ const styles = StyleSheet.create({
   },
   statItem: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: 'rgba(255, 255, 255, 0.04)',
     borderRadius: 20,
     padding: 12,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: 'rgba(255, 255, 255, 0.08)',
   },
   statValue: {
     color: '#FFF',
@@ -436,13 +438,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   statLabel: {
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: Colors.textSecondary,
     fontSize: 11,
     fontWeight: '600',
     marginTop: 2,
   },
   statSubValue: {
-    color: 'rgba(255, 255, 255, 0.4)',
+    color: 'rgba(255, 255, 255, 0.35)',
     fontSize: 9,
     fontWeight: '500',
     marginTop: 4,
@@ -465,14 +467,14 @@ const styles = StyleSheet.create({
   },
   goalCard: {
     flex: 1,
-    backgroundColor: '#111',
+    backgroundColor: Colors.card,
     borderRadius: 24,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 12,
     borderWidth: 1,
-    borderColor: '#222',
+    borderColor: Colors.border,
   },
   goalIconBox: {
     width: 40,
@@ -506,11 +508,11 @@ const styles = StyleSheet.create({
     opacity: 0.5,
   },
   menuGroup: {
-    backgroundColor: '#0A0A0A',
+    backgroundColor: Colors.card,
     borderRadius: 24,
     marginBottom: 32,
     borderWidth: 1,
-    borderColor: '#1A1A1A',
+    borderColor: Colors.border,
     overflow: 'hidden',
   },
   menuOption: {
@@ -523,7 +525,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: '#111',
+    backgroundColor: Colors.background,
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
@@ -556,12 +558,12 @@ const styles = StyleSheet.create({
     width: 46,
     height: 26,
     borderRadius: 13,
-    backgroundColor: '#222',
+    backgroundColor: Colors.border,
     padding: 2,
     justifyContent: 'center',
   },
   switchEnabled: {
-    backgroundColor: '#CCFF00',
+    backgroundColor: Colors.primary,
   },
   switchThumb: {
     width: 22,
@@ -574,7 +576,7 @@ const styles = StyleSheet.create({
   },
   divider: {
     height: 1,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: Colors.border,
     marginHorizontal: 18,
   },
   logoutBtn: {
@@ -598,7 +600,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    shadowColor: '#CC33FF',
+    shadowColor: Colors.primary,
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.5,
     shadowRadius: 15,
@@ -618,12 +620,12 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.8)',
   },
   modalContent: {
-    backgroundColor: '#111',
+    backgroundColor: Colors.card,
     borderRadius: 32,
     padding: 32,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#222',
+    borderColor: Colors.border,
   },
   modalIconWrap: {
     width: 72,
@@ -654,7 +656,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 56,
     borderRadius: 18,
-    backgroundColor: '#1A1A1A',
+    backgroundColor: Colors.border,
     justifyContent: 'center',
     alignItems: 'center',
   },

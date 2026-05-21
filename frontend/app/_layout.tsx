@@ -7,15 +7,19 @@ import { View, ActivityIndicator } from 'react-native';
 import { Colors } from '@/constants/Theme';
 import SplashScreen from '@/components/SplashScreen';
 
+let appHasBooted = false;
+
 function NavigationHandler() {
   const { user, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(!appHasBooted);
 
   useEffect(() => {
+    if (appHasBooted) return;
     const timer = setTimeout(() => {
       setShowSplash(false);
+      appHasBooted = true;
     }, 2500);
     return () => clearTimeout(timer);
   }, []);
