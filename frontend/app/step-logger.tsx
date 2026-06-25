@@ -35,15 +35,18 @@ export default function StepLoggerScreen() {
   const [logs, setLogs] = useState<StepLog[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   const fetchLogs = async () => {
+    setError(null);
     try {
       const res = await api.get('/steps');
       setLogs(res.data);
-    } catch (error) {
-      console.error('Fetch step logs error:', error);
+    } catch (err: any) {
+      console.error('Fetch step logs error:', err);
+      setError(err.message || 'Failed to sync step logs.');
     } finally {
       setLoading(false);
       Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }).start();
@@ -194,6 +197,13 @@ export default function StepLoggerScreen() {
 
           {loading ? (
             <ActivityIndicator size="small" color={Colors.primary} style={{ marginTop: 20 }} />
+          ) : error ? (
+            <View style={{ alignItems: 'center', padding: 20 }}>
+              <Text style={{ color: '#FF4B4B', fontSize: 13, fontWeight: '600', marginBottom: 12, textAlign: 'center' }}>{error}</Text>
+              <TouchableOpacity onPress={() => { setLoading(true); fetchLogs(); }} style={{ backgroundColor: Colors.primary, paddingHorizontal: 16, paddingVertical: 8, borderRadius: 10 }}>
+                <Text style={{ color: '#000', fontSize: 12, fontWeight: '800' }}>Retry Sync</Text>
+              </TouchableOpacity>
+            </View>
           ) : logs.length === 0 ? (
             <View style={styles.emptyHistory}>
               <Info size={32} color="#333" />

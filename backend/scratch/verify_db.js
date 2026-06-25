@@ -6,8 +6,7 @@ const User = require('../models/User');
 const Workout = require('../models/Workout');
 const Trainer = require('../models/Trainer');
 const WorkoutSuggestion = require('../models/WorkoutSuggestion');
-const ChatHistory = require('../models/ChatHistory');
-const ChatKnowledge = require('../models/ChatKnowledge');
+const Chat = require('../models/Chat');
 const MealSelection = require('../models/MealSelection');
 const TrainerConsult = require('../models/TrainerConsult');
 const Notification = require('../models/Notification');
@@ -24,8 +23,7 @@ async function verify() {
       { name: 'Workouts', model: Workout },
       { name: 'Trainers', model: Trainer },
       { name: 'Workout Suggestions', model: WorkoutSuggestion },
-      { name: 'Chat History', model: ChatHistory },
-      { name: 'Chat Knowledge', model: ChatKnowledge },
+      { name: 'Chats', model: Chat },
       { name: 'Meal Selections', model: MealSelection },
       { name: 'Trainer Consultations', model: TrainerConsult },
       { name: 'Notifications', model: Notification },
@@ -51,9 +49,9 @@ async function verify() {
     const suggestions = await WorkoutSuggestion.find().limit(2);
     suggestions.forEach(s => console.log(`- [${s.level}] ${s.exercise}: ${s.reason}`));
 
-    console.log('\n--- CHAT KNOWLEDGE (Sample) ---');
-    const knowledge = await ChatKnowledge.find().limit(2);
-    knowledge.forEach(k => console.log(`- Category: ${k.category} (${k.keywords.slice(0,3).join(', ')}...)`));
+    console.log('\n--- CHATS (Sample) ---');
+    const chats = await Chat.find().limit(2);
+    chats.forEach(c => console.log(`- Chat: ${c.title} (${c.messages?.length || 0} messages)`));
 
     if (await User.countDocuments() > 0) {
       console.log('\n--- RECENT USERS ---');

@@ -38,6 +38,8 @@ export default function DietScreen() {
   const [suggestions, setSuggestions] = useState<NutritionSuggestion[]>([]);
   const { user } = useAuth();
   const { mealName } = useLocalSearchParams<{ mealName?: string }>();
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const currentGoal = user?.fitnessGoal || 'General Fitness';
 
@@ -69,13 +71,16 @@ export default function DietScreen() {
   }, [mealName]);
 
   const fetchMeals = useCallback(async () => {
+    setError(null);
     try {
       const data = await MealService.getMeals();
       setMeals(data);
-    } catch (error: any) {
-      console.error('Fetch meals error:', error);
+    } catch (err: any) {
+      console.error('Fetch meals error:', err);
+      setError(err.message || 'Failed to fetch meals');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   }, []);
 
@@ -107,8 +112,8 @@ export default function DietScreen() {
       setMeals([data, ...meals]);
       setMealInput('');
       setSelectedMeal(null);
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to add meal');
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to add meal');
     } finally {
       setIsAdding(false);
     }
@@ -118,8 +123,8 @@ export default function DietScreen() {
     try {
       await MealService.deleteMeal(id);
       setMeals(meals.filter(m => m._id !== id));
-    } catch (error: any) {
-      Alert.alert('Error', error.message || 'Failed to delete meal');
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Failed to delete meal');
     }
   };
 
@@ -137,6 +142,20 @@ export default function DietScreen() {
     return (
       <View style={[SharedStyles.container, { justifyContent: 'center' }]}>
         <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (error && !refreshing) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <Text style={{ color: '#FF4B4B', fontSize: 16, fontWeight: '700', textAlign: 'center', marginBottom: 16 }}>{error}</Text>
+        <TouchableOpacity 
+          onPress={() => { setLoading(true); fetchMeals(); }} 
+          style={{ backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 }}
+        >
+          <Text style={{ color: '#000', fontWeight: '900' }}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }

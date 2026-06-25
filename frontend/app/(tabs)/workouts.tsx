@@ -23,8 +23,8 @@ const PROGRAMS = [
     calories: '400-500 cal',
     level: 'Intermediate',
     icon: Dumbbell,
-    colors: [Colors.primary, '#9FE800'],
-    accent: Colors.primary,
+    colors: ['#1A1D24', '#12141A'],
+    accent: '#7C4DFF',
   },
   {
     id: 'hiit',
@@ -36,7 +36,7 @@ const PROGRAMS = [
     calories: '350-450 cal',
     level: 'Intermediate',
     icon: Zap,
-    colors: ['#39FF14', '#28CC00'],
+    colors: ['#1A1D24', '#12141A'],
     accent: '#39FF14',
   },
   {
@@ -49,7 +49,7 @@ const PROGRAMS = [
     calories: '150-200 cal',
     level: 'Beginner',
     icon: Heart,
-    colors: ['#00FF85', '#00B35D'],
+    colors: ['#1A1D24', '#12141A'],
     accent: '#00FF85',
   },
   {
@@ -62,7 +62,7 @@ const PROGRAMS = [
     calories: '250-300 cal',
     level: 'Intermediate',
     icon: Target,
-    colors: ['#CCFF00', '#2E2E2E'],
+    colors: ['#1A1D24', '#12141A'],
     accent: '#CCFF00',
   },
 ];
@@ -99,13 +99,16 @@ export default function WorkoutsScreen() {
   const [workouts, setWorkouts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchWorkouts = useCallback(async () => {
+    setError(null);
     try {
       const response = await api.get('/workouts');
       setWorkouts(response.data);
-    } catch (error) {
-      console.error('Failed to fetch workouts', error);
+    } catch (err: any) {
+      console.error('Failed to fetch workouts', err);
+      setError(err.message || 'Failed to fetch workouts');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -127,6 +130,20 @@ export default function WorkoutsScreen() {
     const date = new Date(dateStr);
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
   };
+
+  if (error && !refreshing) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <Text style={{ color: '#FF4B4B', fontSize: 16, fontWeight: '700', textAlign: 'center', marginBottom: 16 }}>{error}</Text>
+        <TouchableOpacity 
+          onPress={() => { setLoading(true); fetchWorkouts(); }} 
+          style={{ backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 }}
+        >
+          <Text style={{ color: '#000', fontWeight: '900' }}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -171,10 +188,10 @@ export default function WorkoutsScreen() {
                 style={styles.card}
               >
                 <View style={styles.cardTop}>
-                  <View style={styles.iconBox}>
-                    <program.icon size={24} color="#FFF" />
+                  <View style={[styles.iconBox, { backgroundColor: program.accent + '20' }]}>
+                    <program.icon size={24} color={program.accent} />
                   </View>
-                  <View style={styles.levelBadge}>
+                  <View style={[styles.levelBadge, { backgroundColor: program.accent + '15' }]}>
                     <Text style={[styles.levelText, { color: program.accent }]}>{program.level}</Text>
                   </View>
                 </View>
@@ -297,6 +314,8 @@ const styles = StyleSheet.create({
     padding: 24,
     minHeight: 200,
     justifyContent: 'space-between',
+    borderWidth: 1.5,
+    borderColor: '#232733',
   },
   cardTop: {
     flexDirection: 'row',

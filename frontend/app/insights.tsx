@@ -135,29 +135,33 @@ export default function AnalyticsDashboardScreen() {
   
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  const fetchData = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      const stats = await getDashboardAnalytics();
+      setData(stats);
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true
+      }).start();
+    } catch (err: any) {
+      console.error('Failed to load analytics', err);
+      setError(err.message || 'Failed to sync analytics data.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     if (user && user.membershipType !== 'premium' && user.membershipType !== 'admin') {
       router.replace('/upgrade');
       return;
     }
-
-    const fetchData = async () => {
-      try {
-        const stats = await getDashboardAnalytics();
-        setData(stats);
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 600,
-          useNativeDriver: true
-        }).start();
-      } catch (err) {
-        console.error('Failed to load analytics', err);
-      } finally {
-        setLoading(false);
-      }
-    };
 
     if (user) {
       fetchData();
@@ -168,6 +172,23 @@ export default function AnalyticsDashboardScreen() {
     return (
       <View style={{ flex: 1, backgroundColor: Colors.background, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (error && !loading) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <LinearGradient colors={['#FF4B4B15', 'transparent']} style={StyleSheet.absoluteFill} />
+        <Text style={{ color: '#FF4B4B', fontSize: 16, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>SYNC ERROR</Text>
+        <Text style={{ color: Colors.textSecondary, fontSize: 14, fontWeight: '500', textAlign: 'center', marginBottom: 28, lineHeight: 22 }}>{error}</Text>
+        <TouchableOpacity 
+          onPress={fetchData} 
+          style={{ height: 54, width: 160, borderRadius: 18, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}
+          activeOpacity={0.8}
+        >
+          <Text style={{ color: '#000', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 }}>RETRY SYNC</Text>
+        </TouchableOpacity>
       </View>
     );
   }

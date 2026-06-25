@@ -28,13 +28,16 @@ export default function NotificationsScreen() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchNotifications = async () => {
+    setError(null);
     try {
       const res = await api.get('/notifications');
       setNotifications(res.data);
-    } catch (error) {
-      console.error('Fetch notifications error:', error);
+    } catch (err: any) {
+      console.error('Fetch notifications error:', err);
+      setError(err.message || 'Failed to sync notifications.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -86,6 +89,23 @@ export default function NotificationsScreen() {
     return (
       <View style={[SharedStyles.container, { justifyContent: 'center' }]}>
         <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (error && !refreshing) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <LinearGradient colors={['#FF4B4B15', 'transparent']} style={StyleSheet.absoluteFill} />
+        <Text style={{ color: '#FF4B4B', fontSize: 16, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>SYNC ERROR</Text>
+        <Text style={{ color: Colors.textSecondary, fontSize: 14, fontWeight: '500', textAlign: 'center', marginBottom: 28, lineHeight: 22 }}>{error}</Text>
+        <TouchableOpacity 
+          onPress={() => { setLoading(true); fetchNotifications(); }} 
+          style={{ height: 54, width: 160, borderRadius: 18, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}
+          activeOpacity={0.8}
+        >
+          <Text style={{ color: '#000', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 }}>RETRY SYNC</Text>
+        </TouchableOpacity>
       </View>
     );
   }

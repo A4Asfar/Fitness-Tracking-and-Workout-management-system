@@ -12,7 +12,7 @@ import {
   History as HistoryIcon, User as UserIcon,
   ChevronRight, TrendingUp, Settings, Dumbbell,
   Zap, Quote, Bell, Sparkles, Activity, ShieldCheck, Users, HeartPulse,
-  Brain, ArrowUpRight, Scale, Target
+  Brain, ArrowUpRight, Scale, Target, Bot
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -81,6 +81,16 @@ const ACTIONS = [
     accent: Colors.primary,
     grad: [Colors.primary + '28', Colors.primary + '08'] as [string, string],
     full: true,
+    premium: false,
+  },
+  {
+    title: 'Trainer Consultations',
+    desc: 'Connect with expert coaches',
+    icon: Users,
+    route: '/trainer',
+    accent: '#CCFF00',
+    grad: ['#CCFF0022', '#CCFF0006'] as [string, string],
+    full: false,
     premium: false,
   },
   {
@@ -257,6 +267,7 @@ export default function HomeDashboard() {
   const [insights, setInsights] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const heroOp = useRef(new Animated.Value(0)).current;
   const heroTy = useRef(new Animated.Value(-20)).current;
@@ -265,6 +276,7 @@ export default function HomeDashboard() {
   const quoteOp = useRef(new Animated.Value(0)).current;
 
   const fetchData = async () => {
+    setError(null);
     try {
       const [analyticsRes, workoutsRes] = await Promise.all([
         api.get('/workouts/analytics'),
@@ -283,8 +295,9 @@ export default function HomeDashboard() {
           advice: "Upgrade to PRO to unlock advanced AI-driven training insights and personalized recovery scores."
         });
       }
-    } catch (e) {
+    } catch (e: any) {
       console.log('Home fetch error:', e);
+      setError(e.message || 'Failed to sync dashboard. Please check your connection.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -325,12 +338,30 @@ export default function HomeDashboard() {
     );
   }
 
+  if (error && !refreshing) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <LinearGradient colors={['#FF4B4B15', 'transparent']} style={StyleSheet.absoluteFill} />
+        <Text style={{ color: '#FF4B4B', fontSize: 16, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>SYNC ERROR</Text>
+        <Text style={{ color: Colors.textSecondary, fontSize: 14, fontWeight: '500', textAlign: 'center', marginBottom: 28, lineHeight: 22 }}>{error}</Text>
+        <TouchableOpacity 
+          onPress={() => { setLoading(true); fetchData(); }} 
+          style={{ height: 54, width: 160, borderRadius: 18, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}
+          activeOpacity={0.8}
+        >
+          <Text style={{ color: '#000', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 }}>RETRY SYNC</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   const firstName = user?.name?.split(' ')[0] ?? 'Athlete';
   const isPremium = user?.membershipType === 'premium' || user?.membershipType === 'admin';
   const isAdmin   = user?.membershipType === 'admin';
   const filteredActions = ACTIONS.filter(a => !a.premium || isPremium);
 
   return (
+    <View style={{ flex: 1, backgroundColor: '#000' }}>
     <ScrollView
       style={s.root}
       contentContainerStyle={{ paddingBottom: 64 }}
@@ -368,8 +399,34 @@ export default function HomeDashboard() {
         {/* ── Quick Stats Row ── */}
         <View style={s.quickStats}>
            <QuickStat label="Streak" value={stats?.streak?.toString() ?? '0'} accent={Colors.primary} />
-           <QuickStat label="Lifted (kg)" value={stats?.totalWeight > 1000 ? `${(stats.totalWeight/1000).toFixed(1)}k` : (stats?.totalWeight?.toString() ?? '0')} accent="#00D1FF" />
+           <QuickStat label="BMI" value={stats?.bmi ? `${stats.bmi} (${stats.bmiCategory})` : '--'} accent="#00D1FF" />
            <QuickStat label="Workouts" value={stats?.totalWorkouts?.toString() ?? '0'} accent="#FFD700" />
+        </View>
+
+        {/* ── Calories Summary Card ── */}
+        <View style={s.caloriesCard}>
+          <LinearGradient colors={['#1A1D24', '#12141A']} style={s.caloriesGrad}>
+            <View style={s.calHeader}>
+              <Flame size={18} color="#FF4B4B" />
+              <Text style={s.calTitle}>Calories Summary</Text>
+            </View>
+            <View style={s.calRow}>
+              <View style={s.calCol}>
+                <Text style={s.calVal}>{stats?.caloriesSummary?.consumed || 0}</Text>
+                <Text style={s.calLabel}>Intake (kcal)</Text>
+              </View>
+              <View style={s.calDivider} />
+              <View style={s.calCol}>
+                <Text style={s.calVal}>{stats?.caloriesSummary?.burned || 0}</Text>
+                <Text style={s.calLabel}>Burned (kcal)</Text>
+              </View>
+              <View style={s.calDivider} />
+              <View style={s.calCol}>
+                <Text style={s.calVal}>{stats?.caloriesSummary?.target || 2000}</Text>
+                <Text style={s.calLabel}>Target (kcal)</Text>
+              </View>
+            </View>
+          </LinearGradient>
         </View>
 
         {/* ── AI Insight Card ── */}
@@ -443,6 +500,21 @@ export default function HomeDashboard() {
           </TouchableOpacity>
         )}
     </ScrollView>
+
+    {/* ── Floating AI Coach Button ── */}
+    <TouchableOpacity
+      style={s.aiFab}
+      onPress={() => router.push('/ai-chat' as any)}
+      activeOpacity={0.85}
+    >
+      <LinearGradient
+        colors={[Colors.primary, '#A970FF']}
+        style={s.aiFabGrad}
+      >
+        <Bot size={24} color="#FFF" strokeWidth={2.5} />
+      </LinearGradient>
+    </TouchableOpacity>
+    </View>
   );
 }
 
@@ -528,5 +600,75 @@ const s = StyleSheet.create({
   emptyNudgeDesc: {
     color: Colors.textSecondary, fontSize: 12, fontWeight: '500',
     marginTop: 4, marginLeft: 16, lineHeight: 18,
+  },
+
+  /* Floating AI Coach Button */
+  aiFab: {
+    position: 'absolute',
+    bottom: 80,
+    right: 20,
+    width: 58,
+    height: 58,
+    borderRadius: 29,
+    elevation: 10,
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.5,
+    shadowRadius: 14,
+    zIndex: 100,
+  },
+  aiFabGrad: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 29,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  /* Calories Card */
+  caloriesCard: {
+    borderRadius: 24,
+    marginBottom: 20,
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: '#1A1D24',
+  },
+  caloriesGrad: {
+    padding: 20,
+  },
+  calHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 16,
+  },
+  calTitle: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  calRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  calCol: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  calVal: {
+    color: '#FFF',
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  calLabel: {
+    color: Colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 4,
+  },
+  calDivider: {
+    width: 1.5,
+    height: '60%',
+    backgroundColor: '#2A2A34',
   },
 });

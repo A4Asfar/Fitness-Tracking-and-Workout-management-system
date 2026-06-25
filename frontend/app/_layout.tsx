@@ -63,6 +63,7 @@ function NavigationHandler() {
       <Stack.Screen name="create-workout" options={{ presentation: 'modal', title: 'Log Workout' }} />
       <Stack.Screen name="help" options={{ presentation: 'card' }} />
       <Stack.Screen name="body-health" options={{ presentation: 'card' }} />
+      <Stack.Screen name="trainer" options={{ presentation: 'card' }} />
       <Stack.Screen name="+not-found" />
     </Stack>
   );

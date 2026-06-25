@@ -81,6 +81,7 @@ export default function WorkoutDetailScreen() {
   const [editMode, setEditMode] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   /* editable fields */
   const [sets,   setSets]   = useState('');
@@ -99,14 +100,16 @@ export default function WorkoutDetailScreen() {
   }, [loading]);
 
   const fetchWorkout = async () => {
+    setError(null);
     try {
       const res = await api.get(`/workouts/${id}`);
       setWorkout(res.data);
       setSets(res.data.sets?.toString() ?? '');
       setReps(res.data.reps?.toString() ?? '');
       setWeight(res.data.weight?.toString() ?? '');
-    } catch {
-      safeBack();
+    } catch (err: any) {
+      console.error('Fetch workout failed:', err);
+      setError(err.message || 'Failed to sync workout details.');
     } finally {
       setLoading(false);
     }
@@ -166,6 +169,39 @@ export default function WorkoutDetailScreen() {
       <View style={styles.loader}>
         <ActivityIndicator size="large" color={Colors.primary} />
         <Text style={styles.loaderText}>Loading workout…</Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <LinearGradient colors={['#FF4B4B15', 'transparent']} style={StyleSheet.absoluteFill} />
+        <Text style={{ color: '#FF4B4B', fontSize: 16, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>SYNC ERROR</Text>
+        <Text style={{ color: Colors.textSecondary, fontSize: 14, fontWeight: '500', textAlign: 'center', marginBottom: 28, lineHeight: 22 }}>{error}</Text>
+        <TouchableOpacity 
+          onPress={() => { setLoading(true); fetchWorkout(); }} 
+          style={{ height: 54, width: 160, borderRadius: 18, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}
+          activeOpacity={0.8}
+        >
+          <Text style={{ color: '#000', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 }}>RETRY SYNC</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!workout) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <Text style={{ color: Colors.text, fontSize: 18, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>Workout Not Found</Text>
+        <Text style={{ color: Colors.textSecondary, fontSize: 14, fontWeight: '500', textAlign: 'center', marginBottom: 28 }}>This session may have been deleted.</Text>
+        <TouchableOpacity 
+          onPress={() => safeBack()} 
+          style={{ height: 54, width: 160, borderRadius: 18, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}
+          activeOpacity={0.8}
+        >
+          <Text style={{ color: '#000', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 }}>GO BACK</Text>
+        </TouchableOpacity>
       </View>
     );
   }

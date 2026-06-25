@@ -25,12 +25,16 @@ export default function ProgressAnalyticsScreen() {
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
 
+  const [error, setError] = useState<string | null>(null);
+
   const fetchAnalytics = async () => {
+    setError(null);
     try {
       const res = await api.get('/workouts/analytics');
       setData(res.data);
     } catch (e: any) {
       console.log('Analytics error:', e.message);
+      setError(e.message || 'Failed to sync progress data.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -44,20 +48,30 @@ export default function ProgressAnalyticsScreen() {
   const onRefresh = () => { setRefreshing(true); fetchAnalytics(); };
 
   // Calculate real stats from user data and analytics
-  const weightKg = user?.weight || 163.5; // Fallback for demo
+  const weightKg = user?.weight || 0;
   const weightLbs = Math.round(weightKg * 2.20462);
-  
-  // Mock trends for UI matching
-  const trends = {
-    weight: { value: '-3.5', isPos: false },
-    calories: { value: '+200', isPos: true },
-    workouts: { value: '+12', isPos: true }
-  };
 
   if (loading && !refreshing) {
     return (
       <View style={styles.loader}>
         <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (error && !refreshing) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <LinearGradient colors={['#FF4B4B15', 'transparent']} style={StyleSheet.absoluteFill} />
+        <Text style={{ color: '#FF4B4B', fontSize: 16, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>SYNC ERROR</Text>
+        <Text style={{ color: Colors.textSecondary, fontSize: 14, fontWeight: '500', textAlign: 'center', marginBottom: 28, lineHeight: 22 }}>{error}</Text>
+        <TouchableOpacity 
+          onPress={() => { setLoading(true); fetchAnalytics(); }} 
+          style={{ height: 54, width: 160, borderRadius: 18, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}
+          activeOpacity={0.8}
+        >
+          <Text style={{ color: '#000', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 }}>RETRY SYNC</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -115,21 +129,21 @@ export default function ProgressAnalyticsScreen() {
         <View style={styles.statsRow}>
           <ProgressStatCard 
             label="Current Weight" 
-            value={String(weightLbs)} 
-            trend={trends.weight.value} 
-            isPositiveTrend={trends.weight.isPos}
+            value={weightKg > 0 ? `${weightLbs} lbs` : '--'} 
+            trend={weightKg > 0 ? `${weightKg} kg` : 'Not set'} 
+            isPositiveTrend={false}
           />
           <ProgressStatCard 
-            label="Avg Calories" 
-            value="2,400" 
-            trend={trends.calories.value} 
-            isPositiveTrend={trends.calories.isPos}
+            label="BMI Index" 
+            value={data?.bmi ? String(data.bmi) : '--'} 
+            trend={data?.bmiCategory || 'N/A'} 
+            isPositiveTrend={true}
           />
           <ProgressStatCard 
             label="Total Workouts" 
-            value={String(data?.totalWorkouts ?? 127)} 
-            trend={trends.workouts.value} 
-            isPositiveTrend={trends.workouts.isPos}
+            value={String(data?.totalWorkouts ?? 0)} 
+            trend="All-time" 
+            isPositiveTrend={true}
           />
         </View>
 
@@ -144,11 +158,24 @@ export default function ProgressAnalyticsScreen() {
 
           <View style={styles.chartPlaceholder}>
              <LinearGradient
-              colors={['#111', '#050505']}
-              style={styles.chartInner}
+              colors={['#161616', '#0A0A0A']}
+              style={styles.chartInnerContent}
             >
-              <Activity size={32} color="rgba(255,255,255,0.1)" />
-              <Text style={styles.chartText}>Chart visualization coming soon</Text>
+              <View style={styles.chartBarWrapper}>
+                {(data?.chartData || []).map((day: any, idx: number) => {
+                  const maxVolume = Math.max(...(data?.chartData || []).map((d: any) => d.volume), 100);
+                  const barHeight = Math.round((day.volume / maxVolume) * 110) + 10;
+                  const dayName = new Date(day.date).toLocaleDateString(undefined, { weekday: 'short' }).substring(0, 3);
+                  return (
+                    <View key={idx} style={styles.barCol}>
+                      <View style={styles.barTrack}>
+                        <View style={[styles.barFill, { height: barHeight }]} />
+                      </View>
+                      <Text style={styles.barLabel}>{dayName}</Text>
+                    </View>
+                  );
+                })}
+              </View>
             </LinearGradient>
           </View>
 
@@ -167,7 +194,7 @@ export default function ProgressAnalyticsScreen() {
                 </View>
                 <Text style={styles.insightLabel}>Calories Burned</Text>
               </View>
-              <Text style={styles.insightValue}>{data?.totalCalories ?? '12,450'} kcal</Text>
+              <Text style={styles.insightValue}>{data?.totalCalories ?? 0} kcal</Text>
               <Text style={styles.insightSub}>You've burned 15% more than last week!</Text>
             </LinearGradient>
           </View>
@@ -321,23 +348,47 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   chartPlaceholder: {
-    height: 200,
+    height: 220,
     marginBottom: 40,
     borderRadius: 32,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#222',
+    borderWidth: 1.5,
+    borderColor: '#1F1F1F',
   },
-  chartInner: {
+  chartInnerContent: {
     flex: 1,
+    padding: 20,
     justifyContent: 'center',
-    alignItems: 'center',
-    gap: 12,
   },
-  chartText: {
-    color: 'rgba(255, 255, 255, 0.2)',
-    fontSize: 13,
-    fontWeight: '500',
+  chartBarWrapper: {
+    flexDirection: 'row',
+    alignItems: 'flex-end',
+    justifyContent: 'space-between',
+    height: 140,
+    width: '100%',
+  },
+  barCol: {
+    alignItems: 'center',
+    flex: 1,
+  },
+  barTrack: {
+    height: 110,
+    width: 14,
+    backgroundColor: '#1E1E1E',
+    borderRadius: 7,
+    justifyContent: 'flex-end',
+    overflow: 'hidden',
+  },
+  barFill: {
+    width: '100%',
+    backgroundColor: Colors.primary,
+    borderRadius: 7,
+  },
+  barLabel: {
+    color: Colors.textSecondary,
+    fontSize: 10,
+    fontWeight: '700',
+    marginTop: 8,
   },
   insightCard: {
     marginBottom: 16,

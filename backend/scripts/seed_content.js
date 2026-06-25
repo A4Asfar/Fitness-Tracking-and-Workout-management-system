@@ -2,6 +2,7 @@ require('dotenv').config();
 const mongoose = require('mongoose');
 const Trainer = require('../models/Trainer');
 const WorkoutSuggestion = require('../models/WorkoutSuggestion');
+const Meal = require('../models/Meal');
 
 const TRAINERS = [
   {
@@ -75,34 +76,34 @@ const SUGGESTIONS = [
   { level: 'Advanced', focus: 'HIIT', exercise: 'Burpees', reason: 'The ultimate test of conditioning and power.', type: 'HIIT', icon: 'Zap' }
 ];
 
-const CHAT_KNOWLEDGE = [
-  {
-    category: 'weight loss',
-    keywords: ['weight loss', 'lose weight', 'slimming', 'lose fat'],
-    responses: [
-      "To lose weight effectively, focus on a sustainable caloric deficit. Aim for 200-500 calories below maintenance.",
-      "Weight loss is a marathon, not a sprint. Prioritize high-volume, low-calorie foods like leafy greens to stay full.",
-      "Combine steady-state cardio with strength training to burn fat while preserving your hard-earned muscle mass."
-    ]
-  },
-  {
-    category: 'muscle gain',
-    keywords: ['muscle gain', 'build muscle', 'bulking', 'hypertrophy', 'get big'],
-    responses: [
-      "Muscle growth requires progressive overload—try to add a little weight or an extra rep every single week.",
-      "To build muscle, you need a slight caloric surplus. Focus on quality complex carbs and lean protein sources.",
-      "Make sure you're getting enough sleep! Muscle isn't built in the gym; it's built while you recover and rest."
-    ]
-  },
-  {
-    category: 'general',
-    keywords: ['general', 'fitness', 'advice'],
-    responses: [
-      "That's a great question! While it depends on your specific context, staying consistent with training and nutrition is the golden rule.",
-      "The best plan is the one you can stick to. Focus on making small, sustainable changes to your daily routine.",
-      "Every body is different, so listen to yours. Adjust your intensity and fuel based on how you're feeling and performing."
-    ]
-  }
+const MEALS = [
+  // Weight Loss
+  { mealName: 'Egg White Omelet', category: 'Breakfast', calories: 180, protein: 24, carbs: 4, fats: 6, recommendedFor: 'Weight Loss', benefit: 'Egg whites provide high-quality leucine for muscle preservation while keeping caloric density extremely low.', icon: 'Coffee' },
+  { mealName: 'Grilled Chicken Salad', category: 'Lunch', calories: 320, protein: 35, carbs: 12, fats: 14, recommendedFor: 'Weight Loss', benefit: 'Lean poultry and dark leafy greens maximize satiety through high volume and protein-induced thermogenesis.', icon: 'Sun' },
+  { mealName: 'Baked Salmon & Asparagus', category: 'Dinner', calories: 410, protein: 32, carbs: 8, fats: 22, recommendedFor: 'Weight Loss', benefit: 'Essential fatty acids support hormonal health while the low-glycemic vegetable base prevents insulin spikes.', icon: 'Moon' },
+  { mealName: 'Greek Yogurt & Berries', category: 'Snack', calories: 160, protein: 18, carbs: 15, fats: 2, recommendedFor: 'Weight Loss', benefit: 'Antioxidants from berries combined with slow-digesting casein protein prevent mid-day muscle breakdown.', icon: 'Apple' },
+
+  // Muscle Gain
+  { mealName: 'Steak & Eggs', category: 'Breakfast', calories: 650, protein: 48, carbs: 2, fats: 42, recommendedFor: 'Muscle Gain', benefit: 'Saturated fats and cholesterol from high-quality beef support natural testosterone production for growth.', icon: 'Coffee' },
+  { mealName: 'Beef & Quinoa Bowl', category: 'Lunch', calories: 580, protein: 42, carbs: 55, fats: 18, recommendedFor: 'Muscle Gain', benefit: 'Quinoa provides a complete amino acid profile alongside slow-release carbs to fuel heavy lifting sessions.', icon: 'Sun' },
+  { mealName: 'Chicken & Sweet Potato', category: 'Dinner', calories: 520, protein: 40, carbs: 62, fats: 8, recommendedFor: 'Muscle Gain', benefit: 'Sweet potatoes are an excellent source of Vitamin A and potassium, essential for electrolyte balance and recovery.', icon: 'Moon' },
+  { mealName: 'Protein Shake & Nut Butter', category: 'Snack', calories: 340, protein: 30, carbs: 12, fats: 22, recommendedFor: 'Muscle Gain', benefit: 'The combination of whey protein and monounsaturated fats provides a sustained release of nutrients.', icon: 'Zap' },
+
+  // Maintain Fitness
+  { mealName: 'Avocado Toast & Egg', category: 'Breakfast', calories: 380, protein: 16, carbs: 32, fats: 24, recommendedFor: 'Maintain Fitness', benefit: 'Monounsaturated fats from avocado support brain health and steady energy throughout the morning.', icon: 'Coffee' },
+  { mealName: 'Turkey & Veggie Wrap', category: 'Lunch', calories: 420, protein: 28, carbs: 45, fats: 12, recommendedFor: 'Maintain Fitness', benefit: 'A balanced ratio of macros ensures you stay energized without feeling heavy or sluggish.', icon: 'Sun' },
+
+  // Endurance
+  { mealName: 'Oatmeal & Banana', category: 'Breakfast', calories: 320, protein: 12, carbs: 62, fats: 6, recommendedFor: 'Endurance', benefit: 'Oats provide beta-glucan fiber for sustained energy release during long endurance sessions.', icon: 'Coffee' },
+  { mealName: 'Pasta with Pesto', category: 'Lunch', calories: 550, protein: 18, carbs: 85, fats: 16, recommendedFor: 'Endurance', benefit: 'High carbohydrate density ensures glycogen stores are topped up for high-intensity endurance work.', icon: 'Sun' },
+  { mealName: 'Brown Rice & Stir-fry', category: 'Dinner', calories: 480, protein: 22, carbs: 70, fats: 10, recommendedFor: 'Endurance', benefit: 'Complex carbs and diverse micronutrients from vegetables support systemic recovery.', icon: 'Moon' },
+  { mealName: 'Energy Bar', category: 'Snack', calories: 220, protein: 6, carbs: 38, fats: 8, recommendedFor: 'Endurance', benefit: 'Simple sugars provide immediate glucose for the brain and muscles during metabolic stress.', icon: 'Zap' },
+
+  // General Fitness
+  { mealName: 'Scrambled Eggs & Fruit', category: 'Breakfast', calories: 280, protein: 18, carbs: 22, fats: 14, recommendedFor: 'General Fitness', benefit: 'A perfect balance of whole protein and natural sugars to wake up your metabolism.', icon: 'Coffee' },
+  { mealName: 'Mixed Grain Bowl', category: 'Lunch', calories: 450, protein: 24, carbs: 55, fats: 16, recommendedFor: 'General Fitness', benefit: 'Fiber-rich grains and seeds support gut health and provide steady energy for the afternoon.', icon: 'Sun' },
+  { mealName: 'Lean Protein & Veggies', category: 'Dinner', calories: 380, protein: 35, carbs: 15, fats: 12, recommendedFor: 'General Fitness', benefit: 'High protein and low carb dinner prevents excessive calorie storage before sleep.', icon: 'Moon' },
+  { mealName: 'Mixed Nuts', category: 'Snack', calories: 190, protein: 7, carbs: 6, fats: 16, recommendedFor: 'General Fitness', benefit: 'Monounsaturated fats and vitamin E support cellular health and reduce inflammation.', icon: 'Apple' }
 ];
 
 async function seed() {
@@ -118,10 +119,9 @@ async function seed() {
     await WorkoutSuggestion.insertMany(SUGGESTIONS);
     console.log('Seeded Workout Suggestions');
 
-    const ChatKnowledge = require('../models/ChatKnowledge');
-    await ChatKnowledge.deleteMany({});
-    await ChatKnowledge.insertMany(CHAT_KNOWLEDGE);
-    console.log('Seeded Chat Knowledge');
+    await Meal.deleteMany({});
+    await Meal.insertMany(MEALS);
+    console.log('Seeded Meals');
 
     process.exit(0);
   } catch (error) {

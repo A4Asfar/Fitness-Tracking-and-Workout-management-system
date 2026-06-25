@@ -23,8 +23,10 @@ export default function DailyPlanScreen() {
   const [plan, setPlan] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const loadPlan = useCallback(async () => {
+    setError(null);
     setRefreshing(true);
     try {
       const data = await ContentService.getDailyPlan({
@@ -33,7 +35,9 @@ export default function DailyPlanScreen() {
         focus: user?.preferredWorkoutFocus
       });
       setPlan(data);
-    } catch (err) {
+    } catch (err: any) {
+      console.log('Daily plan fetch error:', err);
+      setError(err.message || 'Failed to generate daily plan');
       showToast('Failed to load daily plan', 'error');
     } finally {
       setLoading(false);
@@ -45,10 +49,24 @@ export default function DailyPlanScreen() {
     loadPlan();
   }, [loadPlan]);
 
-  if (loading || !plan) {
+  if (loading) {
     return (
       <View style={{ flex: 1, backgroundColor: Colors.background, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  if (error && !plan) {
+    return (
+      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <Text style={{ color: '#FF4B4B', fontSize: 16, fontWeight: '700', textAlign: 'center', marginBottom: 16 }}>{error}</Text>
+        <TouchableOpacity 
+          onPress={() => { setLoading(true); loadPlan(); }} 
+          style={{ backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 }}
+        >
+          <Text style={{ color: '#000', fontWeight: '900' }}>Retry</Text>
+        </TouchableOpacity>
       </View>
     );
   }

@@ -4,6 +4,14 @@ const MealSelection = require('../models/MealSelection');
 const TrainerConsult = require('../models/TrainerConsult');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 
+const getLocalDateString = (d) => {
+  const dateObj = new Date(d);
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 exports.getProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.userId).select('-password');
   res.json(user);
@@ -52,7 +60,7 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
 
   // 1. Calculate Workouts & Volume
   // Count unique days as total workouts to match workoutController logic, or just raw length
-  const totalWorkouts = new Set(workouts.map(w => new Date(w.date).toISOString().split('T')[0])).size;
+  const totalWorkouts = new Set(workouts.map(w => getLocalDateString(w.date))).size;
   
   let totalVolume = 0;
   workouts.forEach(w => {
@@ -81,7 +89,7 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
   // 4. Weekly Activity Score (0-100)
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const recentWorkouts = new Set(workouts.filter(w => new Date(w.date) >= sevenDaysAgo).map(w => new Date(w.date).toISOString().split('T')[0])).size;
+  const recentWorkouts = new Set(workouts.filter(w => new Date(w.date) >= sevenDaysAgo).map(w => getLocalDateString(w.date))).size;
   // 4 workouts a week is a perfect 100 score
   let activityScore = Math.min(Math.round((recentWorkouts / 4) * 100), 100);
 
