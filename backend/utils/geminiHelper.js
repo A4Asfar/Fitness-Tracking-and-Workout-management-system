@@ -4,6 +4,8 @@ let selectedModel = 'gemini-2.0-flash'; // default fallback as requested by test
 let availableModels = [];
 let isConfigured = false;
 
+let startupResult = null;
+
 /**
  * Discovers available models for the configured GEMINI_API_KEY,
  * selects the best compatible model, and verifies connectivity.
@@ -12,7 +14,8 @@ async function verifyGeminiSetup() {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE') {
     console.warn('⚠️ GEMINI_API_KEY is not configured or is placeholder. Gemini operations will use local fallbacks.');
-    return { success: false, reason: 'Key not configured' };
+    startupResult = { success: false, reason: 'Key not configured' };
+    return startupResult;
   }
 
   try {
@@ -68,10 +71,12 @@ async function verifyGeminiSetup() {
     const text = testResult.response.text().trim();
     console.log(`✅ Gemini initialization test succeeded. Response: "${text}"`);
     isConfigured = true;
-    return { success: true, selectedModel, availableModels };
+    startupResult = { success: true, selectedModel, availableModels, testResponse: text };
+    return startupResult;
   } catch (error) {
     console.error('❌ Gemini initialization test failed:', error.message);
-    return { success: false, error: error.message, status: error.status, details: error.details };
+    startupResult = { success: false, error: error.message, status: error.status, details: error.details, availableModels };
+    return startupResult;
   }
 }
 
@@ -83,8 +88,13 @@ function isGeminiReady() {
   return isConfigured;
 }
 
+function getStartupResult() {
+  return startupResult;
+}
+
 module.exports = {
   verifyGeminiSetup,
   getSelectedModel,
-  isGeminiReady
+  isGeminiReady,
+  getStartupResult
 };

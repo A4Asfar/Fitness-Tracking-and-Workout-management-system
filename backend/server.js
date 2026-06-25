@@ -83,6 +83,12 @@ app.get('/api/test-gemini', async (req, res) => {
   }
 });
 
+// Gemini Status Endpoint
+app.get('/api/gemini-status', (req, res) => {
+  const { getStartupResult } = require('./utils/geminiHelper');
+  return res.json(getStartupResult());
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/workouts', workoutRoutes);
 app.use('/api/meals', mealRoutes);
