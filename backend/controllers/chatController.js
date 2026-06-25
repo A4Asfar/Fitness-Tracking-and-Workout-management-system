@@ -73,19 +73,21 @@ exports.aiChat = asyncHandler(async (req, res) => {
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
 
-    // Build chat history for Gemini SDK
-    const geminiHistory = contextMessages.map(msg => ({
-      role: msg.role === 'ai' ? 'model' : 'user',
-      parts: [{ text: msg.text }],
-    }));
+    // Build a single prompt string containing system prompt, history context, and current message
+    let fullPrompt = `${FITNESS_SYSTEM_PROMPT}\n\n`;
+    
+    if (contextMessages.length > 0) {
+      fullPrompt += "CONVERSATION HISTORY:\n";
+      contextMessages.forEach(msg => {
+        const roleName = msg.role === 'ai' ? 'FitAI' : 'User';
+        fullPrompt += `${roleName}: ${msg.text}\n`;
+      });
+      fullPrompt += "\n";
+    }
+    
+    fullPrompt += `CURRENT USER QUESTION:\n${message}\n\nFitAI Response:`;
 
-    // Start chat with system instruction and history
-    const chatSession = model.startChat({
-      history: geminiHistory,
-      systemInstruction: FITNESS_SYSTEM_PROMPT,
-    });
-
-    const result = await chatSession.sendMessage(message);
+    const result = await model.generateContent(fullPrompt);
     const reply = result.response.text();
 
     if (!reply) {
