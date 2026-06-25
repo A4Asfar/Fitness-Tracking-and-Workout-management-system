@@ -35,7 +35,7 @@ async function run() {
     
     // We pass systemInstruction inside model parameters (config), which is correct for @google/generative-ai
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
+      model: 'gemini-2.0-flash',
       systemInstruction: FITNESS_SYSTEM_PROMPT
     });
 

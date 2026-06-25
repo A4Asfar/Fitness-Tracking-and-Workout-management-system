@@ -15,6 +15,7 @@ async function verifyGeminiSetup() {
   if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE') {
     console.warn('⚠️ GEMINI_API_KEY is not configured or is placeholder. Gemini operations will use local fallbacks.');
     startupResult = { success: false, reason: 'Key not configured' };
+    logDiagnostics();
     return startupResult;
   }
 
@@ -35,16 +36,12 @@ async function verifyGeminiSetup() {
       
       console.log('📊 Available Gemini models for this key:', availableModels.join(', '));
 
-      // Prioritized list of candidates to select
+      // Prioritized list of candidates to select (strictly non-deprecated and supported)
       const candidates = [
         'gemini-2.5-flash',
-        'gemini-3.5-flash',
+        'gemini-2.5-pro',
         'gemini-2.0-flash',
-        'gemini-flash-latest',
-        'gemini-pro-latest',
-        'gemini-1.5-flash',
-        'gemini-1.5-flash-latest',
-        'gemini-pro'
+        'gemini-2.0-flash-lite'
       ];
 
       let success = false;
@@ -88,12 +85,31 @@ async function verifyGeminiSetup() {
         };
       }
     }
+    logDiagnostics();
     return startupResult;
   } catch (error) {
     console.error('❌ Gemini initialization test failed:', error.message);
     startupResult = { success: false, error: error.message, status: error.status, details: error.details, availableModels };
+    logDiagnostics();
     return startupResult;
   }
+}
+
+function logDiagnostics() {
+  let sdkVersion = 'unknown';
+  try {
+    sdkVersion = require('@google/generative-ai/package.json').version;
+  } catch (e) {
+    try {
+      sdkVersion = require('../package.json').dependencies['@google/generative-ai'];
+    } catch (e2) {}
+  }
+
+  console.log('\n=========================================');
+  console.log(`🔌 Gemini SDK Version: ${sdkVersion}`);
+  console.log(`🎯 Selected model: ${selectedModel}`);
+  console.log(`🟢 Gemini availability status: ${isConfigured ? 'AVAILABLE' : 'UNAVAILABLE'}`);
+  console.log('=========================================\n');
 }
 
 function getSelectedModel() {
