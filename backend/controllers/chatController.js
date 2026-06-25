@@ -1,5 +1,6 @@
 const Chat = require('../models/Chat');
 const { asyncHandler } = require('../middleware/errorMiddleware');
+const { getSelectedModel } = require('../utils/geminiHelper');
 
 // ─── FITNESS COACH SYSTEM PROMPT ───
 const FITNESS_SYSTEM_PROMPT = `You are FitAI, an expert fitness coach.
@@ -68,10 +69,11 @@ exports.aiChat = asyncHandler(async (req, res) => {
   }
 
   try {
-    // Use @google/generative-ai SDK
     const { GoogleGenerativeAI } = require('@google/generative-ai');
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    const modelName = getSelectedModel();
+    console.log(`🤖 Generating content using model: ${modelName}`);
+    const model = genAI.getGenerativeModel({ model: modelName });
 
     // Build a single prompt string containing system prompt, history context, and current message
     let fullPrompt = `${FITNESS_SYSTEM_PROMPT}\n\n`;
@@ -109,8 +111,15 @@ exports.aiChat = asyncHandler(async (req, res) => {
     });
   } catch (error) {
     console.error('❌ Gemini Error:', error.message);
-    res.status(500);
-    throw new Error('Failed to get AI response: ' + error.message);
+    return res.status(500).json({
+      success: false,
+      message: 'Failed to get AI response: ' + error.message,
+      error: {
+        message: error.message,
+        status: error.status,
+        details: error.details
+      }
+    });
   }
 });
 

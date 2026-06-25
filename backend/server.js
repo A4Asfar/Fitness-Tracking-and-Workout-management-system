@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const { verifyGeminiSetup } = require('./utils/geminiHelper');
 
 // Environment Variable Validation (Soft check for local development)
 const requiredEnv = ['MONGO_URI', 'JWT_SECRET'];
@@ -63,6 +64,25 @@ app.get('/', (req, res) => {
   });
 });
 
+// Temporary Diagnostic Route for Gemini
+app.get('/api/test-gemini', async (req, res) => {
+  try {
+    const { GoogleGenerativeAI } = require('@google/generative-ai');
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({
+      model: 'gemini-2.0-flash'
+    });
+    const result = await model.generateContent('Say hello');
+    return res.send(result.response.text());
+  } catch (err) {
+    return res.status(500).json({
+      message: err.message,
+      status: err.status,
+      details: err.details
+    });
+  }
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/workouts', workoutRoutes);
 app.use('/api/meals', mealRoutes);
@@ -84,6 +104,10 @@ const PORT = process.env.PORT || 5000;
 (async () => {
   try {
     await connectDB();
+    
+    // Verify Gemini setup and log models on boot
+    await verifyGeminiSetup();
+
     app.listen(PORT, '0.0.0.0', () => {
       console.log(`\n=========================================`);
       console.log(`🚀 SERVER IS LIVE ON PORT: ${PORT}`);

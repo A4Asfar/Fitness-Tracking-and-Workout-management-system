@@ -1,5 +1,6 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const Meal = require('../models/Meal');
+const { getSelectedModel } = require('../utils/geminiHelper');
 const DailyPlan = require('../models/DailyPlan');
 const User = require('../models/User');
 const Trainer = require('../models/Trainer');
@@ -90,8 +91,9 @@ exports.getDailyPlan = async (req, res) => {
 
     if (process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY !== 'YOUR_GEMINI_API_KEY_HERE') {
       try {
-        const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-        const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+        const modelName = getSelectedModel();
+        console.log(`🤖 Requesting Gemini daily plan using model: ${modelName}`);
+        const model = genAI.getGenerativeModel({ model: modelName });
 
         const prompt = `Generate a daily fitness and nutrition routine for a user with the following details:
 - Goal: ${goal}
