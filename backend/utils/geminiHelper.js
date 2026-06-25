@@ -37,41 +37,57 @@ async function verifyGeminiSetup() {
 
       // Prioritized list of candidates to select
       const candidates = [
+        'gemini-2.5-flash',
+        'gemini-3.5-flash',
         'gemini-2.0-flash',
+        'gemini-flash-latest',
+        'gemini-pro-latest',
         'gemini-1.5-flash',
         'gemini-1.5-flash-latest',
-        'gemini-1.5-pro',
         'gemini-pro'
       ];
 
-      let found = false;
+      let success = false;
+      let lastError = null;
+
       for (const candidate of candidates) {
         if (availableModels.includes(candidate)) {
-          selectedModel = candidate;
-          found = true;
-          break;
+          console.log(`💬 Testing candidate model: ${candidate}...`);
+          try {
+            const genAI = new GoogleGenerativeAI(apiKey);
+            const model = genAI.getGenerativeModel({ model: candidate });
+            
+            // Set short timeout or test content generation
+            const testResult = await model.generateContent('Say OK');
+            const text = testResult.response.text().trim();
+            console.log(`✅ Model ${candidate} verified successfully. Response: "${text}"`);
+            
+            selectedModel = candidate;
+            success = true;
+            isConfigured = true;
+            startupResult = { success: true, selectedModel, availableModels, testResponse: text };
+            break;
+          } catch (err) {
+            console.warn(`⚠️ Model ${candidate} test failed:`, err.message);
+            lastError = err;
+          }
         }
       }
 
-      if (!found && availableModels.length > 0) {
-        // Fallback to the first available model that supports generation
-        selectedModel = availableModels[0];
+      if (!success) {
+        console.error('❌ All prioritized candidate models failed verification test.');
+        const backupModel = candidates.find(c => availableModels.includes(c)) || availableModels[0] || 'gemini-2.0-flash';
+        selectedModel = backupModel;
+        startupResult = {
+          success: false,
+          error: lastError ? lastError.message : 'No models available',
+          status: lastError ? lastError.status : 500,
+          details: lastError ? lastError.details : null,
+          selectedModel,
+          availableModels
+        };
       }
     }
-
-    console.log(`🎯 Selected Gemini Model: ${selectedModel}`);
-
-    // Verify model works by initializing and sending a test message
-    console.log('💬 Running Gemini initialization test...');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: selectedModel });
-    
-    // Test content generation
-    const testResult = await model.generateContent('Say OK');
-    const text = testResult.response.text().trim();
-    console.log(`✅ Gemini initialization test succeeded. Response: "${text}"`);
-    isConfigured = true;
-    startupResult = { success: true, selectedModel, availableModels, testResponse: text };
     return startupResult;
   } catch (error) {
     console.error('❌ Gemini initialization test failed:', error.message);
