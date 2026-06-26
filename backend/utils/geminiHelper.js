@@ -312,6 +312,12 @@ function logDiagnostics() {
   console.log(`📊 Available models: ${availableModels.join(', ') || 'None discovered'}`);
   console.log(`🛡️ Circuit breaker state: ${circuitBreakerState}`);
   console.log(`🟢 Gemini availability: ${isConfigured ? 'AVAILABLE' : 'UNAVAILABLE'}`);
+  console.log(`📂 System Prompt Path: ${loadedPath ? path.resolve(loadedPath) : 'Fallback (Memory)'}`);
+  console.log(`📏 System Prompt Length: ${FITNESS_SYSTEM_PROMPT.length} characters`);
+  console.log('--- System Prompt (First 300 Characters) ---');
+  console.log(FITNESS_SYSTEM_PROMPT.substring(0, 300));
+  console.log('--- System Prompt (Last 300 Characters) ---');
+  console.log(FITNESS_SYSTEM_PROMPT.substring(Math.max(0, FITNESS_SYSTEM_PROMPT.length - 300)));
   console.log('=========================================\n');
 }
 
