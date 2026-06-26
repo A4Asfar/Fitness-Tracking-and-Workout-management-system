@@ -1,6 +1,6 @@
 const Chat = require('../models/Chat');
 const { asyncHandler } = require('../middleware/errorMiddleware');
-const { getSelectedModel } = require('../utils/geminiHelper');
+const { generateChatWithFallback } = require('../utils/geminiHelper');
 
 // ─── FITNESS COACH SYSTEM PROMPT ───
 const FITNESS_SYSTEM_PROMPT = `You are FitAI, an expert fitness coach.
@@ -60,37 +60,9 @@ exports.aiChat = asyncHandler(async (req, res) => {
   // Build context from conversation history (last 10 messages for context window)
   const contextMessages = chat.messages.slice(-10);
 
-  // Check for Gemini API key
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE') {
-    console.error('⚠️ GEMINI_API_KEY is not set or placeholder.');
-    res.status(500);
-    throw new Error('AI service is not configured. Please set GEMINI_API_KEY.');
-  }
-
   try {
-    const { GoogleGenerativeAI } = require('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const modelName = getSelectedModel();
-    console.log(`🤖 Generating content using model: ${modelName}`);
-    const model = genAI.getGenerativeModel({ model: modelName });
-
-    // Build a single prompt string containing system prompt, history context, and current message
-    let fullPrompt = `${FITNESS_SYSTEM_PROMPT}\n\n`;
-    
-    if (contextMessages.length > 0) {
-      fullPrompt += "CONVERSATION HISTORY:\n";
-      contextMessages.forEach(msg => {
-        const roleName = msg.role === 'ai' ? 'FitAI' : 'User';
-        fullPrompt += `${roleName}: ${msg.text}\n`;
-      });
-      fullPrompt += "\n";
-    }
-    
-    fullPrompt += `CURRENT USER QUESTION:\n${message}\n\nFitAI Response:`;
-
-    const result = await model.generateContent(fullPrompt);
-    const reply = result.response.text();
+    const result = await generateChatWithFallback(contextMessages, message, FITNESS_SYSTEM_PROMPT);
+    const reply = result.text;
 
     if (!reply) {
       throw new Error('Empty response from Gemini');
@@ -110,15 +82,10 @@ exports.aiChat = asyncHandler(async (req, res) => {
       title: chat.title,
     });
   } catch (error) {
-    console.error('❌ Gemini Error:', error.message);
-    return res.status(500).json({
+    console.error('❌ Gemini Error (Internal):', error.stack || error.message);
+    return res.status(503).json({
       success: false,
-      message: 'Failed to get AI response: ' + error.message,
-      error: {
-        message: error.message,
-        status: error.status,
-        details: error.details
-      }
+      message: 'AI service is temporarily busy. Please try again shortly.'
     });
   }
 });

@@ -66,27 +66,24 @@ app.get('/', (req, res) => {
 
 // Temporary Diagnostic Route for Gemini
 app.get('/api/test-gemini', async (req, res) => {
-  const { getSelectedModel } = require('./utils/geminiHelper');
-  const selectedModel = getSelectedModel();
+  const { generateContentWithFallback, getAvailableModels } = require('./utils/geminiHelper');
   try {
-    const { GoogleGenerativeAI } = require('@google/generative-ai');
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({
-      model: selectedModel
-    });
-    const result = await model.generateContent('Hello');
+    const result = await generateContentWithFallback('Hello');
     return res.json({
       success: true,
-      selectedModel,
-      responseText: result.response.text()
+      modelUsed: result.modelUsed,
+      attempts: result.attempts,
+      responseTime: result.responseTime,
+      fallbackUsed: result.fallbackUsed,
+      availableModels: getAvailableModels(),
+      response: result.text
     });
   } catch (err) {
-    return res.status(500).json({
+    console.error('❌ /api/test-gemini Error:', err.stack || err.message);
+    return res.status(503).json({
       success: false,
-      selectedModel,
-      message: err.message,
-      status: err.status,
-      details: err.details
+      message: 'AI service is temporarily busy. Please try again shortly.',
+      availableModels: getAvailableModels()
     });
   }
 });
@@ -108,7 +105,6 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/consultations', require('./routes/consultations'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/content', require('./routes/content'));
-
 // Error Handling Middleware
 app.use(notFound);
 app.use(errorHandler);
