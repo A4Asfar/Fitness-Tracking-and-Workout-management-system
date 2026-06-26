@@ -115,6 +115,9 @@ Your response MUST be a single, valid raw JSON object. Do not wrap it in markdow
     }
 
     let responseText = result.text.trim();
+    if (responseText.startsWith("🤖 FitAI Active")) {
+      responseText = responseText.replace("🤖 FitAI Active", "").trim();
+    }
     if (responseText.startsWith("```")) {
       responseText = responseText.replace(/^```json\s*/i, "").replace(/```$/, "").trim();
     }

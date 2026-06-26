@@ -1,28 +1,9 @@
 const Chat = require('../models/Chat');
+const User = require('../models/User');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 const { generateChatWithFallback } = require('../utils/geminiHelper');
 
-// ─── FITNESS COACH SYSTEM PROMPT ───
-const FITNESS_SYSTEM_PROMPT = `You are FitAI, an expert fitness coach.
-
-Specialties:
-* Weight Loss
-* Muscle Gain
-* Strength Training
-* Nutrition Planning
-* BMI Analysis
-* Calorie Estimation
-* Home Workouts
-* Gym Workouts
-* Fitness Motivation
-
-Rules:
-* Keep responses concise.
-* Use bullet points where appropriate.
-* Give actionable fitness advice.
-* Personalize using available profile data.
-* Avoid medical diagnosis.
-* Redirect dangerous health questions to healthcare professionals.`;
+// ─── GEMINI AI CHAT ───
 
 // ─── GEMINI AI CHAT ───
 
@@ -57,11 +38,19 @@ exports.aiChat = asyncHandler(async (req, res) => {
     chat = new Chat({ userId, title, messages: [] });
   }
 
+  // Fetch user profile context for personalization
+  let userProfile = null;
+  try {
+    userProfile = await User.findById(userId);
+  } catch (err) {
+    console.error('Failed to fetch user profile for chat personalization:', err.message);
+  }
+
   // Build context from conversation history (last 10 messages for context window)
   const contextMessages = chat.messages.slice(-10);
 
   try {
-    const result = await generateChatWithFallback(contextMessages, message, FITNESS_SYSTEM_PROMPT);
+    const result = await generateChatWithFallback(contextMessages, message, userProfile);
     const reply = result.text;
 
     if (!reply) {

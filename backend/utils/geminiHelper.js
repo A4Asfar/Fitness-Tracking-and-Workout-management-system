@@ -1,4 +1,39 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
+const fs = require('fs');
+const path = require('path');
+
+let FITNESS_SYSTEM_PROMPT = '';
+let loadedPath = '';
+const possiblePaths = [
+  path.join(__dirname, '../../.agents/AGENTS.md'),
+  path.join(__dirname, '../config/AGENTS.md'),
+  path.join(__dirname, './AGENTS.md'),
+  path.join(process.cwd(), '.agents/AGENTS.md'),
+  path.join(process.cwd(), 'backend/config/AGENTS.md'),
+  path.join(process.cwd(), 'AGENTS.md')
+];
+
+for (const p of possiblePaths) {
+  try {
+    if (fs.existsSync(p)) {
+      FITNESS_SYSTEM_PROMPT = fs.readFileSync(p, 'utf8');
+      loadedPath = p;
+      break;
+    }
+  } catch (err) {
+    // continue to next path
+  }
+}
+
+if (!FITNESS_SYSTEM_PROMPT) {
+  console.error('Failed to read AGENTS.md from any known path, using fallback.');
+  FITNESS_SYSTEM_PROMPT = `# FitAI System Persona & Workout Guidelines`;
+} else {
+  console.log(`📝 Loaded FitAI System Prompt successfully from: ${loadedPath}`);
+}
+
+// Add the temporary line at the beginning of the system prompt
+FITNESS_SYSTEM_PROMPT = `IMPORTANT:\nEvery response MUST begin with:\n🤖 FitAI Active\n\n` + FITNESS_SYSTEM_PROMPT;
 
 const PREFERRED_MODELS = [
   'gemini-2.5-flash',
@@ -111,7 +146,24 @@ async function generateContentWithFallback(prompt, options = {}) {
       }, 20000);
 
       try {
-        const model = genAI.getGenerativeModel({ model: modelName, ...options });
+        console.log("===== SYSTEM PROMPT START =====");
+        console.log(FITNESS_SYSTEM_PROMPT.substring(0, 500));
+        console.log("===== SYSTEM PROMPT END =====");
+
+        const modelConfig = { 
+          model: modelName, 
+          systemInstruction: FITNESS_SYSTEM_PROMPT,
+          ...options 
+        };
+        console.log("===== GEMINI MODEL CONFIG =====");
+        console.log(JSON.stringify({ 
+          model: modelConfig.model, 
+          systemInstructionLength: modelConfig.systemInstruction ? modelConfig.systemInstruction.length : 0,
+          ...options 
+        }, null, 2));
+        console.log("================================");
+
+        const model = genAI.getGenerativeModel(modelConfig);
         const generationResult = await model.generateContent(prompt, { signal: controller.signal });
         clearTimeout(timeoutId);
 
@@ -206,8 +258,27 @@ async function generateContentWithFallback(prompt, options = {}) {
   throw new Error("AI service is temporarily busy. Please try again shortly.");
 }
 
-async function generateChatWithFallback(history, message, systemPrompt) {
-  let fullPrompt = `${systemPrompt}\n\n`;
+async function generateChatWithFallback(history, message, userProfile = null) {
+  let fullPrompt = "";
+  if (userProfile) {
+    fullPrompt += "USER PROFILE DETAILS:\n";
+    fullPrompt += `- Name: ${userProfile.name || 'User'}\n`;
+    if (userProfile.weight) fullPrompt += `- Weight: ${userProfile.weight} kg\n`;
+    if (userProfile.height) fullPrompt += `- Height: ${userProfile.height} cm\n`;
+    if (userProfile.fitnessGoal && userProfile.fitnessGoal !== 'None') {
+      fullPrompt += `- Fitness Goal: ${userProfile.fitnessGoal}\n`;
+    }
+    if (userProfile.trainingLevel) fullPrompt += `- Experience/Training Level: ${userProfile.trainingLevel}\n`;
+    
+    // Calculate BMI if height and weight exist
+    if (userProfile.weight && userProfile.height) {
+      const heightInMeters = userProfile.height / 100;
+      const bmi = (userProfile.weight / (heightInMeters * heightInMeters)).toFixed(1);
+      fullPrompt += `- BMI: ${bmi}\n`;
+    }
+    fullPrompt += "\n";
+  }
+
   if (history && history.length > 0) {
     fullPrompt += "CONVERSATION HISTORY:\n";
     history.forEach(msg => {
