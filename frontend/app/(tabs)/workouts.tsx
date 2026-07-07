@@ -249,27 +249,59 @@ export default function WorkoutsScreen() {
             <Text style={styles.emptyText}>No recent workouts. Time to start one!</Text>
           </View>
         ) : (
-          workouts.slice(0, 5).map((workout) => (
-            <TouchableOpacity
-              key={workout._id}
-              style={styles.historyCard}
-              onPress={() => router.push(`/workout/${workout._id}` as any)}
-            >
-              <View style={[styles.historyAccent, { backgroundColor: getAccentColor(workout.type) }]} />
-              <View style={styles.historyInfo}>
-                <Text style={styles.historyName}>{workout.exercise}</Text>
-                <Text style={styles.historyMeta}>
-                  {workout.type} • {workout.sets} sets • {formatDate(workout.date)}
-                </Text>
-              </View>
-              <ChevronRight size={20} color={Colors.textSecondary} />
-            </TouchableOpacity>
-          ))
+          workouts.slice(0, 5).map((workout) => {
+            const IconComponent = getWorkoutIcon(workout.type);
+            const accent = getAccentColor(workout.type);
+            return (
+              <TouchableOpacity
+                key={workout._id}
+                style={styles.historyCard}
+                onPress={() => router.push(`/workout/${workout._id}` as any)}
+              >
+                <View style={[styles.historyAccent, { backgroundColor: accent }]} />
+                <View style={[styles.iconBox, { backgroundColor: accent + '15', marginRight: 14, width: 42, height: 42, borderRadius: 12, marginLeft: -4, justifyContent: 'center', alignItems: 'center' }]}>
+                  <IconComponent size={20} color={accent} />
+                </View>
+                <View style={styles.historyInfo}>
+                  <Text style={styles.historyName}>{workout.exercise}</Text>
+                  <Text style={styles.historyMeta}>
+                    {workout.type} • {getWorkoutMetrics(workout)} • {formatDate(workout.date)}
+                  </Text>
+                </View>
+                <ChevronRight size={20} color={Colors.textSecondary} />
+              </TouchableOpacity>
+            );
+          })
         )}
       </ScrollView>
     </View>
   );
 }
+
+const getWorkoutMetrics = (w: any) => {
+  switch (w.type) {
+    case 'Strength':
+      return `${w.sets || 0} sets • ${w.reps || 0} reps • ${w.weight || 0}kg`;
+    case 'Cardio':
+      return `${w.duration || 0} min${w.distance ? ` • ${w.distance}km` : ''}`;
+    case 'HIIT':
+      return `${w.rounds || 0} rounds • ${w.duration || 0} min`;
+    case 'Yoga':
+      return `${w.duration || 0} min${w.difficulty ? ` • ${w.difficulty}` : ''}`;
+    default:
+      return `${w.duration || 0} min`;
+  }
+};
+
+const getWorkoutIcon = (type: string) => {
+  switch (type) {
+    case 'Strength': return Dumbbell;
+    case 'Cardio': return Flame;
+    case 'HIIT': return Zap;
+    case 'Yoga': return Heart;
+    default: return Dumbbell;
+  }
+};
 
 const getAccentColor = (type: string) => {
   switch (type) {

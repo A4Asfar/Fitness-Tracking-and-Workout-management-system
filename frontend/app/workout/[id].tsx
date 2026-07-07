@@ -2,7 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, TextInput, TouchableOpacity,
   ActivityIndicator, ScrollView, KeyboardAvoidingView,
-  Platform, Modal, Animated, Pressable,
+  Platform, Modal, Animated, Pressable, UIManager, LayoutAnimation,
+  Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Colors } from '@/constants/Theme';
@@ -11,6 +12,7 @@ import {
   Dumbbell, Calendar, Save, Trash2, ChevronLeft,
   Activity, Hash, Pencil, X, CheckCircle2,
   Weight as WeightIcon, RotateCcw, AlertTriangle,
+  Flame, Zap, Heart,
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -70,6 +72,56 @@ const ef = StyleSheet.create({
   suffix: { color: Colors.primary, fontSize: 13, fontWeight: '800', marginLeft: 6 },
 });
 
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+interface FormFieldConfig {
+  name: string;
+  label: string;
+  placeholder: string;
+  required: boolean;
+  type: 'text' | 'number';
+  halfWidth?: boolean;
+}
+
+const workoutTypeConfig: Record<string, { fields: FormFieldConfig[] }> = {
+  Strength: {
+    fields: [
+      { name: 'exercise', label: 'Exercise Name', placeholder: 'e.g. Bench Press', required: true, type: 'text' },
+      { name: 'sets', label: 'Sets', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'reps', label: 'Reps', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'weight', label: 'Weight (kg)', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'duration', label: 'Duration (min)', placeholder: '0', required: false, type: 'number', halfWidth: true },
+    ]
+  },
+  Cardio: {
+    fields: [
+      { name: 'exercise', label: 'Exercise Name', placeholder: 'e.g. Running', required: true, type: 'text' },
+      { name: 'duration', label: 'Duration (min)', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'distance', label: 'Distance (km)', placeholder: '0.0', required: false, type: 'number', halfWidth: true },
+      { name: 'calories', label: 'Calories Burned', placeholder: '0', required: false, type: 'number', halfWidth: true },
+      { name: 'speed', label: 'Average Speed (km/h)', placeholder: '0.0', required: false, type: 'number', halfWidth: true },
+    ]
+  },
+  HIIT: {
+    fields: [
+      { name: 'exercise', label: 'Exercise Name', placeholder: 'e.g. Tabata Circuit', required: true, type: 'text' },
+      { name: 'rounds', label: 'Rounds', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'workTime', label: 'Work Time (sec)', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'restTime', label: 'Rest Time (sec)', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'duration', label: 'Total Duration (min)', placeholder: '0', required: false, type: 'number', halfWidth: true },
+    ]
+  },
+  Yoga: {
+    fields: [
+      { name: 'exercise', label: 'Pose / Exercise Name', placeholder: 'e.g. Downward Dog', required: true, type: 'text' },
+      { name: 'duration', label: 'Duration (min)', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'difficulty', label: 'Difficulty', placeholder: 'e.g. Intermediate', required: false, type: 'text', halfWidth: true },
+    ]
+  }
+};
+
 export default function WorkoutDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
@@ -83,10 +135,23 @@ export default function WorkoutDetailScreen() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /* editable fields */
-  const [sets,   setSets]   = useState('');
-  const [reps,   setReps]   = useState('');
-  const [weight, setWeight] = useState('');
+  /* editable fields configuration-driven map */
+  const [editType, setEditType] = useState('Strength');
+  const [formValues, setFormValues] = useState<Record<string, string>>({
+    exercise: '',
+    sets: '',
+    reps: '',
+    weight: '',
+    duration: '',
+    distance: '',
+    calories: '',
+    speed: '',
+    rounds: '',
+    workTime: '',
+    restTime: '',
+    difficulty: '',
+  });
+  const [errors, setErrors] = useState<any>({});
 
   /* animations */
   const editAnim    = useRef(new Animated.Value(0)).current;
@@ -104,9 +169,21 @@ export default function WorkoutDetailScreen() {
     try {
       const res = await api.get(`/workouts/${id}`);
       setWorkout(res.data);
-      setSets(res.data.sets?.toString() ?? '');
-      setReps(res.data.reps?.toString() ?? '');
-      setWeight(res.data.weight?.toString() ?? '');
+      setEditType(res.data.type || 'Strength');
+      setFormValues({
+        exercise: res.data.exercise || '',
+        sets: res.data.sets?.toString() ?? '',
+        reps: res.data.reps?.toString() ?? '',
+        weight: res.data.weight?.toString() ?? '',
+        duration: res.data.duration?.toString() ?? '',
+        distance: res.data.distance?.toString() ?? '',
+        calories: res.data.calories?.toString() ?? '',
+        speed: res.data.speed?.toString() ?? '',
+        rounds: res.data.rounds?.toString() ?? '',
+        workTime: res.data.workTime?.toString() ?? '',
+        restTime: res.data.restTime?.toString() ?? '',
+        difficulty: res.data.difficulty || '',
+      });
     } catch (err: any) {
       console.error('Fetch workout failed:', err);
       setError(err.message || 'Failed to sync workout details.');
@@ -118,25 +195,222 @@ export default function WorkoutDetailScreen() {
   const toggleEdit = (on: boolean) => {
     setEditMode(on);
     Animated.spring(editAnim, { toValue: on ? 1 : 0, useNativeDriver: true, bounciness: 7 }).start();
-    if (!on) {
+    if (!on && workout) {
       /* reset to saved values */
-      setSets(workout.sets?.toString() ?? '');
-      setReps(workout.reps?.toString() ?? '');
-      setWeight(workout.weight?.toString() ?? '');
+      setEditType(workout.type || 'Strength');
+      setFormValues({
+        exercise: workout.exercise || '',
+        sets: workout.sets?.toString() ?? '',
+        reps: workout.reps?.toString() ?? '',
+        weight: workout.weight?.toString() ?? '',
+        duration: workout.duration?.toString() ?? '',
+        distance: workout.distance?.toString() ?? '',
+        calories: workout.calories?.toString() ?? '',
+        speed: workout.speed?.toString() ?? '',
+        rounds: workout.rounds?.toString() ?? '',
+        workTime: workout.workTime?.toString() ?? '',
+        restTime: workout.restTime?.toString() ?? '',
+        difficulty: workout.difficulty || '',
+      });
+      setErrors({});
     }
   };
 
+  const handleTypeChange = (newType: string) => {
+    // Smooth transition
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setEditType(newType);
+    setErrors({});
+    
+    // Clear irrelevant fields, preserve shared exercise name
+    setFormValues(prev => ({
+      exercise: prev.exercise,
+      sets: '',
+      reps: '',
+      weight: '',
+      duration: '',
+      distance: '',
+      calories: '',
+      speed: '',
+      rounds: '',
+      workTime: '',
+      restTime: '',
+      difficulty: '',
+    }));
+  };
+
+  const getWorkoutIcon = (typeStr: string) => {
+    switch (typeStr) {
+      case 'Strength': return Dumbbell;
+      case 'Cardio': return Flame;
+      case 'HIIT': return Zap;
+      case 'Yoga': return Heart;
+      default: return Dumbbell;
+    }
+  };
+
+  const renderDetailPills = () => {
+    if (!workout) return null;
+    const activeType = workout.type || 'Strength';
+    const pills = [];
+
+    if (activeType === 'Strength') {
+      pills.push({ label: 'Sets', value: workout.sets ?? 0, unit: '' });
+      pills.push({ label: 'Reps', value: workout.reps ?? 0, unit: '' });
+      pills.push({ label: 'Weight', value: workout.weight ?? 0, unit: ' kg' });
+      if (workout.duration) {
+        pills.push({ label: 'Duration', value: workout.duration, unit: ' min' });
+      }
+    } else if (activeType === 'Cardio') {
+      pills.push({ label: 'Duration', value: workout.duration ?? 0, unit: ' min' });
+      if (workout.distance) pills.push({ label: 'Distance', value: workout.distance, unit: ' km' });
+      if (workout.calories) pills.push({ label: 'Calories', value: workout.calories, unit: ' kcal' });
+      if (workout.speed) pills.push({ label: 'Speed', value: workout.speed, unit: ' km/h' });
+    } else if (activeType === 'HIIT') {
+      pills.push({ label: 'Rounds', value: workout.rounds ?? 0, unit: '' });
+      pills.push({ label: 'Work Time', value: workout.workTime ?? 0, unit: 's' });
+      pills.push({ label: 'Rest Time', value: workout.restTime ?? 0, unit: 's' });
+      if (workout.duration) pills.push({ label: 'Duration', value: workout.duration, unit: ' min' });
+    } else if (activeType === 'Yoga') {
+      pills.push({ label: 'Duration', value: workout.duration ?? 0, unit: ' min' });
+      if (workout.difficulty) pills.push({ label: 'Difficulty', value: workout.difficulty, unit: '' });
+    }
+
+    return (
+      <View style={styles.statRow}>
+        {pills.map((s, i) => (
+          <View key={i} style={styles.statPill}>
+            <Text style={[styles.statPillValue, { color: accentColor }]}>
+              {s.value}
+              <Text style={styles.statPillUnit}>{s.unit}</Text>
+            </Text>
+            <Text style={styles.statPillLabel}>{s.label}</Text>
+          </View>
+        ))}
+      </View>
+    );
+  };
+
+  const renderEditFields = () => {
+    const fields = workoutTypeConfig[editType].fields;
+    const rows: React.ReactNode[] = [];
+    let i = 0;
+    
+    while (i < fields.length) {
+      const field = fields[i];
+      
+      // Group consecutive half-width fields into rows
+      if (field.halfWidth && i + 1 < fields.length && fields[i + 1].halfWidth) {
+        const nextField = fields[i + 1];
+        rows.push(
+          <View key={`row-${field.name}-${nextField.name}`} style={styles.row}>
+            <View style={styles.halfInput}>
+              <Text style={styles.label}>{field.label}</Text>
+              <View style={[styles.inputWrapper, errors[field.name] && styles.inputError]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder={field.placeholder}
+                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  value={formValues[field.name]}
+                  onChangeText={(val) => {
+                    setFormValues((prev: Record<string, string>) => ({ ...prev, [field.name]: val }));
+                    if (errors[field.name]) setErrors((prev: any) => ({ ...prev, [field.name]: null }));
+                  }}
+                  keyboardType={field.type === 'number' ? 'numeric' : 'default'}
+                />
+              </View>
+              {errors[field.name] && <Text style={styles.errorText}>{errors[field.name]}</Text>}
+            </View>
+
+            <View style={styles.halfInput}>
+              <Text style={styles.label}>{nextField.label}</Text>
+              <View style={[styles.inputWrapper, errors[nextField.name] && styles.inputError]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder={nextField.placeholder}
+                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  value={formValues[nextField.name]}
+                  onChangeText={(val) => {
+                    setFormValues((prev: Record<string, string>) => ({ ...prev, [nextField.name]: val }));
+                    if (errors[nextField.name]) setErrors((prev: any) => ({ ...prev, [nextField.name]: null }));
+                  }}
+                  keyboardType={nextField.type === 'number' ? 'numeric' : 'default'}
+                />
+              </View>
+              {errors[nextField.name] && <Text style={styles.errorText}>{errors[nextField.name]}</Text>}
+            </View>
+          </View>
+        );
+        i += 2;
+      } else {
+        // Render single/full-width field
+        rows.push(
+          <View key={field.name} style={field.halfWidth ? styles.row : styles.inputGroup}>
+            <View style={field.halfWidth ? styles.halfInput : { flex: 1, gap: 8 }}>
+              <Text style={styles.label}>{field.label}</Text>
+              <View style={[styles.inputWrapper, errors[field.name] && styles.inputError]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder={field.placeholder}
+                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  value={formValues[field.name]}
+                  onChangeText={(val) => {
+                    setFormValues((prev: Record<string, string>) => ({ ...prev, [field.name]: val }));
+                    if (errors[field.name]) setErrors((prev: any) => ({ ...prev, [field.name]: null }));
+                  }}
+                  keyboardType={field.type === 'number' ? 'numeric' : 'default'}
+                />
+              </View>
+              {errors[field.name] && <Text style={styles.errorText}>{errors[field.name]}</Text>}
+            </View>
+            {field.halfWidth && <View style={styles.halfInput} />}
+          </View>
+        );
+        i += 1;
+      }
+    }
+
+    return <View style={styles.formSection}>{rows}</View>;
+  };
+
   const handleUpdate = async () => {
-    if (!sets.trim() || !reps.trim()) {
+    const newErrors: any = {};
+    const currentConfig = workoutTypeConfig[editType];
+    
+    currentConfig.fields.forEach(field => {
+      if (field.required) {
+        const val = formValues[field.name];
+        if (!val || !val.trim()) {
+          newErrors[field.name] = `${field.label} is required.`;
+        }
+      }
+    });
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
+
+    setErrors({});
     setSaving(true);
     try {
-      const updated = await api.put(`/workouts/${id}`, {
-        sets: parseInt(sets),
-        reps: parseInt(reps),
-        weight: weight ? parseFloat(weight) : 0,
+      const payload: any = {
+        type: editType,
+        exercise: formValues.exercise.trim(),
+      };
+
+      currentConfig.fields.forEach(field => {
+        const val = formValues[field.name];
+        if (val !== undefined && val !== null && val !== '') {
+          if (field.type === 'number') {
+            payload[field.name] = val.toString().includes('.') ? parseFloat(val) : parseInt(val);
+          } else {
+            payload[field.name] = val;
+          }
+        }
       });
+
+      const updated = await api.put(`/workouts/${id}`, payload);
       setWorkout(updated.data);
       toggleEdit(false);
       /* success flash */
@@ -146,7 +420,8 @@ export default function WorkoutDetailScreen() {
         Animated.timing(successAnim, { toValue: 0, duration: 300, useNativeDriver: true }),
       ]).start();
     } catch (e: any) {
-      /* no-op — interceptor logs it */
+      const message = e.response?.data?.message || 'Failed to save changes.';
+      Alert.alert('Validation Error', message);
     } finally {
       setSaving(false);
     }
@@ -269,10 +544,14 @@ export default function WorkoutDetailScreen() {
               <Text style={[styles.typeText, { color: accentColor }]}>{workout.type?.toUpperCase()}</Text>
             </View>
 
-            {/* Avatar */}
+            {/* Dynamic Avatar Icon */}
             <LinearGradient colors={[accentColor + '40', accentColor + '15']} style={styles.avatarRing}>
               <View style={[styles.avatar, { borderColor: accentColor + '30' }]}>
-                <Dumbbell size={38} color={accentColor} strokeWidth={1.8} />
+                {React.createElement(getWorkoutIcon(workout.type), {
+                  size: 38,
+                  color: accentColor,
+                  strokeWidth: 1.8
+                })}
               </View>
             </LinearGradient>
 
@@ -283,32 +562,23 @@ export default function WorkoutDetailScreen() {
               <Text style={styles.dateText}>{formattedDate}</Text>
             </View>
 
-            {/* Stat pills */}
-            <View style={styles.statRow}>
-              {[
-                { label: 'Sets',   value: workout.sets,              unit: '' },
-                { label: 'Reps',   value: workout.reps,              unit: '' },
-                { label: 'Weight', value: workout.weight ?? 0,        unit: 'kg' },
-              ].map((s, i) => (
-                <View key={i} style={styles.statPill}>
-                  <Text style={[styles.statPillValue, { color: accentColor }]}>{s.value}<Text style={styles.statPillUnit}>{s.unit}</Text></Text>
-                  <Text style={styles.statPillLabel}>{s.label}</Text>
-                </View>
-              ))}
-            </View>
+            {/* Stat pills (only meaningful information) */}
+            {renderDetailPills()}
           </View>
         </Animated.View>
 
-        {/* ── Volume badge ── */}
-        <View style={styles.volumeCard}>
-          <Activity size={16} color={Colors.primary} />
-          <Text style={styles.volumeText}>
-            Total Volume:{' '}
-            <Text style={{ color: Colors.primary, fontWeight: '800' }}>
-              {((workout.sets ?? 0) * (workout.reps ?? 0) * (workout.weight ?? 0)).toLocaleString()} kg
+        {/* ── Volume badge (Only for Strength) ── */}
+        {workout.type === 'Strength' && (
+          <View style={styles.volumeCard}>
+            <Activity size={16} color={Colors.primary} />
+            <Text style={styles.volumeText}>
+              Total Volume:{' '}
+              <Text style={{ color: Colors.primary, fontWeight: '800' }}>
+                {((workout.sets ?? 0) * (workout.reps ?? 0) * (workout.weight ?? 0)).toLocaleString()} kg
+              </Text>
             </Text>
-          </Text>
-        </View>
+          </View>
+        )}
 
         {/* ── Edit Form ── */}
         {editMode && (
@@ -318,21 +588,44 @@ export default function WorkoutDetailScreen() {
               <Text style={styles.editCardTitle}>Edit Performance</Text>
             </View>
 
-            <View style={styles.editRow}>
-              <View style={{ flex: 1, marginRight: 10 }}>
-                <EditField icon={Hash}       label="Sets"       value={sets}   onChange={setSets}   />
-              </View>
-              <View style={{ flex: 1, marginLeft: 10 }}>
-                <EditField icon={Activity}   label="Reps"       value={reps}   onChange={setReps}   />
-              </View>
+            {/* Workout Type Selector */}
+            <Text style={[styles.label, { marginBottom: 12, marginLeft: 4 }]}>Workout Type</Text>
+            <View style={styles.typeGrid}>
+              {[
+                { id: 'Strength', icon: Dumbbell, color: '#CCFF00' },
+                { id: 'Cardio', icon: Flame, color: '#FF4B4B' },
+                { id: 'HIIT', icon: Zap, color: '#00D1FF' },
+                { id: 'Yoga', icon: Heart, color: '#BD00FF' },
+              ].map((t) => (
+                <TouchableOpacity 
+                  key={t.id} 
+                  style={[
+                    styles.typeCard, 
+                    editType === t.id && { backgroundColor: t.color + '20', borderColor: t.color }
+                  ]}
+                  onPress={() => handleTypeChange(t.id)}
+                >
+                  {React.createElement(t.icon, {
+                    size: 16,
+                    color: editType === t.id ? t.color : 'rgba(255,255,255,0.4)'
+                  })}
+                  <Text style={[
+                    styles.typeTextBtn, 
+                    editType === t.id && { color: t.color, fontWeight: '800' }
+                  ]}>{t.id}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
-            <EditField icon={WeightIcon} label="Weight" value={weight} onChange={setWeight} keyboardType="decimal-pad" suffix="kg" />
+
+            {/* Dynamic Config-driven Fields */}
+            {renderEditFields()}
 
             {/* Save button */}
             <TouchableOpacity
               onPress={handleUpdate}
               disabled={saving || deleting}
               activeOpacity={0.85}
+              style={{ marginTop: 24 }}
             >
               <LinearGradient
                 colors={[Colors.primary, '#9FE800']}
@@ -346,13 +639,28 @@ export default function WorkoutDetailScreen() {
               </LinearGradient>
             </TouchableOpacity>
 
-            {/* Reset */}
+            {/* Reset to saved values */}
             <TouchableOpacity
               style={styles.resetBtn}
               onPress={() => {
-                setSets(workout.sets?.toString() ?? '');
-                setReps(workout.reps?.toString() ?? '');
-                setWeight(workout.weight?.toString() ?? '');
+                if (workout) {
+                  setEditType(workout.type || 'Strength');
+                  setFormValues({
+                    exercise: workout.exercise || '',
+                    sets: workout.sets?.toString() ?? '',
+                    reps: workout.reps?.toString() ?? '',
+                    weight: workout.weight?.toString() ?? '',
+                    duration: workout.duration?.toString() ?? '',
+                    distance: workout.distance?.toString() ?? '',
+                    calories: workout.calories?.toString() ?? '',
+                    speed: workout.speed?.toString() ?? '',
+                    rounds: workout.rounds?.toString() ?? '',
+                    workTime: workout.workTime?.toString() ?? '',
+                    restTime: workout.restTime?.toString() ?? '',
+                    difficulty: workout.difficulty || '',
+                  });
+                  setErrors({});
+                }
               }}
             >
               <RotateCcw size={16} color={Colors.textSecondary} />
@@ -573,4 +881,74 @@ const styles = StyleSheet.create({
     borderWidth: 1.5, borderColor: '#333',
   },
   modalCancelText: { color: Colors.text, fontSize: 16, fontWeight: '700' },
+
+  /* Dynamic Form Styles */
+  typeGrid: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 24,
+  },
+  typeCard: {
+    flex: 1,
+    backgroundColor: '#1E1E1E',
+    borderRadius: 16,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#2A2A2A',
+  },
+  typeTextBtn: {
+    color: 'rgba(255, 255, 255, 0.4)',
+    fontSize: 10,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  row: {
+    flexDirection: 'row',
+    gap: 16,
+    marginBottom: 16,
+  },
+  halfInput: {
+    flex: 1,
+    gap: 8,
+  },
+  inputGroup: {
+    gap: 8,
+    marginBottom: 16,
+  },
+  inputWrapper: {
+    backgroundColor: '#1E1E1E',
+    borderRadius: 20,
+    height: 60,
+    borderWidth: 1.5,
+    borderColor: '#2A2A2A',
+    paddingHorizontal: 20,
+    justifyContent: 'center',
+  },
+  input: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  inputError: {
+    borderColor: '#FF4B4B',
+    backgroundColor: 'rgba(255, 75, 75, 0.05)',
+  },
+  errorText: {
+    color: '#FF4B4B',
+    fontSize: 11,
+    fontWeight: '600',
+    marginLeft: 4,
+  },
+  formSection: {
+    gap: 16,
+  },
+  label: {
+    color: Colors.textSecondary,
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 1.5,
+  },
 });
+

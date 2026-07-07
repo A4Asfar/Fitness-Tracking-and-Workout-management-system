@@ -17,43 +17,155 @@ exports.getWorkout = asyncHandler(async (req, res) => {
   res.json(workout);
 });
 
-exports.createWorkout = asyncHandler(async (req, res) => {
-  const { 
-    exercise, sets, reps, weight, type, duration, date,
-    distance, calories, speed, rounds, workTime, restTime, difficulty 
-  } = req.body;
+const workoutTypeRules = {
+  Strength: {
+    required: ['exercise', 'sets', 'reps', 'weight'],
+    optional: ['duration'],
+    forbidden: ['distance', 'calories', 'speed', 'rounds', 'workTime', 'restTime', 'difficulty']
+  },
+  Cardio: {
+    required: ['exercise', 'duration'],
+    optional: ['distance', 'calories', 'speed'],
+    forbidden: ['sets', 'reps', 'weight', 'rounds', 'workTime', 'restTime', 'difficulty']
+  },
+  HIIT: {
+    required: ['exercise', 'rounds', 'workTime', 'restTime'],
+    optional: ['duration'],
+    forbidden: ['sets', 'reps', 'weight', 'distance', 'calories', 'speed', 'difficulty']
+  },
+  Yoga: {
+    required: ['exercise', 'duration'],
+    optional: ['difficulty'],
+    forbidden: ['sets', 'reps', 'weight', 'distance', 'calories', 'speed', 'rounds', 'workTime', 'restTime']
+  }
+};
 
-  if (!exercise || !exercise.trim()) {
-    res.status(400);
-    throw new Error('Please provide an exercise name');
+function validateAndSanitizeWorkout(body) {
+  const type = body.type || 'Strength';
+  const rules = workoutTypeRules[type];
+  if (!rules) {
+    throw new Error(`Unsupported workout type: ${type}`);
   }
 
-  // Validate sets and reps only for Strength workouts
-  const activeType = type || 'Strength';
-  if (activeType === 'Strength') {
-    if (sets === undefined || sets === null || sets === '' || reps === undefined || reps === null || reps === '') {
-      res.status(400);
-      throw new Error('Please provide sets and reps');
+  // 1. Check for forbidden fields to prevent impossible combinations (e.g. Cardio + Weight)
+  for (const field of rules.forbidden) {
+    const val = body[field];
+    if (val !== undefined && val !== null && val !== '' && val !== 0 && val !== '0') {
+      throw new Error(`Field '${field}' is not allowed for ${type} workouts.`);
     }
   }
 
-  // Always use the authenticated user's ID — never allow body to override
+  // 2. Validate required fields with friendly type-specific messages
+  for (const field of rules.required) {
+    const val = body[field];
+    if (val === undefined || val === null || val === '') {
+      if (field === 'exercise') {
+        throw new Error('Exercise name is required.');
+      }
+      if (field === 'sets') {
+        throw new Error('Sets are required for Strength workouts.');
+      }
+      if (field === 'reps') {
+        throw new Error('Reps are required for Strength workouts.');
+      }
+      if (field === 'weight') {
+        throw new Error('Weight is required for Strength workouts.');
+      }
+      if (field === 'duration') {
+        throw new Error(`Duration is required for ${type} workouts.`);
+      }
+      if (field === 'rounds') {
+        throw new Error('Rounds are required for HIIT workouts.');
+      }
+      if (field === 'workTime') {
+        throw new Error('Work Time is required for HIIT workouts.');
+      }
+      if (field === 'restTime') {
+        throw new Error('Rest Time is required for HIIT workouts.');
+      }
+      throw new Error(`${field.charAt(0).toUpperCase() + field.slice(1)} is required for ${type} workouts.`);
+    }
+
+    // Value validations (must be greater than zero)
+    if (field === 'sets' || field === 'reps' || field === 'rounds' || field === 'workTime' || field === 'restTime') {
+      const num = parseInt(val);
+      if (isNaN(num) || num <= 0) {
+        throw new Error(`${field === 'workTime' ? 'Work Time' : field === 'restTime' ? 'Rest Time' : field.charAt(0).toUpperCase() + field.slice(1)} must be greater than zero.`);
+      }
+    }
+    if (field === 'weight') {
+      const num = parseFloat(val);
+      if (isNaN(num) || num <= 0) {
+        throw new Error('Weight must be greater than zero for Strength workouts.');
+      }
+    }
+    if (field === 'duration') {
+      const num = parseInt(val);
+      if (isNaN(num) || num <= 0) {
+        throw new Error(`Duration must be greater than zero for ${type} workouts.`);
+      }
+    }
+  }
+
+  // 3. Validate optional number fields if provided
+  if (body.duration !== undefined && body.duration !== null && body.duration !== '') {
+    const num = parseInt(body.duration);
+    if (num <= 0) throw new Error('Duration must be greater than zero.');
+  }
+  if (body.distance !== undefined && body.distance !== null && body.distance !== '') {
+    const num = parseFloat(body.distance);
+    if (num <= 0) throw new Error('Distance must be greater than zero.');
+  }
+  if (body.calories !== undefined && body.calories !== null && body.calories !== '') {
+    const num = parseInt(body.calories);
+    if (num <= 0) throw new Error('Calories must be greater than zero.');
+  }
+  if (body.speed !== undefined && body.speed !== null && body.speed !== '') {
+    const num = parseFloat(body.speed);
+    if (num <= 0) throw new Error('Speed must be greater than zero.');
+  }
+
+  // 4. Build sanitized payload with only applicable fields
+  const sanitized = {
+    type,
+    exercise: body.exercise.trim()
+  };
+
+  const allowedFields = [...rules.required, ...rules.optional];
+  allowedFields.forEach(field => {
+    const val = body[field];
+    if (val !== undefined && val !== null && val !== '') {
+      if (field === 'difficulty') {
+        sanitized[field] = val.toString().trim();
+      } else if (field === 'exercise') {
+        // already handled
+      } else {
+        sanitized[field] = val.toString().includes('.') ? parseFloat(val) : parseInt(val);
+      }
+    }
+  });
+
+  // Explicitly unset forbidden fields
+  rules.forbidden.forEach(field => {
+    sanitized[field] = undefined;
+  });
+
+  return sanitized;
+}
+
+exports.createWorkout = asyncHandler(async (req, res) => {
+  let sanitized;
+  try {
+    sanitized = validateAndSanitizeWorkout(req.body);
+  } catch (err) {
+    res.status(400);
+    throw new Error(err.message);
+  }
+
   const workout = new Workout({
     userId: req.userId,
-    exercise: exercise.trim(),
-    sets: activeType === 'Strength' ? parseInt(sets) : 0,
-    reps: activeType === 'Strength' ? parseInt(reps) : 0,
-    weight: activeType === 'Strength' && weight ? parseFloat(weight) : 0,
-    type: activeType,
-    duration: duration ? parseInt(duration) : 0,
-    distance: activeType === 'Cardio' && distance ? parseFloat(distance) : 0,
-    calories: activeType === 'Cardio' && calories ? parseInt(calories) : 0,
-    speed: activeType === 'Cardio' && speed ? parseFloat(speed) : 0,
-    rounds: activeType === 'HIIT' && rounds ? parseInt(rounds) : 0,
-    workTime: activeType === 'HIIT' && workTime ? parseInt(workTime) : 0,
-    restTime: activeType === 'HIIT' && restTime ? parseInt(restTime) : 0,
-    difficulty: activeType === 'Yoga' && difficulty ? difficulty : '',
-    ...(date && { date })
+    ...sanitized,
+    ...(req.body.date && { date: req.body.date })
   });
   await workout.save();
 
@@ -61,7 +173,7 @@ exports.createWorkout = asyncHandler(async (req, res) => {
   await Notification.create({
     userId: req.userId,
     title: 'Workout Logged',
-    message: `Strong work! You've logged your ${exercise} session. Keep it up!`,
+    message: `Strong work! You've logged your ${sanitized.exercise} session. Keep it up!`,
     type: 'workout'
   });
 
@@ -79,12 +191,38 @@ exports.deleteWorkout = asyncHandler(async (req, res) => {
 });
 
 exports.updateWorkout = asyncHandler(async (req, res) => {
-  const { sets, reps, weight } = req.body;
+  let sanitized;
+  try {
+    sanitized = validateAndSanitizeWorkout(req.body);
+  } catch (err) {
+    res.status(400);
+    throw new Error(err.message);
+  }
+
+  // Construct MongoDB update with $set and $unset
+  const updateQuery = { $set: {}, $unset: {} };
+  Object.keys(sanitized).forEach(key => {
+    if (sanitized[key] === undefined) {
+      updateQuery.$unset[key] = "";
+    } else {
+      updateQuery.$set[key] = sanitized[key];
+    }
+  });
+
+  if (req.body.date) {
+    updateQuery.$set.date = req.body.date;
+  }
+
+  if (Object.keys(updateQuery.$unset).length === 0) {
+    delete updateQuery.$unset;
+  }
+
   const workout = await Workout.findOneAndUpdate(
     { _id: req.params.id, userId: req.userId },
-    { $set: { sets, reps, weight } },
-    { returnDocument: 'after' }
+    updateQuery,
+    { returnDocument: 'after', new: true }
   );
+
   if (!workout) {
     res.status(404);
     throw new Error('Workout not found');
