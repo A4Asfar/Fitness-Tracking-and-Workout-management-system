@@ -4,11 +4,18 @@ export interface WorkoutLog {
   id?: string;
   userId?: string;
   exercise: string;
-  sets: number;
-  reps: number;
+  sets?: number;
+  reps?: number;
   weight?: number;
   type?: string;
   duration?: number;
+  distance?: number;
+  calories?: number;
+  speed?: number;
+  rounds?: number;
+  workTime?: number;
+  restTime?: number;
+  difficulty?: string;
   date?: string;
 }
 

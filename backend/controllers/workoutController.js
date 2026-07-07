@@ -18,20 +18,41 @@ exports.getWorkout = asyncHandler(async (req, res) => {
 });
 
 exports.createWorkout = asyncHandler(async (req, res) => {
-  const { exercise, sets, reps, weight, type, duration, date } = req.body;
-  if (!exercise || !sets || !reps) {
+  const { 
+    exercise, sets, reps, weight, type, duration, date,
+    distance, calories, speed, rounds, workTime, restTime, difficulty 
+  } = req.body;
+
+  if (!exercise || !exercise.trim()) {
     res.status(400);
-    throw new Error('Please provide exercise, sets, and reps');
+    throw new Error('Please provide an exercise name');
   }
+
+  // Validate sets and reps only for Strength workouts
+  const activeType = type || 'Strength';
+  if (activeType === 'Strength') {
+    if (sets === undefined || sets === null || sets === '' || reps === undefined || reps === null || reps === '') {
+      res.status(400);
+      throw new Error('Please provide sets and reps');
+    }
+  }
+
   // Always use the authenticated user's ID — never allow body to override
   const workout = new Workout({
     userId: req.userId,
-    exercise,
-    sets,
-    reps,
-    weight,
-    type,
-    duration,
+    exercise: exercise.trim(),
+    sets: activeType === 'Strength' ? parseInt(sets) : 0,
+    reps: activeType === 'Strength' ? parseInt(reps) : 0,
+    weight: activeType === 'Strength' && weight ? parseFloat(weight) : 0,
+    type: activeType,
+    duration: duration ? parseInt(duration) : 0,
+    distance: activeType === 'Cardio' && distance ? parseFloat(distance) : 0,
+    calories: activeType === 'Cardio' && calories ? parseInt(calories) : 0,
+    speed: activeType === 'Cardio' && speed ? parseFloat(speed) : 0,
+    rounds: activeType === 'HIIT' && rounds ? parseInt(rounds) : 0,
+    workTime: activeType === 'HIIT' && workTime ? parseInt(workTime) : 0,
+    restTime: activeType === 'HIIT' && restTime ? parseInt(restTime) : 0,
+    difficulty: activeType === 'Yoga' && difficulty ? difficulty : '',
     ...(date && { date })
   });
   await workout.save();

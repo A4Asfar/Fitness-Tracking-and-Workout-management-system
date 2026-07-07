@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, TextInput, TouchableOpacity, 
   ScrollView, KeyboardAvoidingView, Platform, Alert, Dimensions,
-  ActivityIndicator
+  ActivityIndicator, LayoutAnimation, UIManager
 } from 'react-native';
 import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
@@ -27,32 +27,123 @@ const TYPES = [
   { id: 'Yoga', icon: Trophy, color: '#BD00FF' },
 ];
 
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
+interface FormFieldConfig {
+  name: string;
+  label: string;
+  placeholder: string;
+  required: boolean;
+  type: 'text' | 'number';
+  halfWidth?: boolean;
+}
+
+const workoutTypeConfig: Record<string, { fields: FormFieldConfig[] }> = {
+  Strength: {
+    fields: [
+      { name: 'exercise', label: 'Exercise Name', placeholder: 'e.g. Bench Press', required: true, type: 'text' },
+      { name: 'sets', label: 'Sets', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'reps', label: 'Reps', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'weight', label: 'Weight (kg)', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'duration', label: 'Duration (min)', placeholder: '0', required: false, type: 'number', halfWidth: true },
+    ]
+  },
+  Cardio: {
+    fields: [
+      { name: 'exercise', label: 'Exercise Name', placeholder: 'e.g. Running', required: true, type: 'text' },
+      { name: 'duration', label: 'Duration (min)', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'distance', label: 'Distance (km)', placeholder: '0.0', required: false, type: 'number', halfWidth: true },
+      { name: 'calories', label: 'Calories Burned', placeholder: '0', required: false, type: 'number', halfWidth: true },
+      { name: 'speed', label: 'Average Speed (km/h)', placeholder: '0.0', required: false, type: 'number', halfWidth: true },
+    ]
+  },
+  HIIT: {
+    fields: [
+      { name: 'exercise', label: 'Exercise Name', placeholder: 'e.g. Tabata Circuit', required: true, type: 'text' },
+      { name: 'rounds', label: 'Rounds', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'workTime', label: 'Work Time (sec)', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'restTime', label: 'Rest Time (sec)', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'duration', label: 'Total Duration (min)', placeholder: '0', required: false, type: 'number', halfWidth: true },
+    ]
+  },
+  Yoga: {
+    fields: [
+      { name: 'exercise', label: 'Pose / Exercise Name', placeholder: 'e.g. Downward Dog', required: true, type: 'text' },
+      { name: 'duration', label: 'Duration (min)', placeholder: '0', required: true, type: 'number', halfWidth: true },
+      { name: 'difficulty', label: 'Difficulty', placeholder: 'e.g. Intermediate', required: false, type: 'text', halfWidth: true },
+    ]
+  }
+};
+
 export default function CreateWorkoutScreen() {
   const router = useRouter();
   const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   
-  const [exercise, setExercise] = useState('');
-  const [sets, setSets] = useState('');
-  const [reps, setReps] = useState('');
-  const [weight, setWeight] = useState('');
-  const [duration, setDuration] = useState('');
   const [type, setType] = useState((params.type as string) || 'Strength');
+  const [formValues, setFormValues] = useState<Record<string, string>>({
+    exercise: '',
+    sets: '',
+    reps: '',
+    weight: '',
+    duration: '',
+    distance: '',
+    calories: '',
+    speed: '',
+    rounds: '',
+    workTime: '',
+    restTime: '',
+    difficulty: '',
+  });
   const [errors, setErrors] = useState<any>({});
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
   useEffect(() => {
     if (params.type) setType(params.type as string);
-    if (params.exercise) setExercise(params.exercise as string);
+    if (params.exercise) {
+      setFormValues(prev => ({ ...prev, exercise: params.exercise as string }));
+    }
   }, [params.type, params.exercise]);
+
+  const handleTypeChange = (newType: string) => {
+    // Smooth layout transitions without jumps
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+    setType(newType);
+    setErrors({});
+    
+    // Clear irrelevant fields, preserving shared exercise name
+    setFormValues(prev => ({
+      exercise: prev.exercise,
+      sets: '',
+      reps: '',
+      weight: '',
+      duration: '',
+      distance: '',
+      calories: '',
+      speed: '',
+      rounds: '',
+      workTime: '',
+      restTime: '',
+      difficulty: '',
+    }));
+  };
 
   const handleSave = async () => {
     const newErrors: any = {};
-    if (!exercise.trim()) newErrors.exercise = 'Exercise name is required';
-    if (!sets.trim()) newErrors.sets = 'Sets are required';
-    if (!reps.trim()) newErrors.reps = 'Reps are required';
+    const currentConfig = workoutTypeConfig[type];
+    
+    currentConfig.fields.forEach(field => {
+      if (field.required) {
+        const val = formValues[field.name];
+        if (!val || !val.trim()) {
+          newErrors[field.name] = `${field.label} is required`;
+        }
+      }
+    });
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
@@ -62,16 +153,25 @@ export default function CreateWorkoutScreen() {
     setErrors({});
     setLoading(true);
     try {
-      await WorkoutService.logWorkout({
+      const payload: any = {
         userId: user?._id || user?.id,
-        exercise,
-        sets: parseInt(sets),
-        reps: parseInt(reps),
-        weight: weight ? parseFloat(weight) : 0,
         type,
-        duration: duration ? parseInt(duration) : 0,
+        exercise: formValues.exercise.trim(),
         date: new Date().toISOString(),
+      };
+
+      currentConfig.fields.forEach(field => {
+        const val = formValues[field.name];
+        if (val !== undefined && val !== null && val !== '') {
+          if (field.type === 'number') {
+            payload[field.name] = val.includes('.') ? parseFloat(val) : parseInt(val);
+          } else {
+            payload[field.name] = val;
+          }
+        }
       });
+
+      await WorkoutService.logWorkout(payload);
       setShowSuccess(true);
     } catch (error) {
       Alert.alert('Error', 'Failed to save workout. Please try again.');
@@ -81,6 +181,88 @@ export default function CreateWorkoutScreen() {
   };
 
   const activeColor = TYPES.find(t => t.id === type)?.color || Colors.primary;
+
+  const renderFields = () => {
+    const fields = workoutTypeConfig[type].fields;
+    const rows: React.ReactNode[] = [];
+    let i = 0;
+    
+    while (i < fields.length) {
+      const field = fields[i];
+      
+      // Group consecutive half-width fields into rows
+      if (field.halfWidth && i + 1 < fields.length && fields[i + 1].halfWidth) {
+        const nextField = fields[i + 1];
+        rows.push(
+          <View key={`row-${field.name}-${nextField.name}`} style={styles.row}>
+            <View style={styles.halfInput}>
+              <Text style={styles.label}>{field.label}</Text>
+              <View style={[styles.inputWrapper, errors[field.name] && styles.inputError]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder={field.placeholder}
+                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  value={formValues[field.name]}
+                  onChangeText={(val) => {
+                    setFormValues((prev: Record<string, string>) => ({ ...prev, [field.name]: val }));
+                    if (errors[field.name]) setErrors((prev: any) => ({ ...prev, [field.name]: null }));
+                  }}
+                  keyboardType={field.type === 'number' ? 'numeric' : 'default'}
+                />
+              </View>
+              {errors[field.name] && <Text style={styles.errorText}>{errors[field.name]}</Text>}
+            </View>
+
+            <View style={styles.halfInput}>
+              <Text style={styles.label}>{nextField.label}</Text>
+              <View style={[styles.inputWrapper, errors[nextField.name] && styles.inputError]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder={nextField.placeholder}
+                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  value={formValues[nextField.name]}
+                  onChangeText={(val) => {
+                    setFormValues((prev: Record<string, string>) => ({ ...prev, [nextField.name]: val }));
+                    if (errors[nextField.name]) setErrors((prev: any) => ({ ...prev, [nextField.name]: null }));
+                  }}
+                  keyboardType={nextField.type === 'number' ? 'numeric' : 'default'}
+                />
+              </View>
+              {errors[nextField.name] && <Text style={styles.errorText}>{errors[nextField.name]}</Text>}
+            </View>
+          </View>
+        );
+        i += 2;
+      } else {
+        // Render single/full-width field
+        rows.push(
+          <View key={field.name} style={field.halfWidth ? styles.row : styles.inputGroup}>
+            <View style={field.halfWidth ? styles.halfInput : { flex: 1, gap: 8 }}>
+              <Text style={styles.label}>{field.label}</Text>
+              <View style={[styles.inputWrapper, errors[field.name] && styles.inputError]}>
+                <TextInput
+                  style={styles.input}
+                  placeholder={field.placeholder}
+                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  value={formValues[field.name]}
+                  onChangeText={(val) => {
+                    setFormValues((prev: Record<string, string>) => ({ ...prev, [field.name]: val }));
+                    if (errors[field.name]) setErrors((prev: any) => ({ ...prev, [field.name]: null }));
+                  }}
+                  keyboardType={field.type === 'number' ? 'numeric' : 'default'}
+                />
+              </View>
+              {errors[field.name] && <Text style={styles.errorText}>{errors[field.name]}</Text>}
+            </View>
+            {field.halfWidth && <View style={styles.halfInput} />}
+          </View>
+        );
+        i += 1;
+      }
+    }
+
+    return <View style={styles.formSection}>{rows}</View>;
+  };
 
   return (
     <View style={[SharedStyles.container, { backgroundColor: '#000' }]}>
@@ -123,7 +305,7 @@ export default function CreateWorkoutScreen() {
                   styles.typeCard, 
                   type === t.id && { backgroundColor: t.color + '20', borderColor: t.color }
                 ]}
-                onPress={() => setType(t.id)}
+                onPress={() => handleTypeChange(t.id)}
               >
                 <t.icon size={20} color={type === t.id ? t.color : 'rgba(255,255,255,0.4)'} />
                 <Text style={[
@@ -134,84 +316,8 @@ export default function CreateWorkoutScreen() {
             ))}
           </View>
 
-          {/* ── Exercise Details ── */}
-          <View style={styles.formSection}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Exercise Name</Text>
-              <View style={[styles.inputWrapper, errors.exercise && styles.inputError]}>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g. Bench Press"
-                  placeholderTextColor="rgba(255,255,255,0.2)"
-                  value={exercise}
-                  onChangeText={(t) => { setExercise(t); if (errors.exercise) setErrors({...errors, exercise: null}); }}
-                />
-              </View>
-              {errors.exercise && <Text style={styles.errorText}>{errors.exercise}</Text>}
-            </View>
-
-            <View style={styles.row}>
-              <View style={styles.halfInput}>
-                <Text style={styles.label}>Sets</Text>
-                <View style={[styles.inputWrapper, errors.sets && styles.inputError]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="0"
-                    placeholderTextColor="rgba(255,255,255,0.2)"
-                    value={sets}
-                    onChangeText={(t) => { setSets(t); if (errors.sets) setErrors({...errors, sets: null}); }}
-                    keyboardType="numeric"
-                  />
-                </View>
-                {errors.sets && <Text style={styles.errorText}>{errors.sets}</Text>}
-              </View>
-
-              <View style={styles.halfInput}>
-                <Text style={styles.label}>Reps</Text>
-                <View style={[styles.inputWrapper, errors.reps && styles.inputError]}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="0"
-                    placeholderTextColor="rgba(255,255,255,0.2)"
-                    value={reps}
-                    onChangeText={(t) => { setReps(t); if (errors.reps) setErrors({...errors, reps: null}); }}
-                    keyboardType="numeric"
-                  />
-                </View>
-                {errors.reps && <Text style={styles.errorText}>{errors.reps}</Text>}
-              </View>
-            </View>
-
-            <View style={styles.row}>
-              <View style={styles.halfInput}>
-                <Text style={styles.label}>Weight (kg)</Text>
-                <View style={styles.inputWrapper}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="0"
-                    placeholderTextColor="rgba(255,255,255,0.2)"
-                    value={weight}
-                    onChangeText={setWeight}
-                    keyboardType="numeric"
-                  />
-                </View>
-              </View>
-
-              <View style={styles.halfInput}>
-                <Text style={styles.label}>Duration (min)</Text>
-                <View style={styles.inputWrapper}>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="0"
-                    placeholderTextColor="rgba(255,255,255,0.2)"
-                    value={duration}
-                    onChangeText={setDuration}
-                    keyboardType="numeric"
-                  />
-                </View>
-              </View>
-            </View>
-          </View>
+          {/* ── Dynamic Config-driven Fields ── */}
+          {renderFields()}
         </View>
       </ScrollView>
 
