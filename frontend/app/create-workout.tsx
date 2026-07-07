@@ -83,7 +83,13 @@ export default function CreateWorkoutScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   
-  const [type, setType] = useState((params.type as string) || 'Strength');
+  // Derive workout type from the URL parameter (single source of truth)
+  const rawType = params.type as string;
+  const isValidType = TYPES.some(t => t.id.toLowerCase() === rawType?.toLowerCase());
+  const type = isValidType 
+    ? (TYPES.find(t => t.id.toLowerCase() === rawType.toLowerCase())?.id || 'Strength')
+    : 'Strength';
+
   const [formValues, setFormValues] = useState<Record<string, string>>({
     exercise: '',
     sets: '',
@@ -102,21 +108,31 @@ export default function CreateWorkoutScreen() {
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
+  // Sync initial params or changes from parent routing
   useEffect(() => {
-    if (params.type) setType(params.type as string);
     if (params.exercise) {
-      setFormValues(prev => ({ ...prev, exercise: params.exercise as string }));
+      setFormValues((prev: Record<string, string>) => ({ ...prev, exercise: params.exercise as string }));
     }
-  }, [params.type, params.exercise]);
+  }, [params.exercise]);
 
-  const handleTypeChange = (newType: string) => {
-    // Smooth layout transitions without jumps
+  // If type in URL is missing or invalid, replace it with the default "Strength" type
+  useEffect(() => {
+    if (!rawType || !isValidType) {
+      router.replace({
+        pathname: '/create-workout',
+        params: { ...params, type: 'Strength' }
+      });
+    }
+  }, [rawType, isValidType]);
+
+  // Synchronize dynamic form states when type changes (on click or Back/Forward)
+  useEffect(() => {
+    // Smooth transitions without layout jumps
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setType(newType);
     setErrors({});
     
-    // Clear irrelevant fields, preserving shared exercise name
-    setFormValues(prev => ({
+    // Clear type-specific fields, preserving only the shared exercise name
+    setFormValues((prev: Record<string, string>) => ({
       exercise: prev.exercise,
       sets: '',
       reps: '',
@@ -130,6 +146,13 @@ export default function CreateWorkoutScreen() {
       restTime: '',
       difficulty: '',
     }));
+  }, [type]);
+
+  const handleTypeChange = (newType: string) => {
+    router.push({
+      pathname: '/create-workout',
+      params: { ...params, type: newType }
+    });
   };
 
   const handleSave = async () => {
