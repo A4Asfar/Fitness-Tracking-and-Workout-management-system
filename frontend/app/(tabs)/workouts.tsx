@@ -1,5 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, RefreshControl, Animated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, RefreshControl, Animated, Alert } from 'react-native';
 import { Colors, SPACING } from '@/constants/Theme';
 import { 
   Dumbbell, Flame, Zap, Heart, Target, TrendingUp, Clock, Play, ChevronRight
@@ -9,6 +9,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import api from '@/services/api';
+
+// Extracted Premium Components
+import WorkoutCard from '@/components/workout/WorkoutCard';
+import EmptyState from '@/components/workout/EmptyState';
 
 const { width } = Dimensions.get('window');
 
@@ -243,35 +247,44 @@ export default function WorkoutsScreen() {
         </View>
 
         {loading ? (
-          <ActivityIndicator color="#00D1FF" style={{ marginTop: 20 }} />
+          <ActivityIndicator color="#7C4DFF" style={{ marginTop: 20 }} />
         ) : workouts.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No recent workouts. Time to start one!</Text>
-          </View>
+          <EmptyState
+            title="No Recent Sessions"
+            description="You haven't logged any workouts recently. Log your training today to start seeing results!"
+            buttonLabel="Log Workout"
+            onButtonPress={() => router.push('/create-workout' as any)}
+            accentColor="#7C4DFF"
+          />
         ) : (
-          workouts.slice(0, 5).map((workout) => {
-            const IconComponent = getWorkoutIcon(workout.type);
-            const accent = getAccentColor(workout.type);
-            return (
-              <TouchableOpacity
-                key={workout._id}
-                style={styles.historyCard}
-                onPress={() => router.push(`/workout/${workout._id}` as any)}
-              >
-                <View style={[styles.historyAccent, { backgroundColor: accent }]} />
-                <View style={[styles.iconBox, { backgroundColor: accent + '15', marginRight: 14, width: 42, height: 42, borderRadius: 12, marginLeft: -4, justifyContent: 'center', alignItems: 'center' }]}>
-                  <IconComponent size={20} color={accent} />
-                </View>
-                <View style={styles.historyInfo}>
-                  <Text style={styles.historyName}>{workout.exercise}</Text>
-                  <Text style={styles.historyMeta}>
-                    {workout.type} • {getWorkoutMetrics(workout)} • {formatDate(workout.date)}
-                  </Text>
-                </View>
-                <ChevronRight size={20} color={Colors.textSecondary} />
-              </TouchableOpacity>
-            );
-          })
+          workouts.slice(0, 5).map((workout) => (
+            <WorkoutCard
+              key={workout._id}
+              workout={workout}
+              onEditPress={() => router.push(`/workout/${workout._id}` as any)}
+              onDeletePress={() => {
+                Alert.alert(
+                  'Delete Workout',
+                  'Are you sure you want to delete this workout?',
+                  [
+                    { text: 'Cancel', style: 'cancel' },
+                    { 
+                      text: 'Delete', 
+                      style: 'destructive',
+                      onPress: async () => {
+                        try {
+                          await api.delete(`/workouts/${workout._id}`);
+                          fetchWorkouts();
+                        } catch (err) {
+                          Alert.alert('Error', 'Failed to delete workout.');
+                        }
+                      }
+                    }
+                  ]
+                );
+              }}
+            />
+          ))
         )}
       </ScrollView>
     </View>

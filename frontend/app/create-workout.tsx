@@ -1,31 +1,48 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  View, Text, StyleSheet, TextInput, TouchableOpacity, 
-  ScrollView, KeyboardAvoidingView, Platform, Alert, Dimensions,
-  ActivityIndicator, LayoutAnimation, UIManager
+  View, Text, StyleSheet, TextInput, ScrollView, 
+  KeyboardAvoidingView, Platform, Alert, Dimensions, UIManager, LayoutAnimation
 } from 'react-native';
-import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
+import { Colors } from '@/constants/Theme';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
-  Dumbbell, Clock, Flame, Save, ArrowLeft, Zap, 
-  Trophy, Activity, Timer, ChevronRight, Check
+  Dumbbell, Clock, Flame, Zap, Trophy, Activity, Timer, Hash, HelpCircle, Check
 } from 'lucide-react-native';
 import { WorkoutService } from '@/services/workoutService';
 import SuccessModal from '@/components/SuccessModal';
 import { safeBack } from '@/utils/navigation';
 import { useAuth } from '@/context/AuthContext';
-import { LinearGradient } from 'expo-linear-gradient';
-import { BlurView } from 'expo-blur';
+
+// Extracted Premium Components
+import WorkoutHeader from '@/components/workout/WorkoutHeader';
+import WorkoutChip from '@/components/workout/WorkoutChip';
+import FormSection from '@/components/workout/FormSection';
+import ActionButton from '@/components/workout/ActionButton';
 
 const { width } = Dimensions.get('window');
 
 const TYPES = [
-  { id: 'Strength', icon: Dumbbell, color: '#CCFF00' },
+  { id: 'Strength', icon: Dumbbell, color: '#7C4DFF' },
   { id: 'Cardio', icon: Flame, color: '#FF4B4B' },
-  { id: 'HIIT', icon: Zap, color: '#00D1FF' },
+  { id: 'HIIT', icon: Zap, color: '#00B0FF' },
   { id: 'Yoga', icon: Trophy, color: '#BD00FF' },
 ];
+
+const fieldIcons: Record<string, any> = {
+  exercise: Dumbbell,
+  sets: Hash,
+  reps: Activity,
+  weight: Dumbbell,
+  duration: Clock,
+  distance: Activity,
+  calories: Flame,
+  speed: Zap,
+  rounds: Hash,
+  workTime: Clock,
+  restTime: Timer,
+  difficulty: Trophy
+};
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -83,7 +100,6 @@ export default function CreateWorkoutScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   
-  // Derive workout type from the URL parameter (single source of truth)
   const rawType = params.type as string;
   const isValidType = TYPES.some(t => t.id.toLowerCase() === rawType?.toLowerCase());
   const type = isValidType 
@@ -108,14 +124,12 @@ export default function CreateWorkoutScreen() {
   const [loading, setLoading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
 
-  // Sync initial params or changes from parent routing
   useEffect(() => {
     if (params.exercise) {
       setFormValues((prev: Record<string, string>) => ({ ...prev, exercise: params.exercise as string }));
     }
   }, [params.exercise]);
 
-  // If type in URL is missing or invalid, replace it with the default "Strength" type
   useEffect(() => {
     if (!rawType || !isValidType) {
       router.replace({
@@ -125,13 +139,10 @@ export default function CreateWorkoutScreen() {
     }
   }, [rawType, isValidType]);
 
-  // Synchronize dynamic form states when type changes (on click or Back/Forward)
   useEffect(() => {
-    // Smooth transitions without layout jumps
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setErrors({});
     
-    // Clear type-specific fields, preserving only the shared exercise name
     setFormValues((prev: Record<string, string>) => ({
       exercise: prev.exercise,
       sets: '',
@@ -203,52 +214,84 @@ export default function CreateWorkoutScreen() {
     }
   };
 
-  const activeColor = TYPES.find(t => t.id === type)?.color || Colors.primary;
+  const activeColor = TYPES.find(t => t.id === type)?.color || '#7C4DFF';
 
-  const renderFields = () => {
+  const renderFormWithSections = () => {
     const fields = workoutTypeConfig[type].fields;
-    const rows: React.ReactNode[] = [];
+    const exerciseField = fields.find(f => f.name === 'exercise');
+    const metricFields = fields.filter(f => f.name !== 'exercise');
+
+    const renderInput = (field: FormFieldConfig) => {
+      const FieldIcon = fieldIcons[field.name] || HelpCircle;
+      return (
+        <View style={styles.inputGroup} key={field.name}>
+          <Text style={styles.inputLabel}>{field.label}</Text>
+          <View style={[styles.inputWrapper, errors[field.name] && styles.inputError]}>
+            <FieldIcon size={18} color="#64748B" style={styles.fieldIcon} />
+            <TextInput
+              style={styles.input}
+              placeholder={field.placeholder}
+              placeholderTextColor="#94A3B8"
+              value={formValues[field.name]}
+              onChangeText={(val) => {
+                setFormValues((prev: Record<string, string>) => ({ ...prev, [field.name]: val }));
+                if (errors[field.name]) setErrors((prev: any) => ({ ...prev, [field.name]: null }));
+              }}
+              keyboardType={field.type === 'number' ? 'numeric' : 'default'}
+              selectionColor={activeColor}
+            />
+          </View>
+          {errors[field.name] && <Text style={styles.errorText}>{errors[field.name]}</Text>}
+        </View>
+      );
+    };
+
+    const metricRows: React.ReactNode[] = [];
     let i = 0;
-    
-    while (i < fields.length) {
-      const field = fields[i];
-      
-      // Group consecutive half-width fields into rows
-      if (field.halfWidth && i + 1 < fields.length && fields[i + 1].halfWidth) {
-        const nextField = fields[i + 1];
-        rows.push(
+    while (i < metricFields.length) {
+      const field = metricFields[i];
+      if (field.halfWidth && i + 1 < metricFields.length && metricFields[i + 1].halfWidth) {
+        const nextField = metricFields[i + 1];
+        const FieldIcon = fieldIcons[field.name] || HelpCircle;
+        const NextFieldIcon = fieldIcons[nextField.name] || HelpCircle;
+
+        metricRows.push(
           <View key={`row-${field.name}-${nextField.name}`} style={styles.row}>
             <View style={styles.halfInput}>
-              <Text style={styles.label}>{field.label}</Text>
+              <Text style={styles.inputLabel}>{field.label}</Text>
               <View style={[styles.inputWrapper, errors[field.name] && styles.inputError]}>
+                <FieldIcon size={18} color="#64748B" style={styles.fieldIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder={field.placeholder}
-                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  placeholderTextColor="#94A3B8"
                   value={formValues[field.name]}
                   onChangeText={(val) => {
                     setFormValues((prev: Record<string, string>) => ({ ...prev, [field.name]: val }));
                     if (errors[field.name]) setErrors((prev: any) => ({ ...prev, [field.name]: null }));
                   }}
                   keyboardType={field.type === 'number' ? 'numeric' : 'default'}
+                  selectionColor={activeColor}
                 />
               </View>
               {errors[field.name] && <Text style={styles.errorText}>{errors[field.name]}</Text>}
             </View>
 
             <View style={styles.halfInput}>
-              <Text style={styles.label}>{nextField.label}</Text>
+              <Text style={styles.inputLabel}>{nextField.label}</Text>
               <View style={[styles.inputWrapper, errors[nextField.name] && styles.inputError]}>
+                <NextFieldIcon size={18} color="#64748B" style={styles.fieldIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder={nextField.placeholder}
-                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  placeholderTextColor="#94A3B8"
                   value={formValues[nextField.name]}
                   onChangeText={(val) => {
                     setFormValues((prev: Record<string, string>) => ({ ...prev, [nextField.name]: val }));
                     if (errors[nextField.name]) setErrors((prev: any) => ({ ...prev, [nextField.name]: null }));
                   }}
                   keyboardType={nextField.type === 'number' ? 'numeric' : 'default'}
+                  selectionColor={activeColor}
                 />
               </View>
               {errors[nextField.name] && <Text style={styles.errorText}>{errors[nextField.name]}</Text>}
@@ -257,22 +300,24 @@ export default function CreateWorkoutScreen() {
         );
         i += 2;
       } else {
-        // Render single/full-width field
-        rows.push(
+        const FieldIcon = fieldIcons[field.name] || HelpCircle;
+        metricRows.push(
           <View key={field.name} style={field.halfWidth ? styles.row : styles.inputGroup}>
             <View style={field.halfWidth ? styles.halfInput : { flex: 1, gap: 8 }}>
-              <Text style={styles.label}>{field.label}</Text>
+              <Text style={styles.inputLabel}>{field.label}</Text>
               <View style={[styles.inputWrapper, errors[field.name] && styles.inputError]}>
+                <FieldIcon size={18} color="#64748B" style={styles.fieldIcon} />
                 <TextInput
                   style={styles.input}
                   placeholder={field.placeholder}
-                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  placeholderTextColor="#94A3B8"
                   value={formValues[field.name]}
                   onChangeText={(val) => {
                     setFormValues((prev: Record<string, string>) => ({ ...prev, [field.name]: val }));
                     if (errors[field.name]) setErrors((prev: any) => ({ ...prev, [field.name]: null }));
                   }}
                   keyboardType={field.type === 'number' ? 'numeric' : 'default'}
+                  selectionColor={activeColor}
                 />
               </View>
               {errors[field.name] && <Text style={styles.errorText}>{errors[field.name]}</Text>}
@@ -284,88 +329,70 @@ export default function CreateWorkoutScreen() {
       }
     }
 
-    return <View style={styles.formSection}>{rows}</View>;
+    return (
+      <View style={styles.formContainer}>
+        {exerciseField && (
+          <FormSection title="Exercise Information" subtitle="Which exercise did you perform today?">
+            {renderInput(exerciseField)}
+          </FormSection>
+        )}
+
+        <FormSection title="Performance Metrics" subtitle={`Key parameters for your ${type} training`}>
+          <View style={styles.formSection}>{metricRows}</View>
+        </FormSection>
+      </View>
+    );
   };
 
   return (
-    <View style={[SharedStyles.container, { backgroundColor: '#000' }]}>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.container}
+    >
       <Stack.Screen options={{ headerShown: false }} />
       
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
       >
-        {/* ── Immersive Header ── */}
-        <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-          <LinearGradient
-            colors={[activeColor + '40', 'transparent']}
-            style={StyleSheet.absoluteFill}
-          />
-          
-          <View style={styles.headerTop}>
-            <TouchableOpacity onPress={() => safeBack()} style={styles.backBtn}>
-              <ArrowLeft size={22} color="#FFF" />
-            </TouchableOpacity>
-            <View style={styles.headerBadge}>
-              <View style={[styles.dot, { backgroundColor: activeColor }]} />
-              <Text style={styles.headerBadgeText}>ACTIVE SESSION</Text>
-            </View>
-            <View style={{ width: 44 }} />
-          </View>
-
-          <Text style={styles.headerTitle}>Log Workout</Text>
-          <Text style={styles.headerSub}>Record your training progress</Text>
-        </View>
+        <WorkoutHeader 
+          title="Log Workout" 
+          subtitle="Record your training progress"
+          userName={user?.name}
+          onBackPress={() => safeBack()}
+        />
 
         <View style={styles.content}>
-          {/* ── Type Selection ── */}
-          <Text style={styles.sectionTitle}>Workout Type</Text>
-          <View style={styles.typeGrid}>
-            {TYPES.map((t) => (
-              <TouchableOpacity 
-                key={t.id} 
-                style={[
-                  styles.typeCard, 
-                  type === t.id && { backgroundColor: t.color + '20', borderColor: t.color }
-                ]}
-                onPress={() => handleTypeChange(t.id)}
-              >
-                <t.icon size={20} color={type === t.id ? t.color : 'rgba(255,255,255,0.4)'} />
-                <Text style={[
-                  styles.typeText, 
-                  type === t.id && { color: t.color, fontWeight: '800' }
-                ]}>{t.id}</Text>
-              </TouchableOpacity>
-            ))}
-          </View>
+          {/* Segmented type selector */}
+          <FormSection title="Training Type" subtitle="Select category of training activity">
+            <View style={styles.typeGrid}>
+              {TYPES.map((t) => (
+                <WorkoutChip 
+                  key={t.id}
+                  label={t.id}
+                  icon={t.icon}
+                  selected={type === t.id}
+                  activeColor={t.color}
+                  onPress={() => handleTypeChange(t.id)}
+                />
+              ))}
+            </View>
+          </FormSection>
 
-          {/* ── Dynamic Config-driven Fields ── */}
-          {renderFields()}
+          {/* Grouped section form inputs */}
+          {renderFormWithSections()}
         </View>
       </ScrollView>
 
-      {/* ── Bottom Action ── */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
-        <TouchableOpacity 
-          style={styles.saveBtn}
+      {/* Floating complete button */}
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
+        <ActionButton 
+          label="Complete Session" 
+          icon={Check}
           onPress={handleSave}
-          disabled={loading}
-        >
-          <LinearGradient
-            colors={[activeColor, activeColor + 'CC']}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-            style={styles.saveGrad}
-          >
-            {loading ? (
-              <ActivityIndicator color="#000" />
-            ) : (
-              <>
-                <Check size={20} color="#000" strokeWidth={3} />
-                <Text style={styles.saveBtnText}>Complete Session</Text>
-              </>
-            )}
-          </LinearGradient>
-        </TouchableOpacity>
+          loading={loading}
+          accentColor={activeColor}
+        />
       </View>
 
       <SuccessModal 
@@ -376,125 +403,64 @@ export default function CreateWorkoutScreen() {
           safeBack('/(tabs)/');
         }}
       />
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 24,
-    paddingBottom: 32,
-    marginBottom: 16,
-  },
-  headerTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 32,
-  },
-  backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
-  },
-  headerBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-  },
-  headerBadgeText: {
-    color: '#FFF',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1,
-  },
-  headerTitle: {
-    color: '#FFF',
-    fontSize: 34,
-    fontWeight: '900',
-    letterSpacing: -1,
-  },
-  headerSub: {
-    color: 'rgba(255,255,255,0.5)',
-    fontSize: 16,
-    fontWeight: '500',
-    marginTop: 4,
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
   },
   content: {
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    color: '#FFF',
-    fontSize: 18,
-    fontWeight: '800',
-    marginBottom: 16,
+    paddingHorizontal: 20,
+    marginTop: 8,
   },
   typeGrid: {
     flexDirection: 'row',
     gap: 8,
-    marginBottom: 32,
+    width: '100%',
   },
-  typeCard: {
-    flex: 1,
-    backgroundColor: '#111',
-    borderRadius: 16,
-    paddingVertical: 14,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#222',
-  },
-  typeText: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 6,
+  formContainer: {
+    gap: 8,
   },
   formSection: {
-    gap: 20,
+    gap: 16,
   },
   inputGroup: {
     gap: 8,
   },
-  label: {
-    color: 'rgba(255,255,255,0.6)',
+  inputLabel: {
+    color: '#475569',
     fontSize: 13,
     fontWeight: '700',
     marginLeft: 4,
   },
   inputWrapper: {
-    backgroundColor: '#111',
-    borderRadius: 20,
-    height: 60,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    height: 54,
     borderWidth: 1.5,
-    borderColor: '#222',
-    paddingHorizontal: 20,
-    justifyContent: 'center',
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  fieldIcon: {
+    marginRight: 10,
   },
   input: {
-    color: '#FFF',
-    fontSize: 16,
+    flex: 1,
+    color: '#0F172A',
+    fontSize: 15,
     fontWeight: '600',
   },
   inputError: {
-    borderColor: '#FF4B4B',
-    backgroundColor: 'rgba(255, 75, 75, 0.05)',
+    borderColor: '#FF4D4D',
+    backgroundColor: 'rgba(255, 77, 77, 0.03)',
   },
   errorText: {
-    color: '#FF4B4B',
+    color: '#FF4D4D',
     fontSize: 11,
     fontWeight: '600',
     marginLeft: 4,
@@ -512,26 +478,10 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    paddingHorizontal: 24,
-    backgroundColor: 'rgba(0,0,0,0.8)',
-    paddingTop: 16,
-  },
-  saveBtn: {
-    height: 64,
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  saveGrad: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 12,
-  },
-  saveBtnText: {
-    color: '#000',
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: -0.5,
+    paddingHorizontal: 20,
+    backgroundColor: 'rgba(248, 250, 252, 0.85)',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E2E8F0',
   },
 });
