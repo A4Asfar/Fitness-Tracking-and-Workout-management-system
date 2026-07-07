@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, ActivityIndicator, ScrollView,
-  RefreshControl, Dimensions, Animated, TouchableOpacity
+  View, StyleSheet, ActivityIndicator, ScrollView, RefreshControl, Text, TouchableOpacity
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
-import { Colors, SPACING, SharedStyles } from '@/constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  TrendingUp, Activity, Trophy, Calendar, Zap,
-  Dumbbell, ArrowUpRight, ArrowDownRight, Flame, Weight, Sparkles,
-  ChevronRight
+  Weight, Activity, Trophy, Flame, Dumbbell, Sparkles
 } from 'lucide-react-native';
 import { Stack } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 
-const { width } = Dimensions.get('window');
+// Extracted Premium Components
+import AnalyticsHeader from '@/components/analytics/AnalyticsHeader';
+import MetricCard from '@/components/analytics/MetricCard';
+import DateFilter from '@/components/analytics/DateFilter';
+import ChartCard from '@/components/analytics/ChartCard';
+import AIInsightCard from '@/components/analytics/AIInsightCard';
 
 export default function ProgressAnalyticsScreen() {
   const [loading, setLoading] = useState(true);
@@ -24,7 +24,6 @@ export default function ProgressAnalyticsScreen() {
   const [timeframe, setTimeframe] = useState<'weekly' | 'monthly'>('weekly');
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
-
   const [error, setError] = useState<string | null>(null);
 
   const fetchAnalytics = async () => {
@@ -45,320 +44,209 @@ export default function ProgressAnalyticsScreen() {
     fetchAnalytics();
   }, []);
 
-  const onRefresh = () => { setRefreshing(true); fetchAnalytics(); };
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchAnalytics();
+  };
 
-  // Calculate real stats from user data and analytics
   const weightKg = user?.weight || 0;
   const weightLbs = Math.round(weightKg * 2.20462);
 
   if (loading && !refreshing) {
     return (
-      <View style={styles.loader}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#7C4DFF" />
+        <Text style={styles.loaderText}>Syncing your fitness progress…</Text>
       </View>
     );
   }
 
   if (error && !refreshing) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-        <LinearGradient colors={['#FF4B4B15', 'transparent']} style={StyleSheet.absoluteFill} />
-        <Text style={{ color: '#FF4B4B', fontSize: 16, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>SYNC ERROR</Text>
-        <Text style={{ color: Colors.textSecondary, fontSize: 14, fontWeight: '500', textAlign: 'center', marginBottom: 28, lineHeight: 22 }}>{error}</Text>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>SYNC ERROR</Text>
+        <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity 
           onPress={() => { setLoading(true); fetchAnalytics(); }} 
-          style={{ height: 54, width: 160, borderRadius: 18, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}
+          style={styles.retryBtn}
           activeOpacity={0.8}
         >
-          <Text style={{ color: '#000', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 }}>RETRY SYNC</Text>
+          <Text style={styles.retryText}>RETRY SYNC</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <View style={[SharedStyles.container, { backgroundColor: '#000' }]}>
+    <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <ScrollView 
         style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C4DFF" />
+        }
       >
-        {/* ── Page Header ── */}
-        <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-          <Text style={styles.headerTitle}>Progress</Text>
-          <Text style={styles.headerSubtitle}>Track your fitness journey</Text>
-        </View>
+        {/* Dynamic header welcome */}
+        <AnalyticsHeader onSharePress={() => Alert.alert('Share Progress', 'Share sheet will open in production build.')} />
 
-        {/* ── Weekly/Monthly Toggle ── */}
-        <View style={styles.toggleContainer}>
-          <View style={styles.toggleBackground}>
-            <TouchableOpacity 
-              style={[styles.toggleBtn, timeframe === 'weekly' && styles.toggleBtnActive]}
-              onPress={() => setTimeframe('weekly')}
-            >
-              {timeframe === 'weekly' && (
-                <LinearGradient
-                  colors={[Colors.primary, '#9FE800']}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                  style={StyleSheet.absoluteFill}
-                />
-              )}
-              <Text style={[styles.toggleText, timeframe === 'weekly' && styles.toggleTextActive]}>Weekly</Text>
-            </TouchableOpacity>
+        {/* Date Filter Toggles */}
+        <DateFilter selected={timeframe} onChange={setTimeframe} />
 
-            <TouchableOpacity 
-              style={[styles.toggleBtn, timeframe === 'monthly' && styles.toggleBtnActive]}
-              onPress={() => setTimeframe('monthly')}
-            >
-              {timeframe === 'monthly' && (
-                <LinearGradient
-                  colors={[Colors.primary, '#9FE800']}
-                  start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                  style={StyleSheet.absoluteFill}
-                />
-              )}
-              <Text style={[styles.toggleText, timeframe === 'monthly' && styles.toggleTextActive]}>Monthly</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* ── Stats Row ── */}
-        <View style={styles.statsRow}>
-          <ProgressStatCard 
-            label="Current Weight" 
-            value={weightKg > 0 ? `${weightLbs} lbs` : '--'} 
-            trend={weightKg > 0 ? `${weightKg} kg` : 'Not set'} 
-            isPositiveTrend={false}
+        {/* Metrics Grid Row */}
+        <View style={styles.metricsGrid}>
+          <MetricCard 
+            label="Current Weight"
+            value={weightKg > 0 ? `${weightLbs} lbs` : '--'}
+            sub={weightKg > 0 ? `${weightKg} kg` : 'Not set'}
+            isPositive={false}
+            accentColor="#FF6B3B"
+            icon={Weight}
           />
-          <ProgressStatCard 
-            label="BMI Index" 
-            value={data?.bmi ? String(data.bmi) : '--'} 
-            trend={data?.bmiCategory || 'N/A'} 
-            isPositiveTrend={true}
+          <MetricCard 
+            label="BMI Index"
+            value={data?.bmi ? String(data.bmi) : '--'}
+            sub={data?.bmiCategory || 'N/A'}
+            isPositive={true}
+            accentColor="#00B0FF"
+            icon={Activity}
           />
-          <ProgressStatCard 
-            label="Total Workouts" 
-            value={String(data?.totalWorkouts ?? 0)} 
-            trend="All-time" 
-            isPositiveTrend={true}
+        </View>
+        <View style={[styles.metricsGrid, { marginTop: 12, marginBottom: 20 }]}>
+          <MetricCard 
+            label="Total Sessions"
+            value={String(data?.totalWorkouts ?? 0)}
+            sub="All-time log"
+            isPositive={true}
+            accentColor="#7C4DFF"
+            icon={Dumbbell}
+          />
+          <MetricCard 
+            label="Current Streak"
+            value={String(data?.streak ?? 0)}
+            sub="Consecutive"
+            isPositive={true}
+            accentColor="#FF6B00"
+            icon={Trophy}
           />
         </View>
 
-        {/* ── Charts Section ── */}
-        <View style={styles.body}>
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Weight Progress</Text>
-            <TouchableOpacity>
-              <Text style={styles.seeMore}>See More</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.chartPlaceholder}>
-             <LinearGradient
-              colors={['#161616', '#0A0A0A']}
-              style={styles.chartInnerContent}
-            >
-              <View style={styles.chartBarWrapper}>
-                {(data?.chartData || []).map((day: any, idx: number) => {
-                  const maxVolume = Math.max(...(data?.chartData || []).map((d: any) => d.volume), 100);
-                  const barHeight = Math.round((day.volume / maxVolume) * 110) + 10;
-                  const dayName = new Date(day.date).toLocaleDateString(undefined, { weekday: 'short' }).substring(0, 3);
-                  return (
-                    <View key={idx} style={styles.barCol}>
-                      <View style={styles.barTrack}>
-                        <View style={[styles.barFill, { height: barHeight }]} />
-                      </View>
-                      <Text style={styles.barLabel}>{dayName}</Text>
+        {/* Workout Volume Chart */}
+        <View style={styles.chartWrapper}>
+          <ChartCard title="Daily Training Volume">
+            <View style={styles.chartBarWrapper}>
+              {(data?.chartData || []).map((day: any, idx: number) => {
+                const maxVolume = Math.max(...(data?.chartData || []).map((d: any) => d.volume), 100);
+                const barHeight = Math.round((day.volume / maxVolume) * 110) + 10;
+                const dayName = new Date(day.date).toLocaleDateString(undefined, { weekday: 'short' }).substring(0, 3);
+                return (
+                  <View key={idx} style={styles.barCol}>
+                    <View style={styles.barTrack}>
+                      <View style={[styles.barFill, { height: barHeight }]} />
                     </View>
-                  );
-                })}
-              </View>
-            </LinearGradient>
-          </View>
+                    <Text style={styles.barLabel}>{dayName}</Text>
+                  </View>
+                );
+              })}
+            </View>
+          </ChartCard>
+        </View>
 
+        {/* AI Coaching insights list */}
+        <View style={styles.insightsSection}>
           <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Activity Insights</Text>
+            <Sparkles size={16} color="#7C4DFF" style={{ marginRight: 6 }} />
+            <Text style={styles.sectionTitle}>AI Analytics Coach</Text>
           </View>
 
-          <View style={styles.insightCard}>
-            <LinearGradient
-              colors={['#CC33FF20', 'transparent']}
-              style={styles.insightGrad}
-            >
-              <View style={styles.insightHeader}>
-                <View style={styles.insightIconWrap}>
-                  <Flame size={20} color="#CC33FF" />
-                </View>
-                <Text style={styles.insightLabel}>Calories Burned</Text>
-              </View>
-              <Text style={styles.insightValue}>{data?.totalCalories ?? 0} kcal</Text>
-              <Text style={styles.insightSub}>You've burned 15% more than last week!</Text>
-            </LinearGradient>
-          </View>
+          <AIInsightCard 
+            title="Calories Burned"
+            value={`${data?.totalCalories ?? 0} kcal`}
+            sub="You've burned 15% more calories than last week! Keep burning active minutes."
+            icon={Flame}
+            color="#FF4D4D"
+          />
 
-          <View style={styles.insightCard}>
-            <LinearGradient
-              colors={[Colors.primary + '20', 'transparent']}
-              style={styles.insightGrad}
-            >
-              <View style={styles.insightHeader}>
-                <View style={styles.insightIconWrap}>
-                  <Dumbbell size={20} color={Colors.primary} />
-                </View>
-                <Text style={styles.insightLabel}>Training Intensity</Text>
-              </View>
-              <Text style={styles.insightValue}>High Volume</Text>
-              <Text style={styles.insightSub}>Your average intensity is increasing steadily.</Text>
-            </LinearGradient>
-          </View>
+          <AIInsightCard 
+            title="Training Intensity"
+            value="High Volume Focus"
+            sub="Your overall volume and average sets count is increasing steadily. Superb progression!"
+            icon={Dumbbell}
+            color="#7C4DFF"
+          />
         </View>
       </ScrollView>
     </View>
   );
 }
 
-function ProgressStatCard({ label, value, trend, isPositiveTrend }: any) {
-  return (
-    <View style={styles.statCard}>
-      <Text style={styles.statValue}>{value}</Text>
-      <Text style={styles.statLabel}>{label}</Text>
-      <View style={styles.trendRow}>
-        {isPositiveTrend ? (
-          <ArrowUpRight size={12} color="#39FF14" />
-        ) : (
-          <ArrowDownRight size={12} color="#39FF14" />
-        )}
-        <Text style={[styles.trendValue, { color: '#39FF14' }]}>{trend}</Text>
-      </View>
-    </View>
-  );
-}
+import { Alert } from 'react-native';
 
 const styles = StyleSheet.create({
-  loader: {
+  container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#F8FAFC',
+  },
+  loaderContainer: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
+    gap: 14,
   },
-  header: {
-    paddingHorizontal: 24,
-    marginBottom: 24,
-  },
-  headerTitle: {
-    color: '#FFF',
-    fontSize: 34,
-    fontWeight: '900',
-    letterSpacing: -1,
-  },
-  headerSubtitle: {
-    color: Colors.textSecondary,
-    fontSize: 16,
-    fontWeight: '500',
-    marginTop: 4,
-  },
-  toggleContainer: {
-    paddingHorizontal: 24,
-    marginBottom: 32,
-  },
-  toggleBackground: {
-    flexDirection: 'row',
-    backgroundColor: '#111',
-    borderRadius: 20,
-    padding: 6,
-    borderWidth: 1,
-    borderColor: '#222',
-  },
-  toggleBtn: {
-    flex: 1,
-    height: 44,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  toggleBtnActive: {
-    // Gradient is handled inside the component
-  },
-  toggleText: {
-    color: 'rgba(255, 255, 255, 0.4)',
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  toggleTextActive: {
-    color: '#000',
-  },
-  statsRow: {
-    flexDirection: 'row',
-    paddingHorizontal: 24,
-    gap: 12,
-    marginBottom: 40,
-  },
-  statCard: {
-    flex: 1,
-    backgroundColor: '#111',
-    borderRadius: 24,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: '#222',
-  },
-  statValue: {
-    color: '#FFF',
-    fontSize: 22,
-    fontWeight: '800',
-    letterSpacing: -0.5,
-  },
-  statLabel: {
-    color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: 11,
+  loaderText: {
+    color: '#64748B',
+    fontSize: 14,
     fontWeight: '600',
-    marginTop: 4,
+  },
+  errorContainer: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorTitle: {
+    color: '#FF4D4D',
+    fontSize: 18,
+    fontWeight: '900',
     marginBottom: 8,
   },
-  trendRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
+  errorText: {
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 28,
+    lineHeight: 22,
   },
-  trendValue: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  body: {
-    paddingHorizontal: 24,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-    marginTop: 8,
-  },
-  sectionTitle: {
-    color: '#FFF',
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  seeMore: {
-    color: Colors.primary,
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  chartPlaceholder: {
-    height: 220,
-    marginBottom: 40,
-    borderRadius: 32,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: '#1F1F1F',
-  },
-  chartInnerContent: {
-    flex: 1,
-    padding: 20,
+  retryBtn: {
+    height: 52,
+    width: 160,
+    borderRadius: 16,
+    backgroundColor: '#7C4DFF',
     justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#7C4DFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  metricsGrid: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    gap: 12,
+  },
+  chartWrapper: {
+    paddingHorizontal: 20,
   },
   chartBarWrapper: {
     flexDirection: 'row',
@@ -374,61 +262,35 @@ const styles = StyleSheet.create({
   barTrack: {
     height: 110,
     width: 14,
-    backgroundColor: '#1E1E1E',
+    backgroundColor: '#F1F5F9',
     borderRadius: 7,
     justifyContent: 'flex-end',
     overflow: 'hidden',
   },
   barFill: {
     width: '100%',
-    backgroundColor: Colors.primary,
+    backgroundColor: '#7C4DFF',
     borderRadius: 7,
   },
   barLabel: {
-    color: Colors.textSecondary,
+    color: '#64748B',
     fontSize: 10,
     fontWeight: '700',
     marginTop: 8,
   },
-  insightCard: {
-    marginBottom: 16,
-    borderRadius: 24,
-    overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: '#222',
-    backgroundColor: '#0A0A0A',
+  insightsSection: {
+    paddingHorizontal: 20,
+    marginTop: 8,
   },
-  insightGrad: {
-    padding: 20,
-  },
-  insightHeader: {
+  sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 12,
+    marginBottom: 16,
+    paddingLeft: 4,
   },
-  insightIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  insightLabel: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  insightValue: {
-    color: '#FFF',
-    fontSize: 24,
+  sectionTitle: {
+    color: '#0F172A',
+    fontSize: 16,
     fontWeight: '800',
-    marginBottom: 4,
-  },
-  insightSub: {
-    color: 'rgba(255, 255, 255, 0.4)',
-    fontSize: 12,
-    fontWeight: '500',
   },
 });
