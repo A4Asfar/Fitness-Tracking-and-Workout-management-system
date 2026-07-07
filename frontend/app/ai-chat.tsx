@@ -98,7 +98,7 @@ export default function AIChatScreen() {
       const data = await ChatService.getConversations();
       setConversations(data);
     } catch (err: any) {
-      console.error('Failed to load conversations:', err);
+      if (__DEV__) console.error('Failed to load conversations:', err);
       setErrorConversations(err.message || 'Failed to load conversations.');
     } finally {
       setLoadingConversations(false);
@@ -131,7 +131,7 @@ export default function AIChatScreen() {
         setMessages([]);
       }
     } catch (err: any) {
-      console.error('Failed to load conversation:', err);
+      if (__DEV__) console.error('Failed to load conversation:', err);
       setErrorMessages(err.message || 'Failed to load messages.');
       setMessages([]);
     } finally {
@@ -150,7 +150,7 @@ export default function AIChatScreen() {
       // Refresh list in background
       loadConversations();
     } catch (err) {
-      console.error('Failed to create conversation:', err);
+      if (__DEV__) console.error('Failed to create conversation:', err);
       Alert.alert('Error', 'Failed to create new chat');
     }
   };
@@ -174,6 +174,7 @@ export default function AIChatScreen() {
                 setActiveChatId(null);
               }
             } catch (err) {
+              if (__DEV__) console.error('Failed to delete conversation:', err);
               Alert.alert('Error', 'Failed to delete conversation');
             }
           },
@@ -201,6 +202,7 @@ export default function AIChatScreen() {
         setActiveChatTitle(renameText.trim());
       }
     } catch (err) {
+      if (__DEV__) console.error('Failed to rename conversation:', err);
       Alert.alert('Error', 'Failed to rename conversation');
     } finally {
       setRenameModalVisible(false);
@@ -241,7 +243,7 @@ export default function AIChatScreen() {
       };
       setMessages(prev => [...prev, aiMsg]);
     } catch (error: any) {
-      console.error('Failed to get AI response:', error);
+      if (__DEV__) console.error('Failed to get AI response:', error);
       const errorMsg: UIMessage = {
         id: (Date.now() + 1).toString(),
         text: error?.message || 'AI is currently unavailable. Please try again.',

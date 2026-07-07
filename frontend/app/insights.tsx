@@ -150,7 +150,7 @@ export default function AnalyticsDashboardScreen() {
         useNativeDriver: true
       }).start();
     } catch (err: any) {
-      console.error('Failed to load analytics', err);
+      if (__DEV__) console.error('Failed to load analytics', err);
       setError(err.message || 'Failed to sync analytics data.');
     } finally {
       setLoading(false);

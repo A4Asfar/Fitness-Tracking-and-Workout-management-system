@@ -32,7 +32,7 @@ export default function TrainerConsultationsScreen() {
       const res = await api.get('/content/trainers');
       setTrainers(res.data);
     } catch (e: any) {
-      console.log('Trainers fetch error:', e.message);
+      if (__DEV__) console.log('Trainers fetch error:', e.message);
       setError(e.message || 'Failed to fetch trainers.');
     } finally {
       setLoading(false);

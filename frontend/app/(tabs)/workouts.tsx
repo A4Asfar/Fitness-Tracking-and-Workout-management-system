@@ -107,7 +107,7 @@ export default function WorkoutsScreen() {
       const response = await api.get('/workouts');
       setWorkouts(response.data);
     } catch (err: any) {
-      console.error('Failed to fetch workouts', err);
+      if (__DEV__) console.error('Failed to fetch workouts', err);
       setError(err.message || 'Failed to fetch workouts');
     } finally {
       setLoading(false);

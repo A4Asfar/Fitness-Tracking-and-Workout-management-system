@@ -49,7 +49,7 @@ export default function DietScreen() {
         const data = await ContentService.getNutritionSuggestions(user?.fitnessGoal);
         setSuggestions(data);
       } catch (err) {
-        console.error('Failed to fetch suggestions');
+        if (__DEV__) console.error('Failed to fetch suggestions:', err);
       }
     };
     fetchSuggestions();
@@ -63,7 +63,7 @@ export default function DietScreen() {
           const meal = await ContentService.getMealByName(mealName);
           if (meal) setSelectedMeal(meal);
         } catch (err) {
-          console.error('Failed to fetch meal');
+          if (__DEV__) console.error('Failed to fetch meal:', err);
         }
       };
       fetchMeal();
@@ -76,7 +76,7 @@ export default function DietScreen() {
       const data = await MealService.getMeals();
       setMeals(data);
     } catch (err: any) {
-      console.error('Fetch meals error:', err);
+      if (__DEV__) console.error('Fetch meals error:', err);
       setError(err.message || 'Failed to fetch meals');
     } finally {
       setLoading(false);

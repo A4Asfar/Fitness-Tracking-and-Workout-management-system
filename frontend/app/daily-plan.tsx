@@ -36,7 +36,7 @@ export default function DailyPlanScreen() {
       });
       setPlan(data);
     } catch (err: any) {
-      console.log('Daily plan fetch error:', err);
+      if (__DEV__) console.log('Daily plan fetch error:', err);
       setError(err.message || 'Failed to generate daily plan');
       showToast('Failed to load daily plan', 'error');
     } finally {

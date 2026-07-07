@@ -33,7 +33,7 @@ export default function ProgressAnalyticsScreen() {
       const res = await api.get('/workouts/analytics');
       setData(res.data);
     } catch (e: any) {
-      console.log('Analytics error:', e.message);
+      if (__DEV__) console.log('Analytics error:', e.message);
       setError(e.message || 'Failed to sync progress data.');
     } finally {
       setLoading(false);

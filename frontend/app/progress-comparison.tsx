@@ -25,11 +25,13 @@ export default function ProgressComparisonScreen() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideAnim = useRef(new Animated.Value(20)).current;
 
   const fetchData = async () => {
+    setError(null);
     try {
       const res = await api.get('/workouts/analytics');
       setData(res.data);
@@ -38,8 +40,9 @@ export default function ProgressComparisonScreen() {
         Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
         Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true }),
       ]).start();
-    } catch (error) {
-      console.error('Progress Comparison Error:', error);
+    } catch (err: any) {
+      if (__DEV__) console.error('Progress Comparison Error:', err);
+      setError(err.message || 'Failed to sync progress comparison data.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -54,6 +57,21 @@ export default function ProgressComparisonScreen() {
     setRefreshing(true);
     fetchData();
   };
+
+  if (error && !data) {
+    return (
+      <View style={[SharedStyles.container, { justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <Text style={{ color: Colors.error, fontSize: 16, textAlign: 'center', marginBottom: 16, fontWeight: '600' }}>{error}</Text>
+        <TouchableOpacity 
+          style={[SharedStyles.button, { paddingHorizontal: 32, height: 48, borderRadius: 12 }]} 
+          onPress={fetchData}
+        >
+          <Text style={[SharedStyles.buttonText, { color: '#000000', fontWeight: 'bold' }]}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   if (loading && !refreshing) {
     return (

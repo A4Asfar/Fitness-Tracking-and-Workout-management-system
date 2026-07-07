@@ -30,7 +30,7 @@ export default function AccountHubScreen() {
     router.replace('/(auth)/login');
   };
 
-  const isAdmin = user?.membershipType === 'admin' || user?.email === 'admin@peakpulse.ai';
+  const isAdmin = user?.membershipType === 'admin';
   const isPremium = user?.membershipType === 'premium' || isAdmin;
 
   // Calculate real stats from user data
