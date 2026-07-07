@@ -1,15 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  View, FlatList, TouchableOpacity, Text, StyleSheet, 
-  ActivityIndicator, Alert, TextInput, ScrollView, Dimensions, Modal 
+  View, StyleSheet, ActivityIndicator, Alert, ScrollView, Dimensions, Modal, Text, TouchableOpacity
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { MealService } from '@/services/mealService';
 import { ContentService } from '@/services/contentService';
-import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
+import { Colors } from '@/constants/Theme';
 import { 
-  Plus, Trash2, Utensils, Coffee, Sun, Moon, 
-  Sparkles, ChevronRight, Apple, Zap, Flame, Target
+  Plus, ChevronRight, Apple, Zap, Flame, Target, Sparkles
 } from 'lucide-react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,6 +17,14 @@ import {
   getIconComponent 
 } from '@/services/recommendations';
 
+// Extracted Premium Components
+import NutritionHeader from '@/components/nutrition/NutritionHeader';
+import NutritionSummary from '@/components/nutrition/NutritionSummary';
+import WaterTracker from '@/components/nutrition/WaterTracker';
+import MealSection from '@/components/nutrition/MealSection';
+import AddMealModal from '@/components/nutrition/AddMealModal';
+import EmptyState from '@/components/workout/EmptyState';
+
 const { width } = Dimensions.get('window');
 
 interface Meal {
@@ -26,20 +32,24 @@ interface Meal {
   mealType: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack';
   selectedMeal: string;
   calories: number;
+  protein?: number;
+  carbs?: number;
+  fats?: number;
 }
 
 export default function DietScreen() {
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [mealInput, setMealInput] = useState('');
-  const [selectedType, setSelectedType] = useState<'Breakfast' | 'Lunch' | 'Dinner' | 'Snack'>('Breakfast');
-  const [isAdding, setIsAdding] = useState(false);
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [activeDefaultType, setActiveDefaultType] = useState<'Breakfast' | 'Lunch' | 'Dinner' | 'Snack'>('Breakfast');
+  
   const [selectedMeal, setSelectedMeal] = useState<NutritionSuggestion | null>(null);
   const [suggestions, setSuggestions] = useState<NutritionSuggestion[]>([]);
   const { user } = useAuth();
   const { mealName } = useLocalSearchParams<{ mealName?: string }>();
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
 
   const currentGoal = user?.fitnessGoal || 'General Fitness';
 
@@ -55,7 +65,6 @@ export default function DietScreen() {
     fetchSuggestions();
   }, [user?.fitnessGoal]);
 
-  // Handle deep-linked meal selection
   useEffect(() => {
     if (mealName) {
       const fetchMeal = async () => {
@@ -88,29 +97,27 @@ export default function DietScreen() {
     fetchMeals();
   }, [fetchMeals]);
 
-  const addMeal = async (name?: string, type?: any, calories?: number, protein?: number, carbs?: number, fats?: number) => {
-    const finalName = name || mealInput;
-    const finalType = type || selectedType;
-
-    if (!finalName.trim()) {
-      Alert.alert('Error', 'Please enter meal name');
-      return;
-    }
-
+  const handleAddMeal = async (
+    name: string,
+    type: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack',
+    calories: number,
+    protein: number,
+    carbs: number,
+    fats: number
+  ) => {
     setIsAdding(true);
     try {
       const data = await MealService.logMeal({
         userId: user?._id || user?.id,
-        mealType: finalType,
-        selectedMeal: finalName,
+        mealType: type,
+        selectedMeal: name,
         calories: calories || 0,
         protein: protein || 0,
         carbs: carbs || 0,
         fats: fats || 0,
         selectedAt: new Date().toISOString(),
       });
-      setMeals([data, ...meals]);
-      setMealInput('');
+      setMeals(prev => [data, ...prev]);
       setSelectedMeal(null);
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Failed to add meal');
@@ -128,46 +135,55 @@ export default function DietScreen() {
     }
   };
 
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'Breakfast': return <Coffee size={18} color={Colors.primary} />;
-      case 'Lunch': return <Sun size={18} color={Colors.primary} />;
-      case 'Dinner': return <Moon size={18} color={Colors.primary} />;
-      case 'Snack': return <Apple size={18} color={Colors.primary} />;
-      default: return <Utensils size={18} color={Colors.primary} />;
-    }
-  };
-
   if (loading) {
     return (
-      <View style={[SharedStyles.container, { justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <View style={styles.loaderContainer}>
+        <ActivityIndicator size="large" color="#10B981" />
+        <Text style={styles.loaderText}>Syncing your nutrition logs…</Text>
       </View>
     );
   }
 
   if (error && !refreshing) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-        <Text style={{ color: '#FF4B4B', fontSize: 16, fontWeight: '700', textAlign: 'center', marginBottom: 16 }}>{error}</Text>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>SYNC ERROR</Text>
+        <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity 
           onPress={() => { setLoading(true); fetchMeals(); }} 
-          style={{ backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 }}
+          style={styles.retryBtn}
+          activeOpacity={0.8}
         >
-          <Text style={{ color: '#000', fontWeight: '900' }}>Retry</Text>
+          <Text style={styles.retryText}>RETRY SYNC</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
+  // Calculate Aggregates
+  const totalCalories = meals.reduce((sum, m) => sum + (m.calories || 0), 0);
+  const totalProtein = meals.reduce((sum, m) => sum + (m.protein || 0), 0);
+  const totalCarbs = meals.reduce((sum, m) => sum + (m.carbs || 0), 0);
+  const totalFat = meals.reduce((sum, m) => sum + (m.fats || 0), 0);
+
+  const breakfastMeals = meals.filter(m => m.mealType === 'Breakfast');
+  const lunchMeals = meals.filter(m => m.mealType === 'Lunch');
+  const dinnerMeals = meals.filter(m => m.mealType === 'Dinner');
+  const snackMeals = meals.filter(m => m.mealType === 'Snack');
+
+  const triggerAddFood = (type: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack') => {
+    setActiveDefaultType(type);
+    setIsModalVisible(true);
+  };
+
   return (
-    <View style={{ flex: 1, backgroundColor: Colors.background }}>
+    <View style={styles.container}>
       <Stack.Screen 
         options={{ 
           title: 'Smart Nutrition',
           headerShown: true,
-          headerStyle: { backgroundColor: Colors.background },
-          headerTintColor: Colors.primary,
+          headerStyle: { backgroundColor: '#F8FAFC' },
+          headerTintColor: '#0F172A',
           headerShadowVisible: false,
         }} 
       />
@@ -176,32 +192,41 @@ export default function DietScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 100 }}
       >
-        {/* ── Smart Recommendation Banner ── */}
+        {/* Customized header showing goal info */}
+        <NutritionHeader goalName={currentGoal} />
+
+        {/* Energy Summary + Macro indicators */}
+        <NutritionSummary 
+          consumed={totalCalories}
+          target={(user as any)?.dailyCalorieTarget || 2000}
+          protein={totalProtein}
+          carbs={totalCarbs}
+          fat={totalFat}
+        />
+
+        {/* Water / Hydration Tracker */}
+        <WaterTracker />
+
+        {/* AI Suggestions Section */}
         <View style={styles.bannerContainer}>
           <LinearGradient
-            colors={[Colors.primary + '25', Colors.primary + '05']}
+            colors={['#10B98115', '#10B98103']}
             style={styles.banner}
           >
             <View style={styles.bannerContent}>
               <View style={styles.bannerTextContainer}>
                 <View style={styles.bannerTag}>
-                  <Sparkles size={12} color={Colors.primary} fill={Colors.primary} />
-                  <Text style={styles.bannerTagText}>AI SUGGESTION</Text>
+                  <Sparkles size={12} color="#10B981" fill="#10B981" />
+                  <Text style={styles.bannerTagText}>AI COACH RECOMMENDATIONS</Text>
                 </View>
-                <Text style={styles.bannerTitle}>Recommended For Your Goal</Text>
-                <View style={styles.goalBadge}>
-                  <Target size={14} color={Colors.primary} />
-                  <Text style={styles.goalText}>{currentGoal}</Text>
-                </View>
-              </View>
-              <View style={styles.bannerIconBox}>
-                <Flame size={40} color={Colors.primary} opacity={0.6} />
+                <Text style={styles.bannerTitle}>Daily Meal suggestions</Text>
+                <Text style={styles.bannerSubtitle}>Based on your {currentGoal} target goal.</Text>
               </View>
             </View>
           </LinearGradient>
         </View>
 
-        {/* ── Horizontal Suggestions ── */}
+        {/* Horizontal Suggestions Carousel */}
         <ScrollView 
           horizontal 
           showsHorizontalScrollIndicator={false}
@@ -218,22 +243,61 @@ export default function DietScreen() {
               >
                 <View style={styles.suggestionHeader}>
                   <View style={styles.suggestionIconBox}>
-                    <SuggestionIcon size={20} color={Colors.primary} />
+                    <SuggestionIcon size={18} color="#10B981" />
                   </View>
                   <Text style={styles.suggestionType}>{item.type}</Text>
                 </View>
                 <Text style={styles.suggestionName} numberOfLines={1}>{item.name}</Text>
                 <Text style={styles.suggestionNote} numberOfLines={2}>{item.note}</Text>
                 <View style={styles.quickAdd}>
-                  <Plus size={14} color="#000" />
-                  <Text style={styles.quickAddText}>View Details</Text>
+                  <Plus size={12} color="#FFFFFF" strokeWidth={2.5} />
+                  <Text style={styles.quickAddText}>View details</Text>
                 </View>
               </TouchableOpacity>
             );
           })}
         </ScrollView>
 
-        {/* ── Meal Detail Modal ── */}
+        {/* Expandable Meal Sections */}
+        <View style={styles.mealSectionsContainer}>
+          <MealSection 
+            type="Breakfast"
+            meals={breakfastMeals}
+            onAddPress={() => triggerAddFood('Breakfast')}
+            onDeleteMeal={deleteMeal}
+          />
+          <MealSection 
+            type="Lunch"
+            meals={lunchMeals}
+            onAddPress={() => triggerAddFood('Lunch')}
+            onDeleteMeal={deleteMeal}
+          />
+          <MealSection 
+            type="Dinner"
+            meals={dinnerMeals}
+            onAddPress={() => triggerAddFood('Dinner')}
+            onDeleteMeal={deleteMeal}
+          />
+          <MealSection 
+            type="Snack"
+            meals={snackMeals}
+            onAddPress={() => triggerAddFood('Snack')}
+            onDeleteMeal={deleteMeal}
+          />
+        </View>
+
+        {/* Large Empty state when logs are completely blank */}
+        {meals.length === 0 && (
+          <EmptyState 
+            title="Log Your Nutrition"
+            description="Keep track of your breakfast, lunch, and dinner to hit your daily macro budget targets."
+            buttonLabel="Add Custom Meal"
+            onButtonPress={() => triggerAddFood('Breakfast')}
+            accentColor="#10B981"
+          />
+        )}
+
+        {/* Meal Detail Modal */}
         <Modal
           visible={!!selectedMeal}
           transparent
@@ -247,14 +311,14 @@ export default function DietScreen() {
                 <ScrollView showsVerticalScrollIndicator={false}>
                   <View style={styles.modalHeader}>
                     <View style={styles.modalIconBox}>
-                      {React.createElement(getIconComponent(selectedMeal.icon), { size: 28, color: Colors.primary })}
+                      {React.createElement(getIconComponent(selectedMeal.icon), { size: 28, color: '#10B981' })}
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text style={styles.modalTitle}>{selectedMeal.name}</Text>
-                      <Text style={styles.modalType}>{selectedMeal.type} • AI Suggestion</Text>
+                      <Text style={styles.modalType}>{selectedMeal.type} • Recommendation</Text>
                     </View>
-                    <TouchableOpacity onPress={() => setSelectedMeal(null)} style={styles.closeBtn}>
-                      <Plus size={24} color={Colors.textSecondary} style={{ transform: [{ rotate: '45deg' }] }} />
+                    <TouchableOpacity onPress={() => setSelectedMeal(null)} style={styles.closeBtn} activeOpacity={0.7}>
+                      <Plus size={24} color="#64748B" style={{ transform: [{ rotate: '45deg' }] }} />
                     </TouchableOpacity>
                   </View>
 
@@ -270,21 +334,21 @@ export default function DietScreen() {
                     <Text style={styles.detailText}>{selectedMeal.benefit}</Text>
                   </View>
 
-                  <View style={[styles.detailSection, { backgroundColor: Colors.primary + '10', borderColor: Colors.primary + '20' }]}>
+                  <View style={[styles.detailSection, { backgroundColor: '#E6F4EA', borderColor: '#A7F3D0' }]}>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <Target size={16} color={Colors.primary} />
-                      <Text style={[styles.detailLabel, { color: Colors.primary, marginBottom: 0 }]}>Why it matches your goal</Text>
+                      <Target size={16} color="#10B981" />
+                      <Text style={[styles.detailLabel, { color: '#10B981', marginBottom: 0 }]}>Why it matches your goal</Text>
                     </View>
-                    <Text style={[styles.detailText, { color: Colors.text }]}>
+                    <Text style={[styles.detailText, { color: '#0F172A' }]}>
                       This meal is optimized for {currentGoal} by providing {selectedMeal.calories} clean calories with a high {selectedMeal.protein}g protein ratio.
                     </Text>
                   </View>
 
                   <TouchableOpacity 
                     style={[styles.logBtn, isAdding && { opacity: 0.7 }]}
-                    onPress={() => addMeal(
+                    onPress={() => handleAddMeal(
                       selectedMeal.name, 
-                      selectedMeal.type, 
+                      selectedMeal.type as any, 
                       selectedMeal.calories, 
                       selectedMeal.protein, 
                       selectedMeal.carbs, 
@@ -300,74 +364,13 @@ export default function DietScreen() {
           </View>
         </Modal>
 
-        <View style={styles.dividerSection}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>OR LOG MANUALLY</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        {/* ── Manual Input ── */}
-        <View style={styles.inputSection}>
-          <View style={styles.mealTypeButtons}>
-            {(['Breakfast', 'Lunch', 'Dinner', 'Snack'] as const).map(type => (
-              <TouchableOpacity
-                key={type}
-                style={[styles.typeButton, selectedType === type && styles.typeButtonActive]}
-                onPress={() => setSelectedType(type)}
-              >
-                <Text style={[styles.typeButtonText, selectedType === type && styles.typeButtonTextActive]}>
-                  {type}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </View>
-
-          <View style={styles.inputRow}>
-            <TextInput
-              style={styles.input}
-              placeholder="What did you eat?"
-              placeholderTextColor={Colors.textSecondary}
-              value={mealInput}
-              onChangeText={setMealInput}
-            />
-            <TouchableOpacity 
-              style={[styles.addButton, isAdding && { opacity: 0.7 }]} 
-              onPress={() => addMeal()}
-              disabled={isAdding}
-            >
-              {isAdding ? <ActivityIndicator size="small" color="#000" /> : <Plus color="#000" size={24} />}
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* ── Daily Log ── */}
-        <View style={styles.logHeader}>
-          <Utensils size={18} color={Colors.primary} />
-          <Text style={styles.logTitle}>Today&apos;s Nutrition Log</Text>
-        </View>
-
-        {meals.length === 0 ? (
-          <View style={styles.emptyContainer}>
-            <Utensils size={48} color={Colors.textSecondary} opacity={0.3} />
-            <Text style={styles.emptyText}>No meals logged today. Choose a suggestion above to get started!</Text>
-          </View>
-        ) : (
-          meals.map(item => (
-            <View key={item._id} style={styles.mealCard}>
-              <View style={styles.iconBox}>
-                {getIcon(item.mealType)}
-              </View>
-              <View style={{ flex: 1, marginLeft: 15 }}>
-                <Text style={styles.mealTypeLabel}>{item.mealType}</Text>
-                <Text style={styles.mealName}>{item.selectedMeal}</Text>
-                {item.calories > 0 && <Text style={styles.mealCalories}>{item.calories} kcal</Text>}
-              </View>
-              <TouchableOpacity onPress={() => deleteMeal(item._id)}>
-                <Trash2 color={Colors.error} size={20} opacity={0.6} />
-              </TouchableOpacity>
-            </View>
-          ))
-        )}
+        {/* Global Manual Food Logger Modal */}
+        <AddMealModal 
+          visible={isModalVisible}
+          onClose={() => setIsModalVisible(false)}
+          onAdd={handleAddMeal}
+          defaultType={activeDefaultType}
+        />
       </ScrollView>
     </View>
   );
@@ -375,7 +378,7 @@ export default function DietScreen() {
 
 function MacroItem({ label, value, unit }: any) {
   return (
-    <View style={styles.macroItem}>
+    <View style={styles.macroGridItem}>
       <Text style={styles.macroValue}>{value}<Text style={styles.macroUnit}>{unit}</Text></Text>
       <Text style={styles.macroLabel}>{label}</Text>
     </View>
@@ -383,15 +386,70 @@ function MacroItem({ label, value, unit }: any) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  loaderContainer: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 14,
+  },
+  loaderText: {
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  errorContainer: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorTitle: {
+    color: '#FF4D4D',
+    fontSize: 18,
+    fontWeight: '900',
+    marginBottom: 8,
+  },
+  errorText: {
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 28,
+    lineHeight: 22,
+  },
+  retryBtn: {
+    height: 52,
+    width: 160,
+    borderRadius: 16,
+    backgroundColor: '#10B981',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '900',
+  },
   bannerContainer: {
-    paddingHorizontal: SPACING.lg,
-    marginTop: SPACING.md,
+    paddingHorizontal: 20,
+    marginTop: 10,
   },
   banner: {
     borderRadius: 24,
     padding: 20,
     borderWidth: 1.5,
-    borderColor: Colors.primary + '30',
+    borderColor: '#10B98130',
   },
   bannerContent: {
     flexDirection: 'row',
@@ -408,119 +466,110 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   bannerTagText: {
-    color: Colors.primary,
+    color: '#10B981',
     fontSize: 10,
     fontWeight: '900',
     letterSpacing: 1.2,
   },
   bannerTitle: {
-    color: Colors.text,
-    fontSize: 20,
+    color: '#0F172A',
+    fontSize: 18,
     fontWeight: '900',
     letterSpacing: -0.5,
-    marginBottom: 10,
+    marginBottom: 4,
   },
-  goalBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.primary + '15',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    gap: 6,
-  },
-  goalText: {
-    color: Colors.primary,
-    fontSize: 11,
-    fontWeight: '800',
-  },
-  bannerIconBox: {
-    marginLeft: 20,
+  bannerSubtitle: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '500',
   },
   suggestionScroll: {
-    paddingHorizontal: SPACING.lg,
-    paddingVertical: 20,
-    gap: 16,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+    gap: 12,
   },
   suggestionCard: {
     width: width * 0.65,
-    backgroundColor: Colors.card,
+    backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    padding: 20,
+    padding: 16,
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 8,
+    elevation: 1,
   },
   suggestionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 14,
+    gap: 10,
+    marginBottom: 12,
   },
   suggestionIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    backgroundColor: Colors.primary + '15',
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    backgroundColor: '#E6F4EA',
     justifyContent: 'center',
     alignItems: 'center',
   },
   suggestionType: {
-    color: Colors.textSecondary,
+    color: '#64748B',
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 1,
   },
   suggestionName: {
-    color: Colors.text,
-    fontSize: 17,
+    color: '#0F172A',
+    fontSize: 15,
     fontWeight: '800',
-    marginBottom: 6,
-    letterSpacing: -0.3,
+    marginBottom: 4,
   },
   suggestionNote: {
-    color: Colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
+    color: '#64748B',
+    fontSize: 12,
+    lineHeight: 16,
     fontWeight: '500',
-    marginBottom: 16,
+    marginBottom: 14,
   },
   quickAdd: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.primary,
+    backgroundColor: '#10B981',
     paddingHorizontal: 12,
-    paddingVertical: 8,
+    paddingVertical: 6,
     borderRadius: 10,
     alignSelf: 'flex-start',
     gap: 6,
   },
   quickAddText: {
-    color: '#000',
+    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '900',
+    fontWeight: '800',
   },
-
-  /* ── Modal Styles ── */
+  mealSectionsContainer: {
+    marginTop: 10,
+  },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: Colors.background,
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     padding: 24,
     maxHeight: '85%',
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   modalHandle: {
     width: 40,
     height: 5,
-    backgroundColor: Colors.border,
+    backgroundColor: '#CBD5E1',
     borderRadius: 10,
     alignSelf: 'center',
     marginBottom: 20,
@@ -534,19 +583,21 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 18,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: '#E6F4EA',
     justifyContent: 'center',
     alignItems: 'center',
     marginRight: 16,
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
   },
   modalTitle: {
-    color: Colors.text,
-    fontSize: 22,
+    color: '#0F172A',
+    fontSize: 20,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
   modalType: {
-    color: Colors.textSecondary,
+    color: '#64748B',
     fontSize: 13,
     fontWeight: '600',
     marginTop: 2,
@@ -555,228 +606,78 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.card,
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   macroGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 32,
+    marginBottom: 28,
     marginTop: 8,
   },
-  macroItem: {
+  macroGridItem: {
     alignItems: 'center',
-    backgroundColor: Colors.card,
+    backgroundColor: '#F8FAFC',
     padding: 12,
-    borderRadius: 20,
-    width: (width - 48 - 36) / 4,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderRadius: 16,
+    width: (width - 48 - 30) / 4,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   macroValue: {
-    color: Colors.text,
-    fontSize: 16,
-    fontWeight: '900',
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '800',
   },
   macroUnit: {
     fontSize: 10,
-    color: Colors.textSecondary,
+    color: '#64748B',
     fontWeight: '600',
   },
   macroLabel: {
-    color: Colors.textSecondary,
-    fontSize: 10,
-    fontWeight: '700',
+    color: '#64748B',
+    fontSize: 9,
+    fontWeight: '800',
     textTransform: 'uppercase',
     marginTop: 4,
   },
   detailSection: {
-    backgroundColor: Colors.card,
-    padding: 20,
-    borderRadius: 24,
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 20,
     marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   detailLabel: {
-    color: Colors.textSecondary,
+    color: '#64748B',
     fontSize: 11,
-    fontWeight: '900',
+    fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 10,
+    letterSpacing: 0.5,
+    marginBottom: 8,
   },
   detailText: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-    lineHeight: 22,
+    color: '#64748B',
+    fontSize: 13,
+    lineHeight: 18,
     fontWeight: '500',
   },
   logBtn: {
-    backgroundColor: Colors.primary,
-    paddingVertical: 18,
-    borderRadius: 20,
+    backgroundColor: '#10B981',
+    paddingVertical: 16,
+    borderRadius: 16,
     alignItems: 'center',
     marginTop: 8,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
-    elevation: 8,
     marginBottom: 20,
   },
   logBtnText: {
-    color: '#000',
-    fontSize: 16,
+    color: '#FFFFFF',
+    fontSize: 15,
     fontWeight: '900',
-    letterSpacing: 1,
+    letterSpacing: 0.5,
   },
-  dividerSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    marginVertical: 10,
-    gap: 12,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: Colors.border,
-    opacity: 0.5,
-  },
-  dividerText: {
-    color: Colors.textSecondary,
-    fontSize: 9,
-    fontWeight: '900',
-    letterSpacing: 1.5,
-  },
-  inputSection: {
-    padding: SPACING.lg,
-    backgroundColor: Colors.card,
-    marginHorizontal: SPACING.lg,
-    marginTop: 10,
-    marginBottom: SPACING.xl,
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  mealTypeButtons: {
-    flexDirection: 'row',
-    marginBottom: 15,
-    gap: 8,
-  },
-  typeButton: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  typeButtonActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  typeButtonText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: Colors.textSecondary,
-  },
-  typeButtonTextActive: {
-    color: '#000',
-  },
-  inputRow: {
-    flexDirection: 'row',
-  },
-  input: {
-    flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderRadius: 14,
-    paddingHorizontal: 15,
-    paddingVertical: 12,
-    marginRight: 10,
-    color: Colors.text,
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  addButton: {
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-    width: 55,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  logHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: SPACING.lg,
-    gap: 10,
-    marginBottom: 16,
-  },
-  logTitle: {
-    color: Colors.text,
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: -0.3,
-  },
-  mealCard: {
-    backgroundColor: Colors.card,
-    padding: 16,
-    marginBottom: 12,
-    marginHorizontal: SPACING.lg,
-    borderRadius: 24,
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-  },
-  iconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 16,
-    backgroundColor: 'rgba(204, 255, 0, 0.1)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  mealTypeLabel: {
-    fontSize: 10,
-    color: Colors.primary,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 1,
-    marginBottom: 2,
-  },
-  mealName: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.text,
-  },
-  mealCalories: {
-    fontSize: 12,
-    color: Colors.primary,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    marginTop: 20,
-    padding: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.03)',
-    borderRadius: 30,
-    borderStyle: 'dashed',
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    marginHorizontal: SPACING.lg,
-  },
-  emptyText: {
-    color: Colors.textSecondary,
-    marginTop: 15,
-    fontSize: 14,
-    textAlign: 'center',
-    lineHeight: 22,
-    fontWeight: '500',
-  }
 });
-
