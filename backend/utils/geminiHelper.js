@@ -2,6 +2,14 @@ const { GoogleGenerativeAI } = require('@google/generative-ai');
 const fs = require('fs');
 const path = require('path');
 
+class GeminiError extends Error {
+  constructor(message, status = 503) {
+    super(message);
+    this.name = 'GeminiError';
+    this.status = status;
+  }
+}
+
 let FITNESS_SYSTEM_PROMPT = '';
 let loadedPath = '';
 const possiblePaths = [
@@ -117,7 +125,7 @@ async function generateContentWithFallback(prompt, options = {}) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey || apiKey === 'YOUR_GEMINI_API_KEY_HERE') {
     console.error('⚠️ GEMINI_API_KEY is not set or placeholder.');
-    throw new Error('AI service is not configured. Please set GEMINI_API_KEY.');
+    throw new GeminiError('AI service is not configured. Please set GEMINI_API_KEY.', 503);
   }
 
   const wasCircuitActive = (circuitBreakerState === 'OPEN');
@@ -133,7 +141,7 @@ async function generateContentWithFallback(prompt, options = {}) {
 
   for (let i = 0; i < modelsToTry.length; i++) {
     const modelName = modelsToTry[i];
-    console.log(`Trying Gemini model: ${modelName}`);
+    console.log(`[Req: ${requestId}] Trying Gemini model: ${modelName}`);
 
     let attempt = 1;
     const maxAttempts = 2;
@@ -146,22 +154,11 @@ async function generateContentWithFallback(prompt, options = {}) {
       }, 20000);
 
       try {
-        console.log("===== SYSTEM PROMPT START =====");
-        console.log(FITNESS_SYSTEM_PROMPT.substring(0, 500));
-        console.log("===== SYSTEM PROMPT END =====");
-
-        const modelConfig = { 
-          model: modelName, 
+        const modelConfig = {
+          model: modelName,
           systemInstruction: FITNESS_SYSTEM_PROMPT,
-          ...options 
+          ...options
         };
-        console.log("===== GEMINI MODEL CONFIG =====");
-        console.log(JSON.stringify({ 
-          model: modelConfig.model, 
-          systemInstructionLength: modelConfig.systemInstruction ? modelConfig.systemInstruction.length : 0,
-          ...options 
-        }, null, 2));
-        console.log("================================");
 
         const model = genAI.getGenerativeModel(modelConfig);
         const generationResult = await model.generateContent(prompt, { signal: controller.signal });
@@ -175,23 +172,17 @@ async function generateContentWithFallback(prompt, options = {}) {
         const endTime = Date.now();
         const duration = endTime - startTime;
 
-        console.log(`Success using: ${modelName}`);
-        console.log(`Response time: ${duration}ms`);
-        console.log(`Attempts: ${totalAttempts}`);
-        console.log(`Fallback used: ${i > 0}`);
-
-        // backend-only performance metrics block
-        console.log('\n--- GEMINI REQUEST METRICS ---');
-        console.log(`Request ID: ${requestId}`);
-        console.log(`Start Time: ${new Date(startTime).toISOString()}`);
-        console.log(`End Time: ${new Date(endTime).toISOString()}`);
-        console.log(`Duration: ${duration}ms`);
-        console.log(`Model Used: ${modelName}`);
-        console.log(`Retry Count: ${totalAttempts - 1}`);
-        console.log(`Fallback Used: ${i > 0}`);
-        console.log(`Cache Hit: false`);
-        console.log(`Circuit Breaker Active: ${wasCircuitActive}`);
-        console.log('------------------------------\n');
+        console.log(JSON.stringify({
+          logType: 'GEMINI_SUCCESS',
+          requestId,
+          currentModel: modelName,
+          retryCount: attempt - 1,
+          switchingToFallback: i > 0,
+          finalSelectedModel: modelName,
+          circuitBreakerState,
+          finalHttpStatus: 200,
+          responseTime: `${duration}ms`
+        }));
 
         lastSuccessfulModel = modelName;
 
@@ -222,15 +213,46 @@ async function generateContentWithFallback(prompt, options = {}) {
 
         console.log(`Model failed: ${modelName}`);
 
+        const isQuotaError = /exhausted|quota|limit|429/i.test(message);
+
         const isRetryable =
+          isQuotaError ||
           (status && [429, 500, 502, 503, 504].includes(Number(status))) ||
           (code && ['ETIMEDOUT', 'ECONNRESET', 'ECONNABORTED'].includes(code)) ||
           /\b(429|500|502|503|504|ETIMEDOUT|ECONNRESET|ECONNABORTED)\b/i.test(message) ||
           /timeout/i.test(message);
 
+        console.log(JSON.stringify({
+          logType: 'GEMINI_ATTEMPT_FAILED',
+          requestId,
+          currentModel: modelName,
+          retryCount: attempt - 1,
+          switchingToFallback: i < modelsToTry.length - 1,
+          circuitBreakerState,
+          finalHttpStatus: status || 500,
+          error: scrubSensitiveData(message)
+        }));
+
         if (!isRetryable) {
           console.error(`[Req: ${requestId}] Non-retryable error (${status || code}): ${scrubSensitiveData(message)}. Failing immediately.`);
-          throw error;
+          throw new GeminiError("AI service is temporarily busy. Please try again shortly.", 503);
+        }
+
+        // If it is a quota error, do NOT retry on same model; immediately fallback to save quota.
+        if (isQuotaError) {
+          console.log(`[Req: ${requestId}] Quota exceeded on model: ${modelName}. Switching immediately to next fallback.`);
+          if (i < modelsToTry.length - 1) {
+            console.log(JSON.stringify({
+              logType: 'GEMINI_SWITCH_FALLBACK',
+              requestId,
+              fromModel: modelName,
+              toModel: modelsToTry[i + 1],
+              reason: 'Quota Exceeded',
+              circuitBreakerState
+            }));
+            await new Promise(resolve => setTimeout(resolve, 1000));
+          }
+          break; // move to the next model in the outer loop
         }
 
         if (attempt === 1) {
@@ -240,7 +262,14 @@ async function generateContentWithFallback(prompt, options = {}) {
         } else {
           // Second attempt failed on this model. Wait 2 seconds and switch
           if (i < modelsToTry.length - 1) {
-            console.log(`Switching to fallback: ${modelsToTry[i + 1]}`);
+            console.log(JSON.stringify({
+              logType: 'GEMINI_SWITCH_FALLBACK',
+              requestId,
+              fromModel: modelName,
+              toModel: modelsToTry[i + 1],
+              reason: 'Retry limit reached',
+              circuitBreakerState
+            }));
             await new Promise(resolve => setTimeout(resolve, 2000));
           }
           break;
@@ -255,7 +284,14 @@ async function generateContentWithFallback(prompt, options = {}) {
   failureCount = (failureCount || 0) + 1;
   lastError = lastErr;
 
-  throw new Error("AI service is temporarily busy. Please try again shortly.");
+  console.log(JSON.stringify({
+    logType: 'GEMINI_ALL_MODELS_FAILED',
+    requestId,
+    circuitBreakerState,
+    status: 503
+  }));
+
+  throw new GeminiError("AI service is temporarily busy. Please try again shortly.", 503);
 }
 
 async function generateChatWithFallback(history, message, userProfile = null) {
@@ -351,33 +387,17 @@ async function verifyGeminiSetup() {
       
       const modelsToTry = activeModels.length > 0 ? activeModels : PREFERRED_MODELS;
       const candidate = modelsToTry[0];
-      console.log(`💬 Testing primary model: ${candidate}...`);
+      console.log(`💬 Configuring primary model candidate: ${candidate} via metadata...`);
       
-      try {
-        const genAI = new GoogleGenerativeAI(apiKey);
-        const model = genAI.getGenerativeModel({ model: candidate });
-        
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 5000);
-        
-        const testResult = await model.generateContent('Say OK', { signal: controller.signal });
-        clearTimeout(timeoutId);
-        const text = testResult.response.text().trim();
-        console.log(`✅ Model ${candidate} verified successfully. Response: "${text}"`);
-        
-        selectedModel = candidate;
-        isConfigured = true;
-        startupResult = { success: true, selectedModel, availableModels, testResponse: text };
-      } catch (err) {
-        console.warn(`⚠️ Model ${candidate} verification test failed:`, scrubSensitiveData(err.message));
-        isConfigured = false;
-        startupResult = {
-          success: false,
-          error: err.message,
-          selectedModel: candidate,
-          availableModels
-        };
-      }
+      selectedModel = candidate;
+      isConfigured = true;
+      startupResult = { 
+        success: true, 
+        selectedModel, 
+        availableModels, 
+        testResponse: 'SKIPPED (Metadata verified to optimize quota)' 
+      };
+      console.log(`✅ Model ${candidate} configured successfully via metadata verification (generateContent test call skipped to optimize quota).`);
     }
     logDiagnostics();
     return startupResult;

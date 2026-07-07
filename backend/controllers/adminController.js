@@ -1,6 +1,7 @@
 const User = require('../models/User');
+const Workout = require('../models/Workout');
 const { asyncHandler } = require('../middleware/errorMiddleware');
-const mongoose = require('mongoose');
+
 
 // @desc    Get system stats for admin
 // @route   GET /api/admin/stats
@@ -19,8 +20,6 @@ exports.getStats = asyncHandler(async (req, res) => {
   const adminCount = roles.find(r => r._id === 'admin')?.count || 0;
 
   // 3. Total Workouts Logged
-  // We need to access the Workout model. Assuming it's 'Workout'
-  const Workout = mongoose.model('Workout');
   const totalWorkouts = await Workout.countDocuments();
 
   // 4. Recent Activity (Recent Users)

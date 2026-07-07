@@ -3,11 +3,13 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 
 const auth = async (req, res, next) => {
-  const token = req.header('Authorization')?.replace('Bearer ', '');
+  const authHeader = req.header('Authorization');
 
-  if (!token) {
-    return res.status(401).json({ message: 'No token, authorization denied' });
+  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    return res.status(401).json({ message: 'Authentication required.' });
   }
+
+  const token = authHeader.replace('Bearer ', '');
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -20,7 +22,13 @@ const auth = async (req, res, next) => {
     req.user = user;
     next();
   } catch (error) {
-    res.status(401).json({ message: 'Token is not valid' });
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Your session has expired. Please sign in again.' });
+    }
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Authentication failed.' });
+    }
+    res.status(401).json({ message: 'Authentication failed.' });
   }
 };
 

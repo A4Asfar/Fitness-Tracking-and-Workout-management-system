@@ -5,8 +5,6 @@ const { generateChatWithFallback } = require('../utils/geminiHelper');
 
 // ─── GEMINI AI CHAT ───
 
-// ─── GEMINI AI CHAT ───
-
 /**
  * POST /api/chat/ai
  * Send a message in a conversation. Creates a new conversation if no chatId provided.
@@ -163,7 +161,7 @@ exports.renameConversation = asyncHandler(async (req, res) => {
   const chat = await Chat.findOneAndUpdate(
     { _id: chatId, userId: req.userId },
     { title: title.trim() },
-    { new: true }
+    { returnDocument: 'after' }
   );
 
   if (!chat) {
@@ -190,3 +188,4 @@ exports.deleteConversation = asyncHandler(async (req, res) => {
   console.log('🗑️ Conversation deleted:', chatId, 'for user:', req.userId);
   res.json({ message: 'Conversation deleted' });
 });
+

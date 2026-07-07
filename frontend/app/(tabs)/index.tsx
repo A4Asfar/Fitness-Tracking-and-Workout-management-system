@@ -296,7 +296,7 @@ export default function HomeDashboard() {
         });
       }
     } catch (e: any) {
-      console.log('Home fetch error:', e);
+      if (__DEV__) console.log('Home fetch error:', e);
       setError(e.message || 'Failed to sync dashboard. Please check your connection.');
     } finally {
       setLoading(false);
@@ -370,7 +370,7 @@ export default function HomeDashboard() {
     >
       {/* ── Hero Header ── */}
       <View style={[s.hero, { paddingTop: insets.top + 24 }]}>
-        <Text style={s.heroGreeting}>Good Morning 👋</Text>
+        <Text style={s.heroGreeting}>{getGreeting()} 👋</Text>
         <Text style={s.heroName}>{user?.name || 'Athlete'}</Text>
       </View>
 

@@ -157,7 +157,6 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
     });
 
     console.log('📧 Password reset OTP sent to:', user.email);
-    console.log('🔑 DEBUG OTP:', otp); // Safety net for presentation
     res.json({ message: 'OTP sent to your email' });
   } catch (error) {
     user.resetPasswordOTP = null;

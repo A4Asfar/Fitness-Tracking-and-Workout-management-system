@@ -24,6 +24,31 @@ const { errorHandler, notFound } = require('./middleware/errorMiddleware');
 
 const app = express();
 
+// Request Tracing Middleware
+app.use((req, res, next) => {
+  req.requestId = req.header('X-Request-ID') || Math.random().toString(36).substring(7).toUpperCase();
+  req.startTime = Date.now();
+
+  res.on('finish', () => {
+    const responseTime = `${Date.now() - req.startTime}ms`;
+    const statusCode = res.statusCode;
+    const errorCategory = req.errorCategory || (statusCode >= 400 ? (statusCode === 401 || statusCode === 403 ? 'AUTH_ERROR' : (statusCode >= 500 ? 'INTERNAL_ERROR' : 'BAD_REQUEST')) : 'NONE');
+
+    console.log(JSON.stringify({
+      timestamp: new Date().toISOString(),
+      requestId: req.requestId,
+      route: req.originalUrl || req.url,
+      method: req.method,
+      userId: req.userId || 'Guest',
+      responseTime,
+      statusCode,
+      errorCategory
+    }));
+  });
+
+  next();
+});
+
 app.use(express.json());
 
 // Robust CORS configuration for Production
@@ -64,31 +89,7 @@ app.get('/', (req, res) => {
   });
 });
 
-// Temporary Diagnostic Route for Gemini
-app.get('/api/test-gemini', async (req, res) => {
-  const { generateContentWithFallback, getAvailableModels } = require('./utils/geminiHelper');
-  try {
-    const result = await generateContentWithFallback('Hello');
-    return res.json({
-      success: true,
-      modelUsed: result.modelUsed,
-      attempts: result.attempts,
-      responseTime: result.responseTime,
-      fallbackUsed: result.fallbackUsed,
-      availableModels: getAvailableModels(),
-      response: result.text
-    });
-  } catch (err) {
-    console.error('❌ /api/test-gemini Error:', err.stack || err.message);
-    return res.status(503).json({
-      success: false,
-      message: 'AI service is temporarily busy. Please try again shortly.',
-      availableModels: getAvailableModels()
-    });
-  }
-});
-
-// Gemini Status Endpoint
+// Gemini Status Endpoint (read-only — no quota consumption)
 app.get('/api/gemini-status', (req, res) => {
   const { getStartupResult } = require('./utils/geminiHelper');
   return res.json(getStartupResult());

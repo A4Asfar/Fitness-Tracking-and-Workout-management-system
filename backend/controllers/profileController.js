@@ -3,14 +3,7 @@ const Workout = require('../models/Workout');
 const MealSelection = require('../models/MealSelection');
 const TrainerConsult = require('../models/TrainerConsult');
 const { asyncHandler } = require('../middleware/errorMiddleware');
-
-const getLocalDateString = (d) => {
-  const dateObj = new Date(d);
-  const year = dateObj.getFullYear();
-  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-  const day = String(dateObj.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
+const { getLocalDateString, calculateBMI } = require('../utils/dateUtils');
 
 exports.getProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.userId).select('-password');
@@ -26,7 +19,7 @@ exports.updateProfile = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.userId,
     { name, weight, height, fitnessGoal, trainingLevel, workoutFocus, avatar },
-    { new: true }
+    { returnDocument: 'after' }
   ).select('-password');
   console.log('📝 Profile updated in MongoDB for user:', req.userId);
   res.json(user);
@@ -38,11 +31,11 @@ exports.upgradeProfile = asyncHandler(async (req, res) => {
 
   const user = await User.findByIdAndUpdate(
     req.userId,
-    { 
+    {
       membershipType: 'premium',
       membershipExpiresAt: expiryDate
     },
-    { new: true }
+    { returnDocument: 'after' }
   ).select('-password');
   console.log('👑 User upgraded to premium until:', expiryDate);
   res.json(user);
@@ -59,15 +52,12 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
   ]);
 
   // 1. Calculate Workouts & Volume
-  // Count unique days as total workouts to match workoutController logic, or just raw length
   const totalWorkouts = new Set(workouts.map(w => getLocalDateString(w.date))).size;
-  
   let totalVolume = 0;
   workouts.forEach(w => {
     totalVolume += (w.sets || 0) * (w.reps || 0) * (w.weight || 0);
   });
 
-  // Calculate generic Calories Burned estimate (e.g. 250 base + volume factor)
   const caloriesBurnedEstimate = Math.round(totalWorkouts * 250 + (totalVolume * 0.05));
 
   // 2. Meals & Consults
@@ -75,23 +65,15 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
   const totalConsultations = consults.length;
 
   // 3. BMI Calculation
-  let bmi = 0;
-  let bmiCategory = 'N/A';
-  if (user && user.weight && user.height) {
-    const heightInMeters = user.height / 100;
-    bmi = parseFloat((user.weight / (heightInMeters * heightInMeters)).toFixed(1));
-    if (bmi < 18.5) bmiCategory = 'Underweight';
-    else if (bmi < 24.9) bmiCategory = 'Normal';
-    else if (bmi < 29.9) bmiCategory = 'Overweight';
-    else bmiCategory = 'Obese';
-  }
+  const { bmi, bmiCategory } = calculateBMI(user?.weight, user?.height);
 
-  // 4. Weekly Activity Score (0-100)
+  // 4. Weekly Activity Score (0–100)
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-  const recentWorkouts = new Set(workouts.filter(w => new Date(w.date) >= sevenDaysAgo).map(w => getLocalDateString(w.date))).size;
-  // 4 workouts a week is a perfect 100 score
-  let activityScore = Math.min(Math.round((recentWorkouts / 4) * 100), 100);
+  const recentWorkouts = new Set(
+    workouts.filter(w => new Date(w.date) >= sevenDaysAgo).map(w => getLocalDateString(w.date))
+  ).size;
+  const activityScore = Math.min(Math.round((recentWorkouts / 4) * 100), 100);
 
   res.json({
     totalWorkouts,
@@ -106,3 +88,4 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
     trainingLevel: user?.trainingLevel || 'beginner'
   });
 });
+

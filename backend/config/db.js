@@ -1,25 +1,37 @@
 const mongoose = require('mongoose');
 
 const connectDB = async () => {
-  try {
-    // Add event listeners for connection stability in production
-    mongoose.connection.on('connected', () => {
-      console.log('✅ MongoDB Connected Successfully to Atlas');
-    });
+  const maxRetries = 5;
+  let retries = 0;
 
-    mongoose.connection.on('error', (err) => {
-      console.error('❌ MongoDB connection error:', err.message);
-    });
+  // Add event listeners for connection stability in production
+  mongoose.connection.on('connected', () => {
+    console.log('✅ MongoDB Connected Successfully to Atlas');
+  });
 
-    mongoose.connection.on('disconnected', () => {
-      console.warn('⚠️ MongoDB disconnected. Attempting to reconnect...');
-    });
+  mongoose.connection.on('error', (err) => {
+    console.error('❌ MongoDB connection error:', err.message);
+  });
 
-    await mongoose.connect(process.env.MONGO_URI);
-  } catch (err) {
-    console.error('❌ Initial MongoDB connection error:', err.message);
-    if (process.env.NODE_ENV === 'production') {
-      process.exit(1);
+  mongoose.connection.on('disconnected', () => {
+    console.warn('⚠️ MongoDB disconnected. Mongoose will auto-reconnect.');
+  });
+
+  while (retries < maxRetries) {
+    try {
+      await mongoose.connect(process.env.MONGO_URI, {
+        serverSelectionTimeoutMS: 5000,
+      });
+      return;
+    } catch (err) {
+      retries++;
+      console.error(`❌ MongoDB connection attempt ${retries}/${maxRetries} failed: ${err.message}`);
+      if (retries >= maxRetries) {
+        console.error('❌ Max connection retries reached. Database is offline. Failing connection.');
+        throw new Error(`Database connection failed: ${err.message}`);
+      }
+      console.log('Waiting 2 seconds before retrying...');
+      await new Promise(resolve => setTimeout(resolve, 2000));
     }
   }
 };

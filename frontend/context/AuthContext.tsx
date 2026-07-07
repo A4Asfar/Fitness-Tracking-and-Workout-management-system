@@ -1,6 +1,7 @@
 import React, { createContext, useState, useCallback, useEffect, useContext } from 'react';
 import Storage from '@/utils/storage';
-import api, { setAuthToken } from '@/services/api';
+import api, { setAuthToken, setOnUnauthorized } from '@/services/api';
+import { useToast } from '@/components/Toast';
 
 /**
  * User Type definition matching backend schema
@@ -39,6 +40,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
+  const { showToast } = useToast();
+
+  useEffect(() => {
+    setOnUnauthorized(() => {
+      setUser(null);
+      setToken(null);
+      showToast('Your session has expired. Please sign in again.', 'error');
+    });
+  }, [showToast]);
 
   /**
    * Session Restoration
@@ -59,7 +69,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             try {
               setUser(JSON.parse(savedUser));
             } catch (e) {
-              console.error('Failed to parse saved user');
+              if (__DEV__) console.error('Failed to parse saved user');
             }
           }
           
@@ -67,7 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           const response = await api.get('/auth/me');
           setUser(response.data);
           await Storage.setItem('authUser', JSON.stringify(response.data));
-          console.log('✅ Session synchronized for:', response.data.email);
+          if (__DEV__) console.log('✅ Session synchronized for:', response.data.email);
         }
       } catch (error) {
         console.log('Session expired or no token found');
@@ -98,7 +108,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await Storage.setItem('authToken', newToken);
     await Storage.setItem('authUser', JSON.stringify(userData));
     setIsNewUser(false);
-    console.log('🔑 Login successful for:', userData.email);
+    if (__DEV__) console.log('🔑 Login successful for:', userData.email);
   }, []);
 
   /**
@@ -115,7 +125,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await Storage.setItem('authToken', newToken);
     await Storage.setItem('authUser', JSON.stringify(userData));
     setIsNewUser(true);
-    console.log('✨ Account created for:', userData.email);
+    if (__DEV__) console.log('✨ Account created for:', userData.email);
   }, []);
 
   /**
@@ -127,7 +137,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     await Storage.removeItem('authToken');
     await Storage.removeItem('authUser');
-    console.log('🔒 Session cleared - user logged out');
+    if (__DEV__) console.log('🔒 Session cleared - user logged out');
   }, []);
   
   /**

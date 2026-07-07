@@ -72,11 +72,11 @@ function NavigationHandler() {
 export default function RootLayout() {
 
   return (
-    <AuthProvider>
-      <ToastProvider>
+    <ToastProvider>
+      <AuthProvider>
         <NavigationHandler />
         <StatusBar style="light" />
-      </ToastProvider>
-    </AuthProvider>
+      </AuthProvider>
+    </ToastProvider>
   );
 }
