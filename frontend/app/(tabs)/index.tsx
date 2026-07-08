@@ -23,6 +23,8 @@ import AIInsightCard from '@/components/dashboard/AIInsightCard';
 import RecentActivityCard from '@/components/dashboard/RecentActivityCard';
 import SectionHeader from '@/components/dashboard/SectionHeader';
 import EmptyState from '@/components/workout/EmptyState';
+import Storage from '@/utils/storage';
+import PremiumOnboardingModal from '@/components/dashboard/PremiumOnboardingModal';
 
 const QUICK_ACTIONS_CONFIG = [
   {
@@ -56,7 +58,7 @@ const QUICK_ACTIONS_CONFIG = [
 ];
 
 export default function HomeDashboard() {
-  const { user } = useAuth();
+  const { user, isNewUser } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [stats, setStats] = useState<any>(null);
@@ -65,6 +67,19 @@ export default function HomeDashboard() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    const checkOnboarding = async () => {
+      if (user) {
+        const flag = await Storage.getItem(`hasSeenOnboarding_${user.id}`);
+        if (!flag && isNewUser) {
+          setShowOnboarding(true);
+        }
+      }
+    };
+    checkOnboarding();
+  }, [user, isNewUser]);
 
   const fetchData = async () => {
     setError(null);
@@ -273,6 +288,13 @@ export default function HomeDashboard() {
           </View>
         </View>
       </ScrollView>
+      {user && (
+        <PremiumOnboardingModal
+          visible={showOnboarding}
+          onClose={() => setShowOnboarding(false)}
+          userId={user.id}
+        />
+      )}
     </View>
   );
 }
