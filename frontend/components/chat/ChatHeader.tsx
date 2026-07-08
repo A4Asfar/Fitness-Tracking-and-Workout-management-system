@@ -3,6 +3,9 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ArrowLeft, Plus, MoreVertical } from 'lucide-react-native';
 import AIAvatar from './AIAvatar';
 
+import { usePremiumStatus } from '../PremiumGate';
+import PremiumBadge from '../PremiumBadge';
+
 interface ChatHeaderProps {
   title: string;
   subtitle?: string;
@@ -24,6 +27,8 @@ export default function ChatHeader({
   showMenu = false,
   onMenuPress
 }: ChatHeaderProps) {
+  const { isPremium } = usePremiumStatus();
+
   return (
     <View style={styles.container}>
       <View style={styles.leftRow}>
@@ -34,7 +39,10 @@ export default function ChatHeader({
         )}
         <AIAvatar />
         <View style={styles.titleContainer}>
-          <Text style={styles.title} numberOfLines={1}>{title}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={styles.title} numberOfLines={1}>{title}</Text>
+            {isPremium && <PremiumBadge />}
+          </View>
           <Text style={styles.subtitle}>{subtitle}</Text>
         </View>
       </View>

@@ -9,6 +9,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useAuth } from '@/context/AuthContext';
 import { getDashboardAnalytics } from '@/services/analyticsService';
 import Svg, { Circle } from 'react-native-svg';
+import { PremiumGate } from '@/components/PremiumGate';
 
 const { width } = Dimensions.get('window');
 
@@ -155,11 +156,6 @@ export default function AnalyticsDashboardScreen() {
   };
 
   useEffect(() => {
-    if (user && user.membershipType !== 'premium' && user.membershipType !== 'admin') {
-      router.replace('/upgrade');
-      return;
-    }
-
     if (user) {
       fetchData();
     }
@@ -260,48 +256,54 @@ export default function AnalyticsDashboardScreen() {
             </View>
           </View>
 
-          {/* ── Coach Analysis (AI Section Highlighted) ── */}
-          <View style={styles.insightCard}>
-            <View style={styles.insightHeader}>
-              <Sparkles size={20} color="#10B981" fill="#10B981" />
-              <Text style={styles.insightTitle}>Weekly AI Coach Assessment</Text>
+          <PremiumGate
+            featureTitle="Premium Insights"
+            featureDescription="Unlock progressive AI coach assessments, body metrics gauges, and workout activity consistency scores."
+            style={{ marginTop: 10 }}
+          >
+            {/* ── Coach Analysis (AI Section Highlighted) ── */}
+            <View style={styles.insightCard}>
+              <View style={styles.insightHeader}>
+                <Sparkles size={20} color="#10B981" fill="#10B981" />
+                <Text style={styles.insightTitle}>Weekly AI Coach Assessment</Text>
+              </View>
+              <Text style={styles.insightBody}>
+                {data?.activityScore >= 80 
+                  ? "Outstanding weekly activity! Your workout consistency exceeds 80% of personal targets. Keep feeding your body with clean protein macros."
+                  : data?.activityScore >= 50
+                  ? "Good effort this week. You are building solid habits. Let's aim to schedule one additional active recovery session to optimize your stats."
+                  : "Your activity level is slightly below target this week. Remember, consistency beats intensity. Try starting a 15-minute bodyweight routine today!"}
+              </Text>
             </View>
-            <Text style={styles.insightBody}>
-              {data?.activityScore >= 80 
-                ? "Outstanding weekly activity! Your workout consistency exceeds 80% of personal targets. Keep feeding your body with clean protein macros."
-                : data?.activityScore >= 50
-                ? "Good effort this week. You are building solid habits. Let's aim to schedule one additional active recovery session to optimize your stats."
-                : "Your activity level is slightly below target this week. Remember, consistency beats intensity. Try starting a 15-minute bodyweight routine today!"}
-            </Text>
-          </View>
 
-          {/* ── BMI & Body Health ── */}
-          <View style={styles.largeCard}>
-            <Text style={styles.largeCardTitle}>Body Mass Index (BMI)</Text>
-            <View style={styles.bmiContent}>
-              <CircularGauge value={data?.bmi || 0} category={data?.bmiCategory || 'Normal'} />
-              <View style={styles.bmiTextWrap}>
-                <Text style={styles.bmiDesc}>
-                  Calculated using your logged profile height and weight of <Text style={{ color: '#0F172A', fontWeight: '800' }}>{data?.currentWeight || '--'} kg</Text>.
-                </Text>
-                <Text style={styles.bmiDesc}>
-                  Target Range: Maintain a normal BMI (18.5 - 24.9) for optimal metabolic and heart health.
-                </Text>
+            {/* ── BMI & Body Health ── */}
+            <View style={styles.largeCard}>
+              <Text style={styles.largeCardTitle}>Body Mass Index (BMI)</Text>
+              <View style={styles.bmiContent}>
+                <CircularGauge value={data?.bmi || 0} category={data?.bmiCategory || 'Normal'} />
+                <View style={styles.bmiTextWrap}>
+                  <Text style={styles.bmiDesc}>
+                    Calculated using your logged profile height and weight of <Text style={{ color: '#0F172A', fontWeight: '800' }}>{data?.currentWeight || '--'} kg</Text>.
+                  </Text>
+                  <Text style={styles.bmiDesc}>
+                    Target Range: Maintain a normal BMI (18.5 - 24.9) for optimal metabolic and heart health.
+                  </Text>
+                </View>
               </View>
             </View>
-          </View>
 
-          {/* ── Activity Score ── */}
-          <View style={styles.largeCard}>
-            <View style={styles.activityHeader}>
-              <Text style={styles.largeCardTitle}>Weekly Activity Score</Text>
-              <Text style={styles.scoreText}>{data?.activityScore || 0} / 100</Text>
+            {/* ── Activity Score ── */}
+            <View style={styles.largeCard}>
+              <View style={styles.activityHeader}>
+                <Text style={styles.largeCardTitle}>Weekly Activity Score</Text>
+                <Text style={styles.scoreText}>{data?.activityScore || 0} / 100</Text>
+              </View>
+              <ActivityBar score={data?.activityScore || 0} />
+              <Text style={styles.activityDesc}>
+                This score is dynamically calculated from your training frequency and workout consistency over the last 7 days.
+              </Text>
             </View>
-            <ActivityBar score={data?.activityScore || 0} />
-            <Text style={styles.activityDesc}>
-              This score is dynamically calculated from your training frequency and workout consistency over the last 7 days.
-            </Text>
-          </View>
+          </PremiumGate>
         </Animated.View>
       </ScrollView>
     </View>

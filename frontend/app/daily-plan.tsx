@@ -13,6 +13,7 @@ import { useRouter, Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { safeBack } from '@/utils/navigation';
+import { PremiumGate } from '@/components/PremiumGate';
 
 export default function DailyPlanScreen() {
   const { user } = useAuth();
@@ -119,82 +120,88 @@ export default function DailyPlanScreen() {
           <Text style={styles.quoteText}>&quot;{plan.motivation}&quot;</Text>
         </View>
 
-        {/* ── Warmup Section ── */}
-        <SectionHeader title="WARMUP PROTOCOL" icon={Sunrise} color="#FFD700" />
-        <View style={styles.cardBlock}>
-          {plan.warmup?.map((w: any, idx: number) => (
-            <View key={idx} style={styles.warmupRow}>
-              <View style={styles.dot} />
-              <Text style={styles.warmupName}>{w.exercise}</Text>
-              <Text style={styles.warmupTime}>{w.duration}</Text>
-            </View>
-          ))}
-        </View>
-
-        {/* ── Main Workout Section ── */}
-        <SectionHeader title="MAIN EXERCISES" icon={Dumbbell} color={Colors.primary} />
-        <View style={styles.workoutList}>
-          {plan.exercises?.map((ex: any, idx: number) => {
-            const IconComp = getIconComponent(ex.icon || 'Dumbbell');
-            return (
-              <View key={idx} style={styles.exerciseCard}>
-                <View style={styles.exerciseHeader}>
-                  <View style={styles.exIconBox}>
-                    <IconComp size={20} color={Colors.primary} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={styles.exName}>{ex.name}</Text>
-                    <Text style={styles.exNotes}>{ex.notes}</Text>
-                  </View>
-                </View>
-                <View style={styles.exStatsRow}>
-                  <View style={styles.exStat}>
-                    <Text style={styles.exStatLabel}>SETS</Text>
-                    <Text style={styles.exStatValue}>{ex.sets}</Text>
-                  </View>
-                  <View style={styles.exStat}>
-                    <Text style={styles.exStatLabel}>REPS</Text>
-                    <Text style={styles.exStatValue}>{ex.reps}</Text>
-                  </View>
-                  <View style={styles.exStat}>
-                    <Text style={styles.exStatLabel}>REST</Text>
-                    <Text style={styles.exStatValue}>{ex.rest}</Text>
-                  </View>
-                </View>
+        <PremiumGate
+          featureTitle="Unlimited Daily Plans"
+          featureDescription="Unlock customized daily routines, AI-generated exercise sets/reps, protein targets, and recovery guides."
+          style={{ marginTop: 20 }}
+        >
+          {/* ── Warmup Section ── */}
+          <SectionHeader title="WARMUP PROTOCOL" icon={Sunrise} color="#FFD700" />
+          <View style={styles.cardBlock}>
+            {plan.warmup?.map((w: any, idx: number) => (
+              <View key={idx} style={styles.warmupRow}>
+                <View style={styles.dot} />
+                <Text style={styles.warmupName}>{w.exercise}</Text>
+                <Text style={styles.warmupTime}>{w.duration}</Text>
               </View>
-            );
-          })}
-        </View>
+            ))}
+          </View>
 
-        {/* ── Nutrition Strategy ── */}
-        <SectionHeader title="NUTRITION STRATEGY" icon={Utensils} color="#39FF14" />
-        <View style={styles.cardBlock}>
-          <View style={styles.nutritionTarget}>
-            <Text style={styles.targetLabel}>Protein Target:</Text>
-            <Text style={styles.targetValue}>{plan.nutrition?.proteinTarget}</Text>
+          {/* ── Main Workout Section ── */}
+          <SectionHeader title="MAIN EXERCISES" icon={Dumbbell} color={Colors.primary} />
+          <View style={styles.workoutList}>
+            {plan.exercises?.map((ex: any, idx: number) => {
+              const IconComp = getIconComponent(ex.icon || 'Dumbbell');
+              return (
+                <View key={idx} style={styles.exerciseCard}>
+                  <View style={styles.exerciseHeader}>
+                    <View style={styles.exIconBox}>
+                      <IconComp size={20} color={Colors.primary} />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.exName}>{ex.name}</Text>
+                      <Text style={styles.exNotes}>{ex.notes}</Text>
+                    </View>
+                  </View>
+                  <View style={styles.exStatsRow}>
+                    <View style={styles.exStat}>
+                      <Text style={styles.exStatLabel}>SETS</Text>
+                      <Text style={styles.exStatValue}>{ex.sets}</Text>
+                    </View>
+                    <View style={styles.exStat}>
+                      <Text style={styles.exStatLabel}>REPS</Text>
+                      <Text style={styles.exStatValue}>{ex.reps}</Text>
+                    </View>
+                    <View style={styles.exStat}>
+                      <Text style={styles.exStatLabel}>REST</Text>
+                      <Text style={styles.exStatValue}>{ex.rest}</Text>
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
           </View>
-          <View style={styles.mealRow}>
-            <Coffee size={16} color={Colors.textSecondary} />
-            <Text style={styles.mealLabel}>Breakfast</Text>
-            <Text style={styles.mealValue}>{plan.nutrition?.breakfast}</Text>
-          </View>
-          <View style={styles.mealRow}>
-            <Utensils size={16} color={Colors.textSecondary} />
-            <Text style={styles.mealLabel}>Lunch</Text>
-            <Text style={styles.mealValue}>{plan.nutrition?.lunch}</Text>
-          </View>
-          <View style={styles.mealRow}>
-            <Moon size={16} color={Colors.textSecondary} />
-            <Text style={styles.mealLabel}>Dinner</Text>
-            <Text style={styles.mealValue}>{plan.nutrition?.dinner}</Text>
-          </View>
-        </View>
 
-        {/* ── Recovery ── */}
-        <SectionHeader title="RECOVERY" icon={HeartPulse} color="#A855F7" />
-        <LinearGradient colors={['#A855F720', 'transparent']} style={styles.recoveryBox}>
-          <Text style={styles.recoveryText}>{plan.recovery}</Text>
-        </LinearGradient>
+          {/* ── Nutrition Strategy ── */}
+          <SectionHeader title="NUTRITION STRATEGY" icon={Utensils} color="#39FF14" />
+          <View style={styles.cardBlock}>
+            <View style={styles.nutritionTarget}>
+              <Text style={styles.targetLabel}>Protein Target:</Text>
+              <Text style={styles.targetValue}>{plan.nutrition?.proteinTarget}</Text>
+            </View>
+            <View style={styles.mealRow}>
+              <Coffee size={16} color={Colors.textSecondary} />
+              <Text style={styles.mealLabel}>Breakfast</Text>
+              <Text style={styles.mealValue}>{plan.nutrition?.breakfast}</Text>
+            </View>
+            <View style={styles.mealRow}>
+              <Utensils size={16} color={Colors.textSecondary} />
+              <Text style={styles.mealLabel}>Lunch</Text>
+              <Text style={styles.mealValue}>{plan.nutrition?.lunch}</Text>
+            </View>
+            <View style={styles.mealRow}>
+              <Moon size={16} color={Colors.textSecondary} />
+              <Text style={styles.mealLabel}>Dinner</Text>
+              <Text style={styles.mealValue}>{plan.nutrition?.dinner}</Text>
+            </View>
+          </View>
+
+          {/* ── Recovery ── */}
+          <SectionHeader title="RECOVERY" icon={HeartPulse} color="#A855F7" />
+          <LinearGradient colors={['#A855F720', 'transparent']} style={styles.recoveryBox}>
+            <Text style={styles.recoveryText}>{plan.recovery}</Text>
+          </LinearGradient>
+        </PremiumGate>
 
       </ScrollView>
     </View>

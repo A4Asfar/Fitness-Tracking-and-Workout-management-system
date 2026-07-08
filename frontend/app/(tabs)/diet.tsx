@@ -16,6 +16,7 @@ import {
   NutritionSuggestion, 
   getIconComponent 
 } from '@/services/recommendations';
+import { PremiumGate } from '@/components/PremiumGate';
 
 // Extracted Premium Components
 import NutritionHeader from '@/components/nutrition/NutritionHeader';
@@ -207,56 +208,62 @@ export default function DietScreen() {
         {/* Water / Hydration Tracker */}
         <WaterTracker />
 
-        {/* AI Suggestions Section */}
-        <View style={styles.bannerContainer}>
-          <LinearGradient
-            colors={['#10B98115', '#10B98103']}
-            style={styles.banner}
-          >
-            <View style={styles.bannerContent}>
-              <View style={styles.bannerTextContainer}>
-                <View style={styles.bannerTag}>
-                  <Sparkles size={12} color="#10B981" fill="#10B981" />
-                  <Text style={styles.bannerTagText}>AI COACH RECOMMENDATIONS</Text>
-                </View>
-                <Text style={styles.bannerTitle}>Daily Meal suggestions</Text>
-                <Text style={styles.bannerSubtitle}>Based on your {currentGoal} target goal.</Text>
-              </View>
-            </View>
-          </LinearGradient>
-        </View>
-
-        {/* Horizontal Suggestions Carousel */}
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.suggestionScroll}
+        <PremiumGate
+          featureTitle="AI Nutrition Planner"
+          featureDescription="Unlock progressive AI meal suggestions custom-designed to hit your macro targets, food choices, and fitness goals."
+          style={{ marginHorizontal: 20, marginBottom: 20 }}
         >
-          {suggestions.map((item, idx) => {
-            const SuggestionIcon = getIconComponent(item.icon);
-            return (
-              <TouchableOpacity 
-                key={idx} 
-                style={styles.suggestionCard}
-                onPress={() => setSelectedMeal(item)}
-                activeOpacity={0.8}
-              >
-                <View style={styles.suggestionHeader}>
-                  <View style={styles.suggestionIconBox}>
-                    <SuggestionIcon size={18} color="#10B981" />
+          {/* AI Suggestions Section */}
+          <View style={styles.bannerContainer}>
+            <LinearGradient
+              colors={['#10B98115', '#10B98103']}
+              style={styles.banner}
+            >
+              <View style={styles.bannerContent}>
+                <View style={styles.bannerTextContainer}>
+                  <View style={styles.bannerTag}>
+                    <Sparkles size={12} color="#10B981" fill="#10B981" />
+                    <Text style={styles.bannerTagText}>AI COACH RECOMMENDATIONS</Text>
                   </View>
-                  <Text style={styles.suggestionType}>{item.type}</Text>
+                  <Text style={styles.bannerTitle}>Daily Meal suggestions</Text>
+                  <Text style={styles.bannerSubtitle}>Based on your {currentGoal} target goal.</Text>
                 </View>
-                <Text style={styles.suggestionName} numberOfLines={1}>{item.name}</Text>
-                <Text style={styles.suggestionNote} numberOfLines={2}>{item.note}</Text>
-                <View style={styles.quickAdd}>
-                  <Plus size={12} color="#FFFFFF" strokeWidth={2.5} />
-                  <Text style={styles.quickAddText}>View details</Text>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </ScrollView>
+              </View>
+            </LinearGradient>
+          </View>
+
+          {/* Horizontal Suggestions Carousel */}
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.suggestionScroll}
+          >
+            {suggestions.map((item, idx) => {
+              const SuggestionIcon = getIconComponent(item.icon);
+              return (
+                <TouchableOpacity 
+                  key={idx} 
+                  style={styles.suggestionCard}
+                  onPress={() => setSelectedMeal(item)}
+                  activeOpacity={0.8}
+                >
+                  <View style={styles.suggestionHeader}>
+                    <View style={styles.suggestionIconBox}>
+                      <SuggestionIcon size={18} color="#10B981" />
+                    </View>
+                    <Text style={styles.suggestionType}>{item.type}</Text>
+                  </View>
+                  <Text style={styles.suggestionName} numberOfLines={1}>{item.name}</Text>
+                  <Text style={styles.suggestionNote} numberOfLines={2}>{item.note}</Text>
+                  <View style={styles.quickAdd}>
+                    <Plus size={12} color="#FFFFFF" strokeWidth={2.5} />
+                    <Text style={styles.quickAddText}>View details</Text>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </PremiumGate>
 
         {/* Expandable Meal Sections */}
         <View style={styles.mealSectionsContainer}>

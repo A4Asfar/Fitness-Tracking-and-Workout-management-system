@@ -16,6 +16,8 @@ import EmptyChatState from '@/components/chat/EmptyChatState';
 import MessageBubble from '@/components/chat/MessageBubble';
 import ChatInput from '@/components/chat/ChatInput';
 import TypingIndicator from '@/components/chat/TypingIndicator';
+import { usePremiumStatus, PremiumModal } from '@/components/PremiumGate';
+import { Lock } from 'lucide-react-native';
 
 interface UIMessage {
   id: string;
@@ -28,6 +30,9 @@ export default function AIChatScreen() {
   const { user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  
+  const { isPremium, isPending } = usePremiumStatus();
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
 
   const [mode, setMode] = useState<'list' | 'chat'>('list');
   const [activeChatId, setActiveChatId] = useState<string | null>(null);
@@ -43,6 +48,9 @@ export default function AIChatScreen() {
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
   const flatListRef = useRef<FlatList>(null);
+
+  const userMessageCount = messages.filter(m => m.sender === 'user').length;
+  const isChatLocked = !isPremium && userMessageCount >= 3;
 
   const [renameModalVisible, setRenameModalVisible] = useState(false);
   const [renameTarget, setRenameTarget] = useState<Conversation | null>(null);
@@ -161,6 +169,10 @@ export default function AIChatScreen() {
   };
 
   const handleSend = async () => {
+    if (isChatLocked) {
+      setShowPremiumModal(true);
+      return;
+    }
     if (!input.trim() || isTyping) return;
 
     const currentInput = input.trim();
@@ -205,6 +217,10 @@ export default function AIChatScreen() {
   };
 
   const handlePromptClick = async (promptText: string) => {
+    if (isChatLocked) {
+      setShowPremiumModal(true);
+      return;
+    }
     if (isTyping) return;
     const userMsg: UIMessage = {
       id: Date.now().toString(),
@@ -409,15 +425,34 @@ export default function AIChatScreen() {
             />
           )}
 
-          <ChatInput 
-            value={input}
-            onChangeText={setInput}
-            onSend={handleSend}
-            disabled={isTyping}
-            activeColor="#7C4DFF"
-          />
+          {isChatLocked ? (
+            <TouchableOpacity 
+              style={[styles.chatLockBanner, { marginBottom: insets.bottom + 12 }]}
+              onPress={() => setShowPremiumModal(true)}
+              activeOpacity={0.9}
+            >
+              <Lock size={16} color="#78350F" style={{ marginRight: 8 }} />
+              <Text style={styles.chatLockBannerText}>
+                Free limit reached (3 messages). Tap to Unlock PRO.
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <ChatInput 
+              value={input}
+              onChangeText={setInput}
+              onSend={handleSend}
+              disabled={isTyping}
+              activeColor="#7C4DFF"
+            />
+          )}
         </KeyboardAvoidingView>
       )}
+
+      <PremiumModal
+        visible={showPremiumModal}
+        onClose={() => setShowPremiumModal(false)}
+        isPending={isPending}
+      />
     </View>
   );
 }
@@ -520,6 +555,22 @@ const styles = StyleSheet.create({
   renameConfirmText: {
     color: '#FFFFFF',
     fontSize: 14,
+    fontWeight: '800',
+  },
+  chatLockBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFDF6',
+    borderWidth: 1.5,
+    borderColor: '#FDE68A',
+    borderRadius: 16,
+    padding: 14,
+    marginHorizontal: 16,
+  },
+  chatLockBannerText: {
+    color: '#78350F',
+    fontSize: 13,
     fontWeight: '800',
   },
 });

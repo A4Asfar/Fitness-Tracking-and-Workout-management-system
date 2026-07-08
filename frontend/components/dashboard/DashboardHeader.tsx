@@ -3,6 +3,9 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Bell, Flame, Settings, User } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { usePremiumStatus } from '../PremiumGate';
+import PremiumBadge from '../PremiumBadge';
+
 interface DashboardHeaderProps {
   userName: string;
   streakCount: number;
@@ -16,6 +19,7 @@ export default function DashboardHeader({
   onNotificationPress,
   onSettingsPress
 }: DashboardHeaderProps) {
+  const { isPremium } = usePremiumStatus();
   const getGreeting = () => {
     const hr = new Date().getHours();
     if (hr < 12) return 'Good morning';
@@ -46,10 +50,12 @@ export default function DashboardHeader({
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Greeting & Date */}
         <View style={styles.greetContainer}>
           <Text style={styles.greeting}>{getGreeting()}</Text>
-          <Text style={styles.name}>{userName || 'Athlete'}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <Text style={styles.name}>{userName || 'Athlete'}</Text>
+            {isPremium && <PremiumBadge />}
+          </View>
         </View>
 
         {/* Streak & Settings */}

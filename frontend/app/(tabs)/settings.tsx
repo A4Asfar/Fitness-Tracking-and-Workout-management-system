@@ -13,6 +13,7 @@ import {
 } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import api from '@/services/api';
+import PremiumBadge from '@/components/PremiumBadge';
 
 const { width } = Dimensions.get('window');
 
@@ -81,11 +82,7 @@ export default function SettingsCenterScreen() {
                   <View style={styles.goalBadge}>
                     <Text style={styles.goalBadgeText}>{fitnessGoal}</Text>
                   </View>
-                  {isPremium && (
-                    <View style={styles.proBadge}>
-                      <Text style={styles.proBadgeText}>PRO</Text>
-                    </View>
-                  )}
+                  {isPremium && <PremiumBadge />}
                 </View>
               </View>
             </View>

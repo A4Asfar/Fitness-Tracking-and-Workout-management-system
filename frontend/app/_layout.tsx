@@ -40,13 +40,9 @@ function NavigationHandler() {
       }
     } else if (user) {
       const isAdmin = user.membershipType === 'admin' || user.email === 'admin@peakpulse.ai';
-      const isPremiumScreen = segments[0] === 'insights' || segments[0] === 'reminders';
       const isAdminScreen = segments[0] === 'admin-dashboard';
-      const isProgressTab = segments[1] === 'progress';
 
-      if (user.membershipType === 'free' && (isPremiumScreen || isProgressTab)) {
-        router.replace('/upgrade');
-      } else if (!isAdmin && isAdminScreen) {
+      if (!isAdmin && isAdminScreen) {
         router.replace('/(tabs)/' as any);
       }
     }
