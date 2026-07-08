@@ -1,7 +1,7 @@
 const User = require('../models/User');
 const Workout = require('../models/Workout');
+const PremiumPayment = require('../models/PremiumPayment');
 const { asyncHandler } = require('../middleware/errorMiddleware');
-
 
 // @desc    Get system stats for admin
 // @route   GET /api/admin/stats
@@ -45,4 +45,57 @@ exports.getStats = asyncHandler(async (req, res) => {
       workouts: recentWorkouts
     }
   });
+});
+
+exports.getPendingPayments = asyncHandler(async (req, res) => {
+  const payments = await PremiumPayment.find({ status: 'Pending' }).sort({ submittedAt: -1 });
+  res.json(payments);
+});
+
+exports.verifyPayment = asyncHandler(async (req, res) => {
+  const { status, adminRemarks } = req.body;
+  if (!status || !['Approved', 'Rejected'].includes(status)) {
+    res.status(400);
+    throw new Error('Please provide a valid verification status');
+  }
+
+  const payment = await PremiumPayment.findById(req.params.id);
+  if (!payment) {
+    res.status(404);
+    throw new Error('Payment record not found');
+  }
+
+  payment.status = status;
+  payment.adminRemarks = adminRemarks || '';
+
+  if (status === 'Approved') {
+    payment.approvedAt = new Date();
+    
+    // Set expiry
+    let expiry = null;
+    if (payment.plan === 'Monthly') {
+      expiry = new Date();
+      expiry.setDate(expiry.getDate() + 30);
+    }
+    payment.expiryDate = expiry;
+
+    // Upgrade user
+    await User.findByIdAndUpdate(payment.userId, {
+      membershipType: 'premium',
+      membershipExpiresAt: expiry
+    });
+    console.log('✅ Approved payment. User upgraded to premium:', payment.userEmail);
+  } else {
+    payment.rejectedAt = new Date();
+    
+    // Downgrade/Keep free
+    await User.findByIdAndUpdate(payment.userId, {
+      membershipType: 'free',
+      membershipExpiresAt: null
+    });
+    console.log('❌ Rejected payment. User status remains free:', payment.userEmail);
+  }
+
+  await payment.save();
+  res.json(payment);
 });

@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Database,
   History,
-  LayoutDashboard
+  LayoutDashboard,
+  CreditCard
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
@@ -178,6 +179,11 @@ export default function AdminDashboardScreen() {
                 <Database size={18} color={Colors.textSecondary} />
                 <Text style={styles.sectionTitle}>Admin Quick Tools</Text>
               </View>
+              <ToolCard 
+                icon={CreditCard} title="Verify Payments" 
+                desc="Approve or reject pending Premium verification uploads." 
+                onPress={() => router.push('/admin/verify-payments' as any)} 
+              />
               <ToolCard 
                 icon={Users} title="View Users" 
                 desc="Browse and manage user profiles & roles." 

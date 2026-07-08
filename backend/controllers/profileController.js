@@ -2,6 +2,7 @@ const User = require('../models/User');
 const Workout = require('../models/Workout');
 const MealSelection = require('../models/MealSelection');
 const TrainerConsult = require('../models/TrainerConsult');
+const PremiumPayment = require('../models/PremiumPayment');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 const { getLocalDateString, calculateBMI } = require('../utils/dateUtils');
 
@@ -39,6 +40,39 @@ exports.upgradeProfile = asyncHandler(async (req, res) => {
   ).select('-password');
   console.log('👑 User upgraded to premium until:', expiryDate);
   res.json(user);
+});
+
+exports.submitPaymentProof = asyncHandler(async (req, res) => {
+  const { plan, paymentMethod, paymentNumber, screenshotUrl } = req.body;
+  if (!plan || !paymentMethod || !screenshotUrl) {
+    res.status(400);
+    throw new Error('Please provide plan, paymentMethod and screenshot');
+  }
+
+  const user = await User.findById(req.userId);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  const payment = await PremiumPayment.create({
+    userId: req.userId,
+    userName: user.name,
+    userEmail: user.email,
+    plan,
+    paymentMethod,
+    paymentNumber,
+    screenshotUrl,
+    status: 'Pending'
+  });
+
+  console.log('💰 Payment proof submitted for review by user:', user.email);
+  res.status(201).json(payment);
+});
+
+exports.getUserPaymentStatus = asyncHandler(async (req, res) => {
+  const payment = await PremiumPayment.findOne({ userId: req.userId }).sort({ submittedAt: -1 });
+  res.json(payment);
 });
 
 exports.getDashboardStats = asyncHandler(async (req, res) => {

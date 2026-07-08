@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
   Image, Modal, Platform, Dimensions
@@ -12,6 +12,7 @@ import {
   Award, Target, CheckCircle2, Heart, ShieldCheck, Mail, Lock, Languages, Eye, HelpCircle
 } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
+import api from '@/services/api';
 
 const { width } = Dimensions.get('window');
 
@@ -30,6 +31,23 @@ export default function SettingsCenterScreen() {
   const isAdmin = user?.membershipType === 'admin';
   const isPremium = user?.membershipType === 'premium' || isAdmin;
   const fitnessGoal = user?.fitnessGoal || 'General Fitness';
+
+  const [paymentLog, setPaymentLog] = useState<any>(null);
+  const [loadingPayment, setLoadingPayment] = useState(true);
+
+  useEffect(() => {
+    const fetchPayment = async () => {
+      try {
+        const res = await api.get('/profile/payments/status');
+        setPaymentLog(res.data);
+      } catch (e) {
+        console.log('Error fetching payment status:', e);
+      } finally {
+        setLoadingPayment(false);
+      }
+    };
+    fetchPayment();
+  }, [user]);
 
   return (
     <View style={styles.container}>
@@ -82,6 +100,65 @@ export default function SettingsCenterScreen() {
               <Text style={styles.editShortcutText}>Edit Profile Details</Text>
               <ChevronRight size={14} color="#10B981" />
             </TouchableOpacity>
+
+            {paymentLog && (
+              <View style={styles.premiumStatusCard}>
+                <View style={styles.statusRowHeader}>
+                  <Text style={styles.statusLabelText}>Membership Status</Text>
+                  <View style={[
+                    styles.statusBadge, 
+                    paymentLog.status === 'Approved' ? styles.statusBadgeApproved : 
+                    paymentLog.status === 'Rejected' ? styles.statusBadgeRejected : 
+                    styles.statusBadgePending
+                  ]}>
+                    <Text style={[
+                      styles.statusBadgeText,
+                      paymentLog.status === 'Approved' ? { color: '#059669' } : 
+                      paymentLog.status === 'Rejected' ? { color: '#EF4444' } : 
+                      { color: '#B45309' }
+                    ]}>
+                      {paymentLog.status === 'Approved' ? 'Active Pro' : 
+                       paymentLog.status === 'Rejected' ? 'Rejected' : 
+                       'Pending'}
+                    </Text>
+                  </View>
+                </View>
+
+                <View style={styles.statusMetaGrid}>
+                  <Text style={styles.statusMetaText}>Plan: {paymentLog.plan}</Text>
+                  <Text style={styles.statusMetaText}>
+                    Submitted: {new Date(paymentLog.submittedAt).toLocaleDateString()}
+                  </Text>
+                  {paymentLog.approvedAt && (
+                    <Text style={styles.statusMetaText}>
+                      Approved: {new Date(paymentLog.approvedAt).toLocaleDateString()}
+                    </Text>
+                  )}
+                  {paymentLog.expiryDate && (
+                    <Text style={styles.statusMetaText}>
+                      Expires: {new Date(paymentLog.expiryDate).toLocaleDateString()}
+                    </Text>
+                  )}
+                </View>
+
+                <View style={styles.statusActions}>
+                  <TouchableOpacity 
+                    style={styles.statusActionBtn}
+                    onPress={() => router.push('/upgrade')}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.statusActionBtnText}>View Details</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={[styles.statusActionBtn, styles.statusSupportBtn]}
+                    onPress={() => router.push('/ai-chat')}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.statusActionBtnText}>Contact Support</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
           </View>
         </View>
 
@@ -566,5 +643,77 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '800',
+  },
+  premiumStatusCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    marginTop: 16,
+  },
+  statusRowHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  statusLabelText: {
+    color: '#0F172A',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  statusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  statusBadgeApproved: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+  },
+  statusBadgeRejected: {
+    backgroundColor: '#FEF2F2',
+    borderColor: '#FCA5A5',
+  },
+  statusBadgePending: {
+    backgroundColor: '#FFFBEB',
+    borderColor: '#FDE68A',
+  },
+  statusBadgeText: {
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  statusMetaGrid: {
+    gap: 4,
+    marginBottom: 14,
+  },
+  statusMetaText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '600',
+  },
+  statusActions: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  statusActionBtn: {
+    flex: 1,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  statusSupportBtn: {
+    backgroundColor: '#FFFFFF',
+  },
+  statusActionBtnText: {
+    color: '#0F172A',
+    fontSize: 12,
+    fontWeight: '700',
   },
 });
