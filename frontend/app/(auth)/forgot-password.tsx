@@ -5,9 +5,8 @@ import {
 import { useRouter } from 'expo-router';
 import { Mail, ArrowLeft } from 'lucide-react-native';
 import { useToast } from '@/components/Toast';
-import api from '@/services/api';
+import { getRecoveryErrorMessage, postAuthRecovery } from '@/services/authRecovery';
 
-// Extracted Auth Components
 import LogoSection from '@/components/auth/LogoSection';
 import InputField from '@/components/auth/InputField';
 import PrimaryButton from '@/components/auth/PrimaryButton';
@@ -20,11 +19,13 @@ export default function ForgotPasswordScreen() {
   const { showToast } = useToast();
 
   const handleRequestOTP = async () => {
-    if (!email) {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
       setError('Email address is required');
       return;
     }
-    if (!/\S+@\S+\.\S+/.test(email)) {
+    if (!/\S+@\S+\.\S+/.test(normalizedEmail)) {
       setError('Enter a valid email address');
       return;
     }
@@ -32,14 +33,23 @@ export default function ForgotPasswordScreen() {
     setError(null);
     setLoading(true);
     try {
-      await api.post('/auth/forgot-password', { email });
-      showToast('Reset code sent to your email!', 'success');
+      const data = await postAuthRecovery<{ message: string; devOtp?: string }>(
+        '/auth/forgot-password',
+        { email: normalizedEmail }
+      );
+
+      if (__DEV__ && data.devOtp) {
+        showToast(`Dev OTP: ${data.devOtp}`, 'info');
+      } else {
+        showToast('Reset code sent to your email!', 'success');
+      }
+
       router.push({
-        pathname: '/(auth)/verify-otp' as any,
-        params: { email }
+        pathname: '/(auth)/verify-otp',
+        params: { email: normalizedEmail },
       });
-    } catch (err: any) {
-      showToast(err.message || 'Failed to send OTP', 'error');
+    } catch (err: unknown) {
+      showToast(getRecoveryErrorMessage(err, 'Failed to send OTP'), 'error');
     } finally {
       setLoading(false);
     }
@@ -55,7 +65,7 @@ export default function ForgotPasswordScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity 
+        <TouchableOpacity
           onPress={() => router.back()}
           style={styles.backBtn}
           activeOpacity={0.7}
@@ -67,23 +77,26 @@ export default function ForgotPasswordScreen() {
 
         <View style={styles.card}>
           <Text style={styles.title}>Forgot Password</Text>
-          <Text style={styles.subtitle}>Enter your email to receive a 6-digit verification code</Text>
+          <Text style={styles.subtitle}>
+            Enter your email and we will send a 6-digit verification code
+          </Text>
 
-          <InputField 
+          <InputField
             label="Email Address"
             icon={Mail}
-            placeholder="e.g. champion@fitai.com"
+            placeholder="e.g. champion@elevatefit.com"
             value={email}
             onChangeText={(txt) => {
               setEmail(txt);
               if (error) setError(null);
             }}
             keyboardType="email-address"
+            autoCapitalize="none"
             error={error || undefined}
             editable={!loading}
           />
 
-          <PrimaryButton 
+          <PrimaryButton
             title={loading ? 'Sending code...' : 'Send Code'}
             onPress={handleRequestOTP}
             loading={loading}

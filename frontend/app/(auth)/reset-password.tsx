@@ -1,28 +1,37 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView
+  View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { ArrowLeft } from 'lucide-react-native';
 import { useToast } from '@/components/Toast';
-import api from '@/services/api';
+import { getRecoveryErrorMessage, postAuthRecovery } from '@/services/authRecovery';
 
-// Extracted Auth Components
 import LogoSection from '@/components/auth/LogoSection';
 import PasswordField from '@/components/auth/PasswordField';
 import PrimaryButton from '@/components/auth/PrimaryButton';
 
 export default function ResetPasswordScreen() {
-  const { email, otp } = useLocalSearchParams<{ email: string, otp: string }>();
+  const { email: emailParam, otp: otpParam } = useLocalSearchParams<{ email: string; otp: string }>();
+  const email = String(emailParam || '').trim().toLowerCase();
+  const otp = String(otpParam || '').trim();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState<any>({});
-  
+  const [errors, setErrors] = useState<{ password?: string; confirm?: string }>({});
+
   const router = useRouter();
   const { showToast } = useToast();
 
+  useEffect(() => {
+    if (!email || !otp) {
+      showToast('Session expired. Please verify your email again.', 'error');
+      router.replace('/(auth)/forgot-password');
+    }
+  }, [email, otp, router, showToast]);
+
   const handleReset = async () => {
-    const newErrors: any = {};
+    const newErrors: { password?: string; confirm?: string } = {};
     if (password.length < 6) newErrors.password = 'Minimum 6 characters required';
     if (password !== confirmPassword) newErrors.confirm = 'Passwords do not match';
 
@@ -33,11 +42,11 @@ export default function ResetPasswordScreen() {
 
     setLoading(true);
     try {
-      await api.post('/auth/reset-password', { email, otp, password });
-      showToast('Password reset successful! Please login.', 'success');
-      router.replace('/(auth)/login' as any);
-    } catch (err: any) {
-      showToast(err.message || 'Reset failed', 'error');
+      await postAuthRecovery('/auth/reset-password', { email, otp, password });
+      showToast('Password reset successful! Please sign in.', 'success');
+      router.replace('/(auth)/login');
+    } catch (err: unknown) {
+      showToast(getRecoveryErrorMessage(err, 'Reset failed'), 'error');
     } finally {
       setLoading(false);
     }
@@ -53,13 +62,23 @@ export default function ResetPasswordScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backBtn}
+          activeOpacity={0.7}
+        >
+          <ArrowLeft size={20} color="#0F172A" />
+        </TouchableOpacity>
+
         <LogoSection />
 
         <View style={styles.card}>
-          <Text style={styles.title}>New Password</Text>
-          <Text style={styles.subtitle}>Set a strong password to protect your account</Text>
+          <Text style={styles.title}>Create New Password</Text>
+          <Text style={styles.subtitle}>
+            Set a new password for {email}
+          </Text>
 
-          <PasswordField 
+          <PasswordField
             label="New Password"
             placeholder="Min 6 characters"
             value={password}
@@ -71,9 +90,9 @@ export default function ResetPasswordScreen() {
             editable={!loading}
           />
 
-          <PasswordField 
-            label="Confirm Password"
-            placeholder="Re-enter password"
+          <PasswordField
+            label="Confirm New Password"
+            placeholder="Re-enter new password"
             value={confirmPassword}
             onChangeText={(txt) => {
               setConfirmPassword(txt);
@@ -83,8 +102,8 @@ export default function ResetPasswordScreen() {
             editable={!loading}
           />
 
-          <PrimaryButton 
-            title="Reset Password"
+          <PrimaryButton
+            title="Update Password"
             onPress={handleReset}
             loading={loading}
           />
@@ -104,6 +123,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     paddingHorizontal: 24,
     paddingVertical: 36,
+  },
+  backBtn: {
+    position: 'absolute',
+    top: 50,
+    left: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    zIndex: 10,
   },
   card: {
     backgroundColor: '#FFFFFF',

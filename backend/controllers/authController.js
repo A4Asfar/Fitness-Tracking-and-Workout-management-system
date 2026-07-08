@@ -141,7 +141,7 @@ const crypto = require('crypto');
  * @access  Public
  */
 exports.forgotPassword = asyncHandler(async (req, res) => {
-  const { email } = req.body;
+  const email = String(req.body.email || '').trim().toLowerCase();
 
   if (!email) {
     res.status(400);
@@ -154,10 +154,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
     throw new Error('No user found with that email');
   }
 
-  // Generate 6-digit OTP
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  
-  // Set expiry (10 minutes from now)
   const expiry = Date.now() + 10 * 60 * 1000;
 
   user.resetPasswordOTP = otp;
@@ -168,19 +165,24 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
     await sendEmail({
       email: user.email,
       subject: `Your ${APP_NAME} Password Reset Code`,
-      otp: otp,
+      otp,
     });
 
     console.log('📧 Password reset OTP sent to:', user.email);
-    res.json({ message: 'OTP sent to your email' });
+
+    const payload = { message: 'OTP sent to your email' };
+    if (process.env.NODE_ENV !== 'production' && !sendEmail.isEmailConfigured) {
+      payload.devOtp = otp;
+    }
+    res.json(payload);
   } catch (error) {
     user.resetPasswordOTP = null;
     user.resetPasswordExpires = null;
     await user.save();
 
-    console.error('❌ EMAIL ERROR DETAILS:', error);
+    console.error('❌ EMAIL ERROR DETAILS:', error.message);
     res.status(500);
-    throw new Error(`Email failed: ${error.message}`);
+    throw new Error(error.message || 'Failed to send reset email. Please try again.');
   }
 });
 
@@ -190,17 +192,18 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
  * @access  Public
  */
 exports.verifyResetCode = asyncHandler(async (req, res) => {
-  const { email, otp } = req.body;
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const otp = String(req.body.otp || '').trim();
 
   if (!email || !otp) {
     res.status(400);
     throw new Error('Please provide email and OTP');
   }
 
-  const user = await User.findOne({ 
+  const user = await User.findOne({
     email,
     resetPasswordOTP: otp,
-    resetPasswordExpires: { $gt: Date.now() }
+    resetPasswordExpires: { $gt: Date.now() },
   });
 
   if (!user) {
@@ -208,7 +211,7 @@ exports.verifyResetCode = asyncHandler(async (req, res) => {
     throw new Error('Invalid or expired OTP');
   }
 
-  res.json({ message: 'OTP verified successfully' });
+  res.json({ message: 'OTP verified successfully', verified: true });
 });
 
 /**
@@ -217,7 +220,9 @@ exports.verifyResetCode = asyncHandler(async (req, res) => {
  * @access  Public
  */
 exports.resetPassword = asyncHandler(async (req, res) => {
-  const { email, otp, password } = req.body;
+  const email = String(req.body.email || '').trim().toLowerCase();
+  const otp = String(req.body.otp || '').trim();
+  const password = String(req.body.password || '');
 
   if (!email || !otp || !password) {
     res.status(400);
@@ -229,10 +234,10 @@ exports.resetPassword = asyncHandler(async (req, res) => {
     throw new Error('Password must be at least 6 characters');
   }
 
-  const user = await User.findOne({ 
+  const user = await User.findOne({
     email,
     resetPasswordOTP: otp,
-    resetPasswordExpires: { $gt: Date.now() }
+    resetPasswordExpires: { $gt: Date.now() },
   });
 
   if (!user) {
@@ -240,7 +245,6 @@ exports.resetPassword = asyncHandler(async (req, res) => {
     throw new Error('Invalid or expired OTP. Please start again.');
   }
 
-  // Update password (hashing is handled by the model's pre-save hook)
   user.password = password;
   user.resetPasswordOTP = null;
   user.resetPasswordExpires = null;

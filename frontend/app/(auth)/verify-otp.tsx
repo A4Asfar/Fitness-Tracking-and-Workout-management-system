@@ -5,36 +5,40 @@ import {
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { ArrowLeft, RefreshCw } from 'lucide-react-native';
 import { useToast } from '@/components/Toast';
-import api from '@/services/api';
+import { getRecoveryErrorMessage, postAuthRecovery } from '@/services/authRecovery';
 
-// Extracted Auth Components
 import LogoSection from '@/components/auth/LogoSection';
 import OTPInput from '@/components/auth/OTPInput';
 import PrimaryButton from '@/components/auth/PrimaryButton';
 
 export default function VerifyOtpScreen() {
-  const { email } = useLocalSearchParams<{ email: string }>();
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const { email: emailParam } = useLocalSearchParams<{ email: string }>();
+  const email = String(emailParam || '').trim().toLowerCase();
+  const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [timer, setTimer] = useState(60);
   const router = useRouter();
   const { showToast } = useToast();
 
   useEffect(() => {
-    let interval: any;
-    if (timer > 0) {
-      interval = setInterval(() => setTimer(t => t - 1), 1000);
+    if (!email) {
+      showToast('Email is missing. Please start again.', 'error');
+      router.replace('/(auth)/forgot-password');
     }
-    return () => clearInterval(interval);
+  }, [email, router, showToast]);
+
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | undefined;
+    if (timer > 0) {
+      interval = setInterval(() => setTimer((t) => t - 1), 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [timer]);
 
-  const handleOtpChange = (newVal: string) => {
-    const updated = Array.from({ length: 6 }).map((_, i) => newVal[i] || '');
-    setOtp(updated);
-  };
-
   const handleVerify = async () => {
-    const code = otp.join('');
+    const code = otp.replace(/\D/g, '');
     if (code.length < 6) {
       showToast('Please enter the complete 6-digit code', 'error');
       return;
@@ -42,30 +46,37 @@ export default function VerifyOtpScreen() {
 
     setLoading(true);
     try {
-      await api.post('/auth/verify-reset-code', { email, otp: code });
-      showToast('OTP verified!', 'success');
+      await postAuthRecovery('/auth/verify-reset-code', { email, otp: code });
+      showToast('Code verified!', 'success');
       router.push({
-        pathname: '/(auth)/reset-password' as any,
-        params: { email, otp: code }
+        pathname: '/(auth)/reset-password',
+        params: { email, otp: code },
       });
-    } catch (err: any) {
-      showToast(err.message || 'Invalid OTP', 'error');
+    } catch (err: unknown) {
+      showToast(getRecoveryErrorMessage(err, 'Invalid OTP'), 'error');
     } finally {
       setLoading(false);
     }
   };
 
   const handleResend = async () => {
-    if (timer > 0) return;
-    
+    if (timer > 0 || !email) return;
+
     setLoading(true);
     try {
-      await api.post('/auth/forgot-password', { email });
-      showToast('New code sent!', 'success');
+      const data = await postAuthRecovery<{ message: string; devOtp?: string }>(
+        '/auth/forgot-password',
+        { email }
+      );
+      if (__DEV__ && data.devOtp) {
+        showToast(`Dev OTP: ${data.devOtp}`, 'info');
+      } else {
+        showToast('New code sent!', 'success');
+      }
       setTimer(60);
-      setOtp(['', '', '', '', '', '']);
-    } catch (err: any) {
-      showToast(err.message || 'Failed to resend code', 'error');
+      setOtp('');
+    } catch (err: unknown) {
+      showToast(getRecoveryErrorMessage(err, 'Failed to resend code'), 'error');
     } finally {
       setLoading(false);
     }
@@ -81,8 +92,8 @@ export default function VerifyOtpScreen() {
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <TouchableOpacity 
-          onPress={() => router.back()} 
+        <TouchableOpacity
+          onPress={() => router.back()}
           style={styles.backBtn}
           activeOpacity={0.7}
         >
@@ -95,19 +106,18 @@ export default function VerifyOtpScreen() {
           <Text style={styles.title}>Verification Code</Text>
           <Text style={styles.subtitle}>Enter the 6-digit code sent to {email}</Text>
 
-          <OTPInput 
-            value={otp.join('')}
-            onChange={handleOtpChange}
-          />
+          <OTPInput value={otp} onChange={setOtp} />
 
-          <TouchableOpacity 
+          <TouchableOpacity
             onPress={handleResend}
             disabled={timer > 0 || loading}
             style={styles.resendBtn}
             activeOpacity={0.7}
           >
             {timer > 0 ? (
-              <Text style={styles.resendText}>Resend code in <Text style={styles.timer}>{timer}s</Text></Text>
+              <Text style={styles.resendText}>
+                Resend code in <Text style={styles.timer}>{timer}s</Text>
+              </Text>
             ) : (
               <View style={styles.resendActive}>
                 <RefreshCw size={14} color="#10B981" />
@@ -116,7 +126,7 @@ export default function VerifyOtpScreen() {
             )}
           </TouchableOpacity>
 
-          <PrimaryButton 
+          <PrimaryButton
             title="Verify Code"
             onPress={handleVerify}
             loading={loading}

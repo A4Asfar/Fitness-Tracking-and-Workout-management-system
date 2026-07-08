@@ -1,17 +1,39 @@
 const nodemailer = require('nodemailer');
 const { APP_NAME, SUPPORT_EMAIL } = require('../constants/brand');
 
+const EMAIL_SEND_TIMEOUT_MS = 15000;
+
+function isEmailConfigured() {
+  const user = process.env.EMAIL_USER || '';
+  const pass = process.env.EMAIL_PASS || '';
+  if (!user || !pass) return false;
+  if (user.includes('example') || user.includes('YOUR_')) return false;
+  if (pass.includes('your_') || pass.includes('YOUR_')) return false;
+  return true;
+}
+
 /**
  * Professional Email Transport Utility
  * Configured for Gmail/SMTP usage
  */
 const sendEmail = async (options) => {
+  if (!isEmailConfigured()) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[DEV] Email not configured — OTP for ${options.email}: ${options.otp}`);
+      return;
+    }
+    throw new Error('Email service is not configured on the server. Please contact support.');
+  }
+
   const transporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
+    connectionTimeout: EMAIL_SEND_TIMEOUT_MS,
+    greetingTimeout: EMAIL_SEND_TIMEOUT_MS,
+    socketTimeout: EMAIL_SEND_TIMEOUT_MS,
   });
 
   const mailOptions = {
@@ -38,7 +60,13 @@ const sendEmail = async (options) => {
     `,
   };
 
-  await transporter.sendMail(mailOptions);
+  await Promise.race([
+    transporter.sendMail(mailOptions),
+    new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Email delivery timed out. Please try again.')), EMAIL_SEND_TIMEOUT_MS)
+    ),
+  ]);
 };
 
 module.exports = sendEmail;
+module.exports.isEmailConfigured = isEmailConfigured;
