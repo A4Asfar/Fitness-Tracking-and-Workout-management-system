@@ -1,15 +1,15 @@
 import { StyleSheet } from 'react-native';
 
 export const Colors = {
-  background:    '#0F1117',
-  card:          '#1A1D24',
-  primary:       '#7C4DFF',   // Premium Accent (Purple)
-  secondary:     '#A970FF',   // Secondary Accent
-  text:          '#FFFFFF',
-  textSecondary: '#A1A1AA',
-  error:         '#FF4444',
-  border:        '#232733',   // Elevated Surface / Border
-  inputBg:       '#232733',
+  background:    '#F8FAFC',   // Modern neutral background (Slate-50)
+  card:          '#FFFFFF',   // White surfaces
+  primary:       '#10B981',   // Premium emerald/green accent
+  secondary:     '#F97316',   // Orange accent for CTA
+  text:          '#0F172A',   // Slate-900
+  textSecondary: '#64748B',   // Slate-500
+  error:         '#EF4444',   // Red
+  border:        '#E2E8F0',   // Slate-200
+  inputBg:       '#FFFFFF',   // White
 };
 
 export const SPACING = {
@@ -22,93 +22,74 @@ export const SPACING = {
 };
 
 export const SharedStyles = StyleSheet.create({
-  /* ── Full-screen container ── */
   container: {
     flex: 1,
     backgroundColor: Colors.background,
   },
-
-  /* ── Section card ── */
   card: {
     backgroundColor: Colors.card,
-    borderRadius: 24,
+    borderRadius: 20,
     padding: SPACING.lg,
-    borderWidth: 1,
+    borderWidth: 1.5,
     borderColor: Colors.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.45,
-    shadowRadius: 24,
-    elevation: 14,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 3,
   },
-
-  /* ── Screen-level title ── */
   title: {
-    fontSize: 28,
+    fontSize: 26,
     fontWeight: '900',
     color: Colors.text,
     textAlign: 'center',
     marginBottom: SPACING.sm,
-    letterSpacing: -0.8,
-    lineHeight: 34,
+    letterSpacing: -0.6,
+    lineHeight: 32,
   },
-
-  /* ── Screen-level subtitle ── */
   subtitle: {
-    fontSize: 15,
+    fontSize: 14,
     color: Colors.textSecondary,
     textAlign: 'center',
     marginBottom: SPACING.xl,
-    fontWeight: '500',
-    lineHeight: 22,
-    letterSpacing: 0.1,
+    fontWeight: '600',
+    lineHeight: 20,
   },
-
-  /* ── Text input ── */
   input: {
     backgroundColor: Colors.inputBg,
     borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: SPACING.md,
     color: Colors.text,
-    fontSize: 16,
-    fontWeight: '500',
+    fontSize: 15,
+    fontWeight: '600',
     marginBottom: SPACING.md,
     borderWidth: 1.5,
     borderColor: Colors.border,
   },
-
-  /* ── Primary action button ── */
   button: {
     backgroundColor: Colors.primary,
     borderRadius: 16,
-    height: 56,
+    height: 52,
     alignItems: 'center',
     justifyContent: 'center',
     marginTop: SPACING.sm,
     shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4,
-    shadowRadius: 16,
-    elevation: 10,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
+    elevation: 3,
   },
-
-  /* ── Button label ── */
   buttonText: {
-    color: '#000000',
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: 0.8,
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
   },
-
-  /* ── Inline text link ── */
   linkText: {
     color: Colors.primary,
     textAlign: 'center',
     marginTop: SPACING.lg,
     fontSize: 14,
     fontWeight: '700',
-    letterSpacing: 0.2,
   },
 });
-
