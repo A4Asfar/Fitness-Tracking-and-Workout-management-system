@@ -5,6 +5,7 @@ import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ToastProvider } from '@/components/Toast';
 import { View, ActivityIndicator } from 'react-native';
 import { Colors } from '@/constants/Theme';
+import { isAdminUser } from '@/utils/isAdmin';
 import SplashScreen from '@/components/SplashScreen';
 
 let appHasBooted = false;
@@ -32,15 +33,15 @@ function NavigationHandler() {
     if (!user && !inAuthGroup) {
       router.replace('/(auth)/login');
     } else if (user && inAuthGroup) {
-      const isAdmin = user.membershipType === 'admin' || user.email === 'admin@peakpulse.ai';
+      const isAdmin = isAdminUser(user);
       if (isAdmin) {
         router.replace('/admin-dashboard' as any);
       } else {
         router.replace('/(tabs)/' as any);
       }
     } else if (user) {
-      const isAdmin = user.membershipType === 'admin' || user.email === 'admin@peakpulse.ai';
-      const isAdminScreen = segments[0] === 'admin-dashboard';
+      const isAdmin = isAdminUser(user);
+      const isAdminScreen = segments[0] === 'admin-dashboard' || segments[0] === 'admin';
 
       if (!isAdmin && isAdminScreen) {
         router.replace('/(tabs)/' as any);
@@ -60,6 +61,10 @@ function NavigationHandler() {
       <Stack.Screen name="help" options={{ presentation: 'card' }} />
       <Stack.Screen name="body-health" options={{ presentation: 'card' }} />
       <Stack.Screen name="trainer" options={{ presentation: 'card' }} />
+      <Stack.Screen name="trainer-details" options={{ presentation: 'card', headerShown: false }} />
+      <Stack.Screen name="book-session" options={{ presentation: 'card', headerShown: false }} />
+      <Stack.Screen name="booking-success" options={{ presentation: 'card', headerShown: false }} />
+      <Stack.Screen name="my-bookings" options={{ presentation: 'card', headerShown: false }} />
       <Stack.Screen name="+not-found" />
     </Stack>
   );

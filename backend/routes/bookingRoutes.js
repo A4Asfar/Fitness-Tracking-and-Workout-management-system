@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { auth } = require('../middleware/auth');
+const { auth, admin } = require('../middleware/auth');
 const {
   createBooking,
   getMyBookings,
@@ -16,6 +16,6 @@ router.post('/', createBooking);
 router.get('/my', getMyBookings);
 router.get('/:id', getBookingById);
 router.patch('/:id/cancel', cancelBooking);
-router.patch('/:id/status', updateBookingStatus);
+router.patch('/:id/status', admin, updateBookingStatus);
 
 module.exports = router;

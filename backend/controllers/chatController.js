@@ -161,7 +161,7 @@ exports.renameConversation = asyncHandler(async (req, res) => {
   const chat = await Chat.findOneAndUpdate(
     { _id: chatId, userId: req.userId },
     { title: title.trim() },
-    { returnDocument: 'after' }
+    { new: true }
   );
 
   if (!chat) {

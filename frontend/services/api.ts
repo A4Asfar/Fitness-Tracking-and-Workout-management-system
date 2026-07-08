@@ -1,21 +1,38 @@
 import axios from 'axios';
+import { Platform } from 'react-native';
 import Storage from '@/utils/storage';
 
 /**
  * Base API configuration
- * Centralized for both Local Development and Railway Production
+ * Railway (backend) + Vercel (frontend web) + local Expo dev
  */
-const FALLBACK_URL = 'https://fitness-tracking-and-workout-management-system-production.up.railway.app/api';
-export const API_URL = process.env.EXPO_PUBLIC_API_URL || FALLBACK_URL;
+const RAILWAY_API_URL =
+  'https://fitness-tracking-and-workout-management-system-production.up.railway.app/api';
+const LOCAL_API_URL = 'http://localhost:5000/api';
 
-if (__DEV__) console.log('📡 API Connection Point:', API_URL);
+function resolveApiUrl(): string {
+  if (process.env.EXPO_PUBLIC_API_URL) {
+    return process.env.EXPO_PUBLIC_API_URL;
+  }
+  if (__DEV__) {
+    return LOCAL_API_URL;
+  }
+  // Production web (Vercel) and release builds default to Railway
+  return RAILWAY_API_URL;
+}
+
+export const API_URL = resolveApiUrl();
+
+if (__DEV__) {
+  console.log('📡 API Connection Point:', API_URL, Platform.OS);
+}
 
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json',
   },
-  timeout: 15000, // 15s timeout
+  timeout: 20000,
 });
 
 /**
@@ -79,8 +96,8 @@ api.interceptors.response.use(
         message.includes('timeout') ||
         [502, 503, 504].includes(Number(status));
 
-      // Explicitly prevent retrying 400, 401, 403, 404, 422
-      const isExplicitNonRetryable = status && [400, 401, 403, 404, 422].includes(Number(status));
+      // Explicitly prevent retrying 400, 401, 403, 404, 422, 503
+      const isExplicitNonRetryable = status && [400, 401, 403, 404, 422, 503].includes(Number(status));
 
       if (isRetryableError && !isExplicitNonRetryable && config.__retryCount < maxRetries) {
         config.__retryCount += 1;

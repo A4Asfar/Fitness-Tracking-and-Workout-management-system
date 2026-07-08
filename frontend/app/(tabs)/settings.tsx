@@ -14,6 +14,7 @@ import {
 import { BlurView } from 'expo-blur';
 import api from '@/services/api';
 import PremiumBadge from '@/components/PremiumBadge';
+import { isAdminUser } from '@/utils/isAdmin';
 
 const { width } = Dimensions.get('window');
 
@@ -29,7 +30,7 @@ export default function SettingsCenterScreen() {
     router.replace('/(auth)/login');
   };
 
-  const isAdmin = user?.membershipType === 'admin';
+  const isAdmin = isAdminUser(user);
   const isPremium = user?.membershipType === 'premium' || isAdmin;
   const fitnessGoal = user?.fitnessGoal || 'General Fitness';
 

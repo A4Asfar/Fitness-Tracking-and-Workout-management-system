@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, Dumbbell, Apple, TrendingUp, Settings, User } from 'lucide-react-native';
+import { Home, Dumbbell, TrendingUp, Settings, User, Users } from 'lucide-react-native';
 import { Colors } from '@/constants/Theme';
 
 export default function TabLayout() {
@@ -54,6 +54,20 @@ export default function TabLayout() {
         options={{
           title: 'Progress',
           tabBarIcon: ({ color, size }) => <TrendingUp color={color} size={size} strokeWidth={2.5} />,
+        }}
+      />
+      <Tabs.Screen
+        name="trainers"
+        options={{
+          title: 'Trainers',
+          headerShown: false,
+          tabBarIcon: ({ color, size }) => <Users color={color} size={size} strokeWidth={2.5} />,
+        }}
+      />
+      <Tabs.Screen
+        name="diet"
+        options={{
+          href: null,
         }}
       />
       <Tabs.Screen

@@ -58,8 +58,9 @@ export default function PaymentSubmissionScreen() {
         notes
       });
       router.push('/payment-success');
-    } catch (e: any) {
-      showToast(e.response?.data?.message || 'Failed to submit payment.', 'error');
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : 'Failed to submit payment.';
+      showToast(message, 'error');
     } finally {
       setIsSubmitting(false);
     }

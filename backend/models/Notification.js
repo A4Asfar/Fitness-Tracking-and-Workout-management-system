@@ -30,7 +30,9 @@ const notificationSchema = new mongoose.Schema({
       'workout',
       'meal',
       'step',
-      'weight'
+      'weight',
+      'consultation',
+      'premium'
     ],
     required: true,
   },

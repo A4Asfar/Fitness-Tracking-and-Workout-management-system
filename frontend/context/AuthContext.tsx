@@ -79,12 +79,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           await Storage.setItem('authUser', JSON.stringify(response.data));
           if (__DEV__) console.log('✅ Session synchronized for:', response.data.email);
         }
-      } catch (error) {
-        console.log('Session expired or no token found');
-        await Storage.removeItem('authToken');
-        await Storage.removeItem('authUser');
-        setAuthToken(null);
-        setUser(null);
+      } catch (error: unknown) {
+        const message = error instanceof Error ? error.message : '';
+        if (message.includes('session has expired') || message.includes('Authentication')) {
+          await Storage.removeItem('authToken');
+          await Storage.removeItem('authUser');
+          setAuthToken(null);
+          setUser(null);
+        } else if (__DEV__) {
+          console.log('Session refresh skipped (offline or server unavailable)');
+        }
       } finally {
         setIsNewUser(false);
         setLoading(false);

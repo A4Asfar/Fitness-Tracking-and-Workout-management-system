@@ -6,9 +6,17 @@ const { verifyGeminiSetup } = require('./utils/geminiHelper');
 
 // Environment Variable Validation (Soft check for local development)
 const requiredEnv = ['MONGO_URI', 'JWT_SECRET'];
+const optionalEnv = ['GEMINI_API_KEY', 'EMAIL_USER', 'EMAIL_PASS'];
+
 requiredEnv.forEach(env => {
   if (!process.env[env]) {
     console.warn(`⚠️ WARNING: Missing environment variable ${env} in .env file`);
+  }
+});
+
+optionalEnv.forEach(env => {
+  if (!process.env[env] || process.env[env].includes('YOUR_') || process.env[env].includes('your_')) {
+    console.warn(`⚠️ WARNING: ${env} is missing or still a placeholder — related features may not work`);
   }
 });
 

@@ -385,7 +385,7 @@ export default function TrainerDetailsScreen() {
           <Text style={s.priceLabel}>Session Price</Text>
           <Text style={s.priceValue}>PKR {trainer.hourlyPrice || 3000}<Text style={s.priceUnit}>/hr</Text></Text>
         </View>
-        <TouchableOpacity style={s.bookBtn} onPress={() => router.push(`/book-session?trainerId=${trainer.id || trainer._id}`)}>
+        <TouchableOpacity style={s.bookBtn} onPress={() => router.push(`/book-session?trainerId=${trainer._id}`)}>
           <Text style={s.bookBtnText}>Book Session</Text>
         </TouchableOpacity>
       </View>

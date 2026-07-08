@@ -113,7 +113,7 @@ export default function MyBookingsScreen() {
         <Text style={s.emptyTitle}>No {activeTab} Bookings</Text>
         <Text style={s.emptySub}>You don't have any {activeTab.toLowerCase()} sessions at the moment.</Text>
         {activeTab !== 'Upcoming' && (
-          <TouchableOpacity style={s.exploreBtn} onPress={() => router.push('/trainer')}>
+          <TouchableOpacity style={s.exploreBtn} onPress={() => router.push('/(tabs)/trainers')}>
             <Text style={s.exploreBtnText}>Find a Coach</Text>
           </TouchableOpacity>
         )}

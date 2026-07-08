@@ -39,7 +39,7 @@ const QUICK_ACTIONS_CONFIG = [
     title: 'Find Trainer',
     desc: 'Hire an expert',
     icon: Users,
-    route: '/trainer',
+    route: '/(tabs)/trainers',
     color: '#00B0FF',
   },
   {
@@ -73,7 +73,7 @@ const QUICK_ACTIONS_CONFIG = [
 ];
 
 export default function HomeDashboard() {
-  const { user, isNewUser } = useAuth();
+  const { user, isNewUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [stats, setStats] = useState<any>(null);
@@ -126,8 +126,13 @@ export default function HomeDashboard() {
   };
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (authLoading) return;
+    if (user) {
+      fetchData();
+    } else {
+      setLoading(false);
+    }
+  }, [user, authLoading]);
 
   const onRefresh = () => {
     setRefreshing(true);

@@ -13,6 +13,7 @@ import {
 } from 'lucide-react-native';
 import { useToast } from '@/components/Toast';
 import api from '@/services/api';
+import { isAdminUser } from '@/utils/isAdmin';
 import { hapticSuccess, hapticError } from '@/utils/haptics';
 
 const { width, height } = Dimensions.get('window');
@@ -97,7 +98,7 @@ export default function PremiumManagementDashboard() {
 
   // Security Check
   useEffect(() => {
-    if (user && user.membershipType !== 'admin') {
+    if (user && !isAdminUser(user)) {
       router.replace('/');
     }
   }, [user]);
@@ -106,27 +107,55 @@ export default function PremiumManagementDashboard() {
   const fetchPayments = useCallback(async (page = 1) => {
     setLoadingList(true);
     try {
-      const res = await api.get('/admin/payments/list', {
-        params: {
-          page,
-          limit: 10,
-          search: searchQuery,
-          status: statusFilter,
-          plan: planFilter,
-          sort: sortOrder
-        }
-      });
-      setPayments(res.data.items);
-      setTotalPages(res.data.totalPages);
-      setCurrentPage(res.data.page);
-      setTotalRecords(res.data.total);
+      const res = await api.get('/premium/admin/requests');
+      let items: PaymentRecord[] = (res.data || []).map((p: any) => ({
+        _id: p._id,
+        userId: typeof p.userId === 'object' ? p.userId._id : p.userId,
+        userName: p.userId?.name || 'Unknown',
+        userEmail: p.userId?.email || '',
+        plan: p.plan,
+        paymentMethod: p.paymentMethod,
+        paymentNumber: p.transactionId,
+        screenshotUrl: p.paymentScreenshot,
+        status: p.status,
+        submittedAt: p.createdAt,
+        adminRemarks: p.adminRemarks,
+      }));
+
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        items = items.filter(
+          (p) =>
+            p.userName.toLowerCase().includes(q) ||
+            p.userEmail.toLowerCase().includes(q) ||
+            (p.paymentNumber || '').toLowerCase().includes(q)
+        );
+      }
+      if (statusFilter) {
+        items = items.filter((p) => p.status === statusFilter);
+      }
+      if (planFilter) {
+        items = items.filter((p) => p.plan === planFilter);
+      }
+      if (sortOrder === 'oldest') {
+        items.sort((a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime());
+      } else {
+        items.sort((a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime());
+      }
+
+      const limit = 10;
+      const start = (page - 1) * limit;
+      setPayments(items.slice(start, start + limit));
+      setTotalPages(Math.max(1, Math.ceil(items.length / limit)));
+      setCurrentPage(page);
+      setTotalRecords(items.length);
     } catch (error) {
       console.error('Fetch payments error:', error);
       showToast('Failed to load payment requests.', 'error');
     } finally {
       setLoadingList(false);
     }
-  }, [searchQuery, statusFilter, planFilter, sortOrder]);
+  }, [searchQuery, statusFilter, planFilter, sortOrder, showToast]);
 
   // Fetch Premium Users
   const fetchPremiumUsers = useCallback(async () => {
@@ -179,7 +208,7 @@ export default function PremiumManagementDashboard() {
           onPress: async () => {
             setIsActioning(true);
             try {
-              await api.post(`/admin/payments/${payment._id}/verify`, { status: 'Approved' });
+              await api.patch(`/premium/admin/requests/${payment._id}`, { status: 'Approved' });
               hapticSuccess();
               showToast('Premium membership activated successfully!', 'success');
               setSelectedPayment(null);
@@ -204,7 +233,7 @@ export default function PremiumManagementDashboard() {
     const finalRemarks = `${rejectReason}. ${customRemarks}`.trim();
     setIsActioning(true);
     try {
-      await api.post(`/admin/payments/${rejectingItem._id}/verify`, {
+      await api.patch(`/premium/admin/requests/${rejectingItem._id}`, {
         status: 'Rejected',
         adminRemarks: finalRemarks
       });

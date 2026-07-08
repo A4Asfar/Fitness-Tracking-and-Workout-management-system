@@ -21,26 +21,15 @@ exports.updateProfile = asyncHandler(async (req, res) => {
   const user = await User.findByIdAndUpdate(
     req.userId,
     { name, weight, height, fitnessGoal, trainingLevel, workoutFocus, avatar },
-    { returnDocument: 'after' }
+    { new: true }
   ).select('-password');
   console.log('📝 Profile updated in MongoDB for user:', req.userId);
   res.json(user);
 });
 
 exports.upgradeProfile = asyncHandler(async (req, res) => {
-  const expiryDate = new Date();
-  expiryDate.setDate(expiryDate.getDate() + 30); // 1 month subscription
-
-  const user = await User.findByIdAndUpdate(
-    req.userId,
-    {
-      membershipType: 'premium',
-      membershipExpiresAt: expiryDate
-    },
-    { returnDocument: 'after' }
-  ).select('-password');
-  console.log('👑 User upgraded to premium until:', expiryDate);
-  res.json(user);
+  res.status(403);
+  throw new Error('Direct upgrade is disabled. Please submit payment proof via the premium checkout flow.');
 });
 
 exports.submitPaymentProof = asyncHandler(async (req, res) => {
@@ -72,7 +61,7 @@ exports.submitPaymentProof = asyncHandler(async (req, res) => {
     userId: req.userId,
     title: 'Payment Proof Received',
     message: 'Your payment is under review. Estimated approval within 24 hours.',
-    type: 'premium'
+    type: 'Premium Purchased'
   });
 
   console.log('💰 Payment proof submitted for review by user:', user.email);
@@ -80,8 +69,16 @@ exports.submitPaymentProof = asyncHandler(async (req, res) => {
 });
 
 exports.getUserPaymentStatus = asyncHandler(async (req, res) => {
-  const payment = await PremiumPayment.findOne({ userId: req.userId }).sort({ submittedAt: -1 });
-  res.json(payment);
+  const PremiumPurchase = require('../models/PremiumPurchase');
+  const [legacyPayment, latestPurchase] = await Promise.all([
+    PremiumPayment.findOne({ userId: req.userId }).sort({ submittedAt: -1 }),
+    PremiumPurchase.findOne({ userId: req.userId }).sort({ createdAt: -1 }),
+  ]);
+
+  if (latestPurchase) {
+    return res.json(latestPurchase);
+  }
+  res.json(legacyPayment);
 });
 
 exports.getDashboardStats = asyncHandler(async (req, res) => {

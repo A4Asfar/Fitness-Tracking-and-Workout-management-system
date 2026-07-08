@@ -22,29 +22,27 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   const opacity = useRef(new Animated.Value(0)).current;
   const translateY = useRef(new Animated.Value(-100)).current;
 
-  const showToast = useCallback((msg: string, t: ToastType = 'success') => {
-    setMessage(msg);
-    setType(t);
-    setVisible(true);
-
-    // Entrance Animation
-    Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.spring(translateY, { toValue: insets.top + 10, useNativeDriver: true, tension: 40, friction: 8 }),
-    ]).start();
-
-    // Auto-hide after 3 seconds
-    setTimeout(() => {
-      hideToast();
-    }, 3000);
-  }, [insets.top]);
-
   const hideToast = useCallback(() => {
     Animated.parallel([
       Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
       Animated.timing(translateY, { toValue: -100, duration: 300, useNativeDriver: true }),
     ]).start(() => setVisible(false));
-  }, []);
+  }, [opacity, translateY]);
+
+  const showToast = useCallback((msg: string, t: ToastType = 'success') => {
+    setMessage(msg);
+    setType(t);
+    setVisible(true);
+
+    Animated.parallel([
+      Animated.timing(opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+      Animated.spring(translateY, { toValue: insets.top + 10, useNativeDriver: true, tension: 40, friction: 8 }),
+    ]).start();
+
+    setTimeout(() => {
+      hideToast();
+    }, 3000);
+  }, [hideToast, insets.top, opacity, translateY]);
 
   const getIcon = () => {
     switch (type) {

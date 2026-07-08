@@ -27,7 +27,7 @@ exports.createStepLog = asyncHandler(async (req, res) => {
     userId: req.userId,
     title: 'Steps Logged',
     message: `Successfully logged your steps: ${Number(steps).toLocaleString()}. Keep stepping!`,
-    type: 'workout'
+    type: 'step'
   });
 
   console.log('🚶 Step log saved for user:', req.userId);

@@ -316,10 +316,10 @@ const s = StyleSheet.create({
   cardTime: { fontSize: 11, color: '#94A3B8', fontWeight: '600' },
   unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#3B82F6', alignSelf: 'center', marginLeft: 8 },
   
-  deleteActionBtn: { width: 44, height: 56, backgroundColor: '#FEF2F2', borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderVertical: 1, borderWidth: 1, borderColor: '#FEE2E2' },
+  deleteActionBtn: { width: 44, height: 56, backgroundColor: '#FEF2F2', borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#FEE2E2' },
 
   emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 100 },
-  emptyTitle: { fontSize: 18, fontWeight: '850', color: '#0F172A', marginBottom: 8 },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: '#0F172A', marginBottom: 8 },
   emptySub: { fontSize: 14, color: '#64748B', textAlign: 'center', paddingHorizontal: 32, lineHeight: 22 },
 
   errorCard: { backgroundColor: '#FEE2E2', padding: 20, borderRadius: 20, alignItems: 'center', marginHorizontal: 24, marginBottom: 24, gap: 8 },

@@ -1,6 +1,6 @@
 const User = require('../models/User');
 const Workout = require('../models/Workout');
-const Meal = require('../models/Meal');
+const MealSelection = require('../models/MealSelection');
 const Chat = require('../models/Chat'); // Assuming Chat exists
 const Trainer = require('../models/Trainer');
 const TrainerBooking = require('../models/TrainerBooking');
@@ -16,7 +16,7 @@ exports.getStats = asyncHandler(async (req, res) => {
   const totalTrainers = await Trainer.countDocuments();
   const activeBookings = await TrainerBooking.countDocuments({ bookingStatus: 'Confirmed' });
   const workoutsLogged = await Workout.countDocuments();
-  const mealsLogged = await Meal.countDocuments();
+  const mealsLogged = await MealSelection.countDocuments();
   
   // Try to count chats if Chat model exists, default to demo count if not
   let chatsCount = 0;

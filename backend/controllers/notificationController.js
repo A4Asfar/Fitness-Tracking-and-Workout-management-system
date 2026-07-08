@@ -19,7 +19,7 @@ exports.getNotifications = asyncHandler(async (req, res) => {
     } else if (filter === 'Premium') {
       query.type = { $in: ['Premium Purchased', 'Premium Approved'] };
     } else if (filter === 'Workout') {
-      query.type = 'Workout Reminder';
+      query.type = { $in: ['Workout Reminder', 'workout'] };
     } else if (filter === 'System') {
       query.type = { $in: ['Welcome', 'System Announcement'] };
     }

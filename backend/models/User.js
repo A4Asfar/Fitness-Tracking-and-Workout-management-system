@@ -49,6 +49,10 @@ const userSchema = new mongoose.Schema({
     enum: ['Beginner', 'Intermediate', 'Advanced', 'Elite'],
     default: 'Beginner',
   },
+  workoutFocus: {
+    type: String,
+    default: '',
+  },
   avatar: {
     type: String,
     default: '',

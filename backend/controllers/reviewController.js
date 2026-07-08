@@ -1,6 +1,6 @@
 const TrainerReview = require('../models/TrainerReview');
 const TrainerBooking = require('../models/TrainerBooking');
-const Trainer = require('../models/Trainer');
+const { resolveTrainer } = require('../utils/trainerHelper');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 
 // @desc    Add review for a trainer
@@ -52,24 +52,28 @@ exports.addTrainerReview = asyncHandler(async (req, res) => {
 // @route   GET /api/trainers/:id/reviews
 // @access  Public
 exports.getTrainerReviews = asyncHandler(async (req, res) => {
-  const trainerId = req.params.id;
+  const trainer = await resolveTrainer(req.params.id);
+  if (!trainer) {
+    res.status(404);
+    throw new Error('Trainer not found');
+  }
+
+  const trainerObjectId = trainer._id;
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
 
-  // Optimized lean query with user verification
-  const reviews = await TrainerReview.find({ trainerId })
+  const reviews = await TrainerReview.find({ trainerId: trainerObjectId })
     .populate('userId', 'name avatar')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit)
     .lean();
 
-  const total = await TrainerReview.countDocuments({ trainerId });
+  const total = await TrainerReview.countDocuments({ trainerId: trainerObjectId });
 
-  // Calculate rating distribution
   const distributionData = await TrainerReview.aggregate([
-    { $match: { trainerId: new require('mongoose').Types.ObjectId(trainerId) } },
+    { $match: { trainerId: trainerObjectId } },
     { $group: { _id: '$rating', count: { $sum: 1 } } }
   ]);
 
@@ -104,7 +108,7 @@ exports.deleteReview = asyncHandler(async (req, res) => {
   }
 
   const trainerId = review.trainerId;
-  await review.remove();
+  await review.deleteOne();
   
   // Recalculate average rating manually since hook references constructor
   await TrainerReview.calculateAverageRating(trainerId);

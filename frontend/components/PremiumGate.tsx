@@ -21,8 +21,8 @@ export function usePremiumStatus() {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const res = await api.get('/profile/payments/status');
-        setPaymentLog(res.data);
+        const res = await api.get('/premium/my');
+        setPaymentLog(res.data.latestPurchase);
       } catch (e) {
         // No payment record exists
       } finally {
@@ -160,7 +160,7 @@ export function PremiumModal({ visible, onClose, isPending = false }: PremiumMod
               </Text>
               <TouchableOpacity
                 style={styles.pendingBtn}
-                onPress={() => { onClose(); router.push('/upgrade'); }}
+                onPress={() => { onClose(); router.push('/premium'); }}
                 activeOpacity={0.8}
               >
                 <Text style={styles.pendingBtnText}>View Payment Status</Text>
@@ -197,7 +197,7 @@ export function PremiumModal({ visible, onClose, isPending = false }: PremiumMod
 
               <TouchableOpacity
                 style={styles.upgradeBtn}
-                onPress={() => { onClose(); router.push('/upgrade'); }}
+                onPress={() => { onClose(); router.push('/premium'); }}
                 activeOpacity={0.9}
               >
                 <Crown size={16} color="#FFFFFF" fill="#FFFFFF" />

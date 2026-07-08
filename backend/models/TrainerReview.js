@@ -66,7 +66,7 @@ trainerReviewSchema.post('save', async function() {
 });
 
 // Update stats after delete
-trainerReviewSchema.post('remove', async function() {
+trainerReviewSchema.post('deleteOne', { document: true, query: false }, async function() {
   await this.constructor.calculateAverageRating(this.trainerId);
 });
 

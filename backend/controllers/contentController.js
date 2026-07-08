@@ -146,7 +146,17 @@ Your response MUST be a single, valid raw JSON object. Do not wrap it in markdow
     motivation
   });
 
-  await plan.save();
+  try {
+    await plan.save();
+  } catch (saveErr) {
+    if (saveErr.code === 11000) {
+      plan = await DailyPlan.findOne({ userId, generatedDate });
+      if (plan) {
+        return res.json(plan);
+      }
+    }
+    throw saveErr;
+  }
 
   try {
     const { createInAppNotification } = require('./notificationController');

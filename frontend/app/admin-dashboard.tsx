@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Dimensions, TextInput } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { 
@@ -14,8 +14,10 @@ import {
   Database,
   History,
   LayoutDashboard,
-  CreditCard
+  CreditCard,
+  Trash2
 } from 'lucide-react-native';
+import { isAdminUser } from '@/utils/isAdmin';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
@@ -59,6 +61,7 @@ export default function AdminDashboard() {
   const insets = useSafeAreaInsets();
 
   const [refreshing, setRefreshing] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>(null);
 
   const fetchStats = async () => {
@@ -69,6 +72,7 @@ export default function AdminDashboard() {
       console.log('Error fetching stats:', e);
     } finally {
       setRefreshing(false);
+      setLoading(false);
     }
   };
 
@@ -105,10 +109,9 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
-    const isAdmin = user?.membershipType === 'admin' || user?.email === 'admin@peakpulse.ai';
-    if (user && !isAdmin) {
+    if (user && !isAdminUser(user)) {
       router.replace('/');
-    } else {
+    } else if (user) {
       fetchStats();
       fetchUsers();
       fetchBookings();
@@ -168,7 +171,7 @@ export default function AdminDashboard() {
     );
   }
 
-  if (user.membershipType !== 'admin') {
+  if (!isAdminUser(user)) {
     return null;
   }
 
@@ -609,7 +612,7 @@ const styles = StyleSheet.create({
   actionBtnText: {
     color: '#FFF',
     fontSize: 12,
-    fontWeight: '850',
+    fontWeight: '800' as const,
   },
   actionBtnSec: {
     backgroundColor: '#F1F5F9',
@@ -617,7 +620,7 @@ const styles = StyleSheet.create({
   actionBtnTextSec: {
     color: Colors.text,
     fontSize: 12,
-    fontWeight: '750',
+    fontWeight: '700' as const,
   },
   deleteBtn: {
     width: 36,
@@ -662,6 +665,6 @@ const styles = StyleSheet.create({
   saveSettingsBtnText: {
     color: '#FFF',
     fontSize: 15,
-    fontWeight: '850',
+    fontWeight: '800' as const,
   },
 });
