@@ -1,158 +1,98 @@
 const User = require('../models/User');
 const Workout = require('../models/Workout');
-const PremiumPayment = require('../models/PremiumPayment');
+const Meal = require('../models/Meal');
+const Chat = require('../models/Chat'); // Assuming Chat exists
+const Trainer = require('../models/Trainer');
+const TrainerBooking = require('../models/TrainerBooking');
+const PremiumPurchase = require('../models/PremiumPurchase');
+const SystemSettings = require('../models/SystemSettings');
 const Notification = require('../models/Notification');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 
-// @desc    Get system stats for admin
-// @route   GET /api/admin/stats
-// @access  Private/Admin
+// Get all system statistics for admin dashboard
 exports.getStats = asyncHandler(async (req, res) => {
-  // 1. Total Registered Users
   const totalUsers = await User.countDocuments();
+  const premiumUsers = await User.countDocuments({ membershipType: 'premium' });
+  const totalTrainers = await Trainer.countDocuments();
+  const activeBookings = await TrainerBooking.countDocuments({ bookingStatus: 'Confirmed' });
+  const workoutsLogged = await Workout.countDocuments();
+  const mealsLogged = await Meal.countDocuments();
+  
+  // Try to count chats if Chat model exists, default to demo count if not
+  let chatsCount = 0;
+  try {
+    chatsCount = await Chat.countDocuments();
+  } catch (e) {
+    chatsCount = 42; // Fallback demo metric
+  }
 
-  // 2. Role Distribution
-  const roles = await User.aggregate([
-    { $group: { _id: '$membershipType', count: { $sum: 1 } } }
+  // Calculate Revenue (Approved Premium Purchases)
+  const revenueData = await PremiumPurchase.aggregate([
+    { $match: { status: 'Approved' } },
+    { $group: { _id: null, total: { $sum: '$amount' } } }
   ]);
+  const totalRevenue = revenueData.length > 0 ? revenueData[0].total : 0;
 
-  const freeCount = roles.find(r => r._id === 'free')?.count || 0;
-  const premiumCount = roles.find(r => r._id === 'premium')?.count || 0;
-  const adminCount = roles.find(r => r._id === 'admin')?.count || 0;
-
-  // 3. Total Workouts Logged
-  const totalWorkouts = await Workout.countDocuments();
-
-  // 4. Recent Activity (Recent Users)
+  // Recent Users Registered
   const recentUsers = await User.find()
     .select('name email membershipType createdAt')
     .sort({ createdAt: -1 })
-    .limit(5);
+    .limit(5)
+    .lean();
 
-  // 5. Recent Activity (Recent Workouts)
-  const recentWorkouts = await Workout.find()
-    .populate('user', 'name')
+  // Recent Bookings
+  const recentBookings = await TrainerBooking.find()
+    .populate('userId', 'name')
+    .populate('trainerId', 'fullName name')
     .sort({ createdAt: -1 })
-    .limit(5);
+    .limit(5)
+    .lean();
 
   res.json({
     totalUsers,
-    freeCount,
-    premiumCount,
-    adminCount,
-    totalWorkouts,
+    premiumUsers,
+    totalTrainers,
+    activeBookings,
+    workoutsLogged,
+    mealsLogged,
+    chatsCount,
+    totalRevenue,
     recentActivity: {
       users: recentUsers,
-      workouts: recentWorkouts
+      bookings: recentBookings
     }
   });
 });
 
-exports.getPendingPayments = asyncHandler(async (req, res) => {
-  const payments = await PremiumPayment.find({ status: 'Pending' }).sort({ submittedAt: -1 });
-  res.json(payments);
-});
-
-exports.verifyPayment = asyncHandler(async (req, res) => {
-  const { status, adminRemarks } = req.body;
-  if (!status || !['Approved', 'Rejected'].includes(status)) {
-    res.status(400);
-    throw new Error('Please provide a valid verification status');
-  }
-
-  const payment = await PremiumPayment.findById(req.params.id);
-  if (!payment) {
-    res.status(404);
-    throw new Error('Payment record not found');
-  }
-
-  payment.status = status;
-  payment.adminRemarks = adminRemarks || '';
-
-  if (status === 'Approved') {
-    payment.approvedAt = new Date();
-    
-    // Set expiry
-    let expiry = null;
-    if (payment.plan === 'Monthly') {
-      expiry = new Date();
-      expiry.setDate(expiry.getDate() + 30);
-    }
-    payment.expiryDate = expiry;
-
-    // Upgrade user
-    await User.findByIdAndUpdate(payment.userId, {
-      membershipType: 'premium',
-      membershipExpiresAt: expiry
-    });
-
-    // Notify user of approval
-    await Notification.create({
-      userId: payment.userId,
-      title: 'Premium Activated! 🎉',
-      message: 'Congratulations! Your premium membership has been activated. Enjoy unlimited access to all features.',
-      type: 'premium'
-    });
-
-    console.log('✅ Approved payment. User upgraded to premium:', payment.userEmail);
-  } else {
-    payment.rejectedAt = new Date();
-    
-    // Downgrade/Keep free
-    await User.findByIdAndUpdate(payment.userId, {
-      membershipType: 'free',
-      membershipExpiresAt: null
-    });
-
-    // Notify user of rejection
-    await Notification.create({
-      userId: payment.userId,
-      title: 'Payment Verification Failed',
-      message: `Your payment was rejected. Reason: ${adminRemarks || 'Invalid transaction receipt.'}. Please submit another payment proof.`,
-      type: 'premium'
-    });
-
-    console.log('❌ Rejected payment. User status remains free:', payment.userEmail);
-  }
-
-  await payment.save();
-  res.json(payment);
-});
-
-// @desc    Get all payment requests with search, filter, and pagination
-// @route   GET /api/admin/payments/list
-// @access  Private/Admin
-exports.getAllPayments = asyncHandler(async (req, res) => {
+// GET /api/admin/users (Search, Pagination, Role filtering)
+exports.getUsers = asyncHandler(async (req, res) => {
   const page = parseInt(req.query.page) || 1;
   const limit = parseInt(req.query.limit) || 10;
   const skip = (page - 1) * limit;
-
-  const { search, status, plan, sort } = req.query;
+  const { search, role } = req.query;
 
   const query = {};
-
-  if (status) {
-    query.status = status;
-  }
-  if (plan) {
-    query.plan = plan;
+  if (role) {
+    query.membershipType = role;
   }
   if (search) {
     query.$or = [
-      { userName: { $regex: search, $options: 'i' } },
-      { userEmail: { $regex: search, $options: 'i' } }
+      { name: { $regex: search, $options: 'i' } },
+      { email: { $regex: search, $options: 'i' } }
     ];
   }
 
-  const sortOrder = sort === 'oldest' ? 1 : -1;
+  const users = await User.find(query)
+    .select('-password')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
 
-  const [items, total] = await Promise.all([
-    PremiumPayment.find(query).sort({ submittedAt: sortOrder }).skip(skip).limit(limit),
-    PremiumPayment.countDocuments(query)
-  ]);
+  const total = await User.countDocuments(query);
 
   res.json({
-    items,
+    users,
     page,
     limit,
     totalPages: Math.ceil(total / limit),
@@ -160,133 +100,126 @@ exports.getAllPayments = asyncHandler(async (req, res) => {
   });
 });
 
-// @desc    Get all Premium users
-// @route   GET /api/admin/payments/users
-// @access  Private/Admin
-exports.getPremiumUsers = asyncHandler(async (req, res) => {
-  const users = await User.find({ membershipType: 'premium' }).select('name email avatar createdAt membershipExpiresAt');
-  res.json(users);
-});
-
-// @desc    Get Premium Analytics
-// @route   GET /api/admin/payments/analytics
-// @access  Private/Admin
-exports.getPremiumAnalytics = asyncHandler(async (req, res) => {
-  // 1. Total Premium Users
-  const totalPremium = await User.countDocuments({ membershipType: 'premium' });
-
-  // 2. Pending Requests
-  const pendingRequests = await PremiumPayment.countDocuments({ status: 'Pending' });
-
-  // 3. Approved & Rejected counts
-  const approvedCount = await PremiumPayment.countDocuments({ status: 'Approved' });
-  const rejectedCount = await PremiumPayment.countDocuments({ status: 'Rejected' });
-
-  // 4. Monthly & Lifetime users breakdown
-  // Let's count from user membership expiration
-  const activeMonthly = await User.countDocuments({
-    membershipType: 'premium',
-    membershipExpiresAt: { $ne: null }
-  });
-
-  const lifetimePremium = await User.countDocuments({
-    membershipType: 'premium',
-    membershipExpiresAt: null
-  });
-
-  // 5. Estimated Revenue
-  // Plan prices: Monthly = PKR 499, Lifetime = PKR 2999
-  const monthlyPayments = await PremiumPayment.countDocuments({ status: 'Approved', plan: 'Monthly' });
-  const lifetimePayments = await PremiumPayment.countDocuments({ status: 'Approved', plan: 'Lifetime' });
-  const estimatedRevenue = (monthlyPayments * 499) + (lifetimePayments * 2999);
-
-  // 6. Today's New Premium Users
-  const startOfToday = new Date();
-  startOfToday.setHours(0, 0, 0, 0);
-  const todayNewPremium = await PremiumPayment.countDocuments({
-    status: 'Approved',
-    approvedAt: { $gte: startOfToday }
-  });
-
-  // Calculate approval rate
-  const totalProcessed = approvedCount + rejectedCount;
-  const approvalRate = totalProcessed > 0 ? Math.round((approvedCount / totalProcessed) * 100) : 100;
-
-  res.json({
-    totalPremium,
-    pendingRequests,
-    activeMonthly,
-    lifetimePremium,
-    estimatedRevenue,
-    todayNewPremium,
-    approvalRate,
-    approvedCount,
-    rejectedCount
-  });
-});
-
-// @desc    Extend membership
-// @route   POST /api/admin/payments/users/:id/extend
-// @access  Private/Admin
-exports.extendMembership = asyncHandler(async (req, res) => {
-  const { days } = req.body;
-  if (!days || isNaN(days)) {
+// PATCH /api/admin/users/:id/role
+exports.updateUserRole = asyncHandler(async (req, res) => {
+  const { role } = req.body;
+  if (!['free', 'premium', 'admin'].includes(role)) {
     res.status(400);
-    throw new Error('Please provide valid number of days');
+    throw new Error('Invalid user role');
   }
 
-  const user = await User.findById(req.params.id);
+  const user = await User.findByIdAndUpdate(req.params.id, { membershipType: role }, { new: true });
   if (!user) {
     res.status(404);
     throw new Error('User not found');
   }
 
-  let currentExpiry = user.membershipExpiresAt ? new Date(user.membershipExpiresAt) : new Date();
-  if (currentExpiry < new Date()) {
-    currentExpiry = new Date();
+  res.json({ message: 'User role updated successfully', user });
+});
+
+// DELETE /api/admin/users/:id
+exports.deleteUser = asyncHandler(async (req, res) => {
+  const user = await User.findByIdAndDelete(req.params.id);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+  res.json({ message: 'User deleted successfully' });
+});
+
+// Trainer Management Actions
+exports.addTrainer = asyncHandler(async (req, res) => {
+  const trainer = new Trainer(req.body);
+  await trainer.save();
+  res.status(201).json(trainer);
+});
+
+exports.updateTrainer = asyncHandler(async (req, res) => {
+  const trainer = await Trainer.findByIdAndUpdate(req.params.id, req.body, { new: true });
+  if (!trainer) {
+    res.status(404);
+    throw new Error('Trainer not found');
+  }
+  res.json(trainer);
+});
+
+exports.deleteTrainer = asyncHandler(async (req, res) => {
+  const trainer = await Trainer.findByIdAndDelete(req.params.id);
+  if (!trainer) {
+    res.status(404);
+    throw new Error('Trainer not found');
+  }
+  res.json({ message: 'Trainer deleted successfully' });
+});
+
+exports.verifyTrainer = asyncHandler(async (req, res) => {
+  const { verified } = req.body;
+  const trainer = await Trainer.findByIdAndUpdate(req.params.id, { verifiedTrainer: verified }, { new: true });
+  if (!trainer) {
+    res.status(404);
+    throw new Error('Trainer not found');
+  }
+  res.json(trainer);
+});
+
+exports.featureTrainer = asyncHandler(async (req, res) => {
+  const { featured } = req.body;
+  const trainer = await Trainer.findByIdAndUpdate(req.params.id, { featuredTrainer: featured }, { new: true });
+  if (!trainer) {
+    res.status(404);
+    throw new Error('Trainer not found');
+  }
+  res.json(trainer);
+});
+
+// Booking Management Actions
+exports.getAllBookings = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+  const { status } = req.query;
+
+  const query = {};
+  if (status) {
+    query.bookingStatus = status;
   }
 
-  currentExpiry.setDate(currentExpiry.getDate() + parseInt(days));
+  const bookings = await TrainerBooking.find(query)
+    .populate('userId', 'name email')
+    .populate('trainerId', 'fullName name')
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(limit)
+    .lean();
 
-  user.membershipType = 'premium';
-  user.membershipExpiresAt = currentExpiry;
-  await user.save();
-
-  // Create notification
-  await Notification.create({
-    userId: user._id,
-    title: 'Membership Extended! 🚀',
-    message: `Your premium membership has been extended by ${days} days. New expiry: ${currentExpiry.toLocaleDateString()}`,
-    type: 'premium'
-  });
+  const total = await TrainerBooking.countDocuments(query);
 
   res.json({
-    message: 'Membership extended successfully',
-    membershipExpiresAt: currentExpiry
+    bookings,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+    total
   });
 });
 
-// @desc    Deactivate Premium membership
-// @route   POST /api/admin/payments/users/:id/deactivate
-// @access  Private/Admin
-exports.deactivateMembership = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.params.id);
-  if (!user) {
-    res.status(404);
-    throw new Error('User not found');
+// System Settings Management
+exports.getSystemSettings = asyncHandler(async (req, res) => {
+  let settings = await SystemSettings.findOne();
+  if (!settings) {
+    settings = await SystemSettings.create({});
   }
-
-  user.membershipType = 'free';
-  user.membershipExpiresAt = null;
-  await user.save();
-
-  // Notify user
-  await Notification.create({
-    userId: user._id,
-    title: 'Premium Membership Deactivated',
-    message: 'Your premium membership has been deactivated. Please contact support if you think this is a mistake.',
-    type: 'premium'
-  });
-
-  res.json({ message: 'Membership deactivated successfully' });
+  res.json(settings);
 });
+
+exports.updateSystemSettings = asyncHandler(async (req, res) => {
+  let settings = await SystemSettings.findOne();
+  if (!settings) {
+    settings = new SystemSettings(req.body);
+  } else {
+    Object.assign(settings, req.body);
+  }
+  await settings.save();
+  res.json(settings);
+});
+

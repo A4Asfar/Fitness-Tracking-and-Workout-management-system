@@ -33,22 +33,24 @@ export default function SettingsCenterScreen() {
   const isPremium = user?.membershipType === 'premium' || isAdmin;
   const fitnessGoal = user?.fitnessGoal || 'General Fitness';
 
-  const [paymentLog, setPaymentLog] = useState<any>(null);
+  const [statusInfo, setStatusInfo] = useState<any>(null);
   const [loadingPayment, setLoadingPayment] = useState(true);
 
   useEffect(() => {
-    const fetchPayment = async () => {
+    const fetchStatus = async () => {
       try {
-        const res = await api.get('/profile/payments/status');
-        setPaymentLog(res.data);
+        const res = await api.get('/premium/my');
+        setStatusInfo(res.data);
       } catch (e) {
-        console.log('Error fetching payment status:', e);
+        console.log('Error fetching premium status:', e);
       } finally {
         setLoadingPayment(false);
       }
     };
-    fetchPayment();
+    fetchStatus();
   }, [user]);
+
+  const latestPurchase = statusInfo?.latestPurchase;
 
   return (
     <View style={styles.container}>
@@ -98,42 +100,40 @@ export default function SettingsCenterScreen() {
               <ChevronRight size={14} color="#10B981" />
             </TouchableOpacity>
 
-            {paymentLog && (
+            {/* Premium Status Card */}
+            {(latestPurchase || statusInfo?.membershipType === 'premium') && (
               <View style={styles.premiumStatusCard}>
                 <View style={styles.statusRowHeader}>
                   <Text style={styles.statusLabelText}>Membership Status</Text>
                   <View style={[
                     styles.statusBadge, 
-                    paymentLog.status === 'Approved' ? styles.statusBadgeApproved : 
-                    paymentLog.status === 'Rejected' ? styles.statusBadgeRejected : 
+                    statusInfo?.membershipType === 'premium' ? styles.statusBadgeApproved : 
+                    latestPurchase?.status === 'Rejected' ? styles.statusBadgeRejected : 
                     styles.statusBadgePending
                   ]}>
                     <Text style={[
                       styles.statusBadgeText,
-                      paymentLog.status === 'Approved' ? { color: '#059669' } : 
-                      paymentLog.status === 'Rejected' ? { color: '#EF4444' } : 
+                      statusInfo?.membershipType === 'premium' ? { color: '#059669' } : 
+                      latestPurchase?.status === 'Rejected' ? { color: '#EF4444' } : 
                       { color: '#B45309' }
                     ]}>
-                      {paymentLog.status === 'Approved' ? 'Active Pro' : 
-                       paymentLog.status === 'Rejected' ? 'Rejected' : 
+                      {statusInfo?.membershipType === 'premium' ? 'Active Pro' : 
+                       latestPurchase?.status === 'Rejected' ? 'Rejected' : 
                        'Pending'}
                     </Text>
                   </View>
                 </View>
 
                 <View style={styles.statusMetaGrid}>
-                  <Text style={styles.statusMetaText}>Plan: {paymentLog.plan}</Text>
-                  <Text style={styles.statusMetaText}>
-                    Submitted: {new Date(paymentLog.submittedAt).toLocaleDateString()}
-                  </Text>
-                  {paymentLog.approvedAt && (
+                  <Text style={styles.statusMetaText}>Current Plan: {statusInfo?.membershipType === 'premium' ? (latestPurchase?.plan || 'Premium') : 'Free'}</Text>
+                  {statusInfo?.membershipExpiresAt && (
                     <Text style={styles.statusMetaText}>
-                      Approved: {new Date(paymentLog.approvedAt).toLocaleDateString()}
+                      Expires: {new Date(statusInfo.membershipExpiresAt).toLocaleDateString()}
                     </Text>
                   )}
-                  {paymentLog.expiryDate && (
+                  {latestPurchase && latestPurchase.status === 'Pending' && (
                     <Text style={styles.statusMetaText}>
-                      Expires: {new Date(paymentLog.expiryDate).toLocaleDateString()}
+                      Payment Verification Pending...
                     </Text>
                   )}
                 </View>
@@ -141,17 +141,10 @@ export default function SettingsCenterScreen() {
                 <View style={styles.statusActions}>
                   <TouchableOpacity 
                     style={styles.statusActionBtn}
-                    onPress={() => router.push('/upgrade')}
+                    onPress={() => router.push('/premium')}
                     activeOpacity={0.7}
                   >
-                    <Text style={styles.statusActionBtnText}>View Details</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity 
-                    style={[styles.statusActionBtn, styles.statusSupportBtn]}
-                    onPress={() => router.push('/ai-chat')}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.statusActionBtnText}>Contact Support</Text>
+                    <Text style={styles.statusActionBtnText}>Renew Membership</Text>
                   </TouchableOpacity>
                 </View>
               </View>

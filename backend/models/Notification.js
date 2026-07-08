@@ -16,17 +16,38 @@ const notificationSchema = new mongoose.Schema({
   },
   type: {
     type: String,
-    enum: ['workout', 'meal', 'consultation', 'weight', 'system', 'premium'],
-    default: 'system',
+    enum: [
+      'Welcome',
+      'Workout Reminder',
+      'Meal Reminder',
+      'Trainer Booking',
+      'Booking Approved',
+      'Booking Cancelled',
+      'Premium Purchased',
+      'Premium Approved',
+      'AI Daily Plan Ready',
+      'System Announcement'
+    ],
+    required: true,
+  },
+  icon: {
+    type: String,
+    default: 'bell',
   },
   isRead: {
     type: Boolean,
     default: false,
   },
-  createdAt: {
-    type: Date,
-    default: Date.now,
+  actionRoute: {
+    type: String,
+    default: null,
   },
-});
+  actionId: {
+    type: String,
+    default: null,
+  }
+}, { timestamps: true });
+
+notificationSchema.index({ userId: 1, isRead: 1, createdAt: -1 });
 
 module.exports = mongoose.model('Notification', notificationSchema);

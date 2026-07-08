@@ -106,6 +106,9 @@ app.use('/api/admin', require('./routes/admin'));
 app.use('/api/consultations', require('./routes/consultations'));
 app.use('/api/chat', require('./routes/chat'));
 app.use('/api/content', require('./routes/content'));
+app.use('/api/bookings', require('./routes/bookingRoutes'));
+app.use('/api/premium', require('./routes/premiumRoutes'));
+app.use('/api/reviews', require('./routes/reviewRoutes'));
 // Error Handling Middleware
 app.use(notFound);
 app.use(errorHandler);

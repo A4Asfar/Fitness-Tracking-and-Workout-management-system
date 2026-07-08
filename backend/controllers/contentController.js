@@ -147,6 +147,21 @@ Your response MUST be a single, valid raw JSON object. Do not wrap it in markdow
   });
 
   await plan.save();
+
+  try {
+    const { createInAppNotification } = require('./notificationController');
+    await createInAppNotification(
+      userId,
+      'Daily Plan Ready! 🌟',
+      'Your personalized AI Workout and Diet plan for today is ready. Tap to view details.',
+      'AI Daily Plan Ready',
+      'bell',
+      '/daily-plan'
+    );
+  } catch (err) {
+    console.log('Error creating plan ready notification:', err.message);
+  }
+
   console.log(`🤖 Generated new AI Daily Plan for user ${userId} on ${generatedDate}`);
 
   res.json(plan);

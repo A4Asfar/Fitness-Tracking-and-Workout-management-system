@@ -53,23 +53,35 @@ function ToolCard({ icon: Icon, title, desc, onPress }: { icon: any; title: stri
   );
 }
 
-export default function AdminDashboardScreen() {
-  const { user } = useAuth();
-  const router = useRouter();
-  const insets = useSafeAreaInsets();
-  const [stats, setStats] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
+  const [activeSubTab, setActiveSubTab] = useState<'Home' | 'Users' | 'Bookings' | 'Settings'>('Home');
+  const [usersList, setUsersList] = useState<any[]>([]);
+  const [bookingsList, setBookingsList] = useState<any[]>([]);
+  const [settings, setSettings] = useState<any>({ appName: 'FitAI', supportEmail: 'support@fitai.com', maintenanceMode: false, premiumPricing: 2999 });
 
-  const fetchStats = async () => {
+  const fetchUsers = async () => {
     try {
-      const res = await api.get('/admin/stats');
-      setStats(res.data);
-    } catch (error) {
-      console.error('Failed to fetch admin stats:', error);
-    } finally {
-      setLoading(false);
-      setRefreshing(false);
+      const res = await api.get('/admin/users');
+      setUsersList(res.data.users);
+    } catch (e) {
+      console.log('Error fetching users:', e);
+    }
+  };
+
+  const fetchBookings = async () => {
+    try {
+      const res = await api.get('/admin/bookings');
+      setBookingsList(res.data.bookings);
+    } catch (e) {
+      console.log('Error fetching bookings:', e);
+    }
+  };
+
+  const fetchSettings = async () => {
+    try {
+      const res = await api.get('/admin/settings');
+      setSettings(res.data);
+    } catch (e) {
+      console.log('Error fetching settings:', e);
     }
   };
 
@@ -79,12 +91,54 @@ export default function AdminDashboardScreen() {
       router.replace('/');
     } else {
       fetchStats();
+      fetchUsers();
+      fetchBookings();
+      fetchSettings();
     }
   }, [user]);
 
   const onRefresh = () => {
     setRefreshing(true);
     fetchStats();
+    fetchUsers();
+    fetchBookings();
+    fetchSettings();
+  };
+
+  const handleUpdateRole = async (userId: string, newRole: string) => {
+    try {
+      await api.patch(`/admin/users/${userId}/role`, { role: newRole });
+      fetchUsers();
+    } catch (e) {
+      console.log('Error updating role:', e);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string) => {
+    try {
+      await api.delete(`/admin/users/${userId}`);
+      fetchUsers();
+    } catch (e) {
+      console.log('Error deleting user:', e);
+    }
+  };
+
+  const handleUpdateBooking = async (bookingId: string, newStatus: string) => {
+    try {
+      await api.patch(`/bookings/${bookingId}/status`, { status: newStatus });
+      fetchBookings();
+    } catch (e) {
+      console.log('Error updating booking:', e);
+    }
+  };
+
+  const handleUpdateSettings = async () => {
+    try {
+      await api.put('/admin/settings', settings);
+      alert('System Settings updated successfully!');
+    } catch (e) {
+      console.log('Error updating settings:', e);
+    }
   };
 
   if (!user) {
@@ -110,9 +164,22 @@ export default function AdminDashboardScreen() {
         </TouchableOpacity>
         <View style={styles.headerTitleWrap}>
           <Shield size={18} color="#FF3B30" fill="#FF3B3020" />
-          <Text style={styles.headerTitle}>Admin Control Center</Text>
+          <Text style={styles.headerTitle}>Admin Control Center ({activeSubTab})</Text>
         </View>
         <View style={{ width: 44 }} />
+      </View>
+
+      {/* ── Navigation Tabs ── */}
+      <View style={styles.tabBar}>
+        {['Home', 'Users', 'Bookings', 'Settings'].map((t: any) => (
+          <TouchableOpacity 
+            key={t} 
+            style={[styles.tabItem, activeSubTab === t && styles.tabItemActive]}
+            onPress={() => setActiveSubTab(t)}
+          >
+            <Text style={[styles.tabText, activeSubTab === t && styles.tabTextActive]}>{t}</Text>
+          </TouchableOpacity>
+        ))}
       </View>
 
       <ScrollView 
@@ -120,13 +187,11 @@ export default function AdminDashboardScreen() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />}
         showsVerticalScrollIndicator={false}
       >
-        <Text style={styles.subtitle}>System Monitoring Dashboard</Text>
-
         {loading ? (
           <View style={styles.loadingBox}>
             <ActivityIndicator color={Colors.primary} />
           </View>
-        ) : (
+        ) : activeSubTab === 'Home' ? (
           <>
             {/* ── Stat Cards ── */}
             <View style={styles.statsGrid}>
@@ -137,18 +202,28 @@ export default function AdminDashboardScreen() {
               />
               <StatCard 
                 icon={UserCheck} color="#FFD700" 
-                label="Premium" value={stats?.premiumCount || 0} 
+                label="Premium" value={stats?.premiumUsers || 0} 
                 delay={100}
               />
               <StatCard 
-                icon={UserMinus} color="#A855F7" 
-                label="Free Users" value={stats?.freeCount || 0} 
+                icon={Database} color="#A855F7" 
+                label="Trainers" value={stats?.totalTrainers || 0} 
                 delay={200}
               />
               <StatCard 
                 icon={Activity} color="#9FE800" 
-                label="Workouts" value={stats?.totalWorkouts || 0} 
+                label="Active Bookings" value={stats?.activeBookings || 0} 
                 delay={300}
+              />
+              <StatCard 
+                icon={LayoutDashboard} color="#059669" 
+                label="Workouts Logged" value={stats?.workoutsLogged || 0} 
+                delay={400}
+              />
+              <StatCard 
+                icon={CreditCard} color="#F59E0B" 
+                label="Revenue (PKR)" value={stats?.totalRevenue || 0} 
+                delay={500}
               />
             </View>
 
@@ -156,7 +231,7 @@ export default function AdminDashboardScreen() {
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
                 <History size={18} color={Colors.textSecondary} />
-                <Text style={styles.sectionTitle}>Recent Activity</Text>
+                <Text style={styles.sectionTitle}>Recent Registrations</Text>
               </View>
               <View style={styles.activityBox}>
                 {stats?.recentActivity?.users?.map((u: any, i: number) => (
@@ -173,34 +248,96 @@ export default function AdminDashboardScreen() {
               </View>
             </View>
 
-            {/* ── Quick Tools ── */}
+            {/* ── Legacy Verify Payments Hook ── */}
             <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <Database size={18} color={Colors.textSecondary} />
-                <Text style={styles.sectionTitle}>Admin Quick Tools</Text>
-              </View>
               <ToolCard 
-                icon={CreditCard} title="Verify Payments" 
-                desc="Approve or reject pending Premium verification uploads." 
+                icon={CreditCard} title="Verify Premium Invoices" 
+                desc="Go to Premium Membership payment audit interface." 
                 onPress={() => router.push('/admin/verify-payments' as any)} 
-              />
-              <ToolCard 
-                icon={Users} title="View Users" 
-                desc="Browse and manage user profiles & roles." 
-                onPress={() => {}} 
-              />
-              <ToolCard 
-                icon={LayoutDashboard} title="Membership Overview" 
-                desc="Detailed breakdown of subscription tiers." 
-                onPress={() => {}} 
-              />
-              <ToolCard 
-                icon={BarChart3} title="Workout Data Overview" 
-                desc="Global workout frequency and volume stats." 
-                onPress={() => {}} 
               />
             </View>
           </>
+        ) : activeSubTab === 'Users' ? (
+          <View style={styles.listSection}>
+            <Text style={styles.sectionHeaderTitle}>User Directory</Text>
+            {usersList.map((u) => (
+              <View key={u._id} style={styles.adminItemCard}>
+                <View style={styles.adminItemInfo}>
+                  <Text style={styles.adminItemName}>{u.name}</Text>
+                  <Text style={styles.adminItemSub}>{u.email} ({u.membershipType})</Text>
+                </View>
+                <View style={styles.adminActionsRow}>
+                  {u.membershipType !== 'admin' ? (
+                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleUpdateRole(u._id, 'admin')}>
+                      <Text style={styles.actionBtnText}>Make Admin</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity style={[styles.actionBtn, styles.actionBtnSec]} onPress={() => handleUpdateRole(u._id, 'free')}>
+                      <Text style={styles.actionBtnTextSec}>Remove Admin</Text>
+                    </TouchableOpacity>
+                  )}
+                  <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDeleteUser(u._id)}>
+                    <Trash2 size={16} color="#EF4444" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            ))}
+          </View>
+        ) : activeSubTab === 'Bookings' ? (
+          <View style={styles.listSection}>
+            <Text style={styles.sectionHeaderTitle}>All Schedule Requests</Text>
+            {bookingsList.map((b) => (
+              <View key={b._id} style={styles.adminItemCard}>
+                <View style={styles.adminItemInfo}>
+                  <Text style={styles.adminItemName}>Client: {b.userId?.name || 'User'}</Text>
+                  <Text style={styles.adminItemSub}>Coach: {b.trainerId?.fullName || b.trainerId?.name || 'Coach'}</Text>
+                  <Text style={styles.adminItemMeta}>{b.bookingDate} at {b.bookingTime} ({b.bookingStatus})</Text>
+                </View>
+                {b.bookingStatus === 'Pending' && (
+                  <View style={styles.adminActionsRow}>
+                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleUpdateBooking(b._id, 'Confirmed')}>
+                      <Text style={styles.actionBtnText}>Confirm</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.actionBtn, styles.actionBtnSec]} onPress={() => handleUpdateBooking(b._id, 'Cancelled')}>
+                      <Text style={styles.actionBtnTextSec}>Cancel</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
+        ) : (
+          <View style={styles.listSection}>
+            <Text style={styles.sectionHeaderTitle}>Global Platform Config</Text>
+            <View style={styles.formField}>
+              <Text style={styles.formLabel}>App Title Name</Text>
+              <TextInput 
+                style={styles.formInput} 
+                value={settings.appName} 
+                onChangeText={(val) => setSettings(prev => ({ ...prev, appName: val }))}
+              />
+            </View>
+            <View style={styles.formField}>
+              <Text style={styles.formLabel}>Support Helpdesk Email</Text>
+              <TextInput 
+                style={styles.formInput} 
+                value={settings.supportEmail} 
+                onChangeText={(val) => setSettings(prev => ({ ...prev, supportEmail: val }))}
+              />
+            </View>
+            <View style={styles.formField}>
+              <Text style={styles.formLabel}>Premium Plan Price (PKR)</Text>
+              <TextInput 
+                style={styles.formInput} 
+                value={String(settings.premiumPricing)} 
+                onChangeText={(val) => setSettings(prev => ({ ...prev, premiumPricing: Number(val) }))}
+                keyboardType="numeric"
+              />
+            </View>
+            <TouchableOpacity style={styles.saveSettingsBtn} onPress={handleUpdateSettings}>
+              <Text style={styles.saveSettingsBtnText}>Save Settings</Text>
+            </TouchableOpacity>
+          </View>
         )}
       </ScrollView>
     </View>
@@ -369,5 +506,143 @@ const styles = StyleSheet.create({
     fontSize: 12,
     lineHeight: 16,
     fontWeight: '500',
+  },
+
+  // Subtabs Navigation Style
+  tabBar: {
+    flexDirection: 'row',
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    marginBottom: 20,
+  },
+  tabItem: {
+    flex: 1,
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderBottomWidth: 2,
+    borderBottomColor: 'transparent',
+  },
+  tabItemActive: {
+    borderBottomColor: Colors.primary,
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
+  tabTextActive: {
+    color: Colors.primary,
+    fontWeight: '800',
+  },
+
+  // Management Views Style
+  listSection: {
+    marginTop: 8,
+  },
+  sectionHeaderTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+    color: Colors.text,
+    marginBottom: 16,
+  },
+  adminItemCard: {
+    backgroundColor: Colors.card,
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    marginBottom: 12,
+  },
+  adminItemInfo: {
+    marginBottom: 12,
+  },
+  adminItemName: {
+    fontSize: 16,
+    fontWeight: '800',
+    color: Colors.text,
+  },
+  adminItemSub: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 2,
+    fontWeight: '500',
+  },
+  adminItemMeta: {
+    fontSize: 12,
+    color: Colors.primary,
+    marginTop: 4,
+    fontWeight: '700',
+  },
+  adminActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    alignItems: 'center',
+    gap: 8,
+  },
+  actionBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 12,
+    height: 36,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  actionBtnText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '850',
+  },
+  actionBtnSec: {
+    backgroundColor: '#F1F5F9',
+  },
+  actionBtnTextSec: {
+    color: Colors.text,
+    fontSize: 12,
+    fontWeight: '750',
+  },
+  deleteBtn: {
+    width: 36,
+    height: 36,
+    backgroundColor: '#FEF2F2',
+    borderWidth: 1,
+    borderColor: '#FEE2E2',
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  // Form Fields Style
+  formField: {
+    marginBottom: 16,
+  },
+  formLabel: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  formInput: {
+    backgroundColor: Colors.card,
+    borderRadius: 12,
+    height: 48,
+    paddingHorizontal: 16,
+    borderWidth: 1.5,
+    borderColor: Colors.border,
+    color: Colors.text,
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  saveSettingsBtn: {
+    backgroundColor: Colors.primary,
+    height: 52,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  saveSettingsBtnText: {
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '850',
   },
 });

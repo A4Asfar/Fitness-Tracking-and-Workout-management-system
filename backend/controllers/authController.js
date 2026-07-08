@@ -41,6 +41,20 @@ exports.register = asyncHandler(async (req, res) => {
     console.log('👤 User registered in MongoDB:', user.email);
     const token = generateToken(user._id);
     
+    // Trigger in-app Welcome notification
+    try {
+      const { createInAppNotification } = require('./notificationController');
+      await createInAppNotification(
+        user._id,
+        'Welcome to FitAI! 🎉',
+        'We are thrilled to join you on your fitness journey. Start checking out workout suggestors, meal planners, and trainers.',
+        'Welcome',
+        'bell'
+      );
+    } catch (err) {
+      console.log('Error triggering welcome notification:', err.message);
+    }
+    
     // Use toObject to include virtuals like 'id'
     const userData = user.toObject();
     delete userData.password;

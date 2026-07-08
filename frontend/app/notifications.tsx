@@ -1,271 +1,329 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, 
-  ActivityIndicator, RefreshControl 
+  View, Text, StyleSheet, FlatList, TouchableOpacity, 
+  TextInput, ActivityIndicator, RefreshControl 
 } from 'react-native';
-import { Stack } from 'expo-router';
-import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
-import { 
-  Bell, ArrowLeft, Trash2, CheckCircle2, 
-  Dumbbell, Utensils, User, Scale, Info
-} from 'lucide-react-native';
+import { useRouter, Stack } from 'expo-router';
+import { Colors, SPACING } from '@/constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
+import { 
+  ArrowLeft, Bell, Calendar, Award, Info, Trash2, 
+  Search, CheckCheck, AlertTriangle, ShieldAlert
+} from 'lucide-react-native';
 import api from '@/services/api';
-import { safeBack } from '@/utils/navigation';
-
-interface Notification {
-  _id: string;
-  title: string;
-  message: string;
-  type: 'workout' | 'meal' | 'consultation' | 'weight' | 'system';
-  isRead: boolean;
-  createdAt: string;
-}
+import SkeletonCard from '@/components/SkeletonCard';
 
 export default function NotificationsScreen() {
+  const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [filter, setFilter] = useState('All');
+  const [search, setSearch] = useState('');
   const [error, setError] = useState<string | null>(null);
 
-  const fetchNotifications = async () => {
-    setError(null);
+  const fetchNotifications = useCallback(async (pageNum = 1, isRefresh = false) => {
     try {
-      const res = await api.get('/notifications');
-      setNotifications(res.data);
-    } catch (err: any) {
-      console.error('Fetch notifications error:', err);
-      setError(err.message || 'Failed to sync notifications.');
+      const res = await api.get('/notifications', {
+        params: {
+          page: pageNum,
+          limit: 15,
+          filter,
+          search
+        }
+      });
+
+      const { notifications: list, unreadCount: count, pages } = res.data;
+
+      if (isRefresh || pageNum === 1) {
+        setNotifications(list);
+      } else {
+        setNotifications(prev => [...prev, ...list]);
+      }
+
+      setUnreadCount(count);
+      setTotalPages(pages);
+      setPage(pageNum);
+      setError(null);
+    } catch (e: any) {
+      setError(e.message || 'Failed to load notifications.');
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [filter, search]);
 
   useEffect(() => {
-    fetchNotifications();
-  }, []);
+    setLoading(true);
+    fetchNotifications(1);
+  }, [fetchNotifications]);
 
-  const onRefresh = () => {
+  const handleRefresh = () => {
     setRefreshing(true);
-    fetchNotifications();
+    fetchNotifications(1, true);
   };
 
-  const markAsRead = async (id: string) => {
-    try {
-      await api.put(`/notifications/${id}/read`);
-      setNotifications(notifications.map(n => 
-        n._id === id ? { ...n, isRead: true } : n
-      ));
-    } catch (error) {
-      console.error('Mark as read error:', error);
+  const handleLoadMore = () => {
+    if (page < totalPages) {
+      fetchNotifications(page + 1);
     }
+  };
+
+  const handleMarkAsRead = async (id: string) => {
+    try {
+      await api.patch(`/notifications/${id}/read`);
+      setNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
+      setUnreadCount(c => Math.max(0, c - 1));
+    } catch (err) {
+      console.log('Error marking as read:', err);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await api.patch('/notifications/read-all');
+      setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+      setUnreadCount(0);
+    } catch (err) {
+      console.log('Error marking all read:', err);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await api.delete(`/notifications/${id}`);
+      setNotifications(prev => prev.filter(n => n._id !== id));
+      // Reset unread count correctly
+      const res = await api.get('/notifications', { params: { limit: 1 } });
+      setUnreadCount(res.data.unreadCount);
+    } catch (err) {
+      console.log('Error deleting notification:', err);
+    }
+  };
+
+  const handleNotificationPress = (item: any) => {
+    if (!item.isRead) {
+      handleMarkAsRead(item._id);
+    }
+    if (item.actionRoute) {
+      router.push(item.actionRoute);
+    }
+  };
+
+  const getRelativeTime = (dateStr: string) => {
+    const now = new Date();
+    const date = new Date(dateStr);
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMins / 60);
+    const diffDays = Math.floor(diffHours / 24);
+
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins} min ago`;
+    if (diffHours < 24) return `${diffHours} hr ago`;
+    return `${diffDays} days ago`;
   };
 
   const getIcon = (type: string) => {
     switch (type) {
-      case 'workout': return <Dumbbell size={20} color={Colors.primary} />;
-      case 'meal': return <Utensils size={20} color="#FF6B3B" />;
-      case 'consultation': return <User size={20} color="#00D1FF" />;
-      case 'weight': return <Scale size={20} color="#FFD700" />;
-      default: return <Info size={20} color={Colors.textSecondary} />;
+      case 'Trainer Booking':
+      case 'Booking Approved':
+      case 'Booking Cancelled':
+        return <Calendar size={18} color={Colors.primary} />;
+      case 'Premium Purchased':
+      case 'Premium Approved':
+        return <Award size={18} color="#D4AF37" />;
+      case 'Welcome':
+      case 'System Announcement':
+        return <Bell size={18} color="#3B82F6" />;
+      default:
+        return <Info size={18} color="#64748B" />;
     }
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffInSecs = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
-    if (diffInSecs < 60) return 'Just now';
-    if (diffInSecs < 3600) return `${Math.floor(diffInSecs / 60)}m ago`;
-    if (diffInSecs < 86400) return `${Math.floor(diffInSecs / 3600)}h ago`;
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const filters = ['All', 'Unread', 'Bookings', 'Premium', 'Workout', 'System'];
+
+  const renderItem = ({ item }: { item: any }) => (
+    <View style={s.cardWrapper}>
+      <TouchableOpacity 
+        style={[s.card, !item.isRead && s.cardUnread]}
+        onPress={() => handleNotificationPress(item)}
+        activeOpacity={0.8}
+      >
+        <View style={s.iconBox}>
+          {getIcon(item.type)}
+        </View>
+        <View style={s.cardBody}>
+          <Text style={[s.cardTitle, !item.isRead && s.cardTitleUnread]}>{item.title}</Text>
+          <Text style={s.cardMessage}>{item.message}</Text>
+          <Text style={s.cardTime}>{getRelativeTime(item.createdAt)}</Text>
+        </View>
+        {!item.isRead && <View style={s.unreadDot} />}
+      </TouchableOpacity>
+      
+      <TouchableOpacity style={s.deleteActionBtn} onPress={() => handleDelete(item._id)}>
+        <Trash2 size={16} color="#EF4444" />
+      </TouchableOpacity>
+    </View>
+  );
+
+  const renderEmpty = () => {
+    if (loading) return null;
+    return (
+      <View style={s.emptyContainer}>
+        <Bell size={64} color="#CBD5E1" style={{ marginBottom: 16 }} />
+        <Text style={s.emptyTitle}>No notifications yet</Text>
+        <Text style={s.emptySub}>We will notify you when workouts, meal plans, or bookings need your attention.</Text>
+      </View>
+    );
   };
 
-  if (loading && !refreshing) {
-    return (
-      <View style={[SharedStyles.container, { justifyContent: 'center' }]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-      </View>
-    );
-  }
-
-  if (error && !refreshing) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-        <LinearGradient colors={['#FF4B4B15', 'transparent']} style={StyleSheet.absoluteFill} />
-        <Text style={{ color: '#FF4B4B', fontSize: 16, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>SYNC ERROR</Text>
-        <Text style={{ color: Colors.textSecondary, fontSize: 14, fontWeight: '500', textAlign: 'center', marginBottom: 28, lineHeight: 22 }}>{error}</Text>
-        <TouchableOpacity 
-          onPress={() => { setLoading(true); fetchNotifications(); }} 
-          style={{ height: 54, width: 160, borderRadius: 18, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}
-          activeOpacity={0.8}
-        >
-          <Text style={{ color: '#000', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 }}>RETRY SYNC</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
   return (
-    <View style={SharedStyles.container}>
+    <View style={s.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      
-      {/* ── Header ── */}
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
-        <TouchableOpacity onPress={() => safeBack()} style={styles.backBtn}>
-          <ArrowLeft size={22} color={Colors.text} />
+
+      {/* HEADER */}
+      <View style={[s.header, { paddingTop: insets.top + SPACING.sm }]}>
+        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
+          <ArrowLeft size={24} color="#0F172A" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Notifications</Text>
-        <View style={{ width: 44 }} />
+        <View style={s.headerTitleContainer}>
+          <Text style={s.headerTitle}>Notifications</Text>
+          {unreadCount > 0 && (
+            <View style={s.badge}>
+              <Text style={s.badgeText}>{unreadCount} unread</Text>
+            </View>
+          )}
+        </View>
+        {unreadCount > 0 ? (
+          <TouchableOpacity onPress={handleMarkAllRead} style={s.readAllBtn}>
+            <CheckCheck size={20} color={Colors.primary} />
+          </TouchableOpacity>
+        ) : (
+          <View style={{ width: 44 }} />
+        )}
       </View>
 
-      <ScrollView
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
-        showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
-        }
-      >
-        {notifications.length === 0 ? (
-          <View style={styles.emptyState}>
-            <Bell size={64} color="#222" strokeWidth={1} />
-            <Text style={styles.emptyTitle}>All caught up!</Text>
-            <Text style={styles.emptySub}>When you have new updates, they&apos;ll appear here.</Text>
-          </View>
-        ) : (
-          notifications.map((item) => (
+      {/* SEARCH */}
+      <View style={s.searchContainer}>
+        <Search size={18} color="#64748B" style={s.searchIcon} />
+        <TextInput
+          style={s.searchInput}
+          placeholder="Search notifications..."
+          placeholderTextColor="#94A3B8"
+          value={search}
+          onChangeText={(txt) => {
+            setSearch(txt);
+            setLoading(true);
+            fetchNotifications(1);
+          }}
+        />
+      </View>
+
+      {/* FILTER BAR */}
+      <View style={s.filterWrapper}>
+        <FlatList
+          horizontal
+          data={filters}
+          keyExtractor={item => item}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={s.filterContainer}
+          renderItem={({ item }) => (
             <TouchableOpacity 
-              key={item._id} 
-              style={[styles.notificationCard, !item.isRead && styles.unreadCard]}
-              onPress={() => !item.isRead && markAsRead(item._id)}
-              activeOpacity={0.8}
+              style={[s.filterChip, filter === item && s.filterChipActive]}
+              onPress={() => {
+                setFilter(item);
+                setLoading(true);
+                fetchNotifications(1);
+              }}
             >
-              <View style={[styles.iconBox, { backgroundColor: Colors.card }]}>
-                {getIcon(item.type)}
-                {!item.isRead && <View style={styles.unreadDot} />}
-              </View>
-              
-              <View style={styles.textContainer}>
-                <View style={styles.cardHeader}>
-                  <Text style={[styles.notifTitle, !item.isRead && styles.unreadText]}>{item.title}</Text>
-                  <Text style={styles.notifTime}>{formatDate(item.createdAt)}</Text>
-                </View>
-                <Text style={styles.notifMessage} numberOfLines={2}>{item.message}</Text>
-              </View>
+              <Text style={[s.filterChipText, filter === item && s.filterChipTextActive]}>{item}</Text>
             </TouchableOpacity>
-          ))
-        )}
-      </ScrollView>
+          )}
+        />
+      </View>
+
+      {/* ERROR */}
+      {error && !loading && (
+        <View style={s.errorCard}>
+          <AlertTriangle size={24} color="#EF4444" />
+          <Text style={s.errorText}>{error}</Text>
+          <TouchableOpacity style={s.retryBtn} onPress={handleRefresh}>
+            <Text style={s.retryBtnText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* LIST */}
+      {loading ? (
+        <View style={s.listContainer}>
+          {[1, 2, 3, 4].map(k => <SkeletonCard key={k} style={{ marginBottom: 16 }} />)}
+        </View>
+      ) : (
+        <FlatList
+          data={notifications}
+          keyExtractor={item => item._id}
+          renderItem={renderItem}
+          contentContainerStyle={s.listContainer}
+          ListEmptyComponent={renderEmpty}
+          showsVerticalScrollIndicator={false}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.3}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={Colors.primary} />
+          }
+        />
+      )}
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
-  },
-  backBtn: {
-    width: 44, height: 44, borderRadius: 14,
-    backgroundColor: Colors.card, justifyContent: 'center',
-    alignItems: 'center', borderWidth: 1, borderColor: Colors.border,
-  },
-  headerTitle: { color: Colors.text, fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
-  content: { padding: SPACING.lg },
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingBottom: 16 },
+  backBtn: { width: 44, height: 44, backgroundColor: '#FFF', borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
+  headerTitleContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
+  headerTitle: { fontSize: 20, fontWeight: '950', color: '#0F172A' },
+  badge: { backgroundColor: '#FEE2E2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
+  badgeText: { color: '#EF4444', fontSize: 11, fontWeight: '800' },
+  readAllBtn: { width: 44, height: 44, backgroundColor: '#FFF', borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
+
+  searchContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', marginHorizontal: 24, paddingHorizontal: 16, borderRadius: 16, height: 48, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 12 },
+  searchIcon: { marginRight: 8 },
+  searchInput: { flex: 1, fontSize: 14, color: '#0F172A', fontWeight: '500' },
+
+  filterWrapper: { marginBottom: 16 },
+  filterContainer: { paddingHorizontal: 24, gap: 8 },
+  filterChip: { backgroundColor: '#FFF', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 20, borderWidth: 1, borderColor: '#E2E8F0' },
+  filterChipActive: { backgroundColor: Colors.primary, borderColor: Colors.primary },
+  filterChipText: { fontSize: 13, fontWeight: '600', color: '#64748B' },
+  filterChipTextActive: { color: '#FFF', fontWeight: '800' },
+
+  listContainer: { paddingHorizontal: 24, paddingBottom: 100 },
+  cardWrapper: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 8 },
+  card: { flex: 1, flexDirection: 'row', backgroundColor: '#FFF', borderRadius: 20, padding: 16, borderWidth: 1, borderColor: '#F1F5F9', shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.03, shadowRadius: 8, elevation: 1 },
+  cardUnread: { backgroundColor: '#EFF6FF', borderColor: '#BFDBFE' },
+  iconBox: { width: 36, height: 36, borderRadius: 12, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center', marginRight: 12, alignSelf: 'center' },
+  cardBody: { flex: 1 },
+  cardTitle: { fontSize: 14, fontWeight: '700', color: '#475569', marginBottom: 4 },
+  cardTitleUnread: { color: '#1E3A8A' },
+  cardMessage: { fontSize: 13, color: '#64748B', lineHeight: 18, marginBottom: 6 },
+  cardTime: { fontSize: 11, color: '#94A3B8', fontWeight: '600' },
+  unreadDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#3B82F6', alignSelf: 'center', marginLeft: 8 },
   
-  notificationCard: {
-    flexDirection: 'row',
-    backgroundColor: Colors.card,
-    borderRadius: 20,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    alignItems: 'center',
-  },
-  unreadCard: {
-    borderColor: Colors.primary + '30',
-    backgroundColor: Colors.primary + '05',
-  },
-  iconBox: {
-    width: 50,
-    height: 50,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    position: 'relative',
-    borderWidth: 1,
-    borderColor: Colors.border,
-  },
-  unreadDot: {
-    position: 'absolute',
-    top: -2,
-    right: -2,
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    backgroundColor: Colors.primary,
-    borderWidth: 2,
-    borderColor: Colors.background,
-  },
-  textContainer: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  notifTitle: {
-    color: Colors.text,
-    fontSize: 15,
-    fontWeight: '700',
-  },
-  unreadText: {
-    color: Colors.primary,
-    fontWeight: '900',
-  },
-  notifTime: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '600',
-  },
-  notifMessage: {
-    color: Colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '500',
-  },
-  
-  emptyState: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingTop: 100,
-  },
-  emptyTitle: {
-    color: Colors.text,
-    fontSize: 20,
-    fontWeight: '900',
-    marginTop: 20,
-  },
-  emptySub: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-    textAlign: 'center',
-    marginTop: 8,
-    maxWidth: 240,
-    lineHeight: 20,
-  }
+  deleteActionBtn: { width: 44, height: 56, backgroundColor: '#FEF2F2', borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderVertical: 1, borderWidth: 1, borderColor: '#FEE2E2' },
+
+  emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 100 },
+  emptyTitle: { fontSize: 18, fontWeight: '850', color: '#0F172A', marginBottom: 8 },
+  emptySub: { fontSize: 14, color: '#64748B', textAlign: 'center', paddingHorizontal: 32, lineHeight: 22 },
+
+  errorCard: { backgroundColor: '#FEE2E2', padding: 20, borderRadius: 20, alignItems: 'center', marginHorizontal: 24, marginBottom: 24, gap: 8 },
+  errorText: { color: '#EF4444', fontWeight: '600', fontSize: 14, textAlign: 'center' },
+  retryBtn: { backgroundColor: '#EF4444', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 10 },
+  retryBtnText: { color: '#FFF', fontWeight: '750', fontSize: 13 }
 });

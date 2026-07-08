@@ -1,333 +1,564 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, 
-  ActivityIndicator, Image, Modal, Alert 
+  View, Text, StyleSheet, FlatList, TouchableOpacity, 
+  RefreshControl, TextInput, Modal, ScrollView, Animated, KeyboardAvoidingView, Platform
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
-import { safeBack } from '@/utils/navigation';
-import { 
-  ArrowLeft, Star, Clock, UserCheck, ShieldCheck, Sparkles, AlertTriangle 
-} from 'lucide-react-native';
+import { Search, SlidersHorizontal, UserX, AlertCircle, X, ChevronDown, Check } from 'lucide-react-native';
 import api from '@/services/api';
-import { useToast } from '@/components/Toast';
-import { TrainerAvatar } from '@/components/TrainerAvatar';
 
-export default function TrainerConsultationsScreen() {
+import TrainerCard from '@/components/trainers/TrainerCard';
+import FeaturedTrainerCard from '@/components/trainers/FeaturedTrainerCard';
+import SkeletonCard from '@/components/SkeletonCard';
+
+export default function TrainersListScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { showToast } = useToast();
 
   const [trainers, setTrainers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedTrainer, setSelectedTrainer] = useState<any | null>(null);
-  const [booking, setBooking] = useState(false);
 
-  const fetchTrainers = async () => {
-    setError(null);
+  // Search & Filter State
+  const [searchQuery, setSearchQuery] = useState('');
+  const [showFilterModal, setShowFilterModal] = useState(false);
+  const [filters, setFilters] = useState({
+    verifiedOnly: false,
+    featuredOnly: false,
+    availability: 'All', // All, Online, Offline
+    sortBy: 'Highest Rated', // Highest Rated, Most Experienced, Lowest Price
+  });
+
+  // Pagination State
+  const [page, setPage] = useState(1);
+  const PAGE_SIZE = 10;
+
+  const fetchTrainers = useCallback(async () => {
     try {
       const res = await api.get('/content/trainers');
-      setTrainers(res.data);
+      // Simulated delay to show beautiful skeletons
+      setTimeout(() => {
+        setTrainers(res.data);
+        setError(null);
+        setLoading(false);
+        setRefreshing(false);
+      }, 800);
     } catch (e: any) {
-      if (__DEV__) console.log('Trainers fetch error:', e.message);
-      setError(e.message || 'Failed to fetch trainers.');
-    } finally {
+      setError(e.message || 'Failed to connect to servers.');
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchTrainers();
-  }, []);
+  }, [fetchTrainers]);
 
-  const handleBookConsultation = async (trainer: any) => {
-    setBooking(true);
-    try {
-      await api.post('/consultations', {
-        trainerName: trainer.name,
-        trainerSpecialization: trainer.specialization
-      });
-      showToast(`Consultation with ${trainer.name} booked successfully!`, 'success');
-      setSelectedTrainer(null);
-      // Optional: Refresh local notifications or consultations
-    } catch (e: any) {
-      showToast(e.message || 'Failed to book consultation', 'error');
-    } finally {
-      setBooking(false);
+  const handleRefresh = useCallback(() => {
+    setRefreshing(true);
+    setPage(1);
+    fetchTrainers();
+  }, [fetchTrainers]);
+
+  // Derived Data
+  const filteredAndSortedTrainers = useMemo(() => {
+    let result = [...trainers];
+
+    // Search
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter(t => 
+        (t.fullName || t.name || '').toLowerCase().includes(q) ||
+        (t.city || '').toLowerCase().includes(q) ||
+        (t.specializations || []).some((s: string) => s.toLowerCase().includes(q)) ||
+        (t.specialization || '').toLowerCase().includes(q)
+      );
+    }
+
+    // Filters
+    if (filters.verifiedOnly) {
+      result = result.filter(t => t.verifiedTrainer);
+    }
+    if (filters.featuredOnly) {
+      result = result.filter(t => t.featuredTrainer);
+    }
+    if (filters.availability !== 'All') {
+      result = result.filter(t => t.availabilityStatus === filters.availability);
+    }
+
+    // Sort
+    if (filters.sortBy === 'Highest Rated') {
+      result.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    } else if (filters.sortBy === 'Most Experienced') {
+      result.sort((a, b) => (b.experienceYears || 0) - (a.experienceYears || 0));
+    } else if (filters.sortBy === 'Lowest Price') {
+      result.sort((a, b) => (a.hourlyPrice || 0) - (b.hourlyPrice || 0));
+    }
+
+    return result;
+  }, [trainers, searchQuery, filters]);
+
+  const featuredTrainers = useMemo(() => {
+    return filteredAndSortedTrainers.filter(t => t.featuredTrainer).slice(0, 5);
+  }, [filteredAndSortedTrainers]);
+
+  // Pagination Slice
+  const paginatedTrainers = useMemo(() => {
+    return filteredAndSortedTrainers.slice(0, page * PAGE_SIZE);
+  }, [filteredAndSortedTrainers, page]);
+
+  const handleLoadMore = () => {
+    if (paginatedTrainers.length < filteredAndSortedTrainers.length) {
+      setPage(prev => prev + 1);
     }
   };
 
-  if (loading) {
+  const handleTrainerPress = (trainerId: string) => {
+    // router.push(`/trainer/${trainerId}`);
+    // DO NOT IMPLEMENT DETAILS YET per instructions
+  };
+
+  // --- RENDERS ---
+
+  const renderHeader = () => (
+    <View style={s.headerContainer}>
+      <Text style={s.mainTitle}>Find Your Trainer</Text>
+      <Text style={s.subtitle}>Elite coaching tailored to your goals</Text>
+
+      <View style={s.searchRow}>
+        <View style={s.searchBar}>
+          <Search size={20} color={Colors.textSecondary} />
+          <TextInput 
+            style={s.searchInput}
+            placeholder="Search name, city, or specialty..."
+            placeholderTextColor="#94A3B8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+        <TouchableOpacity 
+          style={[s.filterBtn, (filters.verifiedOnly || filters.featuredOnly || filters.availability !== 'All') && s.filterBtnActive]} 
+          onPress={() => setShowFilterModal(true)}
+        >
+          <SlidersHorizontal size={20} color={(filters.verifiedOnly || filters.featuredOnly || filters.availability !== 'All') ? '#FFFFFF' : Colors.text} />
+        </TouchableOpacity>
+      </View>
+
+      {featuredTrainers.length > 0 && !searchQuery && (
+        <View style={s.featuredSection}>
+          <Text style={s.sectionTitle}>Featured Coaches</Text>
+          <FlatList 
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            data={featuredTrainers}
+            keyExtractor={item => 'feat-' + (item.id || item._id)}
+            renderItem={({ item }) => (
+              <FeaturedTrainerCard 
+                trainer={item} 
+                onPress={() => handleTrainerPress(item.id || item._id)} 
+              />
+            )}
+            contentContainerStyle={{ paddingVertical: 8 }}
+            snapToInterval={280 + 16} // CARD_WIDTH + marginRight
+            decelerationRate="fast"
+          />
+        </View>
+      )}
+
+      <Text style={[s.sectionTitle, { marginTop: 24, marginBottom: 12 }]}>All Trainers</Text>
+    </View>
+  );
+
+  const renderEmpty = () => {
+    if (loading) return null;
     return (
-      <View style={s.loader}>
-        <ActivityIndicator size="large" color={Colors.primary} />
-        <Text style={s.loaderText}>Finding active coaches…</Text>
+      <View style={s.emptyContainer}>
+        <UserX size={48} color="#CBD5E1" style={{ marginBottom: 16 }} />
+        <Text style={s.emptyTitle}>No Coaches Found</Text>
+        <Text style={s.emptySub}>We couldn't find any trainers matching your current filters or search.</Text>
+        <TouchableOpacity style={s.clearBtn} onPress={() => {
+          setSearchQuery('');
+          setFilters({ verifiedOnly: false, featuredOnly: false, availability: 'All', sortBy: 'Highest Rated' });
+        }}>
+          <Text style={s.clearBtnText}>Clear All Filters</Text>
+        </TouchableOpacity>
       </View>
     );
-  }
+  };
 
+  const renderFilterModal = () => (
+    <Modal visible={showFilterModal} animationType="slide" transparent>
+      <View style={s.modalOverlay}>
+        <View style={[s.bottomSheet, { paddingBottom: insets.bottom + 24 }]}>
+          <View style={s.sheetHeader}>
+            <Text style={s.sheetTitle}>Sort & Filter</Text>
+            <TouchableOpacity onPress={() => setShowFilterModal(false)} style={s.closeIcon}>
+              <X size={24} color={Colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={s.sheetBody} showsVerticalScrollIndicator={false}>
+            {/* Sort Section */}
+            <Text style={s.filterSectionTitle}>SORT BY</Text>
+            <View style={s.chipRow}>
+              {['Highest Rated', 'Most Experienced', 'Lowest Price'].map(opt => (
+                <TouchableOpacity 
+                  key={opt}
+                  style={[s.chip, filters.sortBy === opt && s.chipActive]}
+                  onPress={() => setFilters(p => ({ ...p, sortBy: opt }))}
+                >
+                  <Text style={[s.chipText, filters.sortBy === opt && s.chipTextActive]}>{opt}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Availability Section */}
+            <Text style={s.filterSectionTitle}>AVAILABILITY</Text>
+            <View style={s.chipRow}>
+              {['All', 'Online', 'Offline'].map(opt => (
+                <TouchableOpacity 
+                  key={opt}
+                  style={[s.chip, filters.availability === opt && s.chipActive]}
+                  onPress={() => setFilters(p => ({ ...p, availability: opt }))}
+                >
+                  <Text style={[s.chipText, filters.availability === opt && s.chipTextActive]}>{opt}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Toggles */}
+            <Text style={s.filterSectionTitle}>PREFERENCES</Text>
+            <TouchableOpacity 
+              style={s.toggleRow} 
+              activeOpacity={0.7}
+              onPress={() => setFilters(p => ({ ...p, verifiedOnly: !p.verifiedOnly }))}
+            >
+              <Text style={s.toggleLabel}>Verified Trainers Only</Text>
+              <View style={[s.checkbox, filters.verifiedOnly && s.checkboxActive]}>
+                {filters.verifiedOnly && <Check size={14} color="#FFF" />}
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity 
+              style={s.toggleRow} 
+              activeOpacity={0.7}
+              onPress={() => setFilters(p => ({ ...p, featuredOnly: !p.featuredOnly }))}
+            >
+              <Text style={s.toggleLabel}>Featured Trainers Only</Text>
+              <View style={[s.checkbox, filters.featuredOnly && s.checkboxActive]}>
+                {filters.featuredOnly && <Check size={14} color="#FFF" />}
+              </View>
+            </TouchableOpacity>
+          </ScrollView>
+
+          <TouchableOpacity style={s.applyBtn} onPress={() => setShowFilterModal(false)}>
+            <Text style={s.applyBtnText}>Show Results</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
+  );
+
+  // Main Render
   if (error) {
     return (
       <View style={s.errorContainer}>
-        <LinearGradient colors={['#FF4B4B15', 'transparent']} style={StyleSheet.absoluteFill} />
-        <AlertTriangle size={48} color="#FF4B4B" style={{ marginBottom: 16 }} />
-        <Text style={s.errorTitle}>CONNECTION FAILURE</Text>
+        <AlertCircle size={48} color={Colors.error} style={{ marginBottom: 16 }} />
+        <Text style={s.errorTitle}>Connection Failed</Text>
         <Text style={s.errorSub}>{error}</Text>
-        <TouchableOpacity 
-          onPress={() => { setLoading(true); fetchTrainers(); }} 
-          style={s.retryBtn}
-          activeOpacity={0.8}
-        >
-          <Text style={s.retryBtnText}>RETRY SYNC</Text>
+        <TouchableOpacity style={s.retryBtn} onPress={handleRefresh}>
+          <Text style={s.retryBtnText}>Try Again</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <View style={SharedStyles.container}>
+    <View style={s.container}>
       <Stack.Screen options={{ headerShown: false }} />
-      
-      {/* ── Header ── */}
-      <View style={[s.header, { paddingTop: insets.top + SPACING.sm }]}>
-        <TouchableOpacity onPress={() => safeBack()} style={s.backButton}>
-          <ArrowLeft size={22} color={Colors.text} />
-        </TouchableOpacity>
-        <Text style={s.headerTitle}>Fitness Coaches</Text>
-        <View style={{ width: 44 }} />
-      </View>
+      <View style={{ paddingTop: insets.top }} />
 
-      <ScrollView 
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[s.content, { paddingBottom: insets.bottom + 40 }]}
-      >
-        <View style={s.intro}>
-          <Text style={s.introTitle}>Personal Coaching</Text>
-          <Text style={s.introSub}>Book consultations with world-class specialists for custom training advice.</Text>
-        </View>
+      {loading ? (
+        <ScrollView style={{ padding: SPACING.lg }} showsVerticalScrollIndicator={false}>
+          <Text style={s.mainTitle}>Find Your Trainer</Text>
+          <View style={{ height: 60 }} />
+          {[1, 2, 3, 4].map(k => <SkeletonCard key={k} style={{ marginBottom: 16 }} />)}
+        </ScrollView>
+      ) : (
+        <FlatList
+          data={paginatedTrainers}
+          keyExtractor={(item) => (item.id || item._id).toString()}
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ padding: SPACING.lg, paddingBottom: insets.bottom + 100 }}
+          ListHeaderComponent={renderHeader}
+          ListEmptyComponent={renderEmpty}
+          renderItem={({ item }) => (
+            <TrainerCard 
+              trainer={item} 
+              onPress={() => handleTrainerPress(item.id || item._id)} 
+            />
+          )}
+          onEndReached={handleLoadMore}
+          onEndReachedThreshold={0.3}
+          initialNumToRender={6}
+          maxToRenderPerBatch={8}
+          windowSize={5}
+          removeClippedSubviews={true}
+          refreshControl={
+            <RefreshControl 
+              refreshing={refreshing} 
+              onRefresh={handleRefresh} 
+              tintColor={Colors.primary} 
+              colors={[Colors.primary]} 
+            />
+          }
+        />
+      )}
 
-        {trainers.length === 0 ? (
-          <View style={s.emptyContainer}>
-            <UserCheck size={48} color={Colors.textSecondary} style={{ marginBottom: 16 }} />
-            <Text style={s.emptyTitle}>No Coaches Available</Text>
-            <Text style={s.emptySub}>All coaches are currently booked out. Please check back later.</Text>
-          </View>
-        ) : (
-          <View style={s.grid}>
-            {trainers.map((trainer) => (
-              <TouchableOpacity 
-                key={trainer._id || trainer.id} 
-                style={s.card}
-                activeOpacity={0.9}
-                onPress={() => setSelectedTrainer(trainer)}
-              >
-                <LinearGradient colors={['#1A1D24', '#12141A']} style={s.cardGrad}>
-                  <View style={s.cardTop}>
-                    <TrainerAvatar 
-                      uri={trainer.image} 
-                      name={trainer.name} 
-                      size={64} 
-                      accentColor={trainer.accentColor || Colors.primary} 
-                    />
-                    <View style={s.cardInfo}>
-                      <Text style={s.trainerName}>{trainer.name}</Text>
-                      <Text style={[s.trainerSpec, { color: trainer.accentColor || Colors.primary }]}>{trainer.specialization}</Text>
-                      <View style={s.ratingRow}>
-                        <Star size={14} color="#FFD700" fill="#FFD700" />
-                        <Text style={s.ratingText}>{trainer.rating || 4.9}</Text>
-                        <Text style={s.expText}>• {trainer.experience}</Text>
-                      </View>
-                    </View>
-                  </View>
-                  <Text style={s.trainerBio} numberOfLines={2}>{trainer.bio}</Text>
-                </LinearGradient>
-              </TouchableOpacity>
-            ))}
-          </View>
-        )}
-      </ScrollView>
-
-      {/* ── Trainer Detail / Booking Modal ── */}
-      <Modal
-        visible={selectedTrainer !== null}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setSelectedTrainer(null)}
-      >
-        <View style={s.modalOverlay}>
-          <View style={s.modalContent}>
-            {selectedTrainer && (
-              <>
-                <View style={s.modalHeader}>
-                  <TrainerAvatar 
-                    uri={selectedTrainer.image} 
-                    name={selectedTrainer.name} 
-                    size={80} 
-                    accentColor={selectedTrainer.accentColor || Colors.primary} 
-                  />
-                  <Text style={s.modalTrainerName}>{selectedTrainer.name}</Text>
-                  <Text style={[s.modalTrainerSpec, { color: selectedTrainer.accentColor || Colors.primary }]}>
-                    {selectedTrainer.specialization}
-                  </Text>
-                </View>
-
-                <ScrollView style={s.modalBody} showsVerticalScrollIndicator={false}>
-                  <Text style={s.modalSectionTitle}>BIOGRAPHY</Text>
-                  <Text style={s.modalText}>{selectedTrainer.bio}</Text>
-
-                  <Text style={s.modalSectionTitle}>EXPERTISE</Text>
-                  <Text style={s.modalText}>{selectedTrainer.expertise}</Text>
-
-                  <Text style={s.modalSectionTitle}>RECOMMENDED FOR</Text>
-                  <Text style={s.modalText}>{selectedTrainer.recommendedFor}</Text>
-
-                  {selectedTrainer.supportNote && (
-                    <View style={[s.noteBox, { borderColor: (selectedTrainer.accentColor || Colors.primary) + '40' }]}>
-                      <Sparkles size={18} color={selectedTrainer.accentColor || Colors.primary} />
-                      <Text style={s.noteText}>{selectedTrainer.supportNote}</Text>
-                    </View>
-                  )}
-                </ScrollView>
-
-                <View style={s.modalActions}>
-                  <TouchableOpacity 
-                    onPress={() => setSelectedTrainer(null)} 
-                    style={s.cancelBtn}
-                    disabled={booking}
-                  >
-                    <Text style={s.cancelBtnText}>Close</Text>
-                  </TouchableOpacity>
-                  
-                  <TouchableOpacity 
-                    onPress={() => handleBookConsultation(selectedTrainer)} 
-                    style={s.bookBtn}
-                    disabled={booking}
-                  >
-                    <LinearGradient
-                      colors={[selectedTrainer.accentColor || Colors.primary, '#9FE800']}
-                      start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
-                      style={s.bookBtnGrad}
-                    >
-                      {booking ? (
-                        <ActivityIndicator color="#000" />
-                      ) : (
-                        <Text style={s.bookBtnText}>Book Session</Text>
-                      )}
-                    </LinearGradient>
-                  </TouchableOpacity>
-                </View>
-              </>
-            )}
-          </View>
-        </View>
-      </Modal>
+      {renderFilterModal()}
     </View>
   );
 }
 
 const s = StyleSheet.create({
-  loader: {
+  container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#F8FAFC',
+  },
+  headerContainer: {
+    marginBottom: 8,
+  },
+  mainTitle: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: '#0F172A',
+    letterSpacing: -1,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: '#64748B',
+    fontWeight: '500',
+    marginTop: 4,
+    marginBottom: 24,
+  },
+  searchRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 24,
+  },
+  searchBar: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    paddingHorizontal: 16,
+    height: 56,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  searchInput: {
+    flex: 1,
+    marginLeft: 10,
+    fontSize: 15,
+    color: '#0F172A',
+    fontWeight: '500',
+  },
+  filterBtn: {
+    width: 56,
+    height: 56,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
-  loaderText: {
-    color: Colors.textSecondary,
+  filterBtnActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  featuredSection: {
+    marginBottom: 8,
+  },
+  emptyContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 60,
+  },
+  emptyTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#0F172A',
+    marginBottom: 8,
+  },
+  emptySub: {
     fontSize: 14,
-    fontWeight: '600',
-    marginTop: 14,
+    color: '#64748B',
+    textAlign: 'center',
+    lineHeight: 22,
+    paddingHorizontal: 20,
+    marginBottom: 24,
+  },
+  clearBtn: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 20,
+  },
+  clearBtnText: {
+    color: '#0F172A',
+    fontWeight: '700',
+    fontSize: 14,
   },
   errorContainer: {
     flex: 1,
-    backgroundColor: '#000',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 24,
+    padding: 32,
+    backgroundColor: '#F8FAFC',
   },
   errorTitle: {
-    color: '#FF4B4B',
-    fontSize: 16,
-    fontWeight: '900',
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#0F172A',
     marginBottom: 8,
   },
   errorSub: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-    fontWeight: '500',
+    fontSize: 15,
+    color: '#64748B',
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
     lineHeight: 22,
   },
   retryBtn: {
-    height: 54,
-    width: 160,
-    borderRadius: 18,
     backgroundColor: Colors.primary,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 20,
+  },
+  retryBtnText: {
+    color: '#FFF',
+    fontSize: 16,
+    fontWeight: '800',
+  },
+  // Modal Styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.4)',
+    justifyContent: 'flex-end',
+  },
+  bottomSheet: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    paddingTop: 24,
+    paddingHorizontal: 24,
+    maxHeight: '80%',
+  },
+  sheetHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  sheetTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#0F172A',
+  },
+  closeIcon: {
+    padding: 8,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 20,
+  },
+  sheetBody: {
+    marginBottom: 24,
+  },
+  filterSectionTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#94A3B8',
+    letterSpacing: 1,
+    marginBottom: 12,
+    marginTop: 24,
+  },
+  chipRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  chip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  chipActive: {
+    backgroundColor: Colors.primary + '15',
+    borderColor: Colors.primary,
+  },
+  chipText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#475569',
+  },
+  chipTextActive: {
+    color: Colors.primary,
+    fontWeight: '700',
+  },
+  toggleRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F1F5F9',
+  },
+  toggleLabel: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#0F172A',
+  },
+  checkbox: {
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#CBD5E1',
     justifyContent: 'center',
     alignItems: 'center',
   },
-  retryBtnText: {
-    color: '#000',
-    fontSize: 15,
-    fontWeight: '900',
+  checkboxActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
-  header: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg, paddingBottom: SPACING.md,
+  applyBtn: {
+    backgroundColor: Colors.primary,
+    height: 56,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: Colors.primary,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 4,
   },
-  backButton: {
-    width: 44, height: 44, borderRadius: 14, backgroundColor: Colors.card,
-    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: Colors.border,
+  applyBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
   },
-  headerTitle: { color: Colors.text, fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
-  content: { paddingHorizontal: SPACING.lg },
-  intro: { marginTop: 10, marginBottom: 28 },
-  introTitle: { color: Colors.text, fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 4 },
-  introSub: { color: Colors.textSecondary, fontSize: 14, fontWeight: '500', lineHeight: 21 },
-  grid: { gap: 16 },
-  card: { borderRadius: 24, overflow: 'hidden', borderWidth: 1.5, borderColor: Colors.border },
-  cardGrad: { padding: 20 },
-  cardTop: { flexDirection: 'row', gap: 16, alignItems: 'center', marginBottom: 14 },
-  cardInfo: { flex: 1 },
-  trainerName: { color: '#FFF', fontSize: 18, fontWeight: '800' },
-  trainerSpec: { fontSize: 13, fontWeight: '700', marginTop: 2, marginBottom: 6 },
-  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
-  ratingText: { color: '#FFF', fontSize: 12, fontWeight: '700' },
-  expText: { color: Colors.textSecondary, fontSize: 12, fontWeight: '500' },
-  trainerBio: { color: Colors.textSecondary, fontSize: 13, lineHeight: 18, fontWeight: '500' },
-  emptyContainer: { alignItems: 'center', padding: 40, marginTop: 40 },
-  emptyTitle: { color: '#FFF', fontSize: 18, fontWeight: '800', marginBottom: 6 },
-  emptySub: { color: Colors.textSecondary, fontSize: 13, textAlign: 'center', lineHeight: 19 },
-  modalOverlay: {
-    flex: 1, backgroundColor: 'rgba(0,0,0,0.85)', justifyContent: 'flex-end'
-  },
-  modalContent: {
-    backgroundColor: Colors.card, borderTopLeftRadius: 36, borderTopRightRadius: 36,
-    paddingHorizontal: 24, paddingTop: 32, paddingBottom: 40, maxHeight: '85%',
-    borderWidth: 1.5, borderColor: Colors.border, borderBottomWidth: 0,
-  },
-  modalHeader: { alignItems: 'center', marginBottom: 24 },
-  modalTrainerName: { color: '#FFF', fontSize: 24, fontWeight: '900', marginTop: 12, letterSpacing: -0.5 },
-  modalTrainerSpec: { fontSize: 14, fontWeight: '800', marginTop: 2 },
-  modalBody: { marginBottom: 24 },
-  modalSectionTitle: { color: Colors.textSecondary, fontSize: 10, fontWeight: '800', letterSpacing: 1.5, marginBottom: 6 },
-  modalText: { color: Colors.text, fontSize: 14, lineHeight: 21, fontWeight: '500', marginBottom: 20 },
-  noteBox: {
-    flexDirection: 'row', gap: 12, backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: 20, padding: 16, borderWidth: 1, marginBottom: 20, alignItems: 'center'
-  },
-  noteText: { flex: 1, color: Colors.text, fontSize: 13, fontWeight: '500', fontStyle: 'italic', lineHeight: 18 },
-  modalActions: { flexDirection: 'row', gap: 12 },
-  cancelBtn: {
-    flex: 1, height: 60, borderRadius: 20, backgroundColor: Colors.border,
-    justifyContent: 'center', alignItems: 'center'
-  },
-  cancelBtnText: { color: '#FFF', fontSize: 15, fontWeight: '700' },
-  bookBtn: { flex: 1.5, height: 60, borderRadius: 20, overflow: 'hidden' },
-  bookBtnGrad: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-  bookBtnText: { color: '#000', fontSize: 15, fontWeight: '900' }
 });
+
