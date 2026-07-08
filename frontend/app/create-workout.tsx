@@ -13,6 +13,7 @@ import { WorkoutService } from '@/services/workoutService';
 import SuccessModal from '@/components/SuccessModal';
 import { safeBack } from '@/utils/navigation';
 import { useAuth } from '@/context/AuthContext';
+import { hapticSuccess, hapticError, hapticWarning } from '@/utils/haptics';
 
 // Extracted Premium Components
 import WorkoutHeader from '@/components/workout/WorkoutHeader';
@@ -181,6 +182,7 @@ export default function CreateWorkoutScreen() {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      hapticWarning();
       return;
     }
 
@@ -206,9 +208,11 @@ export default function CreateWorkoutScreen() {
       });
 
       await WorkoutService.logWorkout(payload);
+      hapticSuccess();
       setShowSuccess(true);
     } catch (error) {
-      Alert.alert('Error', 'Failed to save workout. Please try again.');
+      hapticError();
+      Alert.alert('Error', 'We couldn\'t complete your request right now. Please try again.');
     } finally {
       setLoading(false);
     }

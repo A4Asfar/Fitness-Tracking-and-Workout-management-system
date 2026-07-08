@@ -13,6 +13,7 @@ import {
 } from 'lucide-react-native';
 import { useToast } from '@/components/Toast';
 import api from '@/services/api';
+import { hapticSuccess, hapticError } from '@/utils/haptics';
 
 const { width, height } = Dimensions.get('window');
 
@@ -179,12 +180,14 @@ export default function PremiumManagementDashboard() {
             setIsActioning(true);
             try {
               await api.post(`/admin/payments/${payment._id}/verify`, { status: 'Approved' });
+              hapticSuccess();
               showToast('Premium membership activated successfully!', 'success');
               setSelectedPayment(null);
               fetchPayments(currentPage);
               fetchAnalytics();
             } catch (error) {
               console.error('Approval failed:', error);
+              hapticError();
               showToast('Failed to activate premium.', 'error');
             } finally {
               setIsActioning(false);
@@ -205,6 +208,7 @@ export default function PremiumManagementDashboard() {
         status: 'Rejected',
         adminRemarks: finalRemarks
       });
+      hapticSuccess();
       showToast('Payment request has been rejected.', 'success');
       setRejectingItem(null);
       setSelectedPayment(null);
@@ -213,6 +217,7 @@ export default function PremiumManagementDashboard() {
       fetchAnalytics();
     } catch (error) {
       console.error('Rejection failed:', error);
+      hapticError();
       showToast('Failed to reject payment request.', 'error');
     } finally {
       setIsActioning(false);
@@ -227,11 +232,13 @@ export default function PremiumManagementDashboard() {
       await api.post(`/admin/payments/users/${extendingUser._id}/extend`, {
         days: parseInt(extensionDays) || 30
       });
+      hapticSuccess();
       showToast('Premium membership extended successfully!', 'success');
       setExtendingUser(null);
       fetchPremiumUsers();
     } catch (error) {
       console.error('Extension failed:', error);
+      hapticError();
       showToast('Failed to extend membership.', 'error');
     } finally {
       setIsActioning(false);
@@ -252,11 +259,13 @@ export default function PremiumManagementDashboard() {
             setIsActioning(true);
             try {
               await api.post(`/admin/payments/users/${user._id}/deactivate`);
+              hapticSuccess();
               showToast('Premium membership deactivated.', 'success');
               fetchPremiumUsers();
               fetchAnalytics();
             } catch (error) {
               console.error('Deactivation failed:', error);
+              hapticError();
               showToast('Failed to deactivate membership.', 'error');
             } finally {
               setIsActioning(false);

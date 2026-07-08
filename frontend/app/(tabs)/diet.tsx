@@ -11,6 +11,7 @@ import {
 } from 'lucide-react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import SkeletonCard, { SkeletonItem } from '@/components/SkeletonCard';
 
 import { 
   NutritionSuggestion, 
@@ -138,9 +139,14 @@ export default function DietScreen() {
 
   if (loading) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#10B981" />
-        <Text style={styles.loaderText}>Syncing your nutrition logs…</Text>
+      <View style={[styles.container, { paddingTop: 60, paddingHorizontal: 20 }]}>
+        <View style={{ marginBottom: 24 }}>
+          <SkeletonItem width="40%" height={24} style={{ marginBottom: 8 }} />
+          <SkeletonItem width="60%" height={16} />
+        </View>
+        <SkeletonCard style={{ height: 180, marginBottom: 20 }} />
+        <SkeletonCard style={{ height: 120, marginBottom: 20 }} />
+        <SkeletonCard style={{ height: 120 }} />
       </View>
     );
   }

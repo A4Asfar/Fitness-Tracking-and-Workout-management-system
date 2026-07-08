@@ -15,6 +15,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { useToast } from '@/components/Toast';
 import api from '@/services/api';
+import { hapticSuccess, hapticError, hapticWarning } from '@/utils/haptics';
 
 const { width } = Dimensions.get('window');
 
@@ -97,10 +98,12 @@ export default function PremiumMembershipScreen() {
 
   const handleSubmitProof = async () => {
     if (!screenshotBase64) {
+      hapticWarning();
       showToast('Please select or capture a payment receipt first.', 'error');
       return;
     }
     if (!paymentNumber.trim()) {
+      hapticWarning();
       showToast('Please enter the sender account number.', 'error');
       return;
     }
@@ -113,6 +116,7 @@ export default function PremiumMembershipScreen() {
         paymentNumber,
         screenshotUrl: screenshotBase64
       });
+      hapticSuccess();
       showToast('Payment proof submitted successfully!', 'success');
       setScreenshot(null);
       setScreenshotBase64(null);
@@ -120,7 +124,8 @@ export default function PremiumMembershipScreen() {
       fetchPaymentStatus();
     } catch (error) {
       console.error('Upgrade error:', error);
-      showToast('Failed to log payment proof. Please try again.', 'error');
+      hapticError();
+      showToast('We couldn\'t complete your request right now. Please try again.', 'error');
     } finally {
       setIsSubmitting(false);
     }

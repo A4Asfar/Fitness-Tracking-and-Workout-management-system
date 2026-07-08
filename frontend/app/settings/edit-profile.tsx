@@ -14,6 +14,7 @@ import api from '@/services/api';
 import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useToast } from '@/components/Toast';
+import { hapticSuccess, hapticError, hapticWarning } from '@/utils/haptics';
 
 const GOALS = ['Weight Loss', 'Muscle Gain', 'Maintain Fitness', 'Endurance', 'General Fitness'] as const;
 const LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Elite'] as const;
@@ -78,6 +79,7 @@ export default function EditProfileScreen() {
 
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
+      hapticWarning();
       showToast('Please fill in all required fields.', 'error');
       return;
     }
@@ -93,11 +95,13 @@ export default function EditProfileScreen() {
       
       const response = await api.put('/profile', payload);
       updateUser(response.data);
+      hapticSuccess();
       showToast('Profile updated successfully!', 'success');
       router.back();
     } catch (error: any) {
       console.error('Update Profile Error:', error);
-      showToast(error.response?.data?.message || 'Update failed. Check connection.', 'error');
+      hapticError();
+      showToast(error.response?.data?.message || 'We couldn\'t complete your request right now. Please try again.', 'error');
     } finally {
       setIsSaving(false);
     }

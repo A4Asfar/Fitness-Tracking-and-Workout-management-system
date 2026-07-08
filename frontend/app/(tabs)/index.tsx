@@ -12,6 +12,7 @@ import {
 } from 'lucide-react-native';
 import { useRouter, Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
+import SkeletonCard, { SkeletonItem } from '@/components/SkeletonCard';
 
 // Extracted Premium Components
 import DashboardHeader from '@/components/dashboard/DashboardHeader';
@@ -130,9 +131,17 @@ export default function HomeDashboard() {
 
   if (loading && !refreshing) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#7C4DFF" />
-        <Text style={styles.loaderText}>Syncing your fitness dashboard…</Text>
+      <View style={[styles.container, { paddingTop: insets.top + 16, paddingHorizontal: 20 }]}>
+        <View style={{ marginBottom: 24 }}>
+          <SkeletonItem width="40%" height={24} style={{ marginBottom: 8 }} />
+          <SkeletonItem width="60%" height={16} />
+        </View>
+        <SkeletonCard style={{ height: 180, marginBottom: 20 }} />
+        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+          <SkeletonCard style={{ flex: 1, height: 100 }} />
+          <SkeletonCard style={{ flex: 1, height: 100 }} />
+        </View>
+        <SkeletonCard style={{ height: 120 }} />
       </View>
     );
   }

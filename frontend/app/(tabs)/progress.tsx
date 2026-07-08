@@ -9,6 +9,7 @@ import {
   Weight, Activity, Trophy, Flame, Dumbbell, Sparkles
 } from 'lucide-react-native';
 import { Stack } from 'expo-router';
+import SkeletonCard, { SkeletonItem } from '@/components/SkeletonCard';
 
 import AnalyticsHeader from '@/components/analytics/AnalyticsHeader';
 import MetricCard from '@/components/analytics/MetricCard';
@@ -54,9 +55,17 @@ export default function ProgressAnalyticsScreen() {
 
   if (loading && !refreshing) {
     return (
-      <View style={styles.loaderContainer}>
-        <ActivityIndicator size="large" color="#7C4DFF" />
-        <Text style={styles.loaderText}>Syncing your fitness progress…</Text>
+      <View style={[styles.container, { paddingTop: insets.top + 16, paddingHorizontal: 20 }]}>
+        <View style={{ marginBottom: 24 }}>
+          <SkeletonItem width="40%" height={24} style={{ marginBottom: 8 }} />
+          <SkeletonItem width="60%" height={16} />
+        </View>
+        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
+          <SkeletonCard style={{ flex: 1, height: 100 }} />
+          <SkeletonCard style={{ flex: 1, height: 100 }} />
+        </View>
+        <SkeletonCard style={{ height: 180, marginBottom: 20 }} />
+        <SkeletonCard style={{ height: 140 }} />
       </View>
     );
   }

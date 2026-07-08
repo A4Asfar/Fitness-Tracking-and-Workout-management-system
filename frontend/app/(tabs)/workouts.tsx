@@ -11,6 +11,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import api from '@/services/api';
+import SkeletonCard from '@/components/SkeletonCard';
 
 // Extracted Premium Components
 import WorkoutCard from '@/components/workout/WorkoutCard';
@@ -210,7 +211,11 @@ export default function WorkoutsScreen() {
         }
       >
         {loading ? (
-          <ActivityIndicator color="#7C4DFF" style={{ marginTop: 40 }} />
+          <View style={{ marginTop: 10 }}>
+            <SkeletonCard />
+            <SkeletonCard />
+            <SkeletonCard />
+          </View>
         ) : filteredWorkouts.length === 0 ? (
           <EmptyState
             title={searchQuery ? "No Matches Found" : "No Workout Sessions"}
