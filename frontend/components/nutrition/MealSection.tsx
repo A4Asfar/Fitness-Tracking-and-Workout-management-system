@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
-import { ChevronDown, ChevronUp, Coffee, Sun, Moon, Apple, Plus } from 'lucide-react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { ChevronDown, ChevronUp, Coffee, Sun, Moon, Apple, Plus, Trash2 } from 'lucide-react-native';
 
 interface FoodItem {
   _id: string;
   mealType: string;
   selectedMeal: string;
   calories: number;
+  protein?: number;
+  carbs?: number;
+  fats?: number;
 }
 
 interface MealSectionProps {
@@ -67,23 +70,29 @@ export default function MealSection({
       {expanded && (
         <View style={styles.body}>
           {meals.length > 0 ? (
-            meals.map((meal) => (
-              <View key={meal._id} style={styles.itemRow}>
-                <View style={styles.itemInfo}>
-                  <Text style={styles.itemName}>{meal.selectedMeal}</Text>
-                  {meal.calories > 0 && (
-                    <Text style={styles.itemCalories}>{meal.calories} kcal</Text>
-                  )}
+            meals.map((meal) => {
+              const p = meal.protein || 0;
+              const c = meal.carbs || 0;
+              const f = meal.fats || 0;
+
+              return (
+                <View key={meal._id} style={styles.itemRow}>
+                  <View style={styles.itemInfo}>
+                    <Text style={styles.itemName}>{meal.selectedMeal}</Text>
+                    <Text style={styles.itemMacros}>
+                      {meal.calories} kcal • P: {p}g • C: {c}g • F: {f}g
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    onPress={() => onDeleteMeal(meal._id)}
+                    activeOpacity={0.7}
+                    style={styles.deleteBtn}
+                  >
+                    <Trash2 size={14} color="#EF4444" />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity
-                  onPress={() => onDeleteMeal(meal._id)}
-                  activeOpacity={0.7}
-                  style={styles.deleteBtn}
-                >
-                  <Text style={styles.deleteText}>Delete</Text>
-                </TouchableOpacity>
-              </View>
-            ))
+              );
+            })
           ) : (
             <View style={styles.empty}>
               <Text style={styles.emptyText}>No food logged yet.</Text>
@@ -161,7 +170,7 @@ const styles = StyleSheet.create({
   body: {
     paddingHorizontal: 16,
     paddingBottom: 16,
-    borderTopWidth: 1,
+    borderTopWidth: 1.5,
     borderTopColor: '#F1F5F9',
   },
   itemRow: {
@@ -169,7 +178,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingVertical: 12,
-    borderBottomWidth: 1,
+    borderBottomWidth: 1.5,
     borderBottomColor: '#F1F5F9',
   },
   itemInfo: {
@@ -181,22 +190,19 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
   },
-  itemCalories: {
-    color: '#EF4444',
+  itemMacros: {
+    color: '#64748B',
     fontSize: 12,
-    fontWeight: '700',
-    marginTop: 2,
+    fontWeight: '600',
+    marginTop: 3,
   },
   deleteBtn: {
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    width: 30,
+    height: 30,
     borderRadius: 8,
     backgroundColor: '#FEE2E2',
-  },
-  deleteText: {
-    color: '#EF4444',
-    fontSize: 11,
-    fontWeight: '800',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   empty: {
     paddingVertical: 14,
