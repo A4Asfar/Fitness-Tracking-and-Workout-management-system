@@ -26,7 +26,11 @@ const notificationSchema = new mongoose.Schema({
       'Premium Purchased',
       'Premium Approved',
       'AI Daily Plan Ready',
-      'System Announcement'
+      'System Announcement',
+      'workout',
+      'meal',
+      'step',
+      'weight'
     ],
     required: true,
   },
