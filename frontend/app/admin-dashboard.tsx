@@ -53,6 +53,25 @@ function ToolCard({ icon: Icon, title, desc, onPress }: { icon: any; title: stri
   );
 }
 
+export default function AdminDashboard() {
+  const router = useRouter();
+  const { user } = useAuth();
+  const insets = useSafeAreaInsets();
+
+  const [refreshing, setRefreshing] = useState(false);
+  const [stats, setStats] = useState<any>(null);
+
+  const fetchStats = async () => {
+    try {
+      const res = await api.get('/admin/stats');
+      setStats(res.data);
+    } catch (e) {
+      console.log('Error fetching stats:', e);
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   const [activeSubTab, setActiveSubTab] = useState<'Home' | 'Users' | 'Bookings' | 'Settings'>('Home');
   const [usersList, setUsersList] = useState<any[]>([]);
   const [bookingsList, setBookingsList] = useState<any[]>([]);
