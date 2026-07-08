@@ -38,7 +38,7 @@ function NavigationHandler() {
     if (loading || showSplash || !rootNavigationState?.key) return;
 
     const inAuthGroup = segments[0] === '(auth)';
-    const isRoot = !segments[0] || segments[0] === 'index';
+    const isRoot = !segments[0] || (segments[0] as string) === 'index';
 
     // Defer the routing by a micro-tick to ensure the NavigationContainer is completely mounted
     // This avoids the "Attempted to navigate before mounting the Root Layout" error on all platforms

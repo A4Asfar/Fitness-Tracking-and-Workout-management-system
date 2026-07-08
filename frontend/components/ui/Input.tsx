@@ -21,13 +21,12 @@ export default function Input({ label, error, icon: Icon, isPassword, style, ...
       <View style={[
         s.inputContainer,
         isFocused && s.inputFocused,
-        error ? s.inputError : null,
-        style
+        error ? s.inputError : null
       ]}>
         {Icon && <Icon size={20} color={isFocused ? Colors.primary : Colors.textSecondary} style={s.icon} />}
         
         <TextInput
-          style={s.input}
+          style={[s.input, style]}
           placeholderTextColor={Colors.textSecondary}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}

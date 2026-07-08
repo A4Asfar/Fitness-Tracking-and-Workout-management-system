@@ -288,7 +288,7 @@ const s = StyleSheet.create({
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingBottom: 16 },
   backBtn: { width: 44, height: 44, backgroundColor: '#FFF', borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
   headerTitleContainer: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  headerTitle: { fontSize: 20, fontWeight: '950', color: '#0F172A' },
+  headerTitle: { fontSize: 20, fontWeight: '900', color: '#0F172A' },
   badge: { backgroundColor: '#FEE2E2', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
   badgeText: { color: '#EF4444', fontSize: 11, fontWeight: '800' },
   readAllBtn: { width: 44, height: 44, backgroundColor: '#FFF', borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
@@ -325,5 +325,5 @@ const s = StyleSheet.create({
   errorCard: { backgroundColor: '#FEE2E2', padding: 20, borderRadius: 20, alignItems: 'center', marginHorizontal: 24, marginBottom: 24, gap: 8 },
   errorText: { color: '#EF4444', fontWeight: '600', fontSize: 14, textAlign: 'center' },
   retryBtn: { backgroundColor: '#EF4444', paddingHorizontal: 20, paddingVertical: 8, borderRadius: 10 },
-  retryBtnText: { color: '#FFF', fontWeight: '750', fontSize: 13 }
+  retryBtnText: { color: '#FFF', fontWeight: '700', fontSize: 13 }
 });

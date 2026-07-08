@@ -337,7 +337,7 @@ export default function AdminDashboard() {
               <TextInput 
                 style={styles.formInput} 
                 value={settings.appName} 
-                onChangeText={(val) => setSettings(prev => ({ ...prev, appName: val }))}
+                onChangeText={(val) => setSettings((prev: any) => ({ ...prev, appName: val }))}
               />
             </View>
             <View style={styles.formField}>
@@ -345,7 +345,7 @@ export default function AdminDashboard() {
               <TextInput 
                 style={styles.formInput} 
                 value={settings.supportEmail} 
-                onChangeText={(val) => setSettings(prev => ({ ...prev, supportEmail: val }))}
+                onChangeText={(val) => setSettings((prev: any) => ({ ...prev, supportEmail: val }))}
               />
             </View>
             <View style={styles.formField}>
@@ -353,7 +353,7 @@ export default function AdminDashboard() {
               <TextInput 
                 style={styles.formInput} 
                 value={String(settings.premiumPricing)} 
-                onChangeText={(val) => setSettings(prev => ({ ...prev, premiumPricing: Number(val) }))}
+                onChangeText={(val) => setSettings((prev: any) => ({ ...prev, premiumPricing: Number(val) }))}
                 keyboardType="numeric"
               />
             </View>

@@ -57,7 +57,7 @@ export default function PremiumOnboardingModal({
       await Storage.setItem(`hasSeenOnboarding_${userId}`, 'true');
     } catch (e) {}
     onClose();
-    router.push('/upgrade');
+    router.push('/premium');
   };
 
   return (
