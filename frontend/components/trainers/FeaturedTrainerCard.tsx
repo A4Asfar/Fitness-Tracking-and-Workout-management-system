@@ -23,10 +23,8 @@ export default function FeaturedTrainerCard({ trainer, onPress }: FeaturedTraine
     >
       <Image 
         source={{ uri: trainer.profileImage || trainer.image }}
-        style={s.image}
+        style={s.imageBackground}
         resizeMode="cover"
-      /> 
-        style={s.imageBackground} 
       />
       <LinearGradient
         colors={['transparent', 'rgba(0,0,0,0.8)']}
