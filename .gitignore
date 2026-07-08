@@ -32,3 +32,5 @@ logs
 
 # Backend specific
 backend/config/key.js
+
+.agents/
