@@ -1,7 +1,8 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Dumbbell } from 'lucide-react-native';
-import { APP_NAME, APP_TAGLINE, AI_COACH_NAME } from '@/constants/Brand';
+import { APP_NAME, APP_TAGLINE } from '@/constants/Brand';
 
 export default function LogoSection() {
   return (

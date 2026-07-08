@@ -5,6 +5,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Dumbbell } from 'lucide-react-native';
 import { APP_NAME, APP_TAGLINE } from '@/constants/Brand';
+import { Colors } from '@/constants/Theme';
 
 const { width, height } = Dimensions.get('window');
 

@@ -1,6 +1,7 @@
 import React, { createContext, useState, useCallback, useEffect, useContext } from 'react';
 import Storage from '@/utils/storage';
 import api, { setAuthToken, setOnUnauthorized } from '@/services/api';
+import axios from 'axios';
 import { useToast } from '@/components/Toast';
 
 /**
@@ -55,33 +56,56 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    * Runs on app boot to check for persisted tokens and user data
    */
   useEffect(() => {
+    let cancelled = false;
+
+    const finishBoot = () => {
+      if (!cancelled) {
+        setIsNewUser(false);
+        setLoading(false);
+      }
+    };
+
+    const bootTimeout = setTimeout(finishBoot, 3500);
+
     const restoreSession = async () => {
       try {
         const savedToken = await Storage.getItem('authToken');
         const savedUser = await Storage.getItem('authUser');
-        
-        if (savedToken) {
-          setAuthToken(savedToken);
-          setToken(savedToken);
-          
-          // Optimistically set user from storage to avoid blank screens
-          if (savedUser) {
-            try {
-              setUser(JSON.parse(savedUser));
-            } catch (e) {
-              if (__DEV__) console.error('Failed to parse saved user');
-            }
+
+        if (!savedToken) return;
+
+        setAuthToken(savedToken);
+        setToken(savedToken);
+
+        if (savedUser) {
+          try {
+            setUser(JSON.parse(savedUser));
+          } catch {
+            if (__DEV__) console.error('Failed to parse saved user');
           }
-          
-          // Verify/Refresh from server in background
-          const response = await api.get('/auth/me');
-          setUser(response.data);
-          await Storage.setItem('authUser', JSON.stringify(response.data));
-          if (__DEV__) console.log('✅ Session synchronized for:', response.data.email);
         }
+
+        const response = await Promise.race([
+          api.get('/auth/me', { skipRetry: true, timeout: 8000 } as any),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('Session check timed out')), 8000)
+          ),
+        ]);
+
+        if (cancelled) return;
+
+        setUser(response.data);
+        await Storage.setItem('authUser', JSON.stringify(response.data));
+        if (__DEV__) console.log('✅ Session synchronized for:', response.data.email);
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : '';
-        if (message.includes('session has expired') || message.includes('Authentication')) {
+        const status = axios.isAxiosError(error) ? error.response?.status : undefined;
+
+        if (
+          status === 401 ||
+          message.includes('session has expired') ||
+          message.includes('Authentication')
+        ) {
           await Storage.removeItem('authToken');
           await Storage.removeItem('authUser');
           setAuthToken(null);
@@ -90,12 +114,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log('Session refresh skipped (offline or server unavailable)');
         }
       } finally {
-        setIsNewUser(false);
-        setLoading(false);
+        clearTimeout(bootTimeout);
+        finishBoot();
       }
     };
 
     restoreSession();
+
+    return () => {
+      cancelled = true;
+      clearTimeout(bootTimeout);
+    };
   }, []);
 
   /**

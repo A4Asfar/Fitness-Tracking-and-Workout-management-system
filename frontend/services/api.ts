@@ -87,6 +87,8 @@ api.interceptors.response.use(
       const code = error.code;
       const message = error.message || '';
 
+      const skipRetry = Boolean((config as { skipRetry?: boolean }).skipRetry);
+
       // Determine if error is transient/retryable (network drops, timeouts, 502/503/504)
       const isRetryableError =
         !error.response || 
@@ -99,7 +101,7 @@ api.interceptors.response.use(
       // Explicitly prevent retrying 400, 401, 403, 404, 422, 503
       const isExplicitNonRetryable = status && [400, 401, 403, 404, 422, 503].includes(Number(status));
 
-      if (isRetryableError && !isExplicitNonRetryable && config.__retryCount < maxRetries) {
+      if (!skipRetry && isRetryableError && !isExplicitNonRetryable && config.__retryCount < maxRetries) {
         config.__retryCount += 1;
         console.log(`🔄 Retrying request (${config.__retryCount}/${maxRetries}): ${config.url}`);
         

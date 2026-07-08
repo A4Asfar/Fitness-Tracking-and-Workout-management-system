@@ -61,13 +61,21 @@ app.use((req, res, next) => {
 app.use(express.json());
 
 // Robust CORS configuration for Production
+const extraOrigins = (process.env.FRONTEND_URL || process.env.CLIENT_URL || '')
+  .split(',')
+  .map((value) => value.trim())
+  .filter(Boolean);
+
 const allowedOrigins = [
   'http://localhost:19000', // Expo Go
   'http://localhost:19006', // Expo Web
   'http://localhost:8081',  // New Expo Default
+  'http://localhost:4173',  // Local static web preview
+  'http://localhost:3000',
   /\.railway\.app$/,         // Any Railway deployment
   /\.pages\.dev$/,           // Cloudflare Pages deployments
   /\.vercel\.app$/,          // Any Vercel deployment
+  ...extraOrigins,
 ];
 
 app.use(cors({
