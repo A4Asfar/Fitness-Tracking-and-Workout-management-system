@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const { asyncHandler } = require('../middleware/errorMiddleware');
+const { APP_NAME, APP_PRO } = require('../constants/brand');
 
 // Generate JWT Helper
 const generateToken = (id) => {
@@ -46,7 +47,7 @@ exports.register = asyncHandler(async (req, res) => {
       const { createInAppNotification } = require('./notificationController');
       await createInAppNotification(
         user._id,
-        'Welcome to FitAI! 🎉',
+        `Welcome to ${APP_NAME}! 🎉`,
         'We are thrilled to join you on your fitness journey. Start checking out workout suggestors, meal planners, and trainers.',
         'Welcome',
         'bell'
@@ -166,7 +167,7 @@ exports.forgotPassword = asyncHandler(async (req, res) => {
   try {
     await sendEmail({
       email: user.email,
-      subject: 'Your FitPro AI Password Reset Code',
+      subject: `Your ${APP_NAME} Password Reset Code`,
       otp: otp,
     });
 

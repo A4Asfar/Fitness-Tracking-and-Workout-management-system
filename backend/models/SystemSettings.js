@@ -1,13 +1,14 @@
 const mongoose = require('mongoose');
+const { APP_NAME, SUPPORT_EMAIL } = require('../constants/brand');
 
 const systemSettingsSchema = new mongoose.Schema({
   appName: {
     type: String,
-    default: 'FitAI'
+    default: APP_NAME
   },
   supportEmail: {
     type: String,
-    default: 'support@fitai.com'
+    default: SUPPORT_EMAIL
   },
   maintenanceMode: {
     type: Boolean,

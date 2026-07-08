@@ -1,4 +1,5 @@
 const nodemailer = require('nodemailer');
+const { APP_NAME, SUPPORT_EMAIL } = require('../constants/brand');
 
 /**
  * Professional Email Transport Utility
@@ -14,24 +15,24 @@ const sendEmail = async (options) => {
   });
 
   const mailOptions = {
-    from: `"FitPro AI Support" <${process.env.EMAIL_USER}>`,
+    from: `"${APP_NAME} Support" <${process.env.EMAIL_USER}>`,
     to: options.email,
     subject: options.subject,
     html: `
       <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
         <div style="text-align: center; margin-bottom: 20px;">
-          <h2 style="color: #CCFF00; background: #000; display: inline-block; padding: 10px 20px; border-radius: 5px;">FITPRO AI</h2>
+          <h2 style="color: #10B981; background: #0F172A; display: inline-block; padding: 10px 20px; border-radius: 8px;">${APP_NAME}</h2>
         </div>
         <div style="color: #333; line-height: 1.6;">
-          <h3 style="color: #000;">Password Reset Request</h3>
+          <h3 style="color: #0F172A;">Password Reset Request</h3>
           <p>Hello,</p>
-          <p>We received a request to reset your password for your FitPro AI account. Use the code below to proceed:</p>
+          <p>We received a request to reset your password for your ${APP_NAME} account. Use the code below to proceed:</p>
           <div style="text-align: center; margin: 30px 0;">
-            <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #CCFF00; background: #000; padding: 15px 30px; border-radius: 10px;">${options.otp}</span>
+            <span style="font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #10B981; background: #0F172A; padding: 15px 30px; border-radius: 10px;">${options.otp}</span>
           </div>
-          <p>This code is valid for <strong>10 minutes</strong>. If you did not request a password reset, please ignore this email or contact support if you have concerns.</p>
+          <p>This code is valid for <strong>10 minutes</strong>. If you did not request a password reset, please ignore this email or contact ${SUPPORT_EMAIL}.</p>
           <hr style="border: none; border-top: 1px solid #eeeeee; margin: 20px 0;" />
-          <p style="font-size: 12px; color: #777;">&copy; 2026 FitPro AI - Professional Fitness Management. All rights reserved.</p>
+          <p style="font-size: 12px; color: #777;">&copy; 2026 ${APP_NAME} — Modern AI Fitness & Coaching Platform. All rights reserved.</p>
         </div>
       </div>
     `,

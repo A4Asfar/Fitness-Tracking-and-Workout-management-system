@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { Dumbbell } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { APP_NAME, APP_TAGLINE, AI_COACH_NAME } from '@/constants/Brand';
 
 export default function LogoSection() {
   return (
@@ -12,8 +12,8 @@ export default function LogoSection() {
       >
         <Dumbbell size={32} color="#FFFFFF" strokeWidth={2} />
       </LinearGradient>
-      <Text style={styles.title}>FitAI</Text>
-      <Text style={styles.tagline}>Your Elite Strength Coach & Nutritionist</Text>
+      <Text style={styles.title}>{APP_NAME}</Text>
+      <Text style={styles.tagline}>{APP_TAGLINE}</Text>
     </View>
   );
 }

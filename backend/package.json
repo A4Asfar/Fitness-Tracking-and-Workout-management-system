@@ -1,7 +1,7 @@
 {
   "name": "fitness-backend",
   "version": "1.0.0",
-  "description": "Fitness App Backend",
+  "description": "ElevateFit — Modern AI Fitness & Coaching Platform API",
   "main": "server.js",
   "engines": {
     "node": ">=18.x"

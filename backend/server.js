@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const { verifyGeminiSetup } = require('./utils/geminiHelper');
+const { APP_NAME } = require('./constants/brand');
 
 // Environment Variable Validation (Soft check for local development)
 const requiredEnv = ['MONGO_URI', 'JWT_SECRET'];
@@ -92,7 +93,7 @@ app.use(cors({
 app.get('/', (req, res) => {
   res.json({ 
     status: 'online', 
-    message: 'PeakPulse API is running smoothly',
+    message: `${APP_NAME} API is running smoothly`,
     environment: process.env.NODE_ENV || 'development'
   });
 });

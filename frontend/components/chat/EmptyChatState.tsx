@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { Sparkles, Bot } from 'lucide-react-native';
+import { AI_COACH_NAME } from '@/constants/Brand';
 import { LinearGradient } from 'expo-linear-gradient';
 import PromptChip from './PromptChip';
 
@@ -33,7 +34,7 @@ export default function EmptyChatState({
         </LinearGradient>
       </View>
 
-      <Text style={styles.title}>FitAI Assistant</Text>
+      <Text style={styles.title}>{AI_COACH_NAME}</Text>
       <Text style={styles.subtitle}>
         Your personal AI Fitness Coach. Ask any questions about training splits, nutrition guidelines, meals prep, or recovery.
       </Text>

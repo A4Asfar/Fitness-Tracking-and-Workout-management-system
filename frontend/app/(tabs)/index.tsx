@@ -25,6 +25,7 @@ import RecentActivityCard from '@/components/dashboard/RecentActivityCard';
 import SectionHeader from '@/components/dashboard/SectionHeader';
 import EmptyState from '@/components/workout/EmptyState';
 import Storage from '@/utils/storage';
+import { AI_COACH_NAME } from '@/constants/Brand';
 import PremiumOnboardingModal from '@/components/dashboard/PremiumOnboardingModal';
 
 const QUICK_ACTIONS_CONFIG = [
@@ -43,7 +44,7 @@ const QUICK_ACTIONS_CONFIG = [
     color: '#00B0FF',
   },
   {
-    title: 'Ask FitAI',
+    title: `Ask ${AI_COACH_NAME}`,
     desc: 'AI coach assistant',
     icon: Sparkles,
     route: '/ai-chat',

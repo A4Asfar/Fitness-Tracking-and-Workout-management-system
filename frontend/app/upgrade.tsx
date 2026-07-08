@@ -14,6 +14,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import * as ImagePicker from 'expo-image-picker';
 import { useToast } from '@/components/Toast';
+import { APP_NAME, APP_PRO, PAYMENTS_LABEL } from '@/constants/Brand';
 import api from '@/services/api';
 import { hapticSuccess, hapticError, hapticWarning } from '@/utils/haptics';
 
@@ -165,7 +166,7 @@ export default function PremiumMembershipScreen() {
           <View style={styles.crownWrap}>
             <Crown size={32} color="#D4AF37" fill="#D4AF37" />
           </View>
-          <Text style={styles.headline}>Unlock FitAI Premium</Text>
+          <Text style={styles.headline}>Unlock {APP_NAME} Pro</Text>
           <Text style={styles.subheadline}>
             Get full access to all elite coaching intelligence and customized workout tools.
           </Text>
@@ -204,7 +205,7 @@ export default function PremiumMembershipScreen() {
           <View style={styles.activePlanCard}>
             <View style={styles.activePlanHeader}>
               <Award size={20} color="#D4AF37" fill="#D4AF37" />
-              <Text style={styles.activePlanTitle}>FitAI PRO Active</Text>
+              <Text style={styles.activePlanTitle}>{APP_PRO} Active</Text>
             </View>
             <Text style={styles.activePlanDesc}>
               You have unlocked full premium access to all workout programs, nutrition tracking tools, and AI Coach assistance logs.
@@ -238,7 +239,7 @@ export default function PremiumMembershipScreen() {
 
             {/* --- Features List Card --- */}
             <View style={styles.featuresCard}>
-              <Text style={styles.cardSectionLabel}>Everything in FitAI PRO</Text>
+              <Text style={styles.cardSectionLabel}>Everything in {APP_PRO}</Text>
               <View style={styles.benefitsContainer}>
                 {BENEFITS.map((benefit, index) => (
                   <View key={index} style={styles.benefitRow}>
@@ -267,7 +268,7 @@ export default function PremiumMembershipScreen() {
                 </View>
                 <View style={styles.paymentDetails}>
                   <Text style={styles.paymentLabel}>NAME</Text>
-                  <Text style={styles.paymentValue}>FitAI Payments Ltd</Text>
+                  <Text style={styles.paymentValue}>{PAYMENTS_LABEL}</Text>
                   <Text style={[styles.paymentLabel, { marginTop: 8 }]}>NUMBER</Text>
                   <Text style={styles.paymentValue}>0300-1234567</Text>
                 </View>
@@ -293,7 +294,7 @@ export default function PremiumMembershipScreen() {
                 </View>
                 <View style={styles.paymentDetails}>
                   <Text style={styles.paymentLabel}>NAME</Text>
-                  <Text style={styles.paymentValue}>FitAI Payments Ltd</Text>
+                  <Text style={styles.paymentValue}>{PAYMENTS_LABEL}</Text>
                   <Text style={[styles.paymentLabel, { marginTop: 8 }]}>NUMBER</Text>
                   <Text style={styles.paymentValue}>0311-7654321</Text>
                 </View>

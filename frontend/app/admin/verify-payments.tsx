@@ -14,6 +14,7 @@ import {
 import { useToast } from '@/components/Toast';
 import api from '@/services/api';
 import { isAdminUser } from '@/utils/isAdmin';
+import { APP_NAME } from '@/constants/Brand';
 import { hapticSuccess, hapticError } from '@/utils/haptics';
 
 const { width, height } = Dimensions.get('window');
@@ -331,7 +332,7 @@ export default function PremiumManagementDashboard() {
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <Text style={styles.headerTitle}>Premium Management</Text>
-          <Text style={styles.headerSubtitle}>FitAI Admin Panel</Text>
+          <Text style={styles.headerSubtitle}>{APP_NAME} Admin Panel</Text>
         </View>
         <View style={{ width: 40 }} />
       </View>

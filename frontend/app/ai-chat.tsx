@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChatService, Conversation, ChatMessage } from '@/services/chatService';
 import { useAuth } from '@/context/AuthContext';
+import { AI_COACH_NAME } from '@/constants/Brand';
 
 // Extracted Conversational Components
 import ChatHeader from '@/components/chat/ChatHeader';
@@ -303,7 +304,7 @@ export default function AIChatScreen() {
         /* Conversation History list view */
         <View style={{ flex: 1 }}>
           <ChatHeader 
-            title="FitAI Coach" 
+            title={`${AI_COACH_NAME}`} 
             showBack
             onBackPress={() => router.back()}
             showNewChat
@@ -393,7 +394,7 @@ export default function AIChatScreen() {
             title={activeChatTitle} 
             showBack
             onBackPress={handleBack}
-            subtitle={isTyping ? 'typing...' : 'Online • FitAI'}
+            subtitle={isTyping ? 'typing...' : `Online • ${AI_COACH_NAME}`}
           />
 
           {loadingMessages ? (

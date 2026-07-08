@@ -4,7 +4,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Dumbbell } from 'lucide-react-native';
-import { Colors } from '@/constants/Theme';
+import { APP_NAME, APP_TAGLINE } from '@/constants/Brand';
 
 const { width, height } = Dimensions.get('window');
 
@@ -172,7 +172,7 @@ export default function SplashScreen() {
 
         {/* App title */}
         <Animated.View style={[s.titleWrap, { opacity: titleOp, transform: [{ translateY: titleTy }] }]}>
-          <Text style={s.title}>PEAKPULSE</Text>
+          <Text style={s.title}>{APP_NAME.toUpperCase()}</Text>
           <LinearGradient
             colors={[Colors.primary, '#9FE800', Colors.primary]}
             start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
@@ -194,7 +194,7 @@ export default function SplashScreen() {
 
         {/* Tagline */}
         <Animated.Text style={[s.tagline, { opacity: tagOp, transform: [{ translateY: tagTy }] }]}>
-          Your journey starts here
+          {APP_TAGLINE}
         </Animated.Text>
       </View>
 

@@ -6,6 +6,7 @@ const User = require('../models/User');
 const Trainer = require('../models/Trainer');
 const WorkoutSuggestion = require('../models/WorkoutSuggestion');
 const { resolveTrainer } = require('../utils/trainerHelper');
+const { AI_GREETING } = require('../constants/brand');
 const { getLocalDateString } = require('../utils/dateUtils');
 
 const getMotivation = (goal) => {
@@ -104,6 +105,9 @@ Your response MUST be a single, valid raw JSON object. Do not wrap it in markdow
 
   // Strip any Gemini preamble or markdown code fences
   let responseText = result.text.trim();
+  if (responseText.startsWith(AI_GREETING)) {
+    responseText = responseText.replace(AI_GREETING, '').trim();
+  }
   if (responseText.startsWith('🤖 FitAI Active')) {
     responseText = responseText.replace('🤖 FitAI Active', '').trim();
   }

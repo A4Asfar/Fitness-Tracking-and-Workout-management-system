@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Copy, CreditCard, Landmark, Smartphone, Image as ImageIcon } from 'lucide-react-native';
 import { useToast } from '@/components/Toast';
+import { APP_NAME, PAYMENTS_LABEL } from '@/constants/Brand';
 
 export default function PaymentMethodScreen() {
   const { plan, amount } = useLocalSearchParams<{ plan: string, amount: string }>();
@@ -14,9 +15,9 @@ export default function PaymentMethodScreen() {
   const [selectedMethod, setSelectedMethod] = useState('EasyPaisa');
 
   const methods = [
-    { id: 'EasyPaisa', icon: Smartphone, color: '#10B981', title: 'FitAI Payments', acc: '0300-1234567' },
-    { id: 'JazzCash', icon: Smartphone, color: '#EF4444', title: 'FitAI Payments', acc: '0311-7654321' },
-    { id: 'Bank Transfer', icon: Landmark, color: '#3B82F6', title: 'FitAI (Meezan Bank)', acc: '01234567890123' },
+    { id: 'EasyPaisa', icon: Smartphone, color: '#10B981', title: PAYMENTS_LABEL, acc: '0300-1234567' },
+    { id: 'JazzCash', icon: Smartphone, color: '#EF4444', title: PAYMENTS_LABEL, acc: '0311-7654321' },
+    { id: 'Bank Transfer', icon: Landmark, color: '#3B82F6', title: `${APP_NAME} (Meezan Bank)`, acc: '01234567890123' },
   ];
 
   const handleCopy = (text: string) => {

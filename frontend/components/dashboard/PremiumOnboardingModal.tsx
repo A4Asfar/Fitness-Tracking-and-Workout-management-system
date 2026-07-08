@@ -6,6 +6,7 @@ import { BlurView } from 'expo-blur';
 import { Sparkles, Check, ArrowRight, Zap, Trophy, ShieldAlert, Heart, Star } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import Storage from '@/utils/storage';
+import { APP_NAME, APP_PRO } from '@/constants/Brand';
 
 interface PremiumOnboardingModalProps {
   visible: boolean;
@@ -76,7 +77,7 @@ export default function PremiumOnboardingModal({
           {/* --- Celebratory Top Ribbon --- */}
           <View style={styles.ribbon}>
             <Sparkles size={20} color="#D4AF37" fill="#D4AF37" />
-            <Text style={styles.ribbonText}>Welcome to FitAI</Text>
+            <Text style={styles.ribbonText}>Welcome to {APP_NAME}</Text>
           </View>
 
           <ScrollView 
@@ -93,7 +94,7 @@ export default function PremiumOnboardingModal({
             <View style={styles.premiumBox}>
               <View style={styles.premiumTitleRow}>
                 <Star size={18} color="#D4AF37" fill="#D4AF37" />
-                <Text style={styles.premiumTitle}>Upgrade to FitAI PRO</Text>
+                <Text style={styles.premiumTitle}>Upgrade to {APP_PRO}</Text>
               </View>
               <Text style={styles.premiumDesc}>
                 Take your athletic journey to the absolute peak with our elite AI coach features.

@@ -1,6 +1,7 @@
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 const fs = require('fs');
 const path = require('path');
+const { APP_NAME, AI_COACH_NAME, AI_GREETING } = require('../constants/brand');
 
 class GeminiError extends Error {
   constructor(message, status = 503) {
@@ -35,13 +36,12 @@ for (const p of possiblePaths) {
 
 if (!FITNESS_SYSTEM_PROMPT) {
   console.error('Failed to read AGENTS.md from any known path, using fallback.');
-  FITNESS_SYSTEM_PROMPT = `# FitAI System Persona & Workout Guidelines`;
+  FITNESS_SYSTEM_PROMPT = `# ${APP_NAME} - System Persona & Workout Guidelines`;
 } else {
-  console.log(`📝 Loaded FitAI System Prompt successfully from: ${loadedPath}`);
+  console.log(`📝 Loaded ${AI_COACH_NAME} system prompt from: ${loadedPath}`);
 }
 
-// Add the temporary line at the beginning of the system prompt
-FITNESS_SYSTEM_PROMPT = `IMPORTANT:\nEvery response MUST begin with:\n🤖 FitAI Active\n\n` + FITNESS_SYSTEM_PROMPT;
+FITNESS_SYSTEM_PROMPT = `IMPORTANT:\nEvery response MUST begin with:\n${AI_GREETING}\n\n` + FITNESS_SYSTEM_PROMPT;
 
 const PREFERRED_MODELS = [
   'gemini-2.5-flash',
@@ -318,12 +318,12 @@ async function generateChatWithFallback(history, message, userProfile = null) {
   if (history && history.length > 0) {
     fullPrompt += "CONVERSATION HISTORY:\n";
     history.forEach(msg => {
-      const roleName = msg.role === 'ai' ? 'FitAI' : 'User';
+      const roleName = msg.role === 'ai' ? AI_COACH_NAME : 'User';
       fullPrompt += `${roleName}: ${msg.text}\n`;
     });
     fullPrompt += "\n";
   }
-  fullPrompt += `CURRENT USER QUESTION:\n${message}\n\nFitAI Response:`;
+  fullPrompt += `CURRENT USER QUESTION:\n${message}\n\n${AI_COACH_NAME} Response:`;
 
   return await generateContentWithFallback(fullPrompt);
 }

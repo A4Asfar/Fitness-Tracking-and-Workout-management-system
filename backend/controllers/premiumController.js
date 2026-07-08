@@ -1,6 +1,7 @@
 const PremiumPurchase = require('../models/PremiumPurchase');
 const User = require('../models/User');
 const { asyncHandler } = require('../middleware/errorMiddleware');
+const { APP_NAME } = require('../constants/brand');
 
 // @route POST /api/premium/purchase
 // Submit payment request
@@ -119,7 +120,7 @@ exports.updateRequestStatus = asyncHandler(async (req, res) => {
     const title = status === 'Approved' ? 'Premium Approved! 👑' : 'Premium Request Rejected ❌';
     const type = status === 'Approved' ? 'Premium Approved' : 'Premium Purchased';
     const message = status === 'Approved' 
-      ? `Congratulations! Your request for ${purchase.plan} has been approved. You now have full access to FitAI Premium.`
+      ? `Congratulations! Your request for ${purchase.plan} has been approved. You now have full access to ${APP_NAME} Pro.`
       : `Your request for ${purchase.plan} was rejected. Reason: ${adminRemarks || 'Invalid transaction receipt.'}`;
     
     await createInAppNotification(

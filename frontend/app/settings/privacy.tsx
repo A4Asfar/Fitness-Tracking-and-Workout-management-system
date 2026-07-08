@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-nati
 import { useRouter, Stack } from 'expo-router';
 import { ShieldCheck, ArrowLeft, Lock, Eye, FileText } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { APP_NAME } from '@/constants/Brand';
 
 export default function PrivacyScreen() {
   const router = useRouter();
@@ -55,7 +56,7 @@ export default function PrivacyScreen() {
 
         <Text style={styles.detailTitle}>Detailed Information</Text>
         <Text style={styles.detailText}>
-          This Privacy Policy describes how we collect, use, and process your personal data when you use the FitAI mobile application.{"\n\n"}
+          This Privacy Policy describes how we collect, use, and process your personal data when you use the {APP_NAME} mobile application.{"\n\n"}
           1. Information We Collect: We collect your name, email address, weight, height, and fitness goals to personalize your experience.{"\n\n"}
           2. How We Use It: Your data helps our AI recommend workouts and track your consistency score.{"\n\n"}
           3. Sharing: We may share anonymized, aggregated data for research purposes, but never your identifiable personal information.

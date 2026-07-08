@@ -22,6 +22,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 import { LinearGradient } from 'expo-linear-gradient';
+import { APP_NAME, SUPPORT_EMAIL } from '@/constants/Brand';
 import { safeBack } from '@/utils/navigation';
 
 const { width } = Dimensions.get('window');
@@ -79,7 +80,7 @@ export default function AdminDashboard() {
   const [activeSubTab, setActiveSubTab] = useState<'Home' | 'Users' | 'Bookings' | 'Settings'>('Home');
   const [usersList, setUsersList] = useState<any[]>([]);
   const [bookingsList, setBookingsList] = useState<any[]>([]);
-  const [settings, setSettings] = useState<any>({ appName: 'FitAI', supportEmail: 'support@fitai.com', maintenanceMode: false, premiumPricing: 2999 });
+  const [settings, setSettings] = useState<any>({ appName: APP_NAME, supportEmail: SUPPORT_EMAIL, maintenanceMode: false, premiumPricing: 2999 });
 
   const fetchUsers = async () => {
     try {

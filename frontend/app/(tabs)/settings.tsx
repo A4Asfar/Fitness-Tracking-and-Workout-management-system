@@ -13,6 +13,7 @@ import {
 } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import api from '@/services/api';
+import { APP_NAME, AI_COACH_NAME, APP_PRO, PAYMENTS_LABEL, SUPPORT_EMAIL } from '@/constants/Brand';
 import PremiumBadge from '@/components/PremiumBadge';
 import { isAdminUser } from '@/utils/isAdmin';
 
@@ -261,7 +262,7 @@ export default function SettingsCenterScreen() {
             activeOpacity={0.7}
           >
             <LogOut size={18} color="#EF4444" />
-            <Text style={styles.logoutBtnText}>Sign Out of FitAI</Text>
+            <Text style={styles.logoutBtnText}>Sign Out of {APP_NAME}</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
