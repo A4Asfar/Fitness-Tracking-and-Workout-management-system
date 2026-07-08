@@ -8,14 +8,14 @@ import { useAuth } from '@/context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   User, ChevronRight, Bell, Shield, LogOut, Settings, 
-  Sparkles, Camera, Dumbbell, TrendingUp, Ruler, Scale, Calendar, Award, Target, CheckCircle2, Flame, Heart, ShieldCheck
+  Sparkles, Camera, Dumbbell, TrendingUp, Ruler, Scale, 
+  Award, Target, CheckCircle2, Heart, ShieldCheck, Mail, Lock, Languages, Eye, HelpCircle
 } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 
 const { width } = Dimensions.get('window');
 
-export default function AccountHubScreen() {
+export default function SettingsCenterScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -29,22 +29,7 @@ export default function AccountHubScreen() {
 
   const isAdmin = user?.membershipType === 'admin';
   const isPremium = user?.membershipType === 'premium' || isAdmin;
-
-  const weightKg = user?.weight || 70;
-  const heightCm = user?.height || 175;
   const fitnessGoal = user?.fitnessGoal || 'General Fitness';
-  const trainingLevel = user?.trainingLevel || 'Intermediate';
-  const preferredFocus = user?.preferredWorkoutFocus || 'Strength';
-
-  const bmi = (weightKg > 0 && heightCm > 0) 
-    ? (weightKg / ((heightCm / 100) ** 2)) 
-    : 22.8;
-
-  const weightLbs = Math.round(weightKg * 2.20462);
-  const totalInches = heightCm / 2.54;
-  const feet = Math.floor(totalInches / 12);
-  const inches = Math.round(totalInches % 12);
-  const heightStr = `${feet}'${inches}"`;
 
   return (
     <View style={styles.container}>
@@ -52,132 +37,163 @@ export default function AccountHubScreen() {
 
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={{ paddingBottom: 60 }}
       >
         {/* --- Header --- */}
         <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-          <View style={styles.headerProfileRow}>
-            <TouchableOpacity 
-              style={styles.avatarContainer}
-              onPress={() => router.push('/settings/edit-profile')}
-              activeOpacity={0.8}
-            >
+          <Text style={styles.headerTitle}>Settings</Text>
+        </View>
+
+        {/* --- Profile Summary Card --- */}
+        <View style={styles.profileCardWrap}>
+          <View style={styles.profileCard}>
+            <View style={styles.profileRow}>
               <View style={styles.avatarWrap}>
                 {user?.avatar ? (
                   <Image source={{ uri: user.avatar }} style={styles.avatarImg} />
                 ) : (
-                  <User size={36} color="#94A3B8" />
+                  <User size={30} color="#94A3B8" />
                 )}
               </View>
-              <View style={styles.verifiedBadge}>
-                <ShieldCheck size={12} color="#FFFFFF" fill="#10B981" />
-              </View>
-            </TouchableOpacity>
-
-            <View style={styles.headerTextWrap}>
-              <Text style={styles.userName}>{user?.name || 'Peak Athlete'}</Text>
-              <View style={styles.headerBadgeRow}>
-                <View style={styles.levelBadge}>
-                  <Text style={styles.levelBadgeText}>{trainingLevel}</Text>
-                </View>
-                <View style={styles.goalBadge}>
-                  <Text style={styles.goalBadgeText}>{fitnessGoal}</Text>
+              <View style={styles.profileText}>
+                <Text style={styles.userName}>{user?.name || 'Peak Athlete'}</Text>
+                <Text style={styles.userEmail}>{user?.email || 'user@fitai.com'}</Text>
+                
+                <View style={styles.goalRow}>
+                  <View style={styles.goalBadge}>
+                    <Text style={styles.goalBadgeText}>{fitnessGoal}</Text>
+                  </View>
+                  {isPremium && (
+                    <View style={styles.proBadge}>
+                      <Text style={styles.proBadgeText}>PRO</Text>
+                    </View>
+                  )}
                 </View>
               </View>
             </View>
 
+            <View style={styles.profileDivider} />
+
             <TouchableOpacity 
-              style={styles.editProfileBtn}
+              style={styles.editShortcut}
               onPress={() => router.push('/settings/edit-profile')}
               activeOpacity={0.7}
             >
-              <Text style={styles.editProfileBtnText}>Edit</Text>
+              <Text style={styles.editShortcutText}>Edit Profile Details</Text>
+              <ChevronRight size={14} color="#10B981" />
             </TouchableOpacity>
           </View>
         </View>
 
-        {/* --- Modern Stats Grid --- */}
-        <View style={styles.statsSection}>
-          <Text style={styles.sectionLabel}>Biometrics & Daily Goals</Text>
-          <View style={styles.statsGrid}>
-            <StatTile icon={Scale} label="Weight" value={`${weightKg} kg`} subValue={`${weightLbs} lbs`} color="#10B981" />
-            <StatTile icon={Ruler} label="Height" value={`${heightCm} cm`} subValue={heightStr} color="#10B981" />
-            <StatTile icon={Target} label="BMI" value={bmi.toFixed(1)} subValue="Normal range" color="#10B981" />
-            <StatTile icon={Calendar} label="Age" value="26 yrs" subValue="Mocked" color="#10B981" />
-            <StatTile icon={TrendingUp} label="Activity" value="Active" subValue="Daily target" color="#10B981" />
-            <StatTile icon={Dumbbell} label="Workout" value={preferredFocus} subValue="Focus" color="#10B981" />
-          </View>
-        </View>
+        {/* --- Settings Groups --- */}
+        
+        {/* 1. Account */}
+        <SettingsSection title="Account">
+          <SettingsRow 
+            icon={User} 
+            title="Edit Profile" 
+            subtitle="Change name, height, weight & goals"
+            onPress={() => router.push('/settings/edit-profile')} 
+          />
+          <Divider />
+          <SettingsRow 
+            icon={Lock} 
+            title="Security & Password" 
+            subtitle="Update authentication password credentials"
+            onPress={() => router.push('/forgot-password')} 
+          />
+          <Divider />
+          <SettingsRow 
+            icon={Eye} 
+            title="Privacy Settings" 
+            subtitle="Configure compliance & tracking details"
+            onPress={() => router.push('/settings/privacy')} 
+          />
+        </SettingsSection>
 
-        {/* --- Fitness Info Section --- */}
-        <View style={styles.infoSection}>
-          <Text style={styles.sectionLabel}>Fitness Information</Text>
-          <View style={styles.chipsContainer}>
-            <InfoChip label="Focus" value={preferredFocus} color="#10B981" />
-            <InfoChip label="Location" value="Commercial Gym" color="#10B981" />
-            <InfoChip label="Equipment" value="Full Equipment" color="#10B981" />
-            <InfoChip label="Diet" value="High Protein" color="#10B981" />
-            <InfoChip label="Limitations" value="None" color="#10B981" />
-          </View>
-        </View>
+        {/* 2. Fitness */}
+        <SettingsSection title="Fitness & Goals">
+          <SettingsRow 
+            icon={Dumbbell} 
+            title="Workout Preferences" 
+            subtitle="Strength, cardio, and locations"
+            onPress={() => router.push('/settings/edit-profile')} 
+          />
+          <Divider />
+          <SettingsRow 
+            icon={Target} 
+            title="Daily Nutrition Goals" 
+            subtitle="Calorie budget and target macros"
+            onPress={() => router.push('/diet')} 
+          />
+          <Divider />
+          <SettingsRow 
+            icon={Scale} 
+            title="Units of Measure" 
+            subtitle="Metric (kg, cm) selected"
+            badgeText="Metric"
+          />
+        </SettingsSection>
 
-        {/* --- Progress Summary Section --- */}
-        <View style={styles.progressSection}>
-          <Text style={styles.sectionLabel}>Progress Summary</Text>
-          <View style={styles.widgetsGrid}>
-            <WidgetCard title="Completed" value="18" subtitle="Workouts" icon={CheckCircle2} color="#10B981" />
-            <WidgetCard title="Streak" value="5 days" subtitle="Current" icon={TrendingUp} color="#10B981" />
-            <WidgetCard title="Active" value="12 days" subtitle="Longest streak" icon={Award} color="#10B981" />
-            <WidgetCard title="Calories" value="4,850" subtitle="kcal burned" icon={Flame} color="#10B981" />
-          </View>
-        </View>
+        {/* 3. Notifications */}
+        <SettingsSection title="Notifications">
+          <SettingsRow 
+            icon={Bell} 
+            title="Push Notifications" 
+            subtitle="Alerts for workout reminders & schedules"
+            hasSwitch={true}
+          />
+          <Divider />
+          <SettingsRow 
+            icon={Sparkles} 
+            title="Daily Workout Reminders" 
+            subtitle="Keep your training streaks active"
+            hasSwitch={true}
+            defaultSwitchValue={true}
+          />
+          <Divider />
+          <SettingsRow 
+            icon={Heart} 
+            title="Meal & Hydration Tracker" 
+            subtitle="Log meals and daily target reminders"
+            hasSwitch={true}
+            defaultSwitchValue={true}
+          />
+        </SettingsSection>
 
-        {/* --- Settings Options Menu --- */}
-        <View style={styles.menuSection}>
-          <Text style={styles.sectionLabel}>Preferences & Support</Text>
-          <View style={styles.menuGroup}>
-            {user && isAdmin && (
-              <>
-                <MenuOption 
-                  icon={Shield} 
-                  title="Admin Control" 
-                  subtitle="System dashboard"
-                  onPress={() => router.push('/admin-dashboard')} 
-                />
-                <Divider />
-              </>
-            )}
-            <MenuOption 
-              icon={User} 
-              title="Personal Details" 
-              subtitle="Weight, height & training goal"
-              onPress={() => router.push('/settings/edit-profile')} 
-            />
-            <Divider />
-            <MenuOption 
-              icon={Bell} 
-              title="Notification Preferences" 
-              subtitle="Reminders & system alerts"
-              hasSwitch={true}
-              onPress={() => router.push('/settings/notifications')} 
-            />
-            <Divider />
-            <MenuOption 
-              icon={Sparkles} 
-              title="Membership Tier" 
-              subtitle={isPremium ? 'Premium Pro Member' : 'Standard Free Plan'}
-              badge={isPremium ? 'Pro' : 'Upgrade'}
-              onPress={() => router.push('/upgrade')} 
-            />
-          </View>
+        {/* 4. Application */}
+        <SettingsSection title="Application">
+          <SettingsRow 
+            icon={Languages} 
+            title="Language" 
+            subtitle="English (US) selected"
+            badgeText="English"
+          />
+          <Divider />
+          <SettingsRow 
+            icon={HelpCircle} 
+            title="Help & Support" 
+            subtitle="FAQs, support tickets and troubleshooting"
+            onPress={() => router.push('/ai-chat')} 
+          />
+          <Divider />
+          <SettingsRow 
+            icon={ShieldCheck} 
+            title="Privacy Policy" 
+            subtitle="View legal disclosures and data protection policies"
+            onPress={() => router.push('/settings/privacy')} 
+          />
+        </SettingsSection>
 
+        {/* --- Danger Zone / Logout --- */}
+        <View style={styles.dangerZoneWrap}>
           <TouchableOpacity 
             style={styles.logoutBtn}
             onPress={() => setShowLogoutModal(true)}
             activeOpacity={0.7}
           >
             <LogOut size={18} color="#EF4444" />
-            <Text style={styles.logoutBtnText}>Sign Out</Text>
+            <Text style={styles.logoutBtnText}>Sign Out of FitAI</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
@@ -208,56 +224,33 @@ export default function AccountHubScreen() {
   );
 }
 
-function StatTile({ icon: Icon, label, value, subValue, color }: any) {
+function SettingsSection({ title, children }: { title: string, children: React.ReactNode }) {
   return (
-    <View style={styles.statTile}>
-      <View style={[styles.statIconWrap, { backgroundColor: color + '10' }]}>
-        <Icon size={16} color={color} />
+    <View style={styles.sectionWrap}>
+      <Text style={styles.sectionLabel}>{title}</Text>
+      <View style={styles.sectionCard}>
+        {children}
       </View>
-      <Text style={styles.statTileValue}>{value}</Text>
-      <Text style={styles.statTileLabel}>{label}</Text>
-      <Text style={styles.statTileSub}>{subValue}</Text>
     </View>
   );
 }
 
-function InfoChip({ label, value, color }: any) {
-  return (
-    <View style={[styles.infoChip, { borderColor: '#E2E8F0' }]}>
-      <Text style={styles.infoChipLabel}>{label}:</Text>
-      <Text style={[styles.infoChipValue, { color: color }]}>{value}</Text>
-    </View>
-  );
-}
-
-function WidgetCard({ title, value, subtitle, icon: Icon, color }: any) {
-  return (
-    <View style={styles.widgetCard}>
-      <View style={styles.widgetHeader}>
-        <Text style={styles.widgetTitle}>{title}</Text>
-        <Icon size={16} color={color} />
-      </View>
-      <Text style={styles.widgetValue}>{value}</Text>
-      <Text style={styles.widgetSubtitle}>{subtitle}</Text>
-    </View>
-  );
-}
-
-function MenuOption({ icon: Icon, title, subtitle, onPress, badge, hasSwitch }: any) {
-  const [isEnabled, setIsEnabled] = useState(true);
-  return (
-    <TouchableOpacity style={styles.menuOption} onPress={onPress} activeOpacity={0.7}>
-      <View style={styles.optionIconBox}>
+function SettingsRow({ icon: Icon, title, subtitle, onPress, badgeText, hasSwitch, defaultSwitchValue = false }: any) {
+  const [isEnabled, setIsEnabled] = useState(defaultSwitchValue);
+  
+  const content = (
+    <View style={styles.row}>
+      <View style={styles.iconBox}>
         <Icon size={18} color="#64748B" />
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.optionTitle}>{title}</Text>
-        <Text style={styles.optionSubtitle}>{subtitle}</Text>
+      <View style={{ flex: 1, marginRight: 10 }}>
+        <Text style={styles.rowTitle}>{title}</Text>
+        <Text style={styles.rowSubtitle}>{subtitle}</Text>
       </View>
-      
-      {badge && (
-        <View style={[styles.proBadge, badge === 'Pro' ? styles.badgeActive : styles.badgeUpgrade]}>
-          <Text style={[styles.proBadgeText, { color: badge === 'Pro' ? '#059669' : '#10B981' }]}>{badge}</Text>
+
+      {badgeText && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{badgeText}</Text>
         </View>
       )}
 
@@ -270,8 +263,18 @@ function MenuOption({ icon: Icon, title, subtitle, onPress, badge, hasSwitch }: 
           <View style={[styles.switchThumb, isEnabled ? { transform: [{ translateX: 20 }] } : null]} />
         </TouchableOpacity>
       ) : (
-        <ChevronRight size={16} color="#94A3B8" />
+        onPress && <ChevronRight size={16} color="#94A3B8" />
       )}
+    </View>
+  );
+
+  if (hasSwitch || !onPress) {
+    return <View style={styles.rowContainer}>{content}</View>;
+  }
+
+  return (
+    <TouchableOpacity style={styles.rowContainer} onPress={onPress} activeOpacity={0.7}>
+      {content}
     </TouchableOpacity>
   );
 }
@@ -287,23 +290,38 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 24,
-    paddingBottom: 24,
+    paddingBottom: 16,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1.5,
     borderColor: '#F1F5F9',
   },
-  headerProfileRow: {
+  headerTitle: {
+    color: '#0F172A',
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: -0.8,
+  },
+  profileCardWrap: {
+    paddingHorizontal: 24,
+    paddingTop: 20,
+    marginBottom: 10,
+  },
+  profileCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 24,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+  },
+  profileRow: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  avatarContainer: {
-    position: 'relative',
-  },
   avatarWrap: {
-    width: 64,
-    height: 64,
-    borderRadius: 22,
-    backgroundColor: '#F8FAFC',
+    width: 60,
+    height: 60,
+    borderRadius: 20,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
@@ -314,66 +332,68 @@ const styles = StyleSheet.create({
     width: '100%',
     height: '100%',
   },
-  verifiedBadge: {
-    position: 'absolute',
-    bottom: -2,
-    right: -2,
-    backgroundColor: '#FFFFFF',
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  headerTextWrap: {
-    marginLeft: 16,
+  profileText: {
+    marginLeft: 14,
     flex: 1,
   },
   userName: {
     color: '#0F172A',
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
-  headerBadgeRow: {
+  userEmail: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  goalRow: {
     flexDirection: 'row',
     gap: 6,
-    marginTop: 4,
+    marginTop: 6,
   },
-  levelBadge: {
+  goalBadge: {
     backgroundColor: '#ECFDF5',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
   },
-  levelBadgeText: {
+  goalBadgeText: {
     color: '#059669',
     fontSize: 9,
     fontWeight: '800',
   },
-  goalBadge: {
-    backgroundColor: '#F1F5F9',
+  proBadge: {
+    backgroundColor: '#10B981',
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 6,
   },
-  goalBadgeText: {
-    color: '#64748B',
+  proBadgeText: {
+    color: '#FFFFFF',
     fontSize: 9,
+    fontWeight: '900',
+  },
+  profileDivider: {
+    height: 1.5,
+    backgroundColor: '#E2E8F0',
+    marginVertical: 12,
+  },
+  editShortcut: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 4,
+  },
+  editShortcutText: {
+    color: '#10B981',
+    fontSize: 13,
     fontWeight: '800',
   },
-  editProfileBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  editProfileBtnText: {
-    color: '#0F172A',
-    fontSize: 12,
-    fontWeight: '800',
+  sectionWrap: {
+    paddingHorizontal: 24,
+    paddingTop: 24,
   },
   sectionLabel: {
     color: '#64748B',
@@ -381,138 +401,25 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.5,
-    marginBottom: 12,
+    marginBottom: 10,
     marginLeft: 4,
   },
-  statsSection: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  statTile: {
-    width: (width - 60) / 3,
-    backgroundColor: '#F8FAFC',
-    borderRadius: 20,
-    padding: 12,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  statIconWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  statTileValue: {
-    color: '#0F172A',
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  statTileLabel: {
-    color: '#64748B',
-    fontSize: 10,
-    fontWeight: '700',
-    marginTop: 2,
-  },
-  statTileSub: {
-    color: '#94A3B8',
-    fontSize: 8,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  infoSection: {
-    paddingHorizontal: 24,
-    paddingTop: 28,
-  },
-  chipsContainer: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-  },
-  infoChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1.5,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 12,
-  },
-  infoChipLabel: {
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '700',
-    marginRight: 4,
-  },
-  infoChipValue: {
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  progressSection: {
-    paddingHorizontal: 24,
-    paddingTop: 28,
-  },
-  widgetsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  widgetCard: {
-    width: (width - 60) / 2,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  widgetHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  widgetTitle: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-  },
-  widgetValue: {
-    color: '#0F172A',
-    fontSize: 20,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  widgetSubtitle: {
-    color: '#94A3B8',
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  menuSection: {
-    paddingHorizontal: 24,
-    paddingTop: 28,
-  },
-  menuGroup: {
+  sectionCard: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
     overflow: 'hidden',
   },
-  menuOption: {
+  rowContainer: {
+    paddingHorizontal: 16,
+  },
+  row: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
     height: 64,
   },
-  optionIconBox: {
+  iconBox: {
     width: 36,
     height: 36,
     borderRadius: 10,
@@ -523,32 +430,28 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
   },
-  optionTitle: {
+  rowTitle: {
     color: '#0F172A',
     fontSize: 14,
     fontWeight: '800',
   },
-  optionSubtitle: {
+  rowSubtitle: {
     color: '#64748B',
     fontSize: 11,
     fontWeight: '600',
     marginTop: 2,
   },
-  proBadge: {
+  badge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
-    marginRight: 10,
+    backgroundColor: '#F1F5F9',
+    marginRight: 4,
   },
-  badgeActive: {
-    backgroundColor: '#ECFDF5',
-  },
-  badgeUpgrade: {
-    backgroundColor: '#ECFDF5',
-  },
-  proBadgeText: {
+  badgeText: {
+    color: '#64748B',
     fontSize: 10,
-    fontWeight: '900',
+    fontWeight: '800',
   },
   switchTrack: {
     width: 44,
@@ -557,9 +460,6 @@ const styles = StyleSheet.create({
     backgroundColor: '#E2E8F0',
     padding: 2,
     justifyContent: 'center',
-  },
-  switchEnabled: {
-    backgroundColor: '#10B981',
   },
   switchThumb: {
     width: 20,
@@ -577,13 +477,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#F1F5F9',
     marginHorizontal: 16,
   },
+  dangerZoneWrap: {
+    paddingHorizontal: 24,
+    marginTop: 32,
+  },
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    marginTop: 28,
-    marginBottom: 40,
     height: 52,
     borderRadius: 16,
     backgroundColor: '#FEF2F2',
@@ -664,39 +566,5 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 14,
     fontWeight: '800',
-  },
-  achievementsCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  achieveGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  achieveItem: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  achieveIconWrap: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 6,
-  },
-  achieveValue: {
-    color: '#0F172A',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  achieveLabel: {
-    color: '#64748B',
-    fontSize: 10,
-    fontWeight: '700',
-    marginTop: 2,
   },
 });

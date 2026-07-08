@@ -1,35 +1,33 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { ShieldCheck, ArrowLeft, Lock, Eye, FileText } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { safeBack } from '@/utils/navigation';
 
 export default function PrivacyScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
 
   return (
-    <View style={SharedStyles.container}>
+    <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
       {/* ── Header ── */}
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
-        <TouchableOpacity onPress={() => safeBack()} style={styles.backButton}>
-          <ArrowLeft size={22} color={Colors.text} />
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} activeOpacity={0.7}>
+          <ArrowLeft size={20} color="#0F172A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Privacy Policy</Text>
-        <View style={{ width: 44 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView 
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + SPACING.xl }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.hero}>
           <View style={styles.shieldWrap}>
-            <ShieldCheck size={48} color={Colors.primary} strokeWidth={1.5} />
+            <ShieldCheck size={36} color="#10B981" strokeWidth={1.5} />
           </View>
           <Text style={styles.heroTitle}>Your Privacy Matters</Text>
           <Text style={styles.heroSub}>Last updated: April 2026</Text>
@@ -41,13 +39,13 @@ export default function PrivacyScreen() {
             title="Data Security" 
             content="We use industry-standard encryption to protect your personal information and workout data. Your password is never stored in plain text." 
           />
-          <View style={styles.divider} />
+          <Divider />
           <PrivacyItem 
             icon={Eye} 
             title="Data Usage" 
             content="Your fitness data is used exclusively to provide personalized insights and tracking. We do not sell your personal data to third parties." 
           />
-          <View style={styles.divider} />
+          <Divider />
           <PrivacyItem 
             icon={FileText} 
             title="Legal Compliance" 
@@ -57,7 +55,7 @@ export default function PrivacyScreen() {
 
         <Text style={styles.detailTitle}>Detailed Information</Text>
         <Text style={styles.detailText}>
-          This Privacy Policy describes how we collect, use, and process your personal data when you use the PeakPulse mobile application.{"\n\n"}
+          This Privacy Policy describes how we collect, use, and process your personal data when you use the FitAI mobile application.{"\n\n"}
           1. Information We Collect: We collect your name, email address, weight, height, and fitness goals to personalize your experience.{"\n\n"}
           2. How We Use It: Your data helps our AI recommend workouts and track your consistency score.{"\n\n"}
           3. Sharing: We may share anonymized, aggregated data for research purposes, but never your identifiable personal information.
@@ -71,7 +69,7 @@ function PrivacyItem({ icon: Icon, title, content }: any) {
   return (
     <View style={styles.item}>
       <View style={styles.iconBox}>
-        <Icon size={20} color={Colors.primary} />
+        <Icon size={18} color="#10B981" />
       </View>
       <View style={{ flex: 1 }}>
         <Text style={styles.itemTitle}>{title}</Text>
@@ -81,65 +79,78 @@ function PrivacyItem({ icon: Icon, title, content }: any) {
   );
 }
 
+function Divider() {
+  return <View style={styles.divider} />;
+}
+
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.md,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1.5,
+    borderColor: '#F1F5F9',
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: Colors.card,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   headerTitle: {
-    color: Colors.text,
-    fontSize: 20,
+    color: '#0F172A',
+    fontSize: 18,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
   content: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
+    padding: 20,
   },
   hero: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 32,
+    marginTop: 10,
   },
   shieldWrap: {
-    width: 90,
-    height: 90,
-    borderRadius: 30,
-    backgroundColor: Colors.primary + '12',
+    width: 76,
+    height: 76,
+    borderRadius: 26,
+    backgroundColor: '#ECFDF5',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#A7F3D0',
   },
   heroTitle: {
-    color: Colors.text,
-    fontSize: 24,
+    color: '#0F172A',
+    fontSize: 20,
     fontWeight: '900',
     marginBottom: 6,
   },
   heroSub: {
-    color: Colors.textSecondary,
+    color: '#64748B',
     fontSize: 13,
     fontWeight: '600',
   },
   card: {
-    backgroundColor: Colors.card,
+    backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: 32,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+    marginBottom: 28,
   },
   item: {
     flexDirection: 'row',
@@ -147,41 +158,44 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: Colors.background,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   itemTitle: {
-    color: Colors.text,
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 6,
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 4,
   },
   itemContent: {
-    color: Colors.textSecondary,
-    fontSize: 13,
-    lineHeight: 20,
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 18,
   },
   divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginHorizontal: 20,
+    height: 1.5,
+    backgroundColor: '#F1F5F9',
+    marginHorizontal: 16,
   },
   detailTitle: {
-    color: Colors.text,
-    fontSize: 18,
+    color: '#0F172A',
+    fontSize: 15,
     fontWeight: '800',
-    marginBottom: 16,
+    marginBottom: 12,
     marginLeft: 4,
   },
   detailText: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-    lineHeight: 24,
-    fontWeight: '500',
-    paddingHorizontal: 4,
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '600',
+    lineHeight: 20,
+    marginLeft: 4,
   },
 });

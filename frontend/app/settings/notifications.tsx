@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { 
   Bell, 
   ArrowLeft, 
@@ -11,7 +10,6 @@ import {
   ChevronRight 
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { safeBack } from '@/utils/navigation';
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -22,25 +20,25 @@ export default function NotificationsScreen() {
   const [updates, setUpdates] = useState(false);
 
   return (
-    <View style={SharedStyles.container}>
+    <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
       {/* ── Header ── */}
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
-        <TouchableOpacity onPress={() => safeBack()} style={styles.backButton}>
-          <ArrowLeft size={22} color={Colors.text} />
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} activeOpacity={0.7}>
+          <ArrowLeft size={20} color="#0F172A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>
-        <View style={{ width: 44 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <ScrollView 
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + SPACING.xl }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.intro}>
           <View style={styles.bellIconWrap}>
-            <Bell size={40} color={Colors.primary} strokeWidth={1.5} />
+            <Bell size={36} color="#10B981" strokeWidth={1.5} />
           </View>
           <Text style={styles.introTitle}>Stay Notified</Text>
           <Text style={styles.introSub}>Control how we alert you about your fitness journey.</Text>
@@ -54,7 +52,7 @@ export default function NotificationsScreen() {
             value={reminders}
             onToggle={setReminders}
           />
-          <View style={styles.divider} />
+          <Divider />
           <NotificationRow 
             icon={Activity} 
             title="Weekly Progress" 
@@ -62,7 +60,7 @@ export default function NotificationsScreen() {
             value={progress}
             onToggle={setProgress}
           />
-          <View style={styles.divider} />
+          <Divider />
           <NotificationRow 
             icon={Zap} 
             title="Premium Updates" 
@@ -73,7 +71,7 @@ export default function NotificationsScreen() {
         </View>
 
         <View style={styles.infoCard}>
-          <Shield size={18} color={Colors.textSecondary} style={{ marginRight: 12 }} />
+          <Shield size={18} color="#64748B" style={{ marginRight: 12 }} />
           <Text style={styles.infoText}>
             We respect your focus. We only send notifications that help you reach your goals.
           </Text>
@@ -87,130 +85,164 @@ function NotificationRow({ icon: Icon, title, desc, value, onToggle }: any) {
   return (
     <View style={styles.row}>
       <View style={styles.iconBox}>
-        <Icon size={20} color={Colors.primary} />
+        <Icon size={18} color="#64748B" />
       </View>
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, marginRight: 10 }}>
         <Text style={styles.rowTitle}>{title}</Text>
         <Text style={styles.rowDesc}>{desc}</Text>
       </View>
-      <Switch 
-        value={value} 
-        onValueChange={onToggle}
-        trackColor={{ false: '#333', true: Colors.primary + '80' }}
-        thumbColor={value ? Colors.primary : '#666'}
-      />
+      <TouchableOpacity 
+        onPress={() => onToggle(!value)}
+        style={[styles.switchTrack, value ? { backgroundColor: '#10B981' } : null]}
+        activeOpacity={0.9}
+      >
+        <View style={[styles.switchThumb, value ? { transform: [{ translateX: 20 }] } : null]} />
+      </TouchableOpacity>
     </View>
   );
 }
 
+function Divider() {
+  return <View style={styles.divider} />;
+}
+
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.md,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1.5,
+    borderColor: '#F1F5F9',
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: Colors.card,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   headerTitle: {
-    color: Colors.text,
-    fontSize: 20,
+    color: '#0F172A',
+    fontSize: 18,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
   content: {
-    paddingHorizontal: SPACING.lg,
-    paddingTop: SPACING.lg,
+    padding: 20,
   },
   intro: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: 32,
     marginTop: 10,
   },
   bellIconWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: 28,
-    backgroundColor: Colors.primary + '12',
+    width: 76,
+    height: 76,
+    borderRadius: 26,
+    backgroundColor: '#ECFDF5',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#A7F3D0',
   },
   introTitle: {
-    color: Colors.text,
-    fontSize: 24,
+    color: '#0F172A',
+    fontSize: 20,
     fontWeight: '900',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   introSub: {
-    color: Colors.textSecondary,
-    fontSize: 14,
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '600',
     textAlign: 'center',
-    lineHeight: 20,
-    paddingHorizontal: 40,
+    paddingHorizontal: 20,
   },
   section: {
-    backgroundColor: Colors.card,
+    backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    padding: 10,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    overflow: 'hidden',
+    marginBottom: 20,
   },
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 16,
+    paddingHorizontal: 16,
+    height: 72,
   },
   iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    backgroundColor: Colors.background,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 12,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   rowTitle: {
-    color: Colors.text,
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 2,
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '800',
   },
   rowDesc: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    lineHeight: 16,
+    color: '#64748B',
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  switchTrack: {
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E2E8F0',
+    padding: 2,
+    justifyContent: 'center',
+  },
+  switchThumb: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
   },
   divider: {
-    height: 1,
-    backgroundColor: Colors.border,
+    height: 1.5,
+    backgroundColor: '#F1F5F9',
     marginHorizontal: 16,
   },
   infoCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.background,
-    padding: 20,
+    backgroundColor: '#F8FAFC',
     borderRadius: 20,
-    marginTop: 32,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    borderStyle: 'dashed',
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   infoText: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    lineHeight: 18,
     flex: 1,
-    fontWeight: '500',
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 16,
   },
 });
