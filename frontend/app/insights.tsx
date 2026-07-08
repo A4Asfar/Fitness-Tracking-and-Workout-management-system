@@ -1,13 +1,11 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, Animated, Easing } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { 
-  ArrowLeft, Activity, Flame, Utensils, MessageCircle, HeartPulse, Zap, Dumbbell
+  ArrowLeft, Activity, Flame, Utensils, MessageCircle, HeartPulse, Zap, Dumbbell, ShieldCheck, Sparkles, TrendingUp, RefreshCw
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { safeBack } from '@/utils/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { getDashboardAnalytics } from '@/services/analyticsService';
 import Svg, { Circle } from 'react-native-svg';
@@ -38,14 +36,13 @@ const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
 function CircularGauge({ value, category }: { value: number; category: string }) {
   const size = 120;
-  const strokeWidth = 12;
+  const strokeWidth = 10;
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
   
   const animatedValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    // Normal BMI is ~18-25, let's say max gauge is 40
     const targetProgress = Math.min(value / 40, 1);
     Animated.timing(animatedValue, {
       toValue: targetProgress,
@@ -62,10 +59,10 @@ function CircularGauge({ value, category }: { value: number; category: string })
   });
 
   const getColor = () => {
-    if (category === 'Normal') return '#4CAF50';
-    if (category === 'Underweight') return '#00D1FF';
-    if (category === 'Overweight') return '#FF9800';
-    return '#F44336';
+    if (category === 'Normal') return '#10B981';
+    if (category === 'Underweight') return '#3B82F6';
+    if (category === 'Overweight') return '#F59E0B';
+    return '#EF4444';
   };
 
   return (
@@ -74,7 +71,7 @@ function CircularGauge({ value, category }: { value: number; category: string })
         {/* Background Circle */}
         <Circle
           cx={size / 2} cy={size / 2} r={radius}
-          stroke="#2A2A2A" strokeWidth={strokeWidth}
+          stroke="#F1F5F9" strokeWidth={strokeWidth}
           fill="none"
         />
         {/* Foreground Circle */}
@@ -119,7 +116,7 @@ function ActivityBar({ score }: { score: number }) {
         })
       }]}>
         <LinearGradient
-          colors={['#FF6B3B', '#FFD700']}
+          colors={['#10B981', '#059669']}
           start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
           style={StyleSheet.absoluteFill}
         />
@@ -170,58 +167,59 @@ export default function AnalyticsDashboardScreen() {
 
   if (!user || loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors.background, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+      <View style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
+        <ActivityIndicator size="large" color="#10B981" />
       </View>
     );
   }
 
   if (error && !loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-        <LinearGradient colors={['#FF4B4B15', 'transparent']} style={StyleSheet.absoluteFill} />
-        <Text style={{ color: '#FF4B4B', fontSize: 16, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>SYNC ERROR</Text>
-        <Text style={{ color: Colors.textSecondary, fontSize: 14, fontWeight: '500', textAlign: 'center', marginBottom: 28, lineHeight: 22 }}>{error}</Text>
+      <View style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+        <Text style={{ color: '#EF4444', fontSize: 16, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>SYNC ERROR</Text>
+        <Text style={{ color: '#64748B', fontSize: 14, fontWeight: '500', textAlign: 'center', marginBottom: 28, lineHeight: 22 }}>{error}</Text>
         <TouchableOpacity 
           onPress={fetchData} 
-          style={{ height: 54, width: 160, borderRadius: 18, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}
+          style={{ height: 50, width: 160, borderRadius: 16, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}
           activeOpacity={0.8}
         >
-          <Text style={{ color: '#000', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 }}>RETRY SYNC</Text>
+          <Text style={{ color: '#FFFFFF', fontSize: 15, fontWeight: '900' }}>Retry Sync</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
   return (
-    <View style={SharedStyles.container}>
+    <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
       {/* ── Header ── */}
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
-        <TouchableOpacity onPress={() => safeBack()} style={styles.backButton}>
-          <ArrowLeft size={22} color={Colors.text} />
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} activeOpacity={0.7}>
+          <ArrowLeft size={20} color="#0F172A" />
         </TouchableOpacity>
         <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Analytics</Text>
+          <Text style={styles.headerTitle}>AI Coach Insights</Text>
         </View>
-        <View style={{ width: 44 }} />
+        <TouchableOpacity onPress={fetchData} style={styles.refreshButton} activeOpacity={0.7}>
+          <RefreshCw size={18} color="#0F172A" />
+        </TouchableOpacity>
       </View>
 
       <ScrollView 
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + SPACING.xl }]}
+        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View style={{ opacity: fadeAnim }}>
-          <Text style={styles.subtitle}>Your Complete Fitness Overview</Text>
+          <Text style={styles.subtitle}>Fitness overview last updated today</Text>
 
           {/* ── Stats Grid ── */}
           <View style={styles.grid}>
             {/* Workouts */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
-                <View style={[styles.iconWrap, { backgroundColor: Colors.primary + '15' }]}>
-                  <Dumbbell size={20} color={Colors.primary} />
+                <View style={[styles.iconWrap, { backgroundColor: '#ECFDF5' }]}>
+                  <Dumbbell size={16} color="#10B981" />
                 </View>
                 <Text style={styles.cardTitle}>Workouts</Text>
               </View>
@@ -231,8 +229,8 @@ export default function AnalyticsDashboardScreen() {
             {/* Calories */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
-                <View style={[styles.iconWrap, { backgroundColor: '#FF6B3B15' }]}>
-                  <Flame size={20} color="#FF6B3B" />
+                <View style={[styles.iconWrap, { backgroundColor: '#FEF2F2' }]}>
+                  <Flame size={16} color="#EF4444" />
                 </View>
                 <Text style={styles.cardTitle}>Est. Burn</Text>
               </View>
@@ -242,8 +240,8 @@ export default function AnalyticsDashboardScreen() {
             {/* Meals */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
-                <View style={[styles.iconWrap, { backgroundColor: '#FFD70015' }]}>
-                  <Utensils size={20} color="#FFD700" />
+                <View style={[styles.iconWrap, { backgroundColor: '#FEF3C7' }]}>
+                  <Utensils size={16} color="#F59E0B" />
                 </View>
                 <Text style={styles.cardTitle}>Meals Logged</Text>
               </View>
@@ -253,27 +251,41 @@ export default function AnalyticsDashboardScreen() {
             {/* Consultations */}
             <View style={styles.card}>
               <View style={styles.cardHeader}>
-                <View style={[styles.iconWrap, { backgroundColor: '#A855F715' }]}>
-                  <MessageCircle size={20} color="#A855F7" />
+                <View style={[styles.iconWrap, { backgroundColor: '#F5F3FF' }]}>
+                  <MessageCircle size={16} color="#7C4DFF" />
                 </View>
-                <Text style={styles.cardTitle}>Consults</Text>
+                <Text style={styles.cardTitle}>Consultations</Text>
               </View>
               <Counter target={data?.totalConsultations || 0} />
             </View>
           </View>
 
+          {/* ── Coach Analysis (AI Section Highlighted) ── */}
+          <View style={styles.insightCard}>
+            <View style={styles.insightHeader}>
+              <Sparkles size={20} color="#10B981" fill="#10B981" />
+              <Text style={styles.insightTitle}>Weekly AI Coach Assessment</Text>
+            </View>
+            <Text style={styles.insightBody}>
+              {data?.activityScore >= 80 
+                ? "Outstanding weekly activity! Your workout consistency exceeds 80% of personal targets. Keep feeding your body with clean protein macros."
+                : data?.activityScore >= 50
+                ? "Good effort this week. You are building solid habits. Let's aim to schedule one additional active recovery session to optimize your stats."
+                : "Your activity level is slightly below target this week. Remember, consistency beats intensity. Try starting a 15-minute bodyweight routine today!"}
+            </Text>
+          </View>
+
           {/* ── BMI & Body Health ── */}
           <View style={styles.largeCard}>
-            <LinearGradient colors={['#161616', '#111']} style={StyleSheet.absoluteFill} />
             <Text style={styles.largeCardTitle}>Body Mass Index (BMI)</Text>
             <View style={styles.bmiContent}>
-              <CircularGauge value={data?.bmi || 0} category={data?.bmiCategory || 'N/A'} />
+              <CircularGauge value={data?.bmi || 0} category={data?.bmiCategory || 'Normal'} />
               <View style={styles.bmiTextWrap}>
                 <Text style={styles.bmiDesc}>
-                  Based on your weight of <Text style={{ color: Colors.text, fontWeight: '800' }}>{data?.currentWeight || '--'} kg</Text>.
+                  Calculated using your logged profile height and weight of <Text style={{ color: '#0F172A', fontWeight: '800' }}>{data?.currentWeight || '--'} kg</Text>.
                 </Text>
                 <Text style={styles.bmiDesc}>
-                  Target: Maintain a normal BMI (18.5 - 24.9) for optimal health.
+                  Target Range: Maintain a normal BMI (18.5 - 24.9) for optimal metabolic and heart health.
                 </Text>
               </View>
             </View>
@@ -281,97 +293,112 @@ export default function AnalyticsDashboardScreen() {
 
           {/* ── Activity Score ── */}
           <View style={styles.largeCard}>
-            <LinearGradient colors={['#161616', '#111']} style={StyleSheet.absoluteFill} />
             <View style={styles.activityHeader}>
               <Text style={styles.largeCardTitle}>Weekly Activity Score</Text>
               <Text style={styles.scoreText}>{data?.activityScore || 0} / 100</Text>
             </View>
             <ActivityBar score={data?.activityScore || 0} />
             <Text style={styles.activityDesc}>
-              Your score is derived from your workout frequency over the last 7 days. Consistency is key!
+              This score is dynamically calculated from your training frequency and workout consistency over the last 7 days.
             </Text>
           </View>
-
-          {/* ── Coach Insight ── */}
-          <LinearGradient
-            colors={[Colors.primary + '20', Colors.primary + '05']}
-            start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-            style={styles.insightCard}
-          >
-            <View style={styles.insightHeader}>
-              <Zap size={20} color={Colors.primary} fill={Colors.primary} />
-              <Text style={styles.insightTitle}>AI Health Analysis</Text>
-            </View>
-            <Text style={styles.insightBody}>
-              {data?.activityScore >= 80 
-                ? "Excellent weekly activity! Your consistency is outstanding. Keep fueling your body with the right macros."
-                : data?.activityScore >= 50
-                ? "Good effort this week. Try to squeeze in one more session to hit your peak activity score."
-                : "Your activity is a bit low this week. Let's get back on track! Remember, a short workout is better than no workout."}
-            </Text>
-          </LinearGradient>
         </Animated.View>
       </ScrollView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<Record<string, any>>({
+  container: {
+    flex: 1,
+    backgroundColor: '#FFFFFF',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.md,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1.5,
+    borderColor: '#F1F5F9',
   },
   headerCenter: { alignItems: 'center' },
   backButton: {
-    width: 44, height: 44, borderRadius: 14,
-    backgroundColor: Colors.card, justifyContent: 'center', alignItems: 'center',
-    borderWidth: 1, borderColor: Colors.border,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
-  headerTitle: { color: Colors.text, fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
-  subtitle: { color: Colors.textSecondary, fontSize: 14, textAlign: 'center', fontWeight: '500', marginBottom: 24 },
-  content: { paddingHorizontal: SPACING.lg },
+  refreshButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+  },
+  headerTitle: { color: '#0F172A', fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
+  subtitle: { color: '#64748B', fontSize: 12, textAlign: 'center', fontWeight: '700', marginBottom: 24, marginTop: 16 },
+  content: { padding: 20 },
   
   // Grid
-  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 16, marginBottom: 24 },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
   card: {
-    width: (width - SPACING.lg * 2 - 16) / 2,
-    backgroundColor: Colors.card, borderRadius: 24, padding: 16,
-    borderWidth: 1, borderColor: Colors.border,
+    width: (width - 52) / 2,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
-  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 16 },
-  iconWrap: { width: 36, height: 36, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
-  cardTitle: { color: Colors.textSecondary, fontSize: 12, fontWeight: '700', flex: 1 },
-  cardValue: { color: Colors.text, fontSize: 24, fontWeight: '900', letterSpacing: -0.5 },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
+  iconWrap: { width: 32, height: 32, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  cardTitle: { color: '#64748B', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, flex: 1 },
+  cardValue: { color: '#0F172A', fontSize: 20, fontWeight: '900', letterSpacing: -0.5 },
 
   // Large Cards
   largeCard: {
-    borderRadius: 24, padding: 24, marginBottom: 24, overflow: 'hidden',
-    borderWidth: 1, borderColor: '#2A2A2A',
+    borderRadius: 24,
+    padding: 20,
+    marginBottom: 20,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
-  largeCardTitle: { color: Colors.text, fontSize: 16, fontWeight: '800', marginBottom: 20 },
+  largeCardTitle: { color: '#0F172A', fontSize: 15, fontWeight: '800', marginBottom: 16 },
 
   // BMI
-  bmiContent: { flexDirection: 'row', alignItems: 'center', gap: 20 },
+  bmiContent: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   gaugeContainer: { position: 'relative', width: 120, height: 120, justifyContent: 'center', alignItems: 'center' },
   gaugeCenter: { position: 'absolute', alignItems: 'center' },
-  gaugeValue: { color: Colors.text, fontSize: 26, fontWeight: '900' },
+  gaugeValue: { color: '#0F172A', fontSize: 24, fontWeight: '900' },
   gaugeCategory: { fontSize: 10, fontWeight: '800', textTransform: 'uppercase', marginTop: 2, letterSpacing: 0.5 },
-  bmiTextWrap: { flex: 1, gap: 8 },
-  bmiDesc: { color: Colors.textSecondary, fontSize: 13, lineHeight: 20, fontWeight: '500' },
+  bmiTextWrap: { flex: 1, gap: 6 },
+  bmiDesc: { color: '#64748B', fontSize: 12, lineHeight: 18, fontWeight: '600' },
 
   // Activity Bar
   activityHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  scoreText: { color: Colors.primary, fontSize: 18, fontWeight: '900' },
-  activityBarTrack: { height: 12, backgroundColor: '#252525', borderRadius: 6, overflow: 'hidden', marginBottom: 16 },
-  activityBarFill: { height: '100%', borderRadius: 6 },
-  activityDesc: { color: Colors.textSecondary, fontSize: 13, lineHeight: 20, fontWeight: '500' },
+  scoreText: { color: '#10B981', fontSize: 16, fontWeight: '800' },
+  activityBarTrack: { height: 10, backgroundColor: '#F1F5F9', borderRadius: 5, overflow: 'hidden', marginBottom: 16 },
+  activityBarFill: { height: '100%', borderRadius: 5 },
+  activityDesc: { color: '#64748B', fontSize: 12, lineHeight: 18, fontWeight: '600' },
 
-  // Insight Card
-  insightCard: { borderRadius: 24, padding: 24, borderWidth: 1, borderColor: Colors.primary + '30', marginBottom: 30 },
-  insightHeader: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
-  insightTitle: { color: Colors.text, fontSize: 16, fontWeight: '800' },
-  insightBody: { color: Colors.textSecondary, fontSize: 14, lineHeight: 22, fontWeight: '500' },
+  // Insight Card (Highlighted AI section)
+  insightCard: {
+    borderRadius: 24,
+    padding: 20,
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1.5,
+    borderColor: '#A7F3D0',
+    marginBottom: 20,
+  },
+  insightHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 10 },
+  insightTitle: { color: '#059669', fontSize: 15, fontWeight: '800' },
+  insightBody: { color: '#047857', fontSize: 13, lineHeight: 20, fontWeight: '600' },
 });
