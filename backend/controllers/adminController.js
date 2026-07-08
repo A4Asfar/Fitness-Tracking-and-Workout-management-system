@@ -118,3 +118,175 @@ exports.verifyPayment = asyncHandler(async (req, res) => {
   await payment.save();
   res.json(payment);
 });
+
+// @desc    Get all payment requests with search, filter, and pagination
+// @route   GET /api/admin/payments/list
+// @access  Private/Admin
+exports.getAllPayments = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
+  const skip = (page - 1) * limit;
+
+  const { search, status, plan, sort } = req.query;
+
+  const query = {};
+
+  if (status) {
+    query.status = status;
+  }
+  if (plan) {
+    query.plan = plan;
+  }
+  if (search) {
+    query.$or = [
+      { userName: { $regex: search, $options: 'i' } },
+      { userEmail: { $regex: search, $options: 'i' } }
+    ];
+  }
+
+  const sortOrder = sort === 'oldest' ? 1 : -1;
+
+  const [items, total] = await Promise.all([
+    PremiumPayment.find(query).sort({ submittedAt: sortOrder }).skip(skip).limit(limit),
+    PremiumPayment.countDocuments(query)
+  ]);
+
+  res.json({
+    items,
+    page,
+    limit,
+    totalPages: Math.ceil(total / limit),
+    total
+  });
+});
+
+// @desc    Get all Premium users
+// @route   GET /api/admin/payments/users
+// @access  Private/Admin
+exports.getPremiumUsers = asyncHandler(async (req, res) => {
+  const users = await User.find({ membershipType: 'premium' }).select('name email avatar createdAt membershipExpiresAt');
+  res.json(users);
+});
+
+// @desc    Get Premium Analytics
+// @route   GET /api/admin/payments/analytics
+// @access  Private/Admin
+exports.getPremiumAnalytics = asyncHandler(async (req, res) => {
+  // 1. Total Premium Users
+  const totalPremium = await User.countDocuments({ membershipType: 'premium' });
+
+  // 2. Pending Requests
+  const pendingRequests = await PremiumPayment.countDocuments({ status: 'Pending' });
+
+  // 3. Approved & Rejected counts
+  const approvedCount = await PremiumPayment.countDocuments({ status: 'Approved' });
+  const rejectedCount = await PremiumPayment.countDocuments({ status: 'Rejected' });
+
+  // 4. Monthly & Lifetime users breakdown
+  // Let's count from user membership expiration
+  const activeMonthly = await User.countDocuments({
+    membershipType: 'premium',
+    membershipExpiresAt: { $ne: null }
+  });
+
+  const lifetimePremium = await User.countDocuments({
+    membershipType: 'premium',
+    membershipExpiresAt: null
+  });
+
+  // 5. Estimated Revenue
+  // Plan prices: Monthly = PKR 499, Lifetime = PKR 2999
+  const monthlyPayments = await PremiumPayment.countDocuments({ status: 'Approved', plan: 'Monthly' });
+  const lifetimePayments = await PremiumPayment.countDocuments({ status: 'Approved', plan: 'Lifetime' });
+  const estimatedRevenue = (monthlyPayments * 499) + (lifetimePayments * 2999);
+
+  // 6. Today's New Premium Users
+  const startOfToday = new Date();
+  startOfToday.setHours(0, 0, 0, 0);
+  const todayNewPremium = await PremiumPayment.countDocuments({
+    status: 'Approved',
+    approvedAt: { $gte: startOfToday }
+  });
+
+  // Calculate approval rate
+  const totalProcessed = approvedCount + rejectedCount;
+  const approvalRate = totalProcessed > 0 ? Math.round((approvedCount / totalProcessed) * 100) : 100;
+
+  res.json({
+    totalPremium,
+    pendingRequests,
+    activeMonthly,
+    lifetimePremium,
+    estimatedRevenue,
+    todayNewPremium,
+    approvalRate,
+    approvedCount,
+    rejectedCount
+  });
+});
+
+// @desc    Extend membership
+// @route   POST /api/admin/payments/users/:id/extend
+// @access  Private/Admin
+exports.extendMembership = asyncHandler(async (req, res) => {
+  const { days } = req.body;
+  if (!days || isNaN(days)) {
+    res.status(400);
+    throw new Error('Please provide valid number of days');
+  }
+
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  let currentExpiry = user.membershipExpiresAt ? new Date(user.membershipExpiresAt) : new Date();
+  if (currentExpiry < new Date()) {
+    currentExpiry = new Date();
+  }
+
+  currentExpiry.setDate(currentExpiry.getDate() + parseInt(days));
+
+  user.membershipType = 'premium';
+  user.membershipExpiresAt = currentExpiry;
+  await user.save();
+
+  // Create notification
+  await Notification.create({
+    userId: user._id,
+    title: 'Membership Extended! 🚀',
+    message: `Your premium membership has been extended by ${days} days. New expiry: ${currentExpiry.toLocaleDateString()}`,
+    type: 'premium'
+  });
+
+  res.json({
+    message: 'Membership extended successfully',
+    membershipExpiresAt: currentExpiry
+  });
+});
+
+// @desc    Deactivate Premium membership
+// @route   POST /api/admin/payments/users/:id/deactivate
+// @access  Private/Admin
+exports.deactivateMembership = asyncHandler(async (req, res) => {
+  const user = await User.findById(req.params.id);
+  if (!user) {
+    res.status(404);
+    throw new Error('User not found');
+  }
+
+  user.membershipType = 'free';
+  user.membershipExpiresAt = null;
+  await user.save();
+
+  // Notify user
+  await Notification.create({
+    userId: user._id,
+    title: 'Premium Membership Deactivated',
+    message: 'Your premium membership has been deactivated. Please contact support if you think this is a mistake.',
+    type: 'premium'
+  });
+
+  res.json({ message: 'Membership deactivated successfully' });
+});
