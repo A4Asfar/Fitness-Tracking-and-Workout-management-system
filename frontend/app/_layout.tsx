@@ -21,59 +21,49 @@ function NavigationHandler() {
   const segments = useSegments();
   const router = useRouter();
   const rootNavigationState = useRootNavigationState();
-  const [showSplash, setShowSplash] = useState(!IS_WEB);
-  const [isNavigationReady, setIsNavigationReady] = useState(false);
-
-  useEffect(() => {
-    if (rootNavigationState?.key) {
-      // Delay slightly to ensure Expo Router's internal navigation container is fully mounted
-      const timer = setTimeout(() => setIsNavigationReady(true), 50);
-      return () => clearTimeout(timer);
-    }
-  }, [rootNavigationState?.key]);
+  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
     // Hide the native splash screen immediately to show our custom animated one
     NativeSplashScreen.hideAsync().catch(() => {});
 
-    if (IS_WEB) return;
-
-    const timer = setTimeout(() => setShowSplash(false), SPLASH_DURATION_MS);
-    const forceHide = setTimeout(() => setShowSplash(false), 4000);
-    return () => {
-      clearTimeout(timer);
-      clearTimeout(forceHide);
-    };
+    // Ensure the custom splash screen dismisses after 2.5 seconds
+    const timer = setTimeout(() => setShowSplash(false), 2500);
+    return () => clearTimeout(timer);
   }, []);
 
   useEffect(() => {
     // Wait until Expo Router's navigation state is mounted before routing.
     // If we route too early, it silently fails and leaves the user stuck on the loading screen.
-    if (loading || showSplash || !isNavigationReady) return;
+    if (loading || showSplash || !rootNavigationState?.key) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const isRoot = !segments[0] || segments[0] === 'index';
 
-    if (!user && !inAuthGroup) {
-      router.replace('/(auth)/login');
-    } else if (user && inAuthGroup) {
-      const isAdmin = isAdminUser(user);
-      if (isAdmin) {
-        router.replace('/admin-dashboard' as any);
-      } else {
-        router.replace('/(tabs)/' as any);
-      }
-    } else if (user) {
-      const isAdmin = isAdminUser(user);
-      const isAdminScreen = segments[0] === 'admin-dashboard' || segments[0] === 'admin';
+    // Defer the routing by a micro-tick to ensure the NavigationContainer is completely mounted
+    // This avoids the "Attempted to navigate before mounting the Root Layout" error on all platforms
+    setTimeout(() => {
+      if (!user && !inAuthGroup) {
+        router.replace('/(auth)/login');
+      } else if (user && inAuthGroup) {
+        const isAdmin = isAdminUser(user);
+        if (isAdmin) {
+          router.replace('/admin-dashboard' as any);
+        } else {
+          router.replace('/(tabs)/' as any);
+        }
+      } else if (user) {
+        const isAdmin = isAdminUser(user);
+        const isAdminScreen = segments[0] === 'admin-dashboard' || segments[0] === 'admin';
 
-      if (!isAdmin && isAdminScreen) {
-        router.replace('/(tabs)/' as any);
-      } else if (isRoot) {
-        router.replace(isAdmin ? '/admin-dashboard' as any : '/(tabs)/' as any);
+        if (!isAdmin && isAdminScreen) {
+          router.replace('/(tabs)/' as any);
+        } else if (isRoot) {
+          router.replace(isAdmin ? '/admin-dashboard' as any : '/(tabs)/' as any);
+        }
       }
-    }
-  }, [user, loading, showSplash, segments, router, isNavigationReady]);
+    }, 10);
+  }, [user, loading, showSplash, segments, router, rootNavigationState?.key]);
 
   return (
     <View style={styles.root}>
