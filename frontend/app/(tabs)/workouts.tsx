@@ -1,11 +1,13 @@
-import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, RefreshControl, Animated, Alert } from 'react-native';
-import { Colors, SPACING } from '@/constants/Theme';
+import React, { useState, useCallback } from 'react';
 import { 
-  Dumbbell, Flame, Zap, Heart, Target, TrendingUp, Clock, Play, ChevronRight
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, 
+  ActivityIndicator, RefreshControl, Alert, TextInput 
+} from 'react-native';
+import { Colors } from '@/constants/Theme';
+import { 
+  Dumbbell, Flame, Zap, Heart, Search, Filter, Plus, Calendar, Clock
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import api from '@/services/api';
@@ -14,88 +16,19 @@ import api from '@/services/api';
 import WorkoutCard from '@/components/workout/WorkoutCard';
 import EmptyState from '@/components/workout/EmptyState';
 
-const { width } = Dimensions.get('window');
+const TYPE_ICONS: Record<string, any> = {
+  Strength: Dumbbell,
+  Cardio: Flame,
+  HIIT: Zap,
+  Yoga: Heart,
+};
 
-const PROGRAMS = [
-  {
-    id: 'strength',
-    title: 'Strength Training',
-    type: 'Strength',
-    focus: 'Upper Body Focus',
-    exercises: 12,
-    duration: '45-60 min',
-    calories: '400-500 cal',
-    level: 'Intermediate',
-    icon: Dumbbell,
-    colors: ['#1A1D24', '#12141A'],
-    accent: '#7C4DFF',
-  },
-  {
-    id: 'hiit',
-    title: 'HIIT Cardio',
-    type: 'HIIT',
-    focus: 'Full Body HIIT',
-    exercises: 8,
-    duration: '20-30 min',
-    calories: '350-450 cal',
-    level: 'Intermediate',
-    icon: Zap,
-    colors: ['#1A1D24', '#12141A'],
-    accent: '#39FF14',
-  },
-  {
-    id: 'yoga',
-    title: 'Yoga & Mobility',
-    type: 'Yoga',
-    focus: 'Flexibility & Flow',
-    exercises: 15,
-    duration: '30-45 min',
-    calories: '150-200 cal',
-    level: 'Beginner',
-    icon: Heart,
-    colors: ['#1A1D24', '#12141A'],
-    accent: '#00FF85',
-  },
-  {
-    id: 'core',
-    title: 'Core Blast',
-    type: 'Strength',
-    focus: 'Abs & Core Strength',
-    exercises: 10,
-    duration: '25-35 min',
-    calories: '250-300 cal',
-    level: 'Intermediate',
-    icon: Target,
-    colors: ['#1A1D24', '#12141A'],
-    accent: '#CCFF00',
-  },
-];
-
-/* --- Animated Play Button Component --- */
-function AnimatedPlayButton({ accent, onPress }: { accent: string, onPress: () => void }) {
-  const pulse = useRef(new Animated.Value(1)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(pulse, { toValue: 1.2, duration: 1000, useNativeDriver: true }),
-        Animated.timing(pulse, { toValue: 1, duration: 1000, useNativeDriver: true }),
-      ])
-    ).start();
-  }, []);
-
-  return (
-    <TouchableOpacity onPress={onPress} style={styles.playButtonWrapper} activeOpacity={0.8}>
-      <Animated.View style={[styles.playGlow, { backgroundColor: accent, opacity: 0.3, transform: [{ scale: pulse }] }]} />
-      <LinearGradient
-        colors={[accent, accent + 'CC']}
-        style={styles.playButton}
-      >
-        <Play size={22} color="#FFF" fill="#FFF" />
-      </LinearGradient>
-    </TouchableOpacity>
-  );
-}
+const TYPE_COLORS: Record<string, string> = {
+  Strength: '#7C4DFF',
+  Cardio: '#FF4B4B',
+  HIIT: '#00B0FF',
+  Yoga: '#BD00FF',
+};
 
 export default function WorkoutsScreen() {
   const router = useRouter();
@@ -104,6 +37,10 @@ export default function WorkoutsScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Search & Filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedType, setSelectedType] = useState<string>('All');
 
   const fetchWorkouts = useCallback(async () => {
     setError(null);
@@ -130,376 +67,299 @@ export default function WorkoutsScreen() {
     fetchWorkouts();
   };
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const handleDeleteWorkout = async (id: string) => {
+    Alert.alert(
+      'Delete Workout',
+      'Are you sure you want to delete this workout?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Delete', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await api.delete(`/workouts/${id}`);
+              fetchWorkouts();
+            } catch (err) {
+              Alert.alert('Error', 'Failed to delete workout.');
+            }
+          }
+        }
+      ]
+    );
   };
 
-  if (error && !refreshing) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-        <Text style={{ color: '#FF4B4B', fontSize: 16, fontWeight: '700', textAlign: 'center', marginBottom: 16 }}>{error}</Text>
-        <TouchableOpacity 
-          onPress={() => { setLoading(true); fetchWorkouts(); }} 
-          style={{ backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 14 }}
-        >
-          <Text style={{ color: '#000', fontWeight: '900' }}>Retry</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
+  // Filter & Search Logic
+  const filteredWorkouts = workouts.filter(w => {
+    const matchesSearch = w.exercise.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          w.type.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = selectedType === 'All' || w.type === selectedType;
+    return matchesSearch && matchesType;
+  });
+
+  // Group Workouts dynamically
+  const groupWorkouts = (list: any[]) => {
+    const groups: Record<string, any[]> = {
+      'Today': [],
+      'Yesterday': [],
+      'This Week': [],
+      'Last Week': [],
+      'Earlier': [],
+    };
+
+    const now = new Date();
+    const todayStr = now.toDateString();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    const yesterdayStr = yesterday.toDateString();
+
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - now.getDay());
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    const startOfLastWeek = new Date(startOfWeek);
+    startOfLastWeek.setDate(startOfLastWeek.getDate() - 7);
+
+    list.forEach(w => {
+      const wDate = new Date(w.date);
+      const wDateStr = wDate.toDateString();
+
+      if (wDateStr === todayStr) {
+        groups['Today'].push(w);
+      } else if (wDateStr === yesterdayStr) {
+        groups['Yesterday'].push(w);
+      } else if (wDate >= startOfWeek) {
+        groups['This Week'].push(w);
+      } else if (wDate >= startOfLastWeek) {
+        groups['Last Week'].push(w);
+      } else {
+        groups['Earlier'].push(w);
+      }
+    });
+
+    return groups;
+  };
+
+  const grouped = groupWorkouts(filteredWorkouts);
 
   return (
     <View style={styles.container}>
-      <ScrollView 
-        contentContainerStyle={[styles.content, { paddingTop: insets.top + 20 }]}
+      {/* Custom Header Area */}
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <View>
+          <Text style={styles.headerSubtitle}>History Log</Text>
+          <Text style={styles.headerTitle}>Workouts</Text>
+        </View>
+        <TouchableOpacity
+          onPress={() => router.push('/create-workout' as any)}
+          style={styles.logBtn}
+          activeOpacity={0.8}
+        >
+          <Plus size={16} color="#FFFFFF" strokeWidth={3} />
+          <Text style={styles.logBtnText}>Log New</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Search & Filter bar */}
+      <View style={styles.searchBarRow}>
+        <View style={styles.searchContainer}>
+          <Search size={18} color="#94A3B8" style={styles.searchIcon} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search exercises, types..."
+            placeholderTextColor="#94A3B8"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+        </View>
+      </View>
+
+      {/* Category Chips */}
+      <View style={styles.chipsRow}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipsScroll}>
+          {['All', 'Strength', 'Cardio', 'HIIT', 'Yoga'].map(type => {
+            const isSelected = selectedType === type;
+            const Icon = TYPE_ICONS[type];
+            const color = TYPE_COLORS[type] || '#7C4DFF';
+            return (
+              <TouchableOpacity
+                key={type}
+                onPress={() => setSelectedType(type)}
+                style={[
+                  styles.chip,
+                  isSelected && { backgroundColor: color + '15', borderColor: color }
+                ]}
+                activeOpacity={0.8}
+              >
+                {Icon && <Icon size={14} color={isSelected ? color : '#64748B'} style={{ marginRight: 6 }} />}
+                <Text style={[styles.chipText, isSelected && { color: color, fontWeight: '800' }]}>
+                  {type}
+                </Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
+      {/* Main workout history list */}
+      <ScrollView
+        contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#00D1FF" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C4DFF" />
         }
       >
-        {/* --- Header --- */}
-        <View style={styles.header}>
-          <TrendingUp size={24} color={Colors.primary} strokeWidth={3} />
-          <Text style={styles.headerTitle}>Training Programs</Text>
-        </View>
-
-        {/* --- Programs List --- */}
-        <View style={styles.list}>
-          {PROGRAMS.map((program) => (
-            <TouchableOpacity 
-              key={program.id} 
-              style={styles.cardWrapper}
-              activeOpacity={0.9}
-              onPress={() => router.push({
-                pathname: '/workout-details',
-                params: { 
-                  id: program.id,
-                  title: program.title,
-                  focus: program.focus,
-                  level: program.level,
-                  duration: program.duration,
-                  calories: program.calories,
-                  accent: program.accent,
-                  type: program.type
-                }
-              } as any)}
-            >
-              <LinearGradient
-                colors={program.colors as [string, string]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.card}
-              >
-                <View style={styles.cardTop}>
-                  <View style={[styles.iconBox, { backgroundColor: program.accent + '20' }]}>
-                    <program.icon size={24} color={program.accent} />
-                  </View>
-                  <View style={[styles.levelBadge, { backgroundColor: program.accent + '15' }]}>
-                    <Text style={[styles.levelText, { color: program.accent }]}>{program.level}</Text>
-                  </View>
-                </View>
-
-                <View style={styles.cardMiddle}>
-                  <Text style={styles.cardTitle}>{program.title}</Text>
-                  <Text style={styles.cardExercises}>{program.exercises} exercises</Text>
-                </View>
-
-                <View style={styles.cardBottom}>
-                  <View style={styles.statItem}>
-                    <Clock size={16} color="#FFF" opacity={0.8} />
-                    <Text style={styles.statText}>{program.duration}</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Flame size={16} color="#FFF" opacity={0.8} />
-                    <Text style={styles.statText}>{program.calories}</Text>
-                  </View>
-                </View>
-
-                {/* Animated Play Button */}
-                <AnimatedPlayButton 
-                  accent={program.accent} 
-                  onPress={() => router.push({
-                    pathname: '/workout-details',
-                    params: { 
-                      id: program.id,
-                      title: program.title,
-                      focus: program.focus,
-                      level: program.level,
-                      duration: program.duration,
-                      calories: program.calories,
-                      accent: program.accent,
-                      type: program.type
-                    }
-                  } as any)} 
-                />
-              </LinearGradient>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* --- Recent Sessions --- */}
-        <View style={styles.historyHeader}>
-          <Text style={styles.sectionTitle}>Recent Sessions</Text>
-          <TouchableOpacity onPress={() => {}}>
-            <Text style={styles.seeAll}>View All</Text>
-          </TouchableOpacity>
-        </View>
-
         {loading ? (
-          <ActivityIndicator color="#7C4DFF" style={{ marginTop: 20 }} />
-        ) : workouts.length === 0 ? (
+          <ActivityIndicator color="#7C4DFF" style={{ marginTop: 40 }} />
+        ) : filteredWorkouts.length === 0 ? (
           <EmptyState
-            title="No Recent Sessions"
-            description="You haven't logged any workouts recently. Log your training today to start seeing results!"
-            buttonLabel="Log Workout"
+            title={searchQuery ? "No Matches Found" : "No Workout Sessions"}
+            description={searchQuery ? "Try altering search terms or category filters." : "Log your fitness routines to track progress milestones."}
+            buttonLabel="Log a Workout"
             onButtonPress={() => router.push('/create-workout' as any)}
             accentColor="#7C4DFF"
           />
         ) : (
-          workouts.slice(0, 5).map((workout) => (
-            <WorkoutCard
-              key={workout._id}
-              workout={workout}
-              onEditPress={() => router.push(`/workout/${workout._id}` as any)}
-              onDeletePress={() => {
-                Alert.alert(
-                  'Delete Workout',
-                  'Are you sure you want to delete this workout?',
-                  [
-                    { text: 'Cancel', style: 'cancel' },
-                    { 
-                      text: 'Delete', 
-                      style: 'destructive',
-                      onPress: async () => {
-                        try {
-                          await api.delete(`/workouts/${workout._id}`);
-                          fetchWorkouts();
-                        } catch (err) {
-                          Alert.alert('Error', 'Failed to delete workout.');
-                        }
-                      }
-                    }
-                  ]
-                );
-              }}
-            />
-          ))
+          Object.keys(grouped).map(groupKey => {
+            const list = grouped[groupKey];
+            if (list.length === 0) return null;
+
+            return (
+              <View key={groupKey} style={styles.groupSection}>
+                <Text style={styles.groupHeader}>{groupKey.toUpperCase()}</Text>
+                <View style={styles.groupList}>
+                  {list.map(workout => (
+                    <WorkoutCard
+                      key={workout._id}
+                      workout={workout}
+                      onEditPress={() => router.push(`/workout/${workout._id}` as any)}
+                      onDeletePress={() => handleDeleteWorkout(workout._id)}
+                    />
+                  ))}
+                </View>
+              </View>
+            );
+          })
         )}
       </ScrollView>
     </View>
   );
 }
 
-const getWorkoutMetrics = (w: any) => {
-  switch (w.type) {
-    case 'Strength':
-      return `${w.sets || 0} sets • ${w.reps || 0} reps • ${w.weight || 0}kg`;
-    case 'Cardio':
-      return `${w.duration || 0} min${w.distance ? ` • ${w.distance}km` : ''}`;
-    case 'HIIT':
-      return `${w.rounds || 0} rounds • ${w.duration || 0} min`;
-    case 'Yoga':
-      return `${w.duration || 0} min${w.difficulty ? ` • ${w.difficulty}` : ''}`;
-    default:
-      return `${w.duration || 0} min`;
-  }
-};
-
-const getWorkoutIcon = (type: string) => {
-  switch (type) {
-    case 'Strength': return Dumbbell;
-    case 'Cardio': return Flame;
-    case 'HIIT': return Zap;
-    case 'Yoga': return Heart;
-    default: return Dumbbell;
-  }
-};
-
-const getAccentColor = (type: string) => {
-  switch (type) {
-    case 'Strength': return '#00D1FF';
-    case 'HIIT': return '#FF4B4B';
-    case 'Yoga': return '#BD00FF';
-    default: return '#CCFF00';
-  }
-};
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
-  },
-  content: {
-    paddingHorizontal: 20,
-    paddingBottom: 40,
+    backgroundColor: '#F8FAFC',
   },
   header: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    gap: 12,
-    marginBottom: 24,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1.5,
+    borderColor: '#E2E8F0',
+  },
+  headerSubtitle: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   headerTitle: {
-    color: '#FFF',
+    color: '#0F172A',
     fontSize: 24,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
-  list: {
-    gap: 16,
-    marginBottom: 32,
-  },
-  cardWrapper: {
-    width: '100%',
-    borderRadius: 32,
-  },
-  card: {
-    borderRadius: 32,
-    padding: 24,
-    minHeight: 200,
-    justifyContent: 'space-between',
-    borderWidth: 1.5,
-    borderColor: '#232733',
-  },
-  cardTop: {
+  logBtn: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  iconBox: {
-    width: 48,
-    height: 48,
+    alignItems: 'center',
+    backgroundColor: '#7C4DFF',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  levelBadge: {
-    backgroundColor: 'rgba(0, 0, 0, 0.15)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  levelText: {
-    fontSize: 12,
-    fontWeight: '900',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-  },
-  cardMiddle: {
-    marginTop: 12,
-  },
-  cardTitle: {
-    color: '#FFF',
-    fontSize: 22,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  cardExercises: {
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontSize: 14,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  cardBottom: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 20,
-    marginTop: 12,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
     gap: 6,
-  },
-  statText: {
-    color: '#FFF',
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  playButtonWrapper: {
-    position: 'absolute',
-    bottom: 24,
-    right: 24,
-    width: 60,
-    height: 60,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  playButton: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 2,
-    shadowColor: '#000',
+    shadowColor: '#7C4DFF',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOpacity: 0.2,
     shadowRadius: 8,
-    elevation: 8,
+    elevation: 3,
   },
-  playGlow: {
-    position: 'absolute',
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    zIndex: 1,
-  },
-  historyHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-  sectionTitle: {
-    color: '#FFF',
-    fontSize: 18,
+  logBtnText: {
+    color: '#FFFFFF',
+    fontSize: 13,
     fontWeight: '800',
   },
-  seeAll: {
-    color: Colors.primary,
-    fontSize: 14,
-    fontWeight: '700',
+  searchBarRow: {
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 8,
+    backgroundColor: '#FFFFFF',
   },
-  historyCard: {
-    backgroundColor: '#111',
-    borderRadius: 20,
-    padding: 16,
+  searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: '#222',
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    height: 46,
+    paddingHorizontal: 12,
   },
-  historyAccent: {
-    width: 4,
-    height: '100%',
-    borderRadius: 2,
-    marginRight: 16,
+  searchIcon: {
+    marginRight: 8,
   },
-  historyInfo: {
+  searchInput: {
     flex: 1,
-  },
-  historyName: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 4,
-  },
-  historyMeta: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  emptyState: {
-    padding: 40,
-    alignItems: 'center',
-  },
-  emptyText: {
-    color: Colors.textSecondary,
+    color: '#0F172A',
     fontSize: 14,
-    textAlign: 'center',
+    fontWeight: '600',
+  },
+  chipsRow: {
+    backgroundColor: '#FFFFFF',
+    paddingBottom: 16,
+    borderBottomWidth: 1.5,
+    borderColor: '#E2E8F0',
+  },
+  chipsScroll: {
+    paddingHorizontal: 20,
+    gap: 8,
+  },
+  chip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+  },
+  chipText: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  scrollContent: {
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    paddingBottom: 40,
+  },
+  groupSection: {
+    marginBottom: 24,
+  },
+  groupHeader: {
+    color: '#64748B',
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1.5,
+    marginBottom: 12,
+    marginLeft: 4,
+  },
+  groupList: {
+    gap: 12,
   },
 });

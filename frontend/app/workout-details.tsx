@@ -1,10 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Colors, SPACING } from '@/constants/Theme';
+import { Colors } from '@/constants/Theme';
 import { 
-  ArrowLeft, Clock, Flame, Play, ChevronLeft, 
-  CheckCircle2, Circle, TrendingUp, Sparkles, Target
+  Clock, Flame, Play, ChevronLeft, CheckCircle2, Circle, TrendingUp 
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -59,7 +58,7 @@ export default function WorkoutDetailsScreen() {
   const level = (params.level as string) || 'Intermediate';
   const durationStr = (params.duration as string) || '45 min';
   const caloriesStr = (params.calories as string) || '400 cal';
-  const accent = (params.accent as string) || Colors.primary;
+  const accent = (params.accent as string) || '#7C4DFF';
   
   const [selectedDuration, setSelectedDuration] = useState('45 min');
   const [exercises, setExercises] = useState(PROGRAM_EXERCISES[id] || []);
@@ -81,41 +80,40 @@ export default function WorkoutDetailsScreen() {
       <TouchableOpacity 
         onPress={() => safeBack()} 
         style={[styles.backButton, { top: insets.top + 10 }]}
+        activeOpacity={0.7}
       >
-        <ChevronLeft size={24} color="#FFF" />
+        <ChevronLeft size={24} color="#0F172A" />
       </TouchableOpacity>
 
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
       >
         {/* --- Header Image/Video Card --- */}
         <View style={styles.heroSection}>
           <LinearGradient
-            colors={[accent + '40', '#000']}
+            colors={[accent + '15', '#F8FAFC']}
             style={styles.heroGrad}
           />
           <View style={styles.heroContent}>
             <View style={styles.titleRow}>
-              <View>
-                <Text style={styles.title}>{title}</Text>
-                <Text style={styles.focusText}>{focus}</Text>
-              </View>
+              <Text style={styles.title}>{title}</Text>
+              <Text style={styles.focusText}>{focus}</Text>
             </View>
             
             <View style={styles.videoCard}>
               <LinearGradient
-                colors={['#1A1A1A', '#0A0A0A']}
+                colors={['#FFFFFF', '#F8FAFC']}
                 style={styles.videoInner}
               >
                 <View style={styles.playCenter}>
-                  <View style={[styles.playRing, { borderColor: accent + '40' }]}>
-                    <Play size={32} color={accent} fill={accent} />
+                  <View style={[styles.playRing, { borderColor: accent + '30' }]}>
+                    <Play size={28} color={accent} fill={accent} />
                   </View>
                 </View>
                 
                 <View style={styles.durationBadge}>
-                  <Clock size={12} color="#FFF" />
+                  <Clock size={12} color="#0F172A" />
                   <Text style={styles.durationBadgeText}>{selectedDuration}</Text>
                 </View>
               </LinearGradient>
@@ -143,21 +141,25 @@ export default function WorkoutDetailsScreen() {
           {/* --- Select Duration --- */}
           <Text style={styles.sectionTitle}>Select Duration</Text>
           <View style={styles.durationRow}>
-            {['30 min', '45 min', '60 min'].map((dur) => (
-              <TouchableOpacity
-                key={dur}
-                style={[
-                  styles.durationBtn,
-                  selectedDuration === dur && { backgroundColor: accent }
-                ]}
-                onPress={() => setSelectedDuration(dur)}
-              >
-                <Text style={[
-                  styles.durationBtnText,
-                  selectedDuration === dur && { color: '#000', fontWeight: '900' }
-                ]}>{dur}</Text>
-              </TouchableOpacity>
-            ))}
+            {['30 min', '45 min', '60 min'].map((dur) => {
+              const isSelected = selectedDuration === dur;
+              return (
+                <TouchableOpacity
+                  key={dur}
+                  style={[
+                    styles.durationBtn,
+                    isSelected && { backgroundColor: accent + '10', borderColor: accent }
+                  ]}
+                  onPress={() => setSelectedDuration(dur)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[
+                    styles.durationBtnText,
+                    isSelected && { color: accent, fontWeight: '800' }
+                  ]}>{dur}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           {/* --- Exercises List --- */}
@@ -167,7 +169,7 @@ export default function WorkoutDetailsScreen() {
           </View>
           
           <View style={styles.progressBarBg}>
-            <View style={[styles.progressBarFill, { width: `${progress * 100}%`, backgroundColor: Colors.primary }]} />
+            <View style={[styles.progressBarFill, { width: `${progress * 100}%`, backgroundColor: accent }]} />
           </View>
 
           <View style={styles.exercisesList}>
@@ -176,6 +178,7 @@ export default function WorkoutDetailsScreen() {
                 key={idx}
                 style={[styles.exerciseItem, ex.completed && styles.exerciseItemCompleted]}
                 onPress={() => toggleExercise(idx)}
+                activeOpacity={0.8}
               >
                 <View style={styles.exerciseInfo}>
                   <Text style={[styles.exerciseName, ex.completed && styles.exerciseNameDone]}>
@@ -186,9 +189,9 @@ export default function WorkoutDetailsScreen() {
                   </Text>
                 </View>
                 {ex.completed ? (
-                  <CheckCircle2 size={24} color={accent} />
+                  <CheckCircle2 size={22} color={accent} />
                 ) : (
-                  <Circle size={24} color="#333" />
+                  <Circle size={22} color="#CBD5E1" />
                 )}
               </TouchableOpacity>
             ))}
@@ -197,10 +200,11 @@ export default function WorkoutDetailsScreen() {
       </ScrollView>
 
       {/* --- Sticky Start Workout Button --- */}
-      <View style={[styles.footer, { paddingBottom: insets.bottom + 20 }]}>
+      <View style={[styles.footer, { paddingBottom: insets.bottom + 16 }]}>
         <TouchableOpacity 
           style={styles.startBtnWrapper}
           onPress={() => router.push(`/create-workout?type=${params.type}` as any)}
+          activeOpacity={0.9}
         >
           <LinearGradient
             colors={[accent, accent + 'CC']}
@@ -208,7 +212,7 @@ export default function WorkoutDetailsScreen() {
             end={{ x: 1, y: 0 }}
             style={styles.startBtn}
           >
-            <Play size={20} color="#000" fill="#000" />
+            <Play size={20} color="#FFFFFF" fill="#FFFFFF" />
             <Text style={styles.startBtnText}>Start Workout</Text>
           </LinearGradient>
         </TouchableOpacity>
@@ -220,21 +224,23 @@ export default function WorkoutDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000',
+    backgroundColor: '#F8FAFC',
   },
   backButton: {
     position: 'absolute',
     left: 20,
     zIndex: 10,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 40,
+    height: 40,
+    borderRadius: 14,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   heroSection: {
-    height: 400,
+    height: 380,
     justifyContent: 'flex-end',
     paddingBottom: 20,
   },
@@ -245,27 +251,33 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   titleRow: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   title: {
-    color: '#FFF',
-    fontSize: 32,
+    color: '#0F172A',
+    fontSize: 28,
     fontWeight: '900',
-    letterSpacing: -1,
+    letterSpacing: -0.5,
   },
   focusText: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 16,
+    color: '#64748B',
+    fontSize: 14,
     fontWeight: '600',
-    marginTop: 4,
+    marginTop: 2,
   },
   videoCard: {
     width: '100%',
-    height: 200,
-    borderRadius: 32,
+    height: 180,
+    borderRadius: 24,
     overflow: 'hidden',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.02,
+    shadowRadius: 8,
+    elevation: 2,
   },
   videoInner: {
     flex: 1,
@@ -273,17 +285,17 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   playCenter: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 70,
+    height: 70,
+    borderRadius: 35,
+    backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
   },
   playRing: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     borderWidth: 2,
     justifyContent: 'center',
     alignItems: 'center',
@@ -294,15 +306,17 @@ const styles = StyleSheet.create({
     right: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     gap: 6,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   durationBadgeText: {
-    color: '#FFF',
-    fontSize: 12,
+    color: '#0F172A',
+    fontSize: 11,
     fontWeight: '800',
   },
   body: {
@@ -311,72 +325,75 @@ const styles = StyleSheet.create({
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 32,
+    marginBottom: 28,
+    gap: 8,
   },
   statChip: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#111',
-    paddingHorizontal: 16,
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    paddingHorizontal: 12,
     paddingVertical: 12,
-    borderRadius: 20,
-    gap: 8,
-    borderWidth: 1,
-    borderColor: '#222',
+    borderRadius: 16,
+    gap: 6,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   statChipText: {
-    color: '#FFF',
-    fontSize: 14,
+    color: '#0F172A',
+    fontSize: 13,
     fontWeight: '700',
   },
   sectionTitle: {
-    color: '#FFF',
-    fontSize: 18,
+    color: '#0F172A',
+    fontSize: 16,
     fontWeight: '900',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   durationRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 32,
+    marginBottom: 28,
+    gap: 8,
   },
   durationBtn: {
     flex: 1,
-    height: 50,
-    backgroundColor: '#111',
-    borderRadius: 16,
+    height: 44,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
     justifyContent: 'center',
     alignItems: 'center',
-    marginHorizontal: 5,
-    borderWidth: 1,
-    borderColor: '#222',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   durationBtnText: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 14,
+    color: '#64748B',
+    fontSize: 13,
     fontWeight: '700',
   },
   exerciseHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   exerciseProgress: {
-    color: 'rgba(255, 255, 255, 0.5)',
-    fontSize: 13,
+    color: '#64748B',
+    fontSize: 12,
     fontWeight: '600',
   },
   progressBarBg: {
-    height: 4,
-    backgroundColor: '#1A1A1A',
-    borderRadius: 2,
-    marginBottom: 24,
+    height: 6,
+    backgroundColor: '#E2E8F0',
+    borderRadius: 3,
+    marginBottom: 20,
     overflow: 'hidden',
   },
   progressBarFill: {
     height: '100%',
-    borderRadius: 2,
+    borderRadius: 3,
   },
   exercisesList: {
     gap: 12,
@@ -384,32 +401,32 @@ const styles = StyleSheet.create({
   exerciseItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#111',
-    padding: 20,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#222',
+    backgroundColor: '#FFFFFF',
+    padding: 16,
+    borderRadius: 20,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   exerciseItemCompleted: {
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: '#F8FAFC',
     opacity: 0.8,
   },
   exerciseInfo: {
     flex: 1,
   },
   exerciseName: {
-    color: '#FFF',
-    fontSize: 16,
+    color: '#0F172A',
+    fontSize: 15,
     fontWeight: '700',
-    marginBottom: 4,
+    marginBottom: 2,
   },
   exerciseNameDone: {
     textDecorationLine: 'line-through',
-    color: 'rgba(255, 255, 255, 0.4)',
+    color: '#94A3B8',
   },
   exerciseMeta: {
-    color: 'rgba(255, 255, 255, 0.4)',
-    fontSize: 13,
+    color: '#64748B',
+    fontSize: 12,
     fontWeight: '600',
   },
   footer: {
@@ -417,14 +434,16 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+    backgroundColor: '#FFFFFF',
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 16,
+    borderTopWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   startBtnWrapper: {
     width: '100%',
-    height: 64,
-    borderRadius: 20,
+    height: 52,
+    borderRadius: 16,
     overflow: 'hidden',
   },
   startBtn: {
@@ -432,12 +451,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 12,
+    gap: 10,
   },
   startBtnText: {
-    color: '#000',
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: -0.5,
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
   },
 });

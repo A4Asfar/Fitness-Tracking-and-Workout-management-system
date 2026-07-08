@@ -11,66 +11,18 @@ import api from '@/services/api';
 import {
   Dumbbell, Calendar, Save, Trash2, ChevronLeft,
   Activity, Hash, Pencil, X, CheckCircle2,
-  Weight as WeightIcon, RotateCcw, AlertTriangle,
-  Flame, Zap, Heart,
+  AlertTriangle, Flame, Zap, Heart, RotateCcw
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { safeBack } from '@/utils/navigation';
 
-/* ─── Type badge colour map ─── */
 const TYPE_COLORS: Record<string, string> = {
-  Strength: Colors.primary,
+  Strength: '#7C4DFF',
   Cardio:   '#FF4B4B',
-  HIIT:     '#00D1FF',
+  HIIT:     '#00B0FF',
   Yoga:     '#BD00FF',
 };
-
-/* ─── Small animated field ─── */
-function EditField({
-  icon: Icon, label, value, onChange, keyboardType = 'numeric', suffix,
-}: {
-  icon: any; label: string; value: string;
-  onChange: (v: string) => void; keyboardType?: any; suffix?: string;
-}) {
-  const [focused, setFocused] = useState(false);
-  return (
-    <View style={ef.group}>
-      <Text style={ef.label}>{label}</Text>
-      <View style={[ef.wrapper, focused && ef.wrapperFocused]}>
-        <View style={ef.iconBox}><Icon size={18} color={focused ? Colors.primary : Colors.textSecondary} strokeWidth={2} /></View>
-        <TextInput
-          style={ef.input}
-          value={value}
-          onChangeText={onChange}
-          keyboardType={keyboardType}
-          placeholderTextColor={Colors.textSecondary}
-          placeholder="0"
-          onFocus={() => setFocused(true)}
-          onBlur={() => setFocused(false)}
-          selectionColor={Colors.primary}
-        />
-        {suffix ? <Text style={ef.suffix}>{suffix}</Text> : null}
-      </View>
-    </View>
-  );
-}
-
-const ef = StyleSheet.create({
-  group: { marginBottom: 20 },
-  label: {
-    color: Colors.textSecondary, fontSize: 10, fontWeight: '800',
-    textTransform: 'uppercase', letterSpacing: 1.5, marginBottom: 10, marginLeft: 4,
-  },
-  wrapper: {
-    flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E1E1E',
-    borderRadius: 18, paddingHorizontal: 16, borderWidth: 1.5, borderColor: '#2E2E2E',
-  },
-  wrapperFocused: { borderColor: Colors.primary + '90', backgroundColor: Colors.primary + '0A', shadowColor: Colors.primary, shadowOffset: { width: 0, height: 0 }, shadowOpacity: 0.15, shadowRadius: 10, elevation: 4 },
-  iconBox: { marginRight: 12 },
-  input: { flex: 1, color: Colors.text, fontSize: 18, fontWeight: '700', paddingVertical: 16 },
-  suffix: { color: Colors.primary, fontSize: 13, fontWeight: '800', marginLeft: 6 },
-});
 
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
@@ -115,7 +67,7 @@ const workoutTypeConfig: Record<string, { fields: FormFieldConfig[] }> = {
   },
   Yoga: {
     fields: [
-      { name: 'exercise', label: 'Pose / Exercise Name', placeholder: 'e.g. Downward Dog', required: true, type: 'text' },
+      { name: 'exercise', label: 'Pose Name', placeholder: 'e.g. Downward Dog', required: true, type: 'text' },
       { name: 'duration', label: 'Duration (min)', placeholder: '0', required: true, type: 'number', halfWidth: true },
       { name: 'difficulty', label: 'Difficulty', placeholder: 'e.g. Intermediate', required: false, type: 'text', halfWidth: true },
     ]
@@ -135,7 +87,6 @@ export default function WorkoutDetailScreen() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /* editable fields configuration-driven map */
   const [editType, setEditType] = useState('Strength');
   const [formValues, setFormValues] = useState<Record<string, string>>({
     exercise: '',
@@ -153,7 +104,6 @@ export default function WorkoutDetailScreen() {
   });
   const [errors, setErrors] = useState<any>({});
 
-  /* animations */
   const editAnim    = useRef(new Animated.Value(0)).current;
   const successAnim = useRef(new Animated.Value(0)).current;
   const cardAnim    = useRef(new Animated.Value(0)).current;
@@ -196,7 +146,6 @@ export default function WorkoutDetailScreen() {
     setEditMode(on);
     Animated.spring(editAnim, { toValue: on ? 1 : 0, useNativeDriver: true, bounciness: 7 }).start();
     if (!on && workout) {
-      /* reset to saved values */
       setEditType(workout.type || 'Strength');
       setFormValues({
         exercise: workout.exercise || '',
@@ -217,12 +166,10 @@ export default function WorkoutDetailScreen() {
   };
 
   const handleTypeChange = (newType: string) => {
-    // Smooth transition
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setEditType(newType);
     setErrors({});
     
-    // Clear irrelevant fields, preserve shared exercise name
     setFormValues(prev => ({
       exercise: prev.exercise,
       sets: '',
@@ -299,7 +246,6 @@ export default function WorkoutDetailScreen() {
     while (i < fields.length) {
       const field = fields[i];
       
-      // Group consecutive half-width fields into rows
       if (field.halfWidth && i + 1 < fields.length && fields[i + 1].halfWidth) {
         const nextField = fields[i + 1];
         rows.push(
@@ -310,7 +256,7 @@ export default function WorkoutDetailScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder={field.placeholder}
-                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  placeholderTextColor="#94A3B8"
                   value={formValues[field.name]}
                   onChangeText={(val) => {
                     setFormValues((prev: Record<string, string>) => ({ ...prev, [field.name]: val }));
@@ -319,7 +265,7 @@ export default function WorkoutDetailScreen() {
                   keyboardType={field.type === 'number' ? 'numeric' : 'default'}
                 />
               </View>
-              {errors[field.name] && <Text style={styles.errorText}>{errors[field.name]}</Text>}
+              {errors[field.name] && <Text style={styles.formErrorText}>{errors[field.name]}</Text>}
             </View>
 
             <View style={styles.halfInput}>
@@ -328,7 +274,7 @@ export default function WorkoutDetailScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder={nextField.placeholder}
-                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  placeholderTextColor="#94A3B8"
                   value={formValues[nextField.name]}
                   onChangeText={(val) => {
                     setFormValues((prev: Record<string, string>) => ({ ...prev, [nextField.name]: val }));
@@ -337,13 +283,12 @@ export default function WorkoutDetailScreen() {
                   keyboardType={nextField.type === 'number' ? 'numeric' : 'default'}
                 />
               </View>
-              {errors[nextField.name] && <Text style={styles.errorText}>{errors[nextField.name]}</Text>}
+              {errors[nextField.name] && <Text style={styles.formErrorText}>{errors[nextField.name]}</Text>}
             </View>
           </View>
         );
         i += 2;
       } else {
-        // Render single/full-width field
         rows.push(
           <View key={field.name} style={field.halfWidth ? styles.row : styles.inputGroup}>
             <View style={field.halfWidth ? styles.halfInput : { flex: 1, gap: 8 }}>
@@ -352,7 +297,7 @@ export default function WorkoutDetailScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder={field.placeholder}
-                  placeholderTextColor="rgba(255,255,255,0.2)"
+                  placeholderTextColor="#94A3B8"
                   value={formValues[field.name]}
                   onChangeText={(val) => {
                     setFormValues((prev: Record<string, string>) => ({ ...prev, [field.name]: val }));
@@ -361,7 +306,7 @@ export default function WorkoutDetailScreen() {
                   keyboardType={field.type === 'number' ? 'numeric' : 'default'}
                 />
               </View>
-              {errors[field.name] && <Text style={styles.errorText}>{errors[field.name]}</Text>}
+              {errors[field.name] && <Text style={styles.formErrorText}>{errors[field.name]}</Text>}
             </View>
             {field.halfWidth && <View style={styles.halfInput} />}
           </View>
@@ -413,7 +358,7 @@ export default function WorkoutDetailScreen() {
       const updated = await api.put(`/workouts/${id}`, payload);
       setWorkout(updated.data);
       toggleEdit(false);
-      /* success flash */
+      
       Animated.sequence([
         Animated.timing(successAnim, { toValue: 1, duration: 300, useNativeDriver: true }),
         Animated.delay(1800),
@@ -442,7 +387,7 @@ export default function WorkoutDetailScreen() {
   if (loading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color="#7C4DFF" />
         <Text style={styles.loaderText}>Loading workout…</Text>
       </View>
     );
@@ -450,16 +395,15 @@ export default function WorkoutDetailScreen() {
 
   if (error) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-        <LinearGradient colors={['#FF4B4B15', 'transparent']} style={StyleSheet.absoluteFill} />
-        <Text style={{ color: '#FF4B4B', fontSize: 16, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>SYNC ERROR</Text>
-        <Text style={{ color: Colors.textSecondary, fontSize: 14, fontWeight: '500', textAlign: 'center', marginBottom: 28, lineHeight: 22 }}>{error}</Text>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>SYNC ERROR</Text>
+        <Text style={styles.errorText}>{error}</Text>
         <TouchableOpacity 
           onPress={() => { setLoading(true); fetchWorkout(); }} 
-          style={{ height: 54, width: 160, borderRadius: 18, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}
+          style={styles.retryBtn}
           activeOpacity={0.8}
         >
-          <Text style={{ color: '#000', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 }}>RETRY SYNC</Text>
+          <Text style={styles.retryText}>RETRY SYNC</Text>
         </TouchableOpacity>
       </View>
     );
@@ -467,21 +411,21 @@ export default function WorkoutDetailScreen() {
 
   if (!workout) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#000', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
-        <Text style={{ color: Colors.text, fontSize: 18, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>Workout Not Found</Text>
-        <Text style={{ color: Colors.textSecondary, fontSize: 14, fontWeight: '500', textAlign: 'center', marginBottom: 28 }}>This session may have been deleted.</Text>
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorTitle}>Workout Not Found</Text>
+        <Text style={styles.errorText}>This session may have been deleted.</Text>
         <TouchableOpacity 
           onPress={() => safeBack()} 
-          style={{ height: 54, width: 160, borderRadius: 18, backgroundColor: Colors.primary, justifyContent: 'center', alignItems: 'center' }}
+          style={styles.retryBtn}
           activeOpacity={0.8}
         >
-          <Text style={{ color: '#000', fontSize: 15, fontWeight: '900', letterSpacing: 0.5 }}>GO BACK</Text>
+          <Text style={styles.retryText}>GO BACK</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  const accentColor = TYPE_COLORS[workout?.type] ?? Colors.primary;
+  const accentColor = TYPE_COLORS[workout?.type] ?? '#7C4DFF';
   const formattedDate = new Date(workout.date).toLocaleDateString(undefined, {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
@@ -490,41 +434,40 @@ export default function WorkoutDetailScreen() {
 
   return (
     <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={{ flex: 1, backgroundColor: Colors.background }}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={styles.container}
     >
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: Colors.background },
+          headerStyle: { backgroundColor: '#F8FAFC' },
           headerShadowVisible: false,
           headerTitle: () => (
-            <Text style={{ color: Colors.text, fontSize: 17, fontWeight: '800' }}>
+            <Text style={{ color: '#0F172A', fontSize: 17, fontWeight: '800' }}>
               {editMode ? 'Edit Workout' : 'Workout Details'}
             </Text>
           ),
           headerLeft: () => (
             <TouchableOpacity onPress={() => editMode ? toggleEdit(false) : safeBack()} style={{ padding: 4 }}>
               {editMode
-                ? <X size={22} color={Colors.textSecondary} />
-                : <ChevronLeft size={26} color={Colors.primary} />}
+                ? <X size={22} color="#64748B" />
+                : <ChevronLeft size={26} color="#7C4DFF" />}
             </TouchableOpacity>
           ),
           headerRight: () => !editMode ? (
             <TouchableOpacity
               onPress={() => toggleEdit(true)}
-              style={styles.headerEditBtn}
+              style={[styles.headerEditBtn, { borderColor: accentColor + '40', backgroundColor: accentColor + '10' }]}
             >
-              <Pencil size={16} color={Colors.primary} />
-              <Text style={styles.headerEditText}>Edit</Text>
+              <Pencil size={16} color={accentColor} />
+              <Text style={[styles.headerEditText, { color: accentColor }]}>Edit</Text>
             </TouchableOpacity>
           ) : null,
         }}
       />
 
-      {/* Success toast */}
       <Animated.View style={[styles.successToast, { opacity: successAnim, transform: [{ translateY: successAnim.interpolate({ inputRange: [0, 1], outputRange: [-60, 0] }) }] }]}>
-        <CheckCircle2 size={18} color="#000" />
+        <CheckCircle2 size={18} color="#FFFFFF" />
         <Text style={styles.successToastText}>Workout Updated!</Text>
       </Animated.View>
 
@@ -532,21 +475,18 @@ export default function WorkoutDetailScreen() {
         contentContainerStyle={{ padding: 20, paddingBottom: 60 }}
         showsVerticalScrollIndicator={false}
       >
-        {/* ── Hero Card ── */}
         <Animated.View style={{ opacity: cardAnim, transform: [{ scale: cardAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }] }}>
           <View style={styles.heroCard}>
             <LinearGradient
-              colors={[accentColor + '22', 'transparent']}
+              colors={[accentColor + '08', 'transparent']}
               style={StyleSheet.absoluteFill}
             />
-            {/* Type badge */}
-            <View style={[styles.typeBadge, { borderColor: accentColor + '40', backgroundColor: accentColor + '15' }]}>
+            <View style={[styles.typeBadge, { borderColor: accentColor + '40', backgroundColor: accentColor + '10' }]}>
               <Text style={[styles.typeText, { color: accentColor }]}>{workout.type?.toUpperCase()}</Text>
             </View>
 
-            {/* Dynamic Avatar Icon */}
-            <LinearGradient colors={[accentColor + '40', accentColor + '15']} style={styles.avatarRing}>
-              <View style={[styles.avatar, { borderColor: accentColor + '30' }]}>
+            <LinearGradient colors={[accentColor + '15', accentColor + '05']} style={styles.avatarRing}>
+              <View style={[styles.avatar, { borderColor: accentColor + '20' }]}>
                 {React.createElement(getWorkoutIcon(workout.type), {
                   size: 38,
                   color: accentColor,
@@ -558,56 +498,53 @@ export default function WorkoutDetailScreen() {
             <Text style={styles.exerciseName}>{workout.exercise}</Text>
 
             <View style={styles.dateRow}>
-              <Calendar size={13} color={Colors.textSecondary} />
+              <Calendar size={14} color="#64748B" />
               <Text style={styles.dateText}>{formattedDate}</Text>
             </View>
 
-            {/* Stat pills (only meaningful information) */}
             {renderDetailPills()}
           </View>
         </Animated.View>
 
-        {/* ── Volume badge (Only for Strength) ── */}
         {workout.type === 'Strength' && (
-          <View style={styles.volumeCard}>
-            <Activity size={16} color={Colors.primary} />
+          <View style={[styles.volumeCard, { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' }]}>
+            <Activity size={16} color="#7C4DFF" />
             <Text style={styles.volumeText}>
               Total Volume:{' '}
-              <Text style={{ color: Colors.primary, fontWeight: '800' }}>
+              <Text style={{ color: '#7C4DFF', fontWeight: '800' }}>
                 {((workout.sets ?? 0) * (workout.reps ?? 0) * (workout.weight ?? 0)).toLocaleString()} kg
               </Text>
             </Text>
           </View>
         )}
 
-        {/* ── Edit Form ── */}
         {editMode && (
           <Animated.View style={[styles.editCard, { opacity: editAnim, transform: [{ translateY: editTranslate }] }]}>
             <View style={styles.editCardHeader}>
-              <Pencil size={16} color={Colors.primary} />
+              <Pencil size={16} color="#7C4DFF" />
               <Text style={styles.editCardTitle}>Edit Performance</Text>
             </View>
 
-            {/* Workout Type Selector */}
             <Text style={[styles.label, { marginBottom: 12, marginLeft: 4 }]}>Workout Type</Text>
             <View style={styles.typeGrid}>
               {[
-                { id: 'Strength', icon: Dumbbell, color: '#CCFF00' },
+                { id: 'Strength', icon: Dumbbell, color: '#7C4DFF' },
                 { id: 'Cardio', icon: Flame, color: '#FF4B4B' },
-                { id: 'HIIT', icon: Zap, color: '#00D1FF' },
+                { id: 'HIIT', icon: Zap, color: '#00B0FF' },
                 { id: 'Yoga', icon: Heart, color: '#BD00FF' },
               ].map((t) => (
                 <TouchableOpacity 
                   key={t.id} 
                   style={[
                     styles.typeCard, 
-                    editType === t.id && { backgroundColor: t.color + '20', borderColor: t.color }
+                    editType === t.id && { backgroundColor: t.color + '15', borderColor: t.color }
                   ]}
                   onPress={() => handleTypeChange(t.id)}
+                  activeOpacity={0.8}
                 >
                   {React.createElement(t.icon, {
                     size: 16,
-                    color: editType === t.id ? t.color : 'rgba(255,255,255,0.4)'
+                    color: editType === t.id ? t.color : '#94A3B8'
                   })}
                   <Text style={[
                     styles.typeTextBtn, 
@@ -617,10 +554,8 @@ export default function WorkoutDetailScreen() {
               ))}
             </View>
 
-            {/* Dynamic Config-driven Fields */}
             {renderEditFields()}
 
-            {/* Save button */}
             <TouchableOpacity
               onPress={handleUpdate}
               disabled={saving || deleting}
@@ -628,18 +563,17 @@ export default function WorkoutDetailScreen() {
               style={{ marginTop: 24 }}
             >
               <LinearGradient
-                colors={[Colors.primary, '#9FE800']}
+                colors={['#7C4DFF', '#BD00FF']}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 style={[styles.saveBtn, (saving || deleting) && { opacity: 0.6 }]}
               >
                 {saving
-                  ? <ActivityIndicator size="small" color="#000" />
-                  : <Save size={20} color="#000" strokeWidth={2.5} />}
+                  ? <ActivityIndicator size="small" color="#FFFFFF" />
+                  : <Save size={20} color="#FFFFFF" strokeWidth={2.5} />}
                 <Text style={styles.saveBtnText}>{saving ? 'SAVING…' : 'SAVE CHANGES'}</Text>
               </LinearGradient>
             </TouchableOpacity>
 
-            {/* Reset to saved values */}
             <TouchableOpacity
               style={styles.resetBtn}
               onPress={() => {
@@ -663,42 +597,39 @@ export default function WorkoutDetailScreen() {
                 }
               }}
             >
-              <RotateCcw size={16} color={Colors.textSecondary} />
+              <RotateCcw size={16} color="#64748B" />
               <Text style={styles.resetBtnText}>Reset to original</Text>
             </TouchableOpacity>
           </Animated.View>
         )}
 
-        {/* ── Action buttons (view mode) ── */}
         {!editMode && (
           <View style={styles.actionRow}>
             <TouchableOpacity style={styles.editActionBtn} onPress={() => toggleEdit(true)}>
-              <Pencil size={18} color={Colors.primary} />
+              <Pencil size={18} color="#7C4DFF" />
               <Text style={styles.editActionText}>Edit Workout</Text>
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.deleteActionBtn} onPress={() => setShowDelete(true)}>
-              <Trash2 size={18} color={Colors.error} />
+              <Trash2 size={18} color="#EF4444" />
               <Text style={styles.deleteActionText}>Delete</Text>
             </TouchableOpacity>
           </View>
         )}
       </ScrollView>
 
-      {/* ── Delete Confirmation Modal ── */}
       <Modal visible={showDelete} transparent animationType="fade" statusBarTranslucent>
-        <BlurView intensity={25} tint="dark" style={StyleSheet.absoluteFill} />
+        <BlurView intensity={10} tint="dark" style={StyleSheet.absoluteFill} />
         <Pressable style={styles.modalBackdrop} onPress={() => !deleting && setShowDelete(false)}>
           <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
-            {/* Warning icon */}
             <View style={styles.modalIconRing}>
-              <AlertTriangle size={32} color={Colors.error} strokeWidth={1.8} />
+              <AlertTriangle size={32} color="#EF4444" strokeWidth={1.8} />
             </View>
 
             <Text style={styles.modalTitle}>Delete Workout?</Text>
             <Text style={styles.modalBody}>
               This will permanently remove{' '}
-              <Text style={{ color: Colors.text, fontWeight: '700' }}>{workout.exercise}</Text>
+              <Text style={{ color: '#0F172A', fontWeight: '700' }}>{workout.exercise}</Text>
               {' '}from your history. This action cannot be undone.
             </Text>
 
@@ -708,8 +639,8 @@ export default function WorkoutDetailScreen() {
               disabled={deleting}
             >
               {deleting
-                ? <ActivityIndicator size="small" color="#fff" />
-                : <Trash2 size={18} color="#fff" />}
+                ? <ActivityIndicator size="small" color="#FFFFFF" />
+                : <Trash2 size={18} color="#FFFFFF" />}
               <Text style={styles.modalDeleteText}>{deleting ? 'Deleting…' : 'Yes, Delete'}</Text>
             </TouchableOpacity>
 
@@ -728,227 +659,441 @@ export default function WorkoutDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  loader: { flex: 1, backgroundColor: Colors.background, justifyContent: 'center', alignItems: 'center', gap: 14 },
-  loaderText: { color: Colors.textSecondary, fontSize: 14, fontWeight: '600', letterSpacing: 0.3 },
-
-  /* Success toast */
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  loader: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 14,
+  },
+  loaderText: {
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '600',
+  },
+  errorContainer: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  errorTitle: {
+    color: '#FF4D4D',
+    fontSize: 18,
+    fontWeight: '900',
+    marginBottom: 8,
+  },
+  errorText: {
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '500',
+    textAlign: 'center',
+    marginBottom: 28,
+    lineHeight: 22,
+  },
+  retryBtn: {
+    height: 52,
+    width: 160,
+    borderRadius: 16,
+    backgroundColor: '#7C4DFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#7C4DFF',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  retryText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '900',
+  },
   successToast: {
-    position: 'absolute', top: 12, left: 16, right: 16, zIndex: 99,
-    backgroundColor: Colors.primary, borderRadius: 20,
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    paddingVertical: 16, paddingHorizontal: 20, gap: 10,
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.6, shadowRadius: 20, elevation: 16,
+    position: 'absolute',
+    top: 12,
+    left: 16,
+    right: 16,
+    zIndex: 99,
+    backgroundColor: '#10B981',
+    borderRadius: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    gap: 10,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.2,
+    shadowRadius: 16,
+    elevation: 6,
   },
-  successToastText: { color: '#000', fontSize: 15, fontWeight: '900', letterSpacing: 0.3 },
-
-  /* Header */
+  successToastText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '900',
+  },
   headerEditBtn: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: Colors.primary + '1A', paddingHorizontal: 14,
-    paddingVertical: 8, borderRadius: 22, borderWidth: 1.5,
-    borderColor: Colors.primary + '40',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 22,
+    borderWidth: 1.5,
   },
-  headerEditText: { color: Colors.primary, fontSize: 13, fontWeight: '800' },
-
-  /* Hero card */
+  headerEditText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
   heroCard: {
-    backgroundColor: '#161616', borderRadius: 32, padding: 28,
-    alignItems: 'center', overflow: 'hidden',
-    borderWidth: 1, borderColor: '#242424',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 16 },
-    shadowOpacity: 0.5, shadowRadius: 24, elevation: 16,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    padding: 24,
+    alignItems: 'center',
+    overflow: 'hidden',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.03,
+    shadowRadius: 12,
+    elevation: 2,
     marginBottom: 16,
   },
   typeBadge: {
-    position: 'absolute', top: 20, right: 20,
-    paddingHorizontal: 12, paddingVertical: 6,
-    borderRadius: 12, borderWidth: 1.5,
+    position: 'absolute',
+    top: 20,
+    right: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1.5,
   },
-  typeText: { fontSize: 9, fontWeight: '900', letterSpacing: 2 },
+  typeText: {
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
   avatarRing: {
-    width: 110, height: 110, borderRadius: 34,
-    justifyContent: 'center', alignItems: 'center', marginBottom: 20,
+    width: 100,
+    height: 100,
+    borderRadius: 32,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
   },
   avatar: {
-    width: 96, height: 96, borderRadius: 28,
-    backgroundColor: '#1A1A1A', justifyContent: 'center',
-    alignItems: 'center', borderWidth: 2,
+    width: 88,
+    height: 88,
+    borderRadius: 28,
+    backgroundColor: '#FFFFFF',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
   },
   exerciseName: {
-    color: Colors.text, fontSize: 28, fontWeight: '900',
-    letterSpacing: -1, textAlign: 'center', marginBottom: 10, lineHeight: 32,
+    color: '#0F172A',
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+    textAlign: 'center',
+    marginBottom: 8,
+    lineHeight: 28,
   },
-  dateRow: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 28 },
-  dateText: { color: Colors.textSecondary, fontSize: 13, fontWeight: '600' },
-  statRow: { flexDirection: 'row', gap: 10, width: '100%' },
-  statPill: {
-    flex: 1, backgroundColor: '#1E1E1E', borderRadius: 22,
-    paddingVertical: 16, alignItems: 'center',
-    borderWidth: 1.5, borderColor: '#282828',
-    shadowColor: '#000', shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3, shadowRadius: 8, elevation: 4,
-  },
-  statPillValue: { fontSize: 26, fontWeight: '900', letterSpacing: -0.8 },
-  statPillUnit: { fontSize: 12, fontWeight: '800' },
-  statPillLabel: { color: Colors.textSecondary, fontSize: 9, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 1.2, marginTop: 6 },
-
-  /* Volume card */
-  volumeCard: {
-    backgroundColor: Colors.primary + '0C', borderRadius: 20,
-    paddingVertical: 16, paddingHorizontal: 20,
-    flexDirection: 'row', alignItems: 'center', gap: 12,
-    marginBottom: 20, borderWidth: 1.5, borderColor: Colors.primary + '28',
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1, shadowRadius: 12, elevation: 3,
-  },
-  volumeText: { color: Colors.textSecondary, fontSize: 14, fontWeight: '700' },
-
-  /* Edit card */
-  editCard: {
-    backgroundColor: '#161616', borderRadius: 32, padding: 24,
-    borderWidth: 1.5, borderColor: '#242424', marginBottom: 20,
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.08, shadowRadius: 20, elevation: 10,
-  },
-  editCardHeader: {
-    flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 24,
-    paddingBottom: 18, borderBottomWidth: 1, borderBottomColor: '#242424',
-  },
-  editCardTitle: { color: Colors.text, fontSize: 18, fontWeight: '900', letterSpacing: -0.3 },
-  editRow: { flexDirection: 'row' },
-  saveBtn: {
-    height: 64, borderRadius: 22, flexDirection: 'row',
-    justifyContent: 'center', alignItems: 'center', gap: 12,
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.45, shadowRadius: 20, elevation: 12,
-    marginTop: 4,
-  },
-  saveBtnText: { color: '#000', fontSize: 16, fontWeight: '900', letterSpacing: 1 },
-  resetBtn: {
-    flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 6, marginTop: 16, paddingVertical: 12,
-  },
-  resetBtnText: { color: Colors.textSecondary, fontSize: 13, fontWeight: '600' },
-
-  /* Action row (view mode) */
-  actionRow: { flexDirection: 'row', gap: 14, marginTop: 8 },
-  editActionBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    backgroundColor: Colors.primary + '12', borderRadius: 22, paddingVertical: 20,
-    borderWidth: 1.5, borderColor: Colors.primary + '45',
-    shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.12, shadowRadius: 10, elevation: 4,
-  },
-  editActionText: { color: Colors.primary, fontSize: 15, fontWeight: '900', letterSpacing: 0.3 },
-  deleteActionBtn: {
-    flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10,
-    backgroundColor: Colors.error + '0E', borderRadius: 22, paddingVertical: 20,
-    borderWidth: 1.5, borderColor: Colors.error + '38',
-  },
-  deleteActionText: { color: Colors.error, fontSize: 15, fontWeight: '900', letterSpacing: 0.3 },
-
-  /* Delete modal */
-  modalBackdrop: { flex: 1, justifyContent: 'flex-end', alignItems: 'center', paddingBottom: 0 },
-  modalCard: {
-    backgroundColor: '#191919', borderTopLeftRadius: 36, borderTopRightRadius: 36,
-    borderBottomLeftRadius: 0, borderBottomRightRadius: 0,
-    padding: 32, paddingBottom: 48, width: '100%', alignItems: 'center',
-    borderWidth: 1, borderBottomWidth: 0, borderColor: '#2E2E2E',
-    shadowColor: '#000', shadowOffset: { width: 0, height: -12 },
-    shadowOpacity: 0.6, shadowRadius: 32, elevation: 24,
-  },
-  modalIconRing: {
-    width: 80, height: 80, borderRadius: 28, backgroundColor: Colors.error + '15',
-    justifyContent: 'center', alignItems: 'center', marginBottom: 22,
-    borderWidth: 1.5, borderColor: Colors.error + '35',
-    shadowColor: Colors.error, shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2, shadowRadius: 12, elevation: 6,
-  },
-  modalTitle: { color: Colors.text, fontSize: 24, fontWeight: '900', marginBottom: 14, letterSpacing: -0.5 },
-  modalBody: { color: Colors.textSecondary, fontSize: 15, textAlign: 'center', lineHeight: 24, marginBottom: 32, maxWidth: 300 },
-  modalDeleteBtn: {
-    backgroundColor: Colors.error, borderRadius: 22, width: '100%',
-    height: 60, flexDirection: 'row', alignItems: 'center', justifyContent: 'center',
-    gap: 10, marginBottom: 14,
-    shadowColor: Colors.error, shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.4, shadowRadius: 16, elevation: 10,
-  },
-  modalDeleteText: { color: '#fff', fontSize: 16, fontWeight: '900', letterSpacing: 0.3 },
-  modalCancelBtn: {
-    backgroundColor: '#252525', borderRadius: 22, width: '100%',
-    height: 60, alignItems: 'center', justifyContent: 'center',
-    borderWidth: 1.5, borderColor: '#333',
-  },
-  modalCancelText: { color: Colors.text, fontSize: 16, fontWeight: '700' },
-
-  /* Dynamic Form Styles */
-  typeGrid: {
+  dateRow: {
     flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
     marginBottom: 24,
   },
-  typeCard: {
+  dateText: {
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  statRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+  },
+  statPill: {
     flex: 1,
-    backgroundColor: '#1E1E1E',
-    borderRadius: 16,
-    paddingVertical: 12,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 20,
+    paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#2A2A2A',
+    borderColor: '#E2E8F0',
+  },
+  statPillValue: {
+    fontSize: 22,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  statPillUnit: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  statPillLabel: {
+    color: '#64748B',
+    fontSize: 9,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginTop: 4,
+  },
+  volumeCard: {
+    borderRadius: 20,
+    paddingVertical: 16,
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 20,
+    borderWidth: 1.5,
+  },
+  volumeText: {
+    color: '#64748B',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  editCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    padding: 24,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    marginBottom: 20,
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.03,
+    shadowRadius: 12,
+    elevation: 2,
+  },
+  editCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 24,
+    paddingBottom: 18,
+    borderBottomWidth: 1.5,
+    borderBottomColor: '#F1F5F9',
+  },
+  editCardTitle: {
+    color: '#0F172A',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  saveBtn: {
+    height: 52,
+    borderRadius: 16,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 10,
+  },
+  saveBtnText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  resetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    marginTop: 16,
+    paddingVertical: 10,
+  },
+  resetBtnText: {
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  editActionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#F5F3FF',
+    borderRadius: 16,
+    paddingVertical: 16,
+    borderWidth: 1.5,
+    borderColor: '#DDD6FE',
+  },
+  editActionText: {
+    color: '#7C4DFF',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  deleteActionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    backgroundColor: '#FEE2E2',
+    borderRadius: 16,
+    paddingVertical: 16,
+    borderWidth: 1.5,
+    borderColor: '#FCA5A5',
+  },
+  deleteActionText: {
+    color: '#EF4444',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  modalBackdrop: {
+    flex: 1,
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 24,
+    paddingBottom: 40,
+    width: '100%',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+  },
+  modalIconRing: {
+    width: 68,
+    height: 68,
+    borderRadius: 22,
+    backgroundColor: '#FEE2E2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1.5,
+    borderColor: '#FCA5A5',
+  },
+  modalTitle: {
+    color: '#0F172A',
+    fontSize: 20,
+    fontWeight: '900',
+    marginBottom: 10,
+    letterSpacing: -0.5,
+  },
+  modalBody: {
+    color: '#64748B',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 28,
+    maxWidth: 280,
+  },
+  modalDeleteBtn: {
+    backgroundColor: '#EF4444',
+    borderRadius: 16,
+    width: '100%',
+    height: 52,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  modalDeleteText: {
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  modalCancelBtn: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    width: '100%',
+    height: 52,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+  },
+  modalCancelText: {
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  typeGrid: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 20,
+  },
+  typeCard: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 14,
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   typeTextBtn: {
-    color: 'rgba(255, 255, 255, 0.4)',
+    color: '#64748B',
     fontSize: 10,
     fontWeight: '600',
     marginTop: 4,
   },
   row: {
     flexDirection: 'row',
-    gap: 16,
-    marginBottom: 16,
+    gap: 12,
+    marginBottom: 12,
   },
   halfInput: {
     flex: 1,
-    gap: 8,
+    gap: 6,
   },
   inputGroup: {
-    gap: 8,
-    marginBottom: 16,
+    gap: 6,
+    marginBottom: 12,
   },
   inputWrapper: {
-    backgroundColor: '#1E1E1E',
-    borderRadius: 20,
-    height: 60,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    height: 50,
     borderWidth: 1.5,
-    borderColor: '#2A2A2A',
-    paddingHorizontal: 20,
+    borderColor: '#E2E8F0',
+    paddingHorizontal: 16,
     justifyContent: 'center',
   },
   input: {
-    color: '#FFF',
-    fontSize: 16,
+    color: '#0F172A',
+    fontSize: 14,
     fontWeight: '600',
   },
   inputError: {
-    borderColor: '#FF4B4B',
-    backgroundColor: 'rgba(255, 75, 75, 0.05)',
+    borderColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
   },
-  errorText: {
-    color: '#FF4B4B',
+  formErrorText: {
+    color: '#EF4444',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
     marginLeft: 4,
   },
   formSection: {
-    gap: 16,
+    gap: 12,
   },
   label: {
-    color: Colors.textSecondary,
-    fontSize: 12,
+    color: '#64748B',
+    fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',
-    letterSpacing: 1.5,
+    letterSpacing: 0.5,
   },
 });
-
