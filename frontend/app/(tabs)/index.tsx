@@ -25,8 +25,8 @@ import RecentActivityCard from '@/components/dashboard/RecentActivityCard';
 import SectionHeader from '@/components/dashboard/SectionHeader';
 import EmptyState from '@/components/workout/EmptyState';
 import Storage from '@/utils/storage';
-import { AI_COACH_NAME } from '@/constants/Brand';
 import PremiumOnboardingModal from '@/components/dashboard/PremiumOnboardingModal';
+import FloatingChatButton from '@/components/dashboard/FloatingChatButton';
 
 const QUICK_ACTIONS_CONFIG = [
   {
@@ -42,13 +42,6 @@ const QUICK_ACTIONS_CONFIG = [
     icon: Users,
     route: '/(tabs)/trainers',
     color: '#00B0FF',
-  },
-  {
-    title: `Ask ${AI_COACH_NAME}`,
-    desc: 'AI coach assistant',
-    icon: Sparkles,
-    route: '/ai-chat',
-    color: '#FF6B3B',
   },
   {
     title: 'My Bookings',
@@ -340,6 +333,7 @@ export default function HomeDashboard() {
           userId={user.id}
         />
       )}
+      <FloatingChatButton />
     </View>
   );
 }

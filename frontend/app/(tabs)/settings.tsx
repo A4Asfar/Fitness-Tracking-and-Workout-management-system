@@ -243,7 +243,7 @@ export default function SettingsCenterScreen() {
             icon={HelpCircle} 
             title="Help & Support" 
             subtitle="FAQs, support tickets and troubleshooting"
-            onPress={() => router.push('/ai-chat')} 
+            onPress={() => router.push('/help')} 
           />
           <Divider />
           <SettingsRow 
