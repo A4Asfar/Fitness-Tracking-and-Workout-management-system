@@ -22,6 +22,15 @@ function NavigationHandler() {
   const router = useRouter();
   const rootNavigationState = useRootNavigationState();
   const [showSplash, setShowSplash] = useState(!IS_WEB);
+  const [isNavigationReady, setIsNavigationReady] = useState(false);
+
+  useEffect(() => {
+    if (rootNavigationState?.key) {
+      // Delay slightly to ensure Expo Router's internal navigation container is fully mounted
+      const timer = setTimeout(() => setIsNavigationReady(true), 50);
+      return () => clearTimeout(timer);
+    }
+  }, [rootNavigationState?.key]);
 
   useEffect(() => {
     // Hide the native splash screen immediately to show our custom animated one
@@ -40,7 +49,7 @@ function NavigationHandler() {
   useEffect(() => {
     // Wait until Expo Router's navigation state is mounted before routing.
     // If we route too early, it silently fails and leaves the user stuck on the loading screen.
-    if (loading || showSplash || !rootNavigationState?.key) return;
+    if (loading || showSplash || !isNavigationReady) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const isRoot = !segments[0] || segments[0] === 'index';
@@ -64,7 +73,7 @@ function NavigationHandler() {
         router.replace(isAdmin ? '/admin-dashboard' as any : '/(tabs)/' as any);
       }
     }
-  }, [user, loading, showSplash, segments, router, rootNavigationState?.key]);
+  }, [user, loading, showSplash, segments, router, isNavigationReady]);
 
   return (
     <View style={styles.root}>
