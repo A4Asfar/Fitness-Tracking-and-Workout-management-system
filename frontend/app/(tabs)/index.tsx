@@ -36,25 +36,39 @@ const QUICK_ACTIONS_CONFIG = [
     color: '#10B981',
   },
   {
+    title: 'Find Trainer',
+    desc: 'Hire an expert',
+    icon: Users,
+    route: '/trainer',
+    color: '#00B0FF',
+  },
+  {
     title: 'Ask FitAI',
     desc: 'AI coach assistant',
     icon: Sparkles,
     route: '/ai-chat',
-    color: '#00B0FF',
+    color: '#FF6B3B',
+  },
+  {
+    title: 'My Bookings',
+    desc: 'View sessions',
+    icon: HistoryIcon,
+    route: '/my-bookings',
+    color: '#A855F7',
   },
   {
     title: 'Weight Logger',
     desc: 'Record body weight',
     icon: Scale,
     route: '/weight-logger',
-    color: '#FF6B3B',
+    color: '#10B981',
   },
   {
     title: 'Body Health',
     desc: 'Track BMI & status',
     icon: HeartPulse,
     route: '/body-health',
-    color: '#A855F7',
+    color: '#00B0FF',
   },
 ];
 
@@ -226,6 +240,22 @@ export default function HomeDashboard() {
                 icon={QUICK_ACTIONS_CONFIG[3].icon}
                 accentColor={QUICK_ACTIONS_CONFIG[3].color}
                 onPress={() => router.push(QUICK_ACTIONS_CONFIG[3].route as any)}
+              />
+            </View>
+            <View style={styles.gridRow}>
+              <QuickActionCard 
+                title={QUICK_ACTIONS_CONFIG[4].title}
+                desc={QUICK_ACTIONS_CONFIG[4].desc}
+                icon={QUICK_ACTIONS_CONFIG[4].icon}
+                accentColor={QUICK_ACTIONS_CONFIG[4].color}
+                onPress={() => router.push(QUICK_ACTIONS_CONFIG[4].route as any)}
+              />
+              <QuickActionCard 
+                title={QUICK_ACTIONS_CONFIG[5].title}
+                desc={QUICK_ACTIONS_CONFIG[5].desc}
+                icon={QUICK_ACTIONS_CONFIG[5].icon}
+                accentColor={QUICK_ACTIONS_CONFIG[5].color}
+                onPress={() => router.push(QUICK_ACTIONS_CONFIG[5].route as any)}
               />
             </View>
           </View>
