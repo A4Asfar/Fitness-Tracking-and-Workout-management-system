@@ -19,7 +19,11 @@ function NavigationHandler() {
 
   useEffect(() => {
     const timer = setTimeout(() => setShowSplash(false), SPLASH_DURATION_MS);
-    return () => clearTimeout(timer);
+    const forceHide = setTimeout(() => setShowSplash(false), 4000);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(forceHide);
+    };
   }, []);
 
   useEffect(() => {
@@ -46,7 +50,8 @@ function NavigationHandler() {
     }
   }, [user, loading, showSplash, segments, router]);
 
-  const splashVisible = loading || showSplash;
+  // Never block the UI on auth boot — splash is time-based only
+  const splashVisible = showSplash;
 
   return (
     <View style={styles.root}>

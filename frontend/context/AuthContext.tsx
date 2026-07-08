@@ -56,23 +56,27 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    * Runs on app boot to check for persisted tokens and user data
    */
   useEffect(() => {
-    let cancelled = false;
+    let active = true;
 
     const finishBoot = () => {
-      if (!cancelled) {
+      if (active) {
         setIsNewUser(false);
         setLoading(false);
       }
     };
 
-    const bootTimeout = setTimeout(finishBoot, 3500);
+    // Hard cap so web never stays on splash because of auth
+    const bootTimeout = setTimeout(finishBoot, 2500);
 
     const restoreSession = async () => {
       try {
         const savedToken = await Storage.getItem('authToken');
-        const savedUser = await Storage.getItem('authUser');
+        if (!savedToken) {
+          finishBoot();
+          return;
+        }
 
-        if (!savedToken) return;
+        const savedUser = await Storage.getItem('authUser');
 
         setAuthToken(savedToken);
         setToken(savedToken);
@@ -85,6 +89,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           }
         }
 
+        // Refresh session in background — do not block first screen
+        finishBoot();
+
         const response = await Promise.race([
           api.get('/auth/me', { skipRetry: true, timeout: 8000 } as any),
           new Promise<never>((_, reject) =>
@@ -92,7 +99,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           ),
         ]);
 
-        if (cancelled) return;
+        if (!active) return;
 
         setUser(response.data);
         await Storage.setItem('authUser', JSON.stringify(response.data));
@@ -113,16 +120,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         } else if (__DEV__) {
           console.log('Session refresh skipped (offline or server unavailable)');
         }
-      } finally {
-        clearTimeout(bootTimeout);
-        finishBoot();
       }
     };
 
     restoreSession();
 
     return () => {
-      cancelled = true;
+      active = false;
       clearTimeout(bootTimeout);
     };
   }, []);
