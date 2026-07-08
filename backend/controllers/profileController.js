@@ -3,6 +3,7 @@ const Workout = require('../models/Workout');
 const MealSelection = require('../models/MealSelection');
 const TrainerConsult = require('../models/TrainerConsult');
 const PremiumPayment = require('../models/PremiumPayment');
+const Notification = require('../models/Notification');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 const { getLocalDateString, calculateBMI } = require('../utils/dateUtils');
 
@@ -64,6 +65,14 @@ exports.submitPaymentProof = asyncHandler(async (req, res) => {
     paymentNumber,
     screenshotUrl,
     status: 'Pending'
+  });
+
+  // Create in-app notification for the user
+  await Notification.create({
+    userId: req.userId,
+    title: 'Payment Proof Received',
+    message: 'Your payment is under review. Estimated approval within 24 hours.',
+    type: 'premium'
   });
 
   console.log('💰 Payment proof submitted for review by user:', user.email);

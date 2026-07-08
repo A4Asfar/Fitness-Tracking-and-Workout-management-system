@@ -1,6 +1,7 @@
 const User = require('../models/User');
 const Workout = require('../models/Workout');
 const PremiumPayment = require('../models/PremiumPayment');
+const Notification = require('../models/Notification');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 
 // @desc    Get system stats for admin
@@ -84,6 +85,15 @@ exports.verifyPayment = asyncHandler(async (req, res) => {
       membershipType: 'premium',
       membershipExpiresAt: expiry
     });
+
+    // Notify user of approval
+    await Notification.create({
+      userId: payment.userId,
+      title: 'Premium Activated! 🎉',
+      message: 'Congratulations! Your premium membership has been activated. Enjoy unlimited access to all features.',
+      type: 'premium'
+    });
+
     console.log('✅ Approved payment. User upgraded to premium:', payment.userEmail);
   } else {
     payment.rejectedAt = new Date();
@@ -93,6 +103,15 @@ exports.verifyPayment = asyncHandler(async (req, res) => {
       membershipType: 'free',
       membershipExpiresAt: null
     });
+
+    // Notify user of rejection
+    await Notification.create({
+      userId: payment.userId,
+      title: 'Payment Verification Failed',
+      message: `Your payment was rejected. Reason: ${adminRemarks || 'Invalid transaction receipt.'}. Please submit another payment proof.`,
+      type: 'premium'
+    });
+
     console.log('❌ Rejected payment. User status remains free:', payment.userEmail);
   }
 
