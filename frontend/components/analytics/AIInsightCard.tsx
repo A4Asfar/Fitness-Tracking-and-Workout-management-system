@@ -16,7 +16,7 @@ export default function AIInsightCard({
   value,
   sub,
   icon: IconComponent,
-  color = '#7C4DFF'
+  color = '#10B981'
 }: AIInsightCardProps) {
   return (
     <View style={styles.card}>

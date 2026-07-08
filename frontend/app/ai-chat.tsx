@@ -312,7 +312,7 @@ export default function AIChatScreen() {
 
           {loadingConversations ? (
             <View style={styles.centerContainer}>
-              <ActivityIndicator size="large" color="#7C4DFF" />
+              <ActivityIndicator size="large" color="#10B981" />
             </View>
           ) : errorConversations ? (
             <View style={styles.centerContainer}>
@@ -372,7 +372,7 @@ export default function AIChatScreen() {
                     onPress={handleRenameConfirm}
                   >
                     <LinearGradient
-                      colors={['#7C4DFF', '#BD00FF']}
+                      colors={['#10B981', '#BD00FF']}
                       style={styles.renameConfirmGrad}
                     >
                       <Text style={styles.renameConfirmText}>Save</Text>
@@ -398,7 +398,7 @@ export default function AIChatScreen() {
 
           {loadingMessages ? (
             <View style={styles.centerContainer}>
-              <ActivityIndicator size="large" color="#7C4DFF" />
+              <ActivityIndicator size="large" color="#10B981" />
             </View>
           ) : errorMessages ? (
             <View style={styles.centerContainer}>
@@ -442,7 +442,7 @@ export default function AIChatScreen() {
               onChangeText={setInput}
               onSend={handleSend}
               disabled={isTyping}
-              activeColor="#7C4DFF"
+              activeColor="#10B981"
             />
           )}
         </KeyboardAvoidingView>
@@ -476,7 +476,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   retryBtn: {
-    backgroundColor: '#7C4DFF',
+    backgroundColor: '#10B981',
     paddingHorizontal: 20,
     paddingVertical: 10,
     borderRadius: 12,

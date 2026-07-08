@@ -17,12 +17,12 @@ export default function AIInsightCard({
   return (
     <TouchableOpacity onPress={onPress} activeOpacity={0.9} style={styles.card}>
       <LinearGradient
-        colors={['#7C4DFF15', '#7C4DFF03']}
+        colors={['#10B98115', '#10B98103']}
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.header}>
         <View style={styles.botIconWrap}>
-          <Bot size={22} color="#7C4DFF" strokeWidth={2} />
+          <Bot size={22} color="#10B981" strokeWidth={2} />
         </View>
         <View style={styles.titleInfo}>
           <View style={styles.badgeRow}>
@@ -43,7 +43,7 @@ export default function AIInsightCard({
         <Text style={styles.footerLink}>
           {isPremium ? 'View Deep Analytics' : 'Unlock Pro Insights'}
         </Text>
-        <ChevronRight size={16} color="#7C4DFF" />
+        <ChevronRight size={16} color="#10B981" />
       </View>
     </TouchableOpacity>
   );
@@ -54,8 +54,8 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 28,
     borderWidth: 1.5,
-    borderColor: '#7C4DFF30',
-    shadowColor: '#7C4DFF',
+    borderColor: '#10B98130',
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.05,
     shadowRadius: 16,
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#7C4DFF20',
+    borderColor: '#10B98120',
     marginRight: 12,
   },
   titleInfo: {
@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   liveBadge: {
-    backgroundColor: '#7C4DFF',
+    backgroundColor: '#10B981',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 6,
@@ -128,10 +128,10 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 20,
     borderTopWidth: 1,
-    borderTopColor: '#7C4DFF15',
+    borderTopColor: '#10B98115',
   },
   footerLink: {
-    color: '#7C4DFF',
+    color: '#10B981',
     fontSize: 12,
     fontWeight: '800',
   },

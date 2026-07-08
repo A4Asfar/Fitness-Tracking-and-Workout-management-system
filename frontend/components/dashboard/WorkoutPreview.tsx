@@ -33,12 +33,12 @@ export default function WorkoutPreview({
   return (
     <View style={styles.card}>
       <LinearGradient
-        colors={['#7C4DFF08', 'transparent']}
+        colors={['#10B98108', 'transparent']}
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.header}>
         <View style={styles.titleRow}>
-          <Dumbbell size={16} color="#7C4DFF" style={{ marginRight: 6 }} />
+          <Dumbbell size={16} color="#10B981" style={{ marginRight: 6 }} />
           <Text style={styles.headerLabel}>Today's Routine</Text>
         </View>
         <View style={[styles.badge, { backgroundColor: diffColor + '10', borderColor: diffColor + '20' }]}>
@@ -62,7 +62,7 @@ export default function WorkoutPreview({
 
       <TouchableOpacity onPress={onPress} activeOpacity={0.85} style={styles.btnWrapper}>
         <LinearGradient
-          colors={['#7C4DFF', '#6A3DE8']}
+          colors={['#10B981', '#6A3DE8']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={styles.btn}
@@ -101,7 +101,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   headerLabel: {
-    color: '#7C4DFF',
+    color: '#10B981',
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',

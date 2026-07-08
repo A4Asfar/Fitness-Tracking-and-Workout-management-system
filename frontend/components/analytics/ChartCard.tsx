@@ -14,7 +14,7 @@ export default function ChartCard({
   return (
     <View style={styles.card}>
       <View style={styles.header}>
-        <TrendingUp size={16} color="#7C4DFF" style={{ marginRight: 6 }} />
+        <TrendingUp size={16} color="#10B981" style={{ marginRight: 6 }} />
         <Text style={styles.title}>{title}</Text>
       </View>
       <View style={styles.body}>

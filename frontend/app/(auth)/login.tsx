@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   forgotText: {
-    color: '#7C4DFF',
+    color: '#10B981',
     fontSize: 12,
     fontWeight: '800',
   },
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   footerLink: {
-    color: '#7C4DFF',
+    color: '#10B981',
     fontSize: 13,
     fontWeight: '800',
   },

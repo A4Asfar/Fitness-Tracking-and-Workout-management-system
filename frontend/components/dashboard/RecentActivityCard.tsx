@@ -17,7 +17,7 @@ export default function RecentActivityCard({
   calories,
   duration,
   onPress,
-  accentColor = '#7C4DFF'
+  accentColor = '#10B981'
 }: RecentActivityCardProps) {
   return (
     <TouchableOpacity

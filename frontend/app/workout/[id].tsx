@@ -18,7 +18,7 @@ import { BlurView } from 'expo-blur';
 import { safeBack } from '@/utils/navigation';
 
 const TYPE_COLORS: Record<string, string> = {
-  Strength: '#7C4DFF',
+  Strength: '#10B981',
   Cardio:   '#FF4B4B',
   HIIT:     '#00B0FF',
   Yoga:     '#BD00FF',
@@ -387,7 +387,7 @@ export default function WorkoutDetailScreen() {
   if (loading) {
     return (
       <View style={styles.loader}>
-        <ActivityIndicator size="large" color="#7C4DFF" />
+        <ActivityIndicator size="large" color="#10B981" />
         <Text style={styles.loaderText}>Loading workout…</Text>
       </View>
     );
@@ -425,7 +425,7 @@ export default function WorkoutDetailScreen() {
     );
   }
 
-  const accentColor = TYPE_COLORS[workout?.type] ?? '#7C4DFF';
+  const accentColor = TYPE_COLORS[workout?.type] ?? '#10B981';
   const formattedDate = new Date(workout.date).toLocaleDateString(undefined, {
     weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
   });
@@ -451,7 +451,7 @@ export default function WorkoutDetailScreen() {
             <TouchableOpacity onPress={() => editMode ? toggleEdit(false) : safeBack()} style={{ padding: 4 }}>
               {editMode
                 ? <X size={22} color="#64748B" />
-                : <ChevronLeft size={26} color="#7C4DFF" />}
+                : <ChevronLeft size={26} color="#10B981" />}
             </TouchableOpacity>
           ),
           headerRight: () => !editMode ? (
@@ -508,10 +508,10 @@ export default function WorkoutDetailScreen() {
 
         {workout.type === 'Strength' && (
           <View style={[styles.volumeCard, { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' }]}>
-            <Activity size={16} color="#7C4DFF" />
+            <Activity size={16} color="#10B981" />
             <Text style={styles.volumeText}>
               Total Volume:{' '}
-              <Text style={{ color: '#7C4DFF', fontWeight: '800' }}>
+              <Text style={{ color: '#10B981', fontWeight: '800' }}>
                 {((workout.sets ?? 0) * (workout.reps ?? 0) * (workout.weight ?? 0)).toLocaleString()} kg
               </Text>
             </Text>
@@ -521,14 +521,14 @@ export default function WorkoutDetailScreen() {
         {editMode && (
           <Animated.View style={[styles.editCard, { opacity: editAnim, transform: [{ translateY: editTranslate }] }]}>
             <View style={styles.editCardHeader}>
-              <Pencil size={16} color="#7C4DFF" />
+              <Pencil size={16} color="#10B981" />
               <Text style={styles.editCardTitle}>Edit Performance</Text>
             </View>
 
             <Text style={[styles.label, { marginBottom: 12, marginLeft: 4 }]}>Workout Type</Text>
             <View style={styles.typeGrid}>
               {[
-                { id: 'Strength', icon: Dumbbell, color: '#7C4DFF' },
+                { id: 'Strength', icon: Dumbbell, color: '#10B981' },
                 { id: 'Cardio', icon: Flame, color: '#FF4B4B' },
                 { id: 'HIIT', icon: Zap, color: '#00B0FF' },
                 { id: 'Yoga', icon: Heart, color: '#BD00FF' },
@@ -563,7 +563,7 @@ export default function WorkoutDetailScreen() {
               style={{ marginTop: 24 }}
             >
               <LinearGradient
-                colors={['#7C4DFF', '#BD00FF']}
+                colors={['#10B981', '#BD00FF']}
                 start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}
                 style={[styles.saveBtn, (saving || deleting) && { opacity: 0.6 }]}
               >
@@ -606,7 +606,7 @@ export default function WorkoutDetailScreen() {
         {!editMode && (
           <View style={styles.actionRow}>
             <TouchableOpacity style={styles.editActionBtn} onPress={() => toggleEdit(true)}>
-              <Pencil size={18} color="#7C4DFF" />
+              <Pencil size={18} color="#10B981" />
               <Text style={styles.editActionText}>Edit Workout</Text>
             </TouchableOpacity>
 
@@ -700,10 +700,10 @@ const styles = StyleSheet.create({
     height: 52,
     width: 160,
     borderRadius: 16,
-    backgroundColor: '#7C4DFF',
+    backgroundColor: '#10B981',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#7C4DFF',
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -936,7 +936,7 @@ const styles = StyleSheet.create({
     borderColor: '#DDD6FE',
   },
   editActionText: {
-    color: '#7C4DFF',
+    color: '#10B981',
     fontSize: 14,
     fontWeight: '800',
   },

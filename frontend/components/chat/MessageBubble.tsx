@@ -247,7 +247,7 @@ const mdStyles = StyleSheet.create({
   },
   blockquote: {
     borderLeftWidth: 3,
-    borderLeftColor: '#7C4DFF',
+    borderLeftColor: '#10B981',
     backgroundColor: '#F8FAFC',
     paddingHorizontal: 10,
     paddingVertical: 6,
@@ -321,7 +321,7 @@ const mdStyles = StyleSheet.create({
     marginBottom: 4,
   },
   bullet: {
-    color: '#7C4DFF',
+    color: '#10B981',
     fontSize: 13,
     fontWeight: '800',
   },
@@ -372,7 +372,7 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   userBubble: {
-    backgroundColor: '#7C4DFF',
+    backgroundColor: '#10B981',
     borderTopLeftRadius: 18,
     borderTopRightRadius: 18,
     borderBottomLeftRadius: 18,

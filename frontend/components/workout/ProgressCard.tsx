@@ -13,7 +13,7 @@ interface ProgressCardProps {
 export default function ProgressCard({
   completedCount,
   totalCount,
-  activeColor = '#7C4DFF'
+  activeColor = '#10B981'
 }: ProgressCardProps) {
   const progressAnim = useRef(new Animated.Value(0)).current;
   

@@ -15,7 +15,7 @@ export default function WorkoutCard({
   workout,
   onEditPress,
   onDeletePress,
-  accentColor = '#7C4DFF'
+  accentColor = '#10B981'
 }: WorkoutCardProps) {
   const getIcon = (typeStr: string) => {
     switch (typeStr) {
@@ -29,11 +29,11 @@ export default function WorkoutCard({
 
   const getAccent = (typeStr: string) => {
     switch (typeStr) {
-      case 'Strength': return '#7C4DFF';
+      case 'Strength': return '#10B981';
       case 'Cardio': return '#FF4B4B';
       case 'HIIT': return '#00B0FF';
       case 'Yoga': return '#BD00FF';
-      default: return '#7C4DFF';
+      default: return '#10B981';
     }
   };
 

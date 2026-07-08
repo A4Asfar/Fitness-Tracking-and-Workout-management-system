@@ -35,7 +35,7 @@ export default function PasswordField({
         <View style={styles.iconBox}>
           <Lock
             size={18}
-            color={error ? '#EF4444' : focused ? '#7C4DFF' : '#94A3B8'}
+            color={error ? '#EF4444' : focused ? '#10B981' : '#94A3B8'}
           />
         </View>
         <TextInput
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
   },
   inputRowFocused: {
-    borderColor: '#7C4DFF',
+    borderColor: '#10B981',
     backgroundColor: '#FFFFFF',
   },
   inputRowError: {

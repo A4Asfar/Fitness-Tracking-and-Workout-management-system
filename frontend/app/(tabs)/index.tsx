@@ -33,7 +33,7 @@ const QUICK_ACTIONS_CONFIG = [
     desc: 'Log training logs',
     icon: PlusCircle,
     route: '/create-workout',
-    color: '#7C4DFF',
+    color: '#10B981',
   },
   {
     title: 'Ask FitAI',
@@ -173,7 +173,7 @@ export default function HomeDashboard() {
         contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C4DFF" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10B981" />
         }
       >
         {/* Dynamic header welcome */}
@@ -266,11 +266,11 @@ export default function HomeDashboard() {
               recent.map((item: any, index: number) => {
                 const getAccent = (typeStr: string) => {
                   switch (typeStr) {
-                    case 'Strength': return '#7C4DFF';
+                    case 'Strength': return '#10B981';
                     case 'Cardio': return '#FF4B4B';
                     case 'HIIT': return '#00B0FF';
                     case 'Yoga': return '#BD00FF';
-                    default: return '#7C4DFF';
+                    default: return '#10B981';
                   }
                 };
                 return (
@@ -291,7 +291,7 @@ export default function HomeDashboard() {
                 description="Your activity history is clean. Tap below to log your first training session!"
                 buttonLabel="Start Workout"
                 onButtonPress={() => router.push('/create-workout' as any)}
-                accentColor="#7C4DFF"
+                accentColor="#10B981"
               />
             )}
           </View>
@@ -358,10 +358,10 @@ const styles = StyleSheet.create({
     height: 52,
     width: 160,
     borderRadius: 16,
-    backgroundColor: '#7C4DFF',
+    backgroundColor: '#10B981',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#7C4DFF',
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,

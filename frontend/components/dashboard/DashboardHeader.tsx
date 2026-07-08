@@ -41,7 +41,7 @@ export default function DashboardHeader({
         {/* User avatar ring */}
         <TouchableOpacity onPress={onSettingsPress} activeOpacity={0.85}>
           <LinearGradient
-            colors={['#7C4DFF', '#BD00FF']}
+            colors={['#10B981', '#BD00FF']}
             style={styles.avatarRing}
           >
             <View style={styles.avatarInner}>
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   avatarText: {
-    color: '#7C4DFF',
+    color: '#10B981',
     fontSize: 16,
     fontWeight: '800',
   },

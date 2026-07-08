@@ -95,7 +95,7 @@ export default function ProgressAnalyticsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C4DFF" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10B981" />
         }
       >
         {/* Dynamic header welcome */}
@@ -129,7 +129,7 @@ export default function ProgressAnalyticsScreen() {
             value={String(data?.totalWorkouts ?? 0)}
             sub="All-time log"
             isPositive={true}
-            accentColor="#7C4DFF"
+            accentColor="#10B981"
             icon={Dumbbell}
           />
           <MetricCard 
@@ -177,7 +177,7 @@ export default function ProgressAnalyticsScreen() {
           {/* AI Coaching insights list */}
           <View style={styles.insightsSection}>
             <View style={styles.sectionHeader}>
-              <Sparkles size={16} color="#7C4DFF" style={{ marginRight: 6 }} />
+              <Sparkles size={16} color="#10B981" style={{ marginRight: 6 }} />
               <Text style={styles.sectionTitle}>AI Analytics Coach</Text>
             </View>
 
@@ -194,7 +194,7 @@ export default function ProgressAnalyticsScreen() {
               value="High Volume Focus"
               sub="Your overall volume and average sets count is increasing steadily. Superb progression!"
               icon={Dumbbell}
-              color="#7C4DFF"
+              color="#10B981"
             />
           </View>
         </PremiumGate>
@@ -247,10 +247,10 @@ const styles = StyleSheet.create({
     height: 52,
     width: 160,
     borderRadius: 16,
-    backgroundColor: '#7C4DFF',
+    backgroundColor: '#10B981',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#7C4DFF',
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,
@@ -290,7 +290,7 @@ const styles = StyleSheet.create({
   },
   barFill: {
     width: '100%',
-    backgroundColor: '#7C4DFF',
+    backgroundColor: '#10B981',
     borderRadius: 7,
   },
   barLabel: {

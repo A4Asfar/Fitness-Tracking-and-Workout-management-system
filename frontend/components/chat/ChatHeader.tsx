@@ -50,7 +50,7 @@ export default function ChatHeader({
       <View style={styles.actions}>
         {showNewChat && onNewChatPress && (
           <TouchableOpacity onPress={onNewChatPress} style={styles.newChatBtn} activeOpacity={0.8}>
-            <Plus size={16} color="#7C4DFF" strokeWidth={2.5} style={{ marginRight: 4 }} />
+            <Plus size={16} color="#10B981" strokeWidth={2.5} style={{ marginRight: 4 }} />
             <Text style={styles.newChatText}>New</Text>
           </TouchableOpacity>
         )}
@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     borderColor: '#D8B4FE',
   },
   newChatText: {
-    color: '#7C4DFF',
+    color: '#10B981',
     fontSize: 12,
     fontWeight: '800',
   },

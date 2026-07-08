@@ -58,7 +58,7 @@ export default function WorkoutHeader({
 
       {quote && (
         <View style={styles.quoteCard}>
-          <Sparkles size={14} color="#7C4DFF" style={styles.quoteIcon} />
+          <Sparkles size={14} color="#10B981" style={styles.quoteIcon} />
           <Text style={styles.quoteText}>"{quote}"</Text>
         </View>
       )}
@@ -150,7 +150,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 14,
     borderLeftWidth: 3,
-    borderLeftColor: '#7C4DFF',
+    borderLeftColor: '#10B981',
   },
   quoteIcon: {
     marginRight: 8,

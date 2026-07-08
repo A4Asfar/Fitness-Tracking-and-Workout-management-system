@@ -15,7 +15,7 @@ export default function ExerciseRow({
   detail,
   completed,
   onToggle,
-  accentColor = '#7C4DFF'
+  accentColor = '#10B981'
 }: ExerciseRowProps) {
   return (
     <TouchableOpacity

@@ -24,7 +24,7 @@ import ActionButton from '@/components/workout/ActionButton';
 const { width } = Dimensions.get('window');
 
 const TYPES = [
-  { id: 'Strength', icon: Dumbbell, color: '#7C4DFF' },
+  { id: 'Strength', icon: Dumbbell, color: '#10B981' },
   { id: 'Cardio', icon: Flame, color: '#FF4B4B' },
   { id: 'HIIT', icon: Zap, color: '#00B0FF' },
   { id: 'Yoga', icon: Trophy, color: '#BD00FF' },
@@ -218,7 +218,7 @@ export default function CreateWorkoutScreen() {
     }
   };
 
-  const activeColor = TYPES.find(t => t.id === type)?.color || '#7C4DFF';
+  const activeColor = TYPES.find(t => t.id === type)?.color || '#10B981';
 
   const renderFormWithSections = () => {
     const fields = workoutTypeConfig[type].fields;

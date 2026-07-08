@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
     letterSpacing: -0.5,
   },
   action: {
-    color: '#7C4DFF',
+    color: '#10B981',
     fontSize: 13,
     fontWeight: '800',
   },

@@ -110,8 +110,8 @@ export default function VerifyOtpScreen() {
               <Text style={styles.resendText}>Resend code in <Text style={styles.timer}>{timer}s</Text></Text>
             ) : (
               <View style={styles.resendActive}>
-                <RefreshCw size={14} color="#7C4DFF" />
-                <Text style={[styles.resendText, { color: '#7C4DFF' }]}>Resend OTP</Text>
+                <RefreshCw size={14} color="#10B981" />
+                <Text style={[styles.resendText, { color: '#10B981' }]}>Resend OTP</Text>
               </View>
             )}
           </TouchableOpacity>
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   timer: {
-    color: '#7C4DFF',
+    color: '#10B981',
     fontWeight: '800',
   },
   resendActive: {

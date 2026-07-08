@@ -66,6 +66,6 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   textActive: {
-    color: '#7C4DFF',
+    color: '#10B981',
   },
 });

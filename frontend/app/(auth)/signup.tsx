@@ -260,7 +260,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   planTextActive: {
-    color: '#7C4DFF',
+    color: '#10B981',
   },
   footer: {
     flexDirection: 'row',
@@ -275,7 +275,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   footerLink: {
-    color: '#7C4DFF',
+    color: '#10B981',
     fontSize: 13,
     fontWeight: '800',
   },

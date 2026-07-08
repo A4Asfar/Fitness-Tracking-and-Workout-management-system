@@ -58,7 +58,7 @@ export default function WorkoutDetailsScreen() {
   const level = (params.level as string) || 'Intermediate';
   const durationStr = (params.duration as string) || '45 min';
   const caloriesStr = (params.calories as string) || '400 cal';
-  const accent = (params.accent as string) || '#7C4DFF';
+  const accent = (params.accent as string) || '#10B981';
   
   const [selectedDuration, setSelectedDuration] = useState('45 min');
   const [exercises, setExercises] = useState(PROGRAM_EXERCISES[id] || []);

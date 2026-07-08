@@ -25,7 +25,7 @@ const TYPE_ICONS: Record<string, any> = {
 };
 
 const TYPE_COLORS: Record<string, string> = {
-  Strength: '#7C4DFF',
+  Strength: '#10B981',
   Cardio: '#FF4B4B',
   HIIT: '#00B0FF',
   Yoga: '#BD00FF',
@@ -181,7 +181,7 @@ export default function WorkoutsScreen() {
           {['All', 'Strength', 'Cardio', 'HIIT', 'Yoga'].map(type => {
             const isSelected = selectedType === type;
             const Icon = TYPE_ICONS[type];
-            const color = TYPE_COLORS[type] || '#7C4DFF';
+            const color = TYPE_COLORS[type] || '#10B981';
             return (
               <TouchableOpacity
                 key={type}
@@ -207,7 +207,7 @@ export default function WorkoutsScreen() {
         contentContainerStyle={styles.scrollContent}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#7C4DFF" />
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10B981" />
         }
       >
         {loading ? (
@@ -222,7 +222,7 @@ export default function WorkoutsScreen() {
             description={searchQuery ? "Try altering search terms or category filters." : "Log your fitness routines to track progress milestones."}
             buttonLabel="Log a Workout"
             onButtonPress={() => router.push('/create-workout' as any)}
-            accentColor="#7C4DFF"
+            accentColor="#10B981"
           />
         ) : (
           Object.keys(grouped).map(groupKey => {
@@ -282,12 +282,12 @@ const styles = StyleSheet.create({
   logBtn: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#7C4DFF',
+    backgroundColor: '#10B981',
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 16,
     gap: 6,
-    shadowColor: '#7C4DFF',
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.2,
     shadowRadius: 8,

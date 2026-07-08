@@ -34,7 +34,7 @@ export default function PrimaryButton({
         style={styles.btn}
       >
         <LinearGradient
-          colors={['#7C4DFF', '#BD00FF']}
+          colors={['#10B981', '#BD00FF']}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={StyleSheet.absoluteFill}
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#7C4DFF',
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
     shadowRadius: 12,

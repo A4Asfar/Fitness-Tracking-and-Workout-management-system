@@ -29,7 +29,7 @@ export default function HeroCard({
   return (
     <View style={styles.card}>
       <LinearGradient
-        colors={['#7C4DFF10', '#BD00FF04']}
+        colors={['#10B98110', '#BD00FF04']}
         style={StyleSheet.absoluteFill}
       />
       <View style={styles.header}>

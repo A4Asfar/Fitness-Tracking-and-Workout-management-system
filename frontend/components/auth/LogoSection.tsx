@@ -7,7 +7,7 @@ export default function LogoSection() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#7C4DFF', '#BD00FF']}
+        colors={['#10B981', '#BD00FF']}
         style={styles.logoBox}
       >
         <Dumbbell size={32} color="#FFFFFF" strokeWidth={2} />
@@ -30,7 +30,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 14,
-    shadowColor: '#7C4DFF',
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
     shadowRadius: 10,

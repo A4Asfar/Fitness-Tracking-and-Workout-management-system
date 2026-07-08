@@ -28,10 +28,10 @@ export default function ConversationCard({
     >
       <View style={styles.iconWrap}>
         <LinearGradient
-          colors={['#7C4DFF20', '#BD00FF04']}
+          colors={['#10B98120', '#BD00FF04']}
           style={styles.iconGrad}
         >
-          <MessageSquare size={18} color="#7C4DFF" />
+          <MessageSquare size={18} color="#10B981" />
         </LinearGradient>
       </View>
 

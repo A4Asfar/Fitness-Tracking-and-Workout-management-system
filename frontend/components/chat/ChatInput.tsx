@@ -16,7 +16,7 @@ export default function ChatInput({
   onChangeText,
   onSend,
   disabled = false,
-  activeColor = '#7C4DFF'
+  activeColor = '#10B981'
 }: ChatInputProps) {
   const hasText = value.trim().length > 0;
 

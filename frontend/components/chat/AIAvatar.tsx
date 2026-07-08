@@ -7,7 +7,7 @@ export default function AIAvatar() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#7C4DFF', '#BD00FF']}
+        colors={['#10B981', '#BD00FF']}
         style={styles.avatar}
       >
         <Bot size={18} color="#FFFFFF" strokeWidth={2} />

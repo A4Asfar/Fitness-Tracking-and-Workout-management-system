@@ -248,7 +248,7 @@ export default function AnalyticsDashboardScreen() {
             <View style={styles.card}>
               <View style={styles.cardHeader}>
                 <View style={[styles.iconWrap, { backgroundColor: '#F5F3FF' }]}>
-                  <MessageCircle size={16} color="#7C4DFF" />
+                  <MessageCircle size={16} color="#10B981" />
                 </View>
                 <Text style={styles.cardTitle}>Consultations</Text>
               </View>

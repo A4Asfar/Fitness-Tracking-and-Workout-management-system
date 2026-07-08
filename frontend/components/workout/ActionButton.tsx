@@ -18,7 +18,7 @@ export default function ActionButton({
   onPress,
   loading = false,
   disabled = false,
-  accentColor = '#7C4DFF',
+  accentColor = '#10B981',
   secondary = false
 }: ActionButtonProps) {
   const scaleVal = useRef(new Animated.Value(1)).current;

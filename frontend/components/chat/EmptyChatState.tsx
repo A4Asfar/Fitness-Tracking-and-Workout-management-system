@@ -26,10 +26,10 @@ export default function EmptyChatState({
     <View style={styles.container}>
       <View style={styles.iconCircle}>
         <LinearGradient
-          colors={['#7C4DFF20', '#BD00FF04']}
+          colors={['#10B98120', '#BD00FF04']}
           style={styles.grad}
         >
-          <Bot size={40} color="#7C4DFF" strokeWidth={1.5} />
+          <Bot size={40} color="#10B981" strokeWidth={1.5} />
         </LinearGradient>
       </View>
 

@@ -16,7 +16,7 @@ export default function MetricCard({
   value,
   sub,
   isPositive = true,
-  accentColor = '#7C4DFF',
+  accentColor = '#10B981',
   icon: IconComponent
 }: MetricCardProps) {
   return (

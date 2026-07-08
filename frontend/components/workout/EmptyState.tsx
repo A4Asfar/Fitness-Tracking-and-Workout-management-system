@@ -19,7 +19,7 @@ export default function EmptyState({
   motivationalText = "Every journey begins with a single step.",
   buttonLabel,
   onButtonPress,
-  accentColor = '#7C4DFF'
+  accentColor = '#10B981'
 }: EmptyStateProps) {
   return (
     <View style={styles.container}>
