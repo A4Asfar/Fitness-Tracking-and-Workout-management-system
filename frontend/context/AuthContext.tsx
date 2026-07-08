@@ -1,4 +1,5 @@
 import React, { createContext, useState, useCallback, useEffect, useContext } from 'react';
+import { Platform } from 'react-native';
 import Storage from '@/utils/storage';
 import api, { setAuthToken, setOnUnauthorized } from '@/services/api';
 import axios from 'axios';
@@ -39,7 +40,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(Platform.OS !== 'web');
   const [isNewUser, setIsNewUser] = useState(false);
   const { showToast } = useToast();
 

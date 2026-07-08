@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ToastProvider } from '@/components/Toast';
 import { isAdminUser } from '@/utils/isAdmin';
@@ -9,15 +9,18 @@ import SplashScreen from '@/components/SplashScreen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-const SPLASH_DURATION_MS = 2200;
+const IS_WEB = Platform.OS === 'web';
+const SPLASH_DURATION_MS = IS_WEB ? 0 : 2200;
 
 function NavigationHandler() {
   const { user, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
-  const [showSplash, setShowSplash] = useState(true);
+  const [showSplash, setShowSplash] = useState(!IS_WEB);
 
   useEffect(() => {
+    if (IS_WEB) return;
+
     const timer = setTimeout(() => setShowSplash(false), SPLASH_DURATION_MS);
     const forceHide = setTimeout(() => setShowSplash(false), 4000);
     return () => {
@@ -50,9 +53,6 @@ function NavigationHandler() {
     }
   }, [user, loading, showSplash, segments, router]);
 
-  // Never block the UI on auth boot — splash is time-based only
-  const splashVisible = showSplash;
-
   return (
     <View style={styles.root}>
       <Stack screenOptions={{ headerShown: false }}>
@@ -71,7 +71,7 @@ function NavigationHandler() {
         <Stack.Screen name="+not-found" />
       </Stack>
 
-      {splashVisible && (
+      {showSplash && (
         <View style={styles.splashOverlay} pointerEvents="auto">
           <SplashScreen />
         </View>
