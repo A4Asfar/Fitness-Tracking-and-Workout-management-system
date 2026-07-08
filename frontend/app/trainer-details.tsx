@@ -474,7 +474,7 @@ const s = StyleSheet.create({
   distBarFill: { height: '100%', backgroundColor: '#F59E0B', borderRadius: 3 },
   distPercentageLabel: { fontSize: 11, fontWeight: '700', color: '#64748B', width: 30 },
 
-  writeReviewBtn: { backgroundColor: '#FFF', borderVertical: 1, borderWidth: 1.5, borderColor: Colors.primary, borderRadius: 16, height: 50, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
+  writeReviewBtn: { backgroundColor: '#FFF', borderWidth: 1.5, borderColor: Colors.primary, borderRadius: 16, height: 50, justifyContent: 'center', alignItems: 'center', marginBottom: 20 },
   writeReviewBtnText: { color: Colors.primary, fontWeight: '800', fontSize: 15 },
 
   reviewsEmpty: { backgroundColor: '#FFF', borderRadius: 20, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: '#F1F5F9', borderStyle: 'dashed' },

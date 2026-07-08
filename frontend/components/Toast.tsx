@@ -24,8 +24,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
 
   const hideToast = useCallback(() => {
     Animated.parallel([
-      Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: true }),
-      Animated.timing(translateY, { toValue: -100, duration: 300, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 0, duration: 300, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.timing(translateY, { toValue: -100, duration: 300, useNativeDriver: Platform.OS !== 'web' }),
     ]).start(() => setVisible(false));
   }, [opacity, translateY]);
 
@@ -35,8 +35,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setVisible(true);
 
     Animated.parallel([
-      Animated.timing(opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
-      Animated.spring(translateY, { toValue: insets.top + 10, useNativeDriver: true, tension: 40, friction: 8 }),
+      Animated.timing(opacity, { toValue: 1, duration: 400, useNativeDriver: Platform.OS !== 'web' }),
+      Animated.spring(translateY, { toValue: insets.top + 10, useNativeDriver: Platform.OS !== 'web', tension: 40, friction: 8 }),
     ]).start();
 
     setTimeout(() => {
@@ -74,7 +74,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
           ]}
         >
-          <BlurView intensity={Platform.OS === 'ios' ? 40 : 100} tint="dark" style={StyleSheet.absoluteFill} />
+          {Platform.OS === 'web' ? (
+            <View style={[StyleSheet.absoluteFill, styles.webBackdrop]} />
+          ) : (
+            <BlurView intensity={Platform.OS === 'ios' ? 40 : 100} tint="dark" style={StyleSheet.absoluteFill} />
+          )}
           <View style={styles.content}>
             <View style={styles.iconArea}>
               {getIcon()}
@@ -131,5 +135,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: -0.2,
+  },
+  webBackdrop: {
+    backgroundColor: 'rgba(15, 23, 42, 0.94)',
   },
 });

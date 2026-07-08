@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View, StyleSheet, Platform } from 'react-native';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
@@ -8,6 +8,10 @@ import { isAdminUser } from '@/utils/isAdmin';
 import SplashScreen from '@/components/SplashScreen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import * as NativeSplashScreen from 'expo-splash-screen';
+
+// Prevent auto-hiding of the native splash screen
+NativeSplashScreen.preventAutoHideAsync().catch(() => {});
 
 const IS_WEB = Platform.OS === 'web';
 const SPLASH_DURATION_MS = IS_WEB ? 0 : 2200;
@@ -16,9 +20,13 @@ function NavigationHandler() {
   const { user, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const rootNavigationState = useRootNavigationState();
   const [showSplash, setShowSplash] = useState(!IS_WEB);
 
   useEffect(() => {
+    // Hide the native splash screen immediately to show our custom animated one
+    NativeSplashScreen.hideAsync().catch(() => {});
+
     if (IS_WEB) return;
 
     const timer = setTimeout(() => setShowSplash(false), SPLASH_DURATION_MS);
@@ -30,9 +38,12 @@ function NavigationHandler() {
   }, []);
 
   useEffect(() => {
-    if (loading || showSplash) return;
+    // Wait until Expo Router's navigation state is mounted before routing.
+    // If we route too early, it silently fails and leaves the user stuck on the loading screen.
+    if (loading || showSplash || !rootNavigationState?.key) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const isRoot = !segments[0] || segments[0] === 'index';
 
     if (!user && !inAuthGroup) {
       router.replace('/(auth)/login');
@@ -49,9 +60,11 @@ function NavigationHandler() {
 
       if (!isAdmin && isAdminScreen) {
         router.replace('/(tabs)/' as any);
+      } else if (isRoot) {
+        router.replace(isAdmin ? '/admin-dashboard' as any : '/(tabs)/' as any);
       }
     }
-  }, [user, loading, showSplash, segments, router]);
+  }, [user, loading, showSplash, segments, router, rootNavigationState?.key]);
 
   return (
     <View style={styles.root}>

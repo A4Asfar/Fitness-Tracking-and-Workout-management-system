@@ -67,7 +67,7 @@ export default function Button({
         <ActivityIndicator color={loaderColor} />
       ) : (
         <>
-          {Icon && <Icon size={20} color={StyleSheet.flatten(text).color?.toString()} style={s.icon} />}
+          {Icon && <Icon size={20} color={(StyleSheet.flatten(text) as any).color?.toString()} style={s.icon} />}
           <Text style={text}>{title}</Text>
         </>
       )}
