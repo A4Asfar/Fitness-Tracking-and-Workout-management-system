@@ -5,13 +5,11 @@ import {
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
-import { Colors, SPACING, SharedStyles } from '@/constants/Theme';
+import { Colors } from '@/constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  User, ChevronRight, Bell, Shield, ShieldCheck,
-  CircleHelp, Info, LogOut, Settings, 
-  Star, Sparkles, Camera, UserCheck,
-  Play, TrendingUp, Dumbbell, Target
+  User, ChevronRight, Bell, Shield, LogOut, Settings, 
+  Sparkles, Camera, Dumbbell, TrendingUp, Ruler, Scale, Calendar, Award, Target
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -33,117 +31,145 @@ export default function AccountHubScreen() {
   const isAdmin = user?.membershipType === 'admin';
   const isPremium = user?.membershipType === 'premium' || isAdmin;
 
-  // Calculate real stats from user data
-  const weightKg = user?.weight || 0;
-  const heightCm = user?.height || 0;
-  const fitnessGoal = user?.fitnessGoal || 'Not set';
+  const weightKg = user?.weight || 70;
+  const heightCm = user?.height || 175;
+  const fitnessGoal = user?.fitnessGoal || 'General Fitness';
+  const trainingLevel = user?.trainingLevel || 'Intermediate';
 
   const bmi = (weightKg > 0 && heightCm > 0) 
     ? (weightKg / ((heightCm / 100) ** 2)) 
-    : null;
+    : 22.8;
 
   const weightLbs = Math.round(weightKg * 2.20462);
   const totalInches = heightCm / 2.54;
   const feet = Math.floor(totalInches / 12);
   const inches = Math.round(totalInches % 12);
-  const heightStr = heightCm > 0 ? `${feet}'${inches}"` : '0\'0"';
+  const heightStr = `${feet}'${inches}"`;
 
   return (
-    <View style={SharedStyles.container}>
+    <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <ScrollView 
-        style={{ flex: 1 }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 120 }}
       >
-        {/* ── Page Header ── */}
+        {/* --- Custom Header Area --- */}
         <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-          <Text style={styles.headerTitle}>Profile</Text>
-          <Text style={styles.headerSubtitle}>Manage your fitness journey</Text>
+          <View>
+            <Text style={styles.headerSubtitle}>Personal Profile</Text>
+            <Text style={styles.headerTitle}>Account Hub</Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.settingsBtn}
+            onPress={() => router.push('/settings/privacy')}
+            activeOpacity={0.7}
+          >
+            <Settings size={20} color="#0F172A" />
+          </TouchableOpacity>
         </View>
 
-        {/* ── Gradient Profile Card ── */}
+        {/* --- Profile Card --- */}
         <View style={styles.cardContainer}>
-          <LinearGradient
-            colors={[Colors.card, Colors.background]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 1 }}
-            style={styles.profileCard}
-          >
+          <View style={styles.profileCard}>
             <View style={styles.profileInfo}>
               <TouchableOpacity 
                 style={styles.avatarContainer}
                 onPress={() => router.push('/settings/edit-profile')}
+                activeOpacity={0.8}
               >
                 <View style={styles.avatarWrap}>
                   {user?.avatar ? (
                     <Image source={{ uri: user.avatar }} style={styles.avatarImg} />
                   ) : (
-                    <User size={40} color="#FFF" strokeWidth={1.5} />
+                    <User size={36} color="#64748B" />
                   )}
                 </View>
                 <View style={styles.cameraBadge}>
-                  <Camera size={12} color="#000" strokeWidth={2.5} />
+                  <Camera size={10} color="#FFFFFF" strokeWidth={2.5} />
                 </View>
               </TouchableOpacity>
 
               <View style={styles.profileText}>
                 <Text style={styles.userName}>{user?.name || 'Fitness Athlete'}</Text>
-                <Text style={styles.userRole}>{isPremium ? 'Premium Member' : 'Standard Member'}</Text>
-                <View style={styles.proTag}>
-                  <Sparkles size={10} color={Colors.primary} />
-                  <Text style={styles.proTagText}>{isPremium ? 'Pro Plan' : 'Free Plan'}</Text>
+                <View style={styles.badgeRow}>
+                  <View style={[styles.badge, { backgroundColor: '#F1F5F9', borderColor: '#E2E8F0' }]}>
+                    <Text style={styles.badgeText}>{trainingLevel}</Text>
+                  </View>
+                  <View style={[styles.badge, { backgroundColor: '#F5F3FF', borderColor: '#DDD6FE' }]}>
+                    <Sparkles size={10} color="#7C4DFF" style={{ marginRight: 4 }} />
+                    <Text style={[styles.badgeText, { color: '#7C4DFF' }]}>{isPremium ? 'Pro Member' : 'Free Tier'}</Text>
+                  </View>
                 </View>
               </View>
             </View>
 
-            {/* ── Stats Row ── */}
+            {/* --- Edit Button --- */}
+            <TouchableOpacity
+              style={styles.editBtn}
+              onPress={() => router.push('/settings/edit-profile')}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.editBtnText}>Edit Profile</Text>
+            </TouchableOpacity>
+
+            {/* --- Stats Summary Row --- */}
             <View style={styles.statsRow}>
               <StatItem 
                 label="Weight" 
-                value={weightKg > 0 ? `${weightLbs} lbs` : '--'} 
-                subValue={weightKg > 0 ? `${weightKg} kg` : 'Not set'} 
+                value={`${weightKg} kg`} 
+                subValue={`${weightLbs} lbs`}
+                icon={Scale}
+                color="#7C4DFF"
               />
               <StatItem 
                 label="Height" 
-                value={heightCm > 0 ? heightStr : '--'} 
-                subValue={heightCm > 0 ? `${heightCm} cm` : 'Not set'} 
+                value={`${heightCm} cm`} 
+                subValue={heightStr}
+                icon={Ruler}
+                color="#FF4B4B"
               />
               <StatItem 
                 label="Goal" 
-                value={fitnessGoal !== 'Not set' ? fitnessGoal.split(' ')[0] : '--'} 
-                subValue={bmi ? `BMI: ${bmi.toFixed(1)}` : 'Set stats'} 
+                value={fitnessGoal.split(' ')[0]} 
+                subValue={`BMI: ${bmi.toFixed(1)}`}
+                icon={Target}
+                color="#00B0FF"
               />
             </View>
-          </LinearGradient>
+          </View>
         </View>
 
+        {/* --- Main Dashboard Sections --- */}
         <View style={styles.body}>
-          {/* ── YOUR GOALS SECTION ── */}
-          <View style={styles.sectionHeader}>
-            <Text style={styles.sectionTitle}>Your Goals</Text>
-          </View>
-          
-          <View style={styles.goalsGrid}>
-            <GoalCard 
-              title="Workouts" 
-              icon={Dumbbell} 
-              count="12" 
-              subtitle="This month" 
-              color={Colors.primary}
-            />
-            <GoalCard 
-              title="Progress" 
-              icon={TrendingUp} 
-              count="+4%" 
-              subtitle="Weight loss" 
-              color={Colors.secondary}
-            />
+          {/* --- Fitness Goal Summary --- */}
+          <Text style={styles.sectionTitle}>Fitness Goals</Text>
+          <View style={styles.goalCard}>
+            <View style={styles.goalHeader}>
+              <View style={styles.goalBadgeRow}>
+                <Dumbbell size={18} color="#7C4DFF" />
+                <Text style={styles.goalTitle}>{fitnessGoal}</Text>
+              </View>
+              <Text style={styles.goalPercentage}>80%</Text>
+            </View>
+            <View style={styles.progressBarBg}>
+              <View style={[styles.progressBarFill, { width: '80%', backgroundColor: '#7C4DFF' }]} />
+            </View>
+            <Text style={styles.goalMotivation}>Keep pushing! Only 2 workouts left to hit your weekly target.</Text>
           </View>
 
-          {/* ── MENU GROUPS ── */}
-          <SectionLabel label="ACCOUNT" />
+          {/* --- Achievements --- */}
+          <Text style={styles.sectionTitle}>Achievements</Text>
+          <View style={styles.achievementsCard}>
+            <View style={styles.achieveGrid}>
+              <AchievementItem label="Streak" value="5 Days" icon={Award} color="#FFD700" />
+              <AchievementItem label="Finished" value="14 Sessions" icon={Dumbbell} color="#7C4DFF" />
+              <AchievementItem label="Longest Streak" value="12 Days" icon={TrendingUp} color="#10B981" />
+            </View>
+          </View>
+
+          {/* --- Account Menu List --- */}
+          <Text style={styles.sectionLabel}>Account Options</Text>
           <View style={styles.menuGroup}>
             {user && isAdmin && (
               <>
@@ -157,83 +183,46 @@ export default function AccountHubScreen() {
             )}
             <MenuOption 
               icon={User} 
-              label="Edit Profile" 
+              label="Personal Details" 
               onPress={() => router.push('/settings/edit-profile')} 
             />
             <Divider />
-            {isPremium ? (
-              <MenuOption 
-                icon={Star} 
-                label="Premium Status" 
-                badge="Active"
-                subtitle={user?.membershipExpiresAt ? `Expires: ${new Date(user.membershipExpiresAt).toLocaleDateString()}` : 'Lifetime Access'}
-                onPress={() => router.push('/upgrade')} 
-              />
-            ) : (
-              <MenuOption 
-                icon={Star} 
-                label="Upgrade to Premium" 
-                badge="Pro"
-                onPress={() => router.push('/upgrade')} 
-              />
-            )}
-          </View>
-
-          <SectionLabel label="PREFERENCES" />
-          <View style={styles.menuGroup}>
             <MenuOption 
               icon={Bell} 
-              label="Notifications" 
+              label="Notification Preferences" 
               hasSwitch={true}
               onPress={() => router.push('/settings/notifications')} 
             />
             <Divider />
             <MenuOption 
-              icon={Settings} 
-              label="Settings" 
-              onPress={() => router.push('/settings/privacy')} 
-            />
-          </View>
-
-          <SectionLabel label="SUPPORT" />
-          <View style={styles.menuGroup}>
-            <MenuOption 
-              icon={CircleHelp} 
-              label="Help & Support" 
-              onPress={() => router.push('/help')} 
+              icon={Sparkles} 
+              label="Membership Status" 
+              badge={isPremium ? 'Active' : 'Upgrade'}
+              onPress={() => router.push('/upgrade')} 
             />
           </View>
 
           <TouchableOpacity 
             style={styles.logoutBtn}
             onPress={() => setShowLogoutModal(true)}
+            activeOpacity={0.7}
           >
-            <LogOut size={20} color="#FF3B30" />
+            <LogOut size={18} color="#EF4444" />
             <Text style={styles.logoutBtnText}>Sign Out</Text>
           </TouchableOpacity>
         </View>
       </ScrollView>
 
-      {/* ── Floating Action Button ── */}
-      <TouchableOpacity style={styles.fab}>
-        <LinearGradient
-          colors={[Colors.primary, Colors.secondary]}
-          style={styles.fabGradient}
-        >
-          <Play size={28} color="#000" fill="#000" />
-        </LinearGradient>
-      </TouchableOpacity>
-
-      {/* ── Logout Confirmation ── */}
-      <Modal visible={showLogoutModal} transparent animationType="fade">
-        <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+      {/* --- Logout Modal --- */}
+      <Modal visible={showLogoutModal} transparent animationType="fade" statusBarTranslucent>
+        <BlurView intensity={10} tint="dark" style={StyleSheet.absoluteFill} />
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalIconWrap}>
-              <LogOut size={32} color={Colors.error} />
+              <LogOut size={28} color="#EF4444" />
             </View>
             <Text style={styles.modalTitle}>Confirm Sign Out</Text>
-            <Text style={styles.modalDesc}>Are you sure you want to end your session?</Text>
+            <Text style={styles.modalDesc}>Are you sure you want to log out of your FitAI dashboard?</Text>
             
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowLogoutModal(false)}>
@@ -250,9 +239,12 @@ export default function AccountHubScreen() {
   );
 }
 
-function StatItem({ label, value, subValue }: any) {
+function StatItem({ label, value, subValue, icon: Icon, color }: any) {
   return (
     <View style={styles.statItem}>
+      <View style={[styles.statIconWrap, { backgroundColor: color + '10' }]}>
+        <Icon size={16} color={color} />
+      </View>
       <Text style={styles.statValue}>{value}</Text>
       <Text style={styles.statLabel}>{label}</Text>
       <Text style={styles.statSubValue}>{subValue}</Text>
@@ -260,52 +252,43 @@ function StatItem({ label, value, subValue }: any) {
   );
 }
 
-function GoalCard({ title, icon: Icon, count, subtitle, color }: any) {
+function AchievementItem({ label, value, icon: Icon, color }: any) {
   return (
-    <TouchableOpacity style={styles.goalCard}>
-      <View style={[styles.goalIconBox, { backgroundColor: color + '20' }]}>
-        <Icon size={20} color={color} />
+    <View style={styles.achieveItem}>
+      <View style={[styles.achieveIconWrap, { backgroundColor: color + '10' }]}>
+        <Icon size={18} color={color} />
       </View>
-      <View>
-        <Text style={styles.goalCount}>{count}</Text>
-        <Text style={styles.goalTitle}>{title}</Text>
-        <Text style={styles.goalSubtitle}>{subtitle}</Text>
-      </View>
-    </TouchableOpacity>
+      <Text style={styles.achieveValue}>{value}</Text>
+      <Text style={styles.achieveLabel}>{label}</Text>
+    </View>
   );
 }
 
-function SectionLabel({ label }: { label: string }) {
-  return <Text style={styles.sectionLabel}>{label}</Text>;
-}
-
-function MenuOption({ icon: Icon, label, onPress, badge, hasSwitch, subtitle }: any) {
+function MenuOption({ icon: Icon, label, onPress, badge, hasSwitch }: any) {
   const [isEnabled, setIsEnabled] = useState(true);
   return (
-    <TouchableOpacity style={styles.menuOption} onPress={onPress} activeOpacity={0.6}>
+    <TouchableOpacity style={styles.menuOption} onPress={onPress} activeOpacity={0.7}>
       <View style={styles.optionIconBox}>
-        <Icon size={20} color="#FFF" opacity={0.8} />
+        <Icon size={18} color="#64748B" />
       </View>
-      <View style={{ flex: 1 }}>
-        <Text style={styles.optionLabel}>{label}</Text>
-        {subtitle && <Text style={styles.optionSubLabel}>{subtitle}</Text>}
-      </View>
+      <Text style={styles.optionLabel}>{label}</Text>
       
       {badge && (
-        <View style={styles.proBadge}>
-          <Text style={styles.proBadgeText}>{badge}</Text>
+        <View style={[styles.proBadge, badge === 'Active' ? styles.badgeActive : styles.badgeUpgrade]}>
+          <Text style={[styles.proBadgeText, { color: badge === 'Active' ? '#10B981' : '#7C4DFF' }]}>{badge}</Text>
         </View>
       )}
 
       {hasSwitch ? (
         <TouchableOpacity 
           onPress={() => setIsEnabled(!isEnabled)}
-          style={[styles.switchTrack, isEnabled && styles.switchEnabled]}
+          style={[styles.switchTrack, isEnabled ? { backgroundColor: '#7C4DFF' } : null]}
+          activeOpacity={0.9}
         >
-          <View style={[styles.switchThumb, isEnabled && styles.switchThumbEnabled]} />
+          <View style={[styles.switchThumb, isEnabled ? { transform: [{ translateX: 20 }] } : null]} />
         </TouchableOpacity>
       ) : (
-        <ChevronRight size={18} color={Colors.textSecondary} opacity={0.3} />
+        <ChevronRight size={16} color="#94A3B8" />
       )}
     </TouchableOpacity>
   );
@@ -316,54 +299,76 @@ function Divider() {
 }
 
 const styles = StyleSheet.create({
-  header: {
-    paddingHorizontal: 24,
-    marginBottom: 24,
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
   },
-  headerTitle: {
-    color: '#FFF',
-    fontSize: 34,
-    fontWeight: '900',
-    letterSpacing: -1,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 24,
+    paddingBottom: 20,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   headerSubtitle: {
-    color: Colors.textSecondary,
-    fontSize: 16,
-    fontWeight: '500',
-    marginTop: 4,
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  headerTitle: {
+    color: '#0F172A',
+    fontSize: 24,
+    fontWeight: '900',
+    letterSpacing: -0.5,
+  },
+  settingsBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   cardContainer: {
     paddingHorizontal: 20,
-    marginBottom: 32,
+    paddingTop: 20,
   },
   profileCard: {
-    borderRadius: 32,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
     padding: 24,
     borderWidth: 1.5,
-    borderColor: Colors.border,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.15,
-    shadowRadius: 16,
-    elevation: 10,
+    borderColor: '#E2E8F0',
+    shadowColor: '#0F172A',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.03,
+    shadowRadius: 12,
+    elevation: 2,
   },
   profileInfo: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 20,
   },
   avatarContainer: {
     position: 'relative',
   },
   avatarWrap: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    width: 72,
+    height: 72,
+    borderRadius: 24,
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
     overflow: 'hidden',
   },
   avatarImg: {
@@ -372,280 +377,330 @@ const styles = StyleSheet.create({
   },
   cameraBadge: {
     position: 'absolute',
-    bottom: 0,
-    right: 0,
-    backgroundColor: Colors.primary,
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    bottom: -2,
+    right: -2,
+    backgroundColor: '#7C4DFF',
+    width: 22,
+    height: 22,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 3,
-    borderColor: Colors.card,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   profileText: {
     marginLeft: 16,
     flex: 1,
   },
   userName: {
-    color: '#FFF',
-    fontSize: 24,
-    fontWeight: '800',
+    color: '#0F172A',
+    fontSize: 20,
+    fontWeight: '900',
     letterSpacing: -0.5,
   },
-  userRole: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-    fontWeight: '500',
-    marginTop: 2,
+  badgeRow: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 6,
   },
-  proTag: {
+  badge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(124, 77, 255, 0.15)',
-    alignSelf: 'flex-start',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
-    marginTop: 8,
-    gap: 4,
-    borderWidth: 1,
-    borderColor: 'rgba(124, 77, 255, 0.3)',
+    borderWidth: 1.5,
   },
-  proTagText: {
-    color: Colors.primary,
-    fontSize: 11,
-    fontWeight: '700',
+  badgeText: {
+    color: '#64748B',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  editBtn: {
+    height: 44,
+    borderRadius: 14,
+    backgroundColor: '#F8FAFC',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    marginBottom: 24,
+  },
+  editBtnText: {
+    color: '#0F172A',
+    fontSize: 13,
+    fontWeight: '800',
   },
   statsRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 12,
+    gap: 10,
   },
   statItem: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.04)',
+    backgroundColor: '#F8FAFC',
     borderRadius: 20,
     padding: 12,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+  },
+  statIconWrap: {
+    width: 32,
+    height: 32,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   statValue: {
-    color: '#FFF',
-    fontSize: 16,
+    color: '#0F172A',
+    fontSize: 14,
     fontWeight: '800',
   },
   statLabel: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '600',
+    color: '#64748B',
+    fontSize: 10,
+    fontWeight: '800',
     marginTop: 2,
   },
   statSubValue: {
-    color: 'rgba(255, 255, 255, 0.35)',
+    color: '#94A3B8',
     fontSize: 9,
-    fontWeight: '500',
-    marginTop: 4,
+    fontWeight: '600',
+    marginTop: 2,
   },
   body: {
-    paddingHorizontal: 24,
-  },
-  sectionHeader: {
-    marginBottom: 16,
+    paddingHorizontal: 20,
   },
   sectionTitle: {
-    color: '#FFF',
-    fontSize: 20,
-    fontWeight: '800',
-  },
-  goalsGrid: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 32,
+    color: '#0F172A',
+    fontSize: 16,
+    fontWeight: '900',
+    marginTop: 28,
+    marginBottom: 12,
   },
   goalCard: {
-    flex: 1,
-    backgroundColor: Colors.card,
+    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+  },
+  goalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  goalBadgeRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    gap: 8,
   },
-  goalIconBox: {
-    width: 40,
-    height: 40,
+  goalTitle: {
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  goalPercentage: {
+    color: '#7C4DFF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  progressBarBg: {
+    height: 6,
+    backgroundColor: '#F1F5F9',
+    borderRadius: 3,
+    marginBottom: 12,
+    overflow: 'hidden',
+  },
+  progressBarFill: {
+    height: '100%',
+    borderRadius: 3,
+  },
+  goalMotivation: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 16,
+  },
+  achievementsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+  },
+  achieveGrid: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  achieveItem: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  achieveIconWrap: {
+    width: 36,
+    height: 36,
     borderRadius: 12,
     justifyContent: 'center',
     alignItems: 'center',
+    marginBottom: 6,
   },
-  goalCount: {
-    color: '#FFF',
-    fontSize: 18,
+  achieveValue: {
+    color: '#0F172A',
+    fontSize: 13,
     fontWeight: '800',
   },
-  goalTitle: {
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  goalSubtitle: {
-    color: 'rgba(255, 255, 255, 0.3)',
+  achieveLabel: {
+    color: '#64748B',
     fontSize: 10,
-    fontWeight: '500',
+    fontWeight: '700',
+    marginTop: 2,
   },
   sectionLabel: {
-    color: Colors.textSecondary,
-    fontSize: 12,
+    color: '#64748B',
+    fontSize: 11,
     fontWeight: '800',
-    letterSpacing: 1.2,
-    marginBottom: 16,
+    letterSpacing: 0.5,
+    textTransform: 'uppercase',
+    marginTop: 28,
+    marginBottom: 12,
     marginLeft: 4,
-    opacity: 0.5,
   },
   menuGroup: {
-    backgroundColor: Colors.card,
+    backgroundColor: '#FFFFFF',
     borderRadius: 24,
-    marginBottom: 32,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
     overflow: 'hidden',
   },
   menuOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    padding: 18,
-    height: 72,
+    paddingHorizontal: 16,
+    height: 60,
   },
   optionIconBox: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: Colors.background,
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: 16,
+    marginRight: 12,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   optionLabel: {
     flex: 1,
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  optionSubLabel: {
-    color: 'rgba(255, 255, 255, 0.4)',
-    fontSize: 12,
-    fontWeight: '500',
-    marginTop: 2,
+    color: '#0F172A',
+    fontSize: 14,
+    fontWeight: '700',
   },
   proBadge: {
-    backgroundColor: '#FF9500',
-    paddingHorizontal: 12,
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
-    marginRight: 12,
+    borderRadius: 8,
+    marginRight: 10,
+  },
+  badgeActive: {
+    backgroundColor: '#ECFDF5',
+  },
+  badgeUpgrade: {
+    backgroundColor: '#F5F3FF',
   },
   proBadgeText: {
-    color: '#FFF',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '900',
   },
+  badgeTextActive: {
+    color: '#10B981',
+  },
+  badgeTextUpgrade: {
+    color: '#7C4DFF',
+  },
   switchTrack: {
-    width: 46,
-    height: 26,
-    borderRadius: 13,
-    backgroundColor: Colors.border,
+    width: 44,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: '#E2E8F0',
     padding: 2,
     justifyContent: 'center',
   },
   switchEnabled: {
-    backgroundColor: Colors.primary,
+    backgroundColor: '#7C4DFF',
   },
   switchThumb: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#FFF',
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 2,
+    elevation: 2,
   },
   switchThumbEnabled: {
     transform: [{ translateX: 20 }],
   },
   divider: {
-    height: 1,
-    backgroundColor: Colors.border,
-    marginHorizontal: 18,
+    height: 1.5,
+    backgroundColor: '#F1F5F9',
+    marginHorizontal: 16,
   },
   logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: 10,
-    marginTop: 10,
+    gap: 8,
+    marginTop: 24,
     marginBottom: 40,
-    opacity: 0.8,
   },
   logoutBtnText: {
-    color: '#FF3B30',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  fab: {
-    position: 'absolute',
-    bottom: 30,
-    right: 20,
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.5,
-    shadowRadius: 15,
-    elevation: 10,
-  },
-  fabGradient: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 32,
-    justifyContent: 'center',
-    alignItems: 'center',
+    color: '#EF4444',
+    fontSize: 15,
+    fontWeight: '800',
   },
   modalOverlay: {
     flex: 1,
     justifyContent: 'center',
     padding: 24,
-    backgroundColor: 'rgba(0,0,0,0.8)',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   modalContent: {
-    backgroundColor: Colors.card,
-    borderRadius: 32,
-    padding: 32,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 28,
+    padding: 24,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   modalIconWrap: {
-    width: 72,
-    height: 72,
-    borderRadius: 24,
-    backgroundColor: 'rgba(255, 68, 68, 0.1)',
+    width: 60,
+    height: 60,
+    borderRadius: 20,
+    backgroundColor: '#FEE2E2',
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 16,
+    borderWidth: 1.5,
+    borderColor: '#FCA5A5',
   },
   modalTitle: {
-    color: '#FFF',
-    fontSize: 22,
+    color: '#0F172A',
+    fontSize: 18,
     fontWeight: '900',
-    marginBottom: 12,
+    marginBottom: 8,
   },
   modalDesc: {
-    color: Colors.textSecondary,
-    fontSize: 14,
+    color: '#64748B',
+    fontSize: 13,
     textAlign: 'center',
-    marginBottom: 32,
+    marginBottom: 24,
+    lineHeight: 18,
   },
   modalActions: {
     flexDirection: 'row',
@@ -653,28 +708,30 @@ const styles = StyleSheet.create({
   },
   cancelBtn: {
     flex: 1,
-    height: 56,
-    borderRadius: 18,
-    backgroundColor: Colors.border,
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   cancelBtnText: {
-    color: '#FFF',
-    fontSize: 15,
+    color: '#0F172A',
+    fontSize: 14,
     fontWeight: '700',
   },
   confirmBtn: {
     flex: 1.2,
-    height: 56,
-    borderRadius: 18,
-    backgroundColor: '#FF3B30',
+    height: 48,
+    borderRadius: 14,
+    backgroundColor: '#EF4444',
     justifyContent: 'center',
     alignItems: 'center',
   },
   confirmBtnText: {
-    color: '#FFF',
-    fontSize: 15,
+    color: '#FFFFFF',
+    fontSize: 14,
     fontWeight: '800',
   },
 });

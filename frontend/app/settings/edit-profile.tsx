@@ -4,7 +4,7 @@ import {
   TextInput, ActivityIndicator, Image, KeyboardAvoidingView, Platform
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
+import { Colors } from '@/constants/Theme';
 import {
   User, ArrowLeft, Target, Scale, Ruler, Camera, Check,
   Mail, Award
@@ -84,7 +84,6 @@ export default function EditProfileScreen() {
     }
 
     setErrors({});
-
     setIsSaving(true);
     try {
       const payload = {
@@ -106,15 +105,20 @@ export default function EditProfileScreen() {
   };
 
   return (
-    <View style={SharedStyles.container}>
+    <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <ArrowLeft size={22} color={Colors.text} />
+      {/* --- Header Area --- */}
+      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
+        <TouchableOpacity 
+          onPress={() => router.back()} 
+          style={styles.backBtn}
+          activeOpacity={0.7}
+        >
+          <ArrowLeft size={20} color="#0F172A" />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Profile</Text>
-        <View style={{ width: 44 }} />
+        <View style={{ width: 40 }} />
       </View>
 
       <KeyboardAvoidingView 
@@ -125,38 +129,45 @@ export default function EditProfileScreen() {
           style={{ flex: 1 }}
           contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 40 }]}
           showsVerticalScrollIndicator={false}
+          keyboardShouldPersistTaps="handled"
         >
+          {/* --- Avatar Selection Section --- */}
           <View style={styles.avatarSection}>
             <TouchableOpacity onPress={handlePickImage} activeOpacity={0.8}>
               <View style={styles.avatarWrap}>
                 {formData.avatar ? (
                   <Image source={{ uri: formData.avatar }} style={styles.avatarImg} />
                 ) : (
-                  <User size={48} color={Colors.textSecondary} />
+                  <User size={36} color="#64748B" />
                 )}
                 <View style={styles.cameraIcon}>
-                  <Camera size={14} color="#000" />
+                  <Camera size={12} color="#FFFFFF" />
                 </View>
               </View>
             </TouchableOpacity>
             <Text style={styles.avatarLabel}>Tap to change avatar</Text>
           </View>
 
-          <SectionTitle title="GENERAL INFORMATION" />
+          {/* --- Form Details --- */}
+          <SectionTitle title="General Information" />
+          
           <View style={styles.formGroup}>
-            <InputLabel label="FULL NAME" icon={User} required />
+            <InputLabel label="Full Name" icon={User} required />
             <TextInput 
               style={[styles.input, errors.name && styles.inputError]}
               value={formData.name}
-              onChangeText={(t) => { setFormData(p => ({ ...p, name: t })); if (errors.name) setErrors({...errors, name: null}); }}
-              placeholder="Your Name"
-              placeholderTextColor="#555"
+              onChangeText={(t) => {
+                setFormData(p => ({ ...p, name: t }));
+                if (errors.name) setErrors({ ...errors, name: null });
+              }}
+              placeholder="e.g. John Doe"
+              placeholderTextColor="#94A3B8"
             />
             {errors.name && <Text style={styles.errorText}>{errors.name}</Text>}
           </View>
 
           <View style={styles.formGroup}>
-            <InputLabel label="EMAIL ADDRESS (READ-ONLY)" icon={Mail} />
+            <InputLabel label="Email Address (Read-Only)" icon={Mail} />
             <View style={[styles.input, styles.disabledInput]}>
               <Text style={styles.disabledText}>{user?.email}</Text>
             </View>
@@ -164,75 +175,98 @@ export default function EditProfileScreen() {
 
           <View style={styles.row}>
             <View style={{ flex: 1 }}>
-              <InputLabel label="WEIGHT (KG)" icon={Scale} required />
+              <InputLabel label="Weight (KG)" icon={Scale} required />
               <TextInput 
                 style={[styles.input, errors.weight && styles.inputError]}
                 value={formData.weight}
-                onChangeText={(t) => { setFormData(p => ({ ...p, weight: t })); if (errors.weight) setErrors({...errors, weight: null}); }}
+                onChangeText={(t) => {
+                  setFormData(p => ({ ...p, weight: t }));
+                  if (errors.weight) setErrors({ ...errors, weight: null });
+                }}
                 keyboardType="numeric"
-                placeholder="00.0"
-                placeholderTextColor="#555"
+                placeholder="e.g. 72"
+                placeholderTextColor="#94A3B8"
               />
               {errors.weight && <Text style={styles.errorText}>{errors.weight}</Text>}
             </View>
             <View style={{ width: 16 }} />
             <View style={{ flex: 1 }}>
-              <InputLabel label="HEIGHT (CM)" icon={Ruler} required />
+              <InputLabel label="Height (CM)" icon={Ruler} required />
               <TextInput 
                 style={[styles.input, errors.height && styles.inputError]}
                 value={formData.height}
-                onChangeText={(t) => { setFormData(p => ({ ...p, height: t })); if (errors.height) setErrors({...errors, height: null}); }}
+                onChangeText={(t) => {
+                  setFormData(p => ({ ...p, height: t }));
+                  if (errors.height) setErrors({ ...errors, height: null });
+                }}
                 keyboardType="numeric"
-                placeholder="000"
-                placeholderTextColor="#555"
+                placeholder="e.g. 175"
+                placeholderTextColor="#94A3B8"
               />
               {errors.height && <Text style={styles.errorText}>{errors.height}</Text>}
             </View>
           </View>
 
-          <SectionTitle title="FITNESS FOCUS" />
-          <InputLabel label="PRIMARY TRAINING GOAL" icon={Target} required />
+          {/* --- Fitness Goals Section --- */}
+          <SectionTitle title="Fitness Focus" />
+          
+          <InputLabel label="Primary Training Goal" icon={Target} required />
           <View style={styles.chipGrid}>
-            {GOALS.map(g => (
-              <TouchableOpacity 
-                key={g}
-                style={[styles.chip, formData.fitnessGoal === g && styles.chipActive]}
-                onPress={() => { setFormData(p => ({ ...p, fitnessGoal: g })); if (errors.fitnessGoal) setErrors({...errors, fitnessGoal: null}); }}
-              >
-                <Text style={[styles.chipText, formData.fitnessGoal === g && styles.chipTextActive]}>{g}</Text>
-              </TouchableOpacity>
-            ))}
+            {GOALS.map(g => {
+              const isSelected = formData.fitnessGoal === g;
+              return (
+                <TouchableOpacity 
+                  key={g}
+                  style={[styles.chip, isSelected && styles.chipActive]}
+                  onPress={() => {
+                    setFormData(p => ({ ...p, fitnessGoal: g }));
+                    if (errors.fitnessGoal) setErrors({ ...errors, fitnessGoal: null });
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>{g}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
           {errors.fitnessGoal && <Text style={[styles.errorText, { marginTop: -14, marginBottom: 20 }]}>{errors.fitnessGoal}</Text>}
 
-          <InputLabel label="CURRENT EXPERIENCE LEVEL" icon={Award} />
+          <InputLabel label="Current Experience Level" icon={Award} />
           <View style={styles.chipGrid}>
-            {LEVELS.map(l => (
-              <TouchableOpacity 
-                key={l}
-                style={[styles.chip, formData.trainingLevel === l && styles.chipActive]}
-                onPress={() => setFormData(p => ({ ...p, trainingLevel: l }))}
-              >
-                <Text style={[styles.chipText, formData.trainingLevel === l && styles.chipTextActive]}>{l}</Text>
-              </TouchableOpacity>
-            ))}
+            {LEVELS.map(l => {
+              const isSelected = formData.trainingLevel === l;
+              return (
+                <TouchableOpacity 
+                  key={l}
+                  style={[styles.chip, isSelected && styles.chipActive]}
+                  onPress={() => setFormData(p => ({ ...p, trainingLevel: l }))}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>{l}</Text>
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
+          {/* --- Action Buttons --- */}
           <TouchableOpacity 
             style={styles.saveBtn}
             onPress={handleSave}
             disabled={isSaving}
+            activeOpacity={0.9}
           >
             <LinearGradient
-              colors={[Colors.primary, '#9FE800']}
+              colors={['#7C4DFF', '#BD00FF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
               style={styles.saveGrad}
             >
               {isSaving ? (
-                <ActivityIndicator color="#000" />
+                <ActivityIndicator color="#FFFFFF" />
               ) : (
                 <>
-                  <Check size={20} color="#000" strokeWidth={3} />
-                  <Text style={styles.saveBtnText}>SAVE CHANGES</Text>
+                  <Check size={20} color="#FFFFFF" strokeWidth={3} />
+                  <Text style={styles.saveBtnText}>Save Changes</Text>
                 </>
               )}
             </LinearGradient>
@@ -250,7 +284,7 @@ function SectionTitle({ title }: { title: string }) {
 function InputLabel({ label, icon: Icon, required }: any) {
   return (
     <View style={styles.labelRow}>
-      <Icon size={12} color={Colors.primary} />
+      <Icon size={12} color="#7C4DFF" />
       <Text style={styles.labelText}>{label}</Text>
       {required && <Text style={styles.asterisk}>*</Text>}
     </View>
@@ -258,48 +292,54 @@ function InputLabel({ label, icon: Icon, required }: any) {
 }
 
 const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.md,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   backBtn: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: Colors.card,
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#F8FAFC',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
   },
   headerTitle: {
-    color: Colors.text,
+    color: '#0F172A',
     fontSize: 18,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
   content: {
-    padding: 24,
+    padding: 20,
   },
   avatarSection: {
     alignItems: 'center',
-    marginBottom: 32,
+    marginBottom: 28,
   },
   avatarWrap: {
-    width: 100,
-    height: 100,
-    borderRadius: 36,
-    backgroundColor: Colors.card,
+    width: 90,
+    height: 90,
+    borderRadius: 30,
+    backgroundColor: '#FFFFFF',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 2,
-    borderColor: Colors.border,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
     overflow: 'hidden',
+    position: 'relative',
   },
   avatarImg: {
     width: '100%',
@@ -307,137 +347,135 @@ const styles = StyleSheet.create({
   },
   cameraIcon: {
     position: 'absolute',
-    bottom: -4,
-    right: -4,
-    backgroundColor: Colors.primary,
-    width: 28,
-    height: 28,
-    borderRadius: 10,
+    bottom: -2,
+    right: -2,
+    backgroundColor: '#7C4DFF',
+    width: 22,
+    height: 22,
+    borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 4,
-    borderColor: Colors.background,
+    borderWidth: 2,
+    borderColor: '#FFFFFF',
   },
   avatarLabel: {
-    color: Colors.textSecondary,
+    color: '#64748B',
     fontSize: 12,
-    marginTop: 12,
+    marginTop: 10,
     fontWeight: '600',
   },
   sectionTitle: {
-    color: Colors.textSecondary,
-    fontSize: 11,
+    color: '#0F172A',
+    fontSize: 16,
     fontWeight: '900',
-    letterSpacing: 1.5,
-    marginTop: 16,
-    marginBottom: 20,
-    opacity: 0.8,
+    marginTop: 12,
+    marginBottom: 16,
   },
   formGroup: {
-    marginBottom: 24,
+    marginBottom: 20,
   },
   labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 10,
+    gap: 6,
+    marginBottom: 8,
     marginLeft: 4,
   },
   labelText: {
-    color: Colors.textSecondary,
+    color: '#64748B',
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: Colors.card,
+    backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    height: 56,
-    paddingHorizontal: 20,
-    color: Colors.text,
-    fontSize: 16,
+    height: 52,
+    paddingHorizontal: 16,
+    color: '#0F172A',
+    fontSize: 14,
     fontWeight: '600',
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: '#E2E8F0',
   },
   inputError: {
-    borderColor: '#FF4B4B',
-    backgroundColor: '#FF4B4B08',
+    borderColor: '#EF4444',
+    backgroundColor: '#FEF2F2',
   },
   errorText: {
-    color: '#FF4B4B',
+    color: '#EF4444',
     fontSize: 11,
-    fontWeight: '600',
+    fontWeight: '700',
     marginTop: 4,
     marginLeft: 4,
     marginBottom: 8,
   },
   asterisk: {
-    color: '#FF4B4B',
+    color: '#EF4444',
     fontSize: 14,
     fontWeight: 'bold',
     marginLeft: 4,
   },
   disabledInput: {
-    opacity: 0.5,
+    opacity: 0.6,
     justifyContent: 'center',
+    backgroundColor: '#F1F5F9',
   },
   disabledText: {
-    color: Colors.textSecondary,
-    fontSize: 16,
+    color: '#64748B',
+    fontSize: 14,
     fontWeight: '600',
   },
   row: {
     flexDirection: 'row',
-    marginBottom: 24,
+    marginBottom: 20,
   },
   chipGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 10,
-    marginBottom: 24,
+    gap: 8,
+    marginBottom: 20,
   },
   chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: 14,
-    backgroundColor: Colors.card,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
-    borderColor: Colors.border,
+    borderColor: '#E2E8F0',
   },
   chipActive: {
-    backgroundColor: Colors.primary + '15',
-    borderColor: Colors.primary,
+    backgroundColor: '#F5F3FF',
+    borderColor: '#7C4DFF',
   },
   chipText: {
-    color: Colors.textSecondary,
-    fontSize: 13,
+    color: '#64748B',
+    fontSize: 12,
     fontWeight: '700',
   },
   chipTextActive: {
-    color: Colors.primary,
+    color: '#7C4DFF',
   },
   saveBtn: {
     marginTop: 20,
-    borderRadius: 18,
+    borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.3,
-    shadowRadius: 20,
-    elevation: 8,
+    shadowColor: '#7C4DFF',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 4,
   },
   saveGrad: {
-    height: 64,
+    height: 52,
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
-    gap: 12,
+    gap: 10,
   },
   saveBtnText: {
-    color: '#000',
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: 1,
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '800',
   },
 });
