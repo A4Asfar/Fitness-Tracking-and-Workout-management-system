@@ -20,7 +20,8 @@ export default function TrainerCard({ trainer, onPress }: TrainerCardProps) {
       <View style={s.topRow}>
         <Image 
           source={{ uri: trainer.profileImage || trainer.image }} 
-          style={s.image} 
+          style={s.image}
+          resizeMode="cover"
         />
         <View style={s.infoContainer}>
           <View style={s.nameRow}>

@@ -22,7 +22,10 @@ export default function FeaturedTrainerCard({ trainer, onPress }: FeaturedTraine
       accessibilityLabel={`View featured trainer ${trainer.fullName || trainer.name}`}
     >
       <Image 
-        source={{ uri: trainer.profileImage || trainer.image }} 
+        source={{ uri: trainer.profileImage || trainer.image }}
+        style={s.image}
+        resizeMode="cover"
+      /> 
         style={s.imageBackground} 
       />
       <LinearGradient

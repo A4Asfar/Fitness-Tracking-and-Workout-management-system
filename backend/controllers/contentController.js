@@ -5,6 +5,7 @@ const DailyPlan = require('../models/DailyPlan');
 const User = require('../models/User');
 const Trainer = require('../models/Trainer');
 const WorkoutSuggestion = require('../models/WorkoutSuggestion');
+const { resolveTrainer } = require('../utils/trainerHelper');
 const { getLocalDateString } = require('../utils/dateUtils');
 
 const getMotivation = (goal) => {
@@ -29,12 +30,12 @@ const getMotivation = (goal) => {
 };
 
 exports.getTrainers = asyncHandler(async (req, res) => {
-  const trainers = await Trainer.find({}).sort({ name: 1 });
+  const trainers = await Trainer.find({}).sort({ featuredTrainer: -1, rating: -1, fullName: 1 });
   res.json(trainers);
 });
 
 exports.getTrainerById = asyncHandler(async (req, res) => {
-  const trainer = await Trainer.findOne({ id: req.params.id });
+  const trainer = await resolveTrainer(req.params.id);
   if (!trainer) {
     res.status(404);
     throw new Error('Trainer not found');

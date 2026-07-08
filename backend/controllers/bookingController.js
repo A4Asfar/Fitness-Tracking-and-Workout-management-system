@@ -1,5 +1,5 @@
 const TrainerBooking = require('../models/TrainerBooking');
-const Trainer = require('../models/Trainer');
+const { resolveTrainer } = require('../utils/trainerHelper');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 
 exports.createBooking = asyncHandler(async (req, res) => {
@@ -19,8 +19,8 @@ exports.createBooking = asyncHandler(async (req, res) => {
     throw new Error('Cannot book a session in the past');
   }
 
-  // Find trainer to calculate price
-  const trainer = await Trainer.findById(trainerId);
+  // Find trainer (supports MongoDB _id or legacy slug id)
+  const trainer = await resolveTrainer(trainerId);
   if (!trainer) {
     res.status(404);
     throw new Error('Trainer not found');
@@ -32,7 +32,7 @@ exports.createBooking = asyncHandler(async (req, res) => {
 
   // Create booking
   const booking = new TrainerBooking({
-    trainerId,
+    trainerId: trainer._id,
     userId,
     bookingDate,
     bookingTime,
