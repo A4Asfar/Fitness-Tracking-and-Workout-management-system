@@ -4,7 +4,6 @@ import {
   TextInput, ActivityIndicator, Image, KeyboardAvoidingView, Platform
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { Colors } from '@/constants/Theme';
 import {
   User, ArrowLeft, Target, Scale, Ruler, Camera, Check,
   Mail, Award
@@ -108,7 +107,7 @@ export default function EditProfileScreen() {
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
-      {/* --- Header Area --- */}
+      {/* --- Header --- */}
       <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
         <TouchableOpacity 
           onPress={() => router.back()} 
@@ -256,7 +255,7 @@ export default function EditProfileScreen() {
             activeOpacity={0.9}
           >
             <LinearGradient
-              colors={['#7C4DFF', '#BD00FF']}
+              colors={['#10B981', '#059669']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.saveGrad}
@@ -284,7 +283,7 @@ function SectionTitle({ title }: { title: string }) {
 function InputLabel({ label, icon: Icon, required }: any) {
   return (
     <View style={styles.labelRow}>
-      <Icon size={12} color="#7C4DFF" />
+      <Icon size={12} color="#10B981" />
       <Text style={styles.labelText}>{label}</Text>
       {required && <Text style={styles.asterisk}>*</Text>}
     </View>
@@ -294,7 +293,7 @@ function InputLabel({ label, icon: Icon, required }: any) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FFFFFF',
   },
   header: {
     flexDirection: 'row',
@@ -304,7 +303,7 @@ const styles = StyleSheet.create({
     paddingBottom: 16,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: '#F1F5F9',
   },
   backBtn: {
     width: 40,
@@ -349,7 +348,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     bottom: -2,
     right: -2,
-    backgroundColor: '#7C4DFF',
+    backgroundColor: '#10B981',
     width: 22,
     height: 22,
     borderRadius: 8,
@@ -428,7 +427,6 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    marginBottom: 20,
   },
   chipGrid: {
     flexDirection: 'row',
@@ -445,8 +443,8 @@ const styles = StyleSheet.create({
     borderColor: '#E2E8F0',
   },
   chipActive: {
-    backgroundColor: '#F5F3FF',
-    borderColor: '#7C4DFF',
+    backgroundColor: '#ECFDF5',
+    borderColor: '#10B981',
   },
   chipText: {
     color: '#64748B',
@@ -454,13 +452,13 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   chipTextActive: {
-    color: '#7C4DFF',
+    color: '#10B981',
   },
   saveBtn: {
     marginTop: 20,
     borderRadius: 16,
     overflow: 'hidden',
-    shadowColor: '#7C4DFF',
+    shadowColor: '#10B981',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.15,
     shadowRadius: 12,
