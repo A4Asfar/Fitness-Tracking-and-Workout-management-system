@@ -263,7 +263,7 @@ export default function HomeDashboard() {
           <AIInsightCard 
             insightText={stats?.insight || insights?.advice || 'Upgrade to PRO to unlock advanced AI-driven training insights and recovery scores.'}
             isPremium={isPremium}
-            onPress={() => router.push(isPremium ? '/insights' : '/upgrade' as any)}
+            onPress={() => router.push(isPremium ? '/insights' : '/premium' as any)}
           />
 
           {/* Today's Recommended Routine */}
