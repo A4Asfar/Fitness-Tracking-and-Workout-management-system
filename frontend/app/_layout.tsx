@@ -1,11 +1,10 @@
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ToastProvider } from '@/components/Toast';
 import { isAdminUser } from '@/utils/isAdmin';
-import SplashScreen from '@/components/SplashScreen';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as NativeSplashScreen from 'expo-splash-screen';
@@ -18,20 +17,17 @@ function NavigationHandler() {
   const segments = useSegments();
   const router = useRouter();
   const rootNavigationState = useRootNavigationState();
-  const [showSplash, setShowSplash] = useState(true);
 
   useEffect(() => {
-    // Hide the native splash screen immediately to show our custom animated one
-    NativeSplashScreen.hideAsync().catch(() => {});
-
-    // Ensure the custom splash screen dismisses after 2.5 seconds
-    const timer = setTimeout(() => setShowSplash(false), 2500);
-    return () => clearTimeout(timer);
-  }, []);
+    // Hide the native splash screen once auth state is resolved
+    if (!loading) {
+      NativeSplashScreen.hideAsync().catch(() => {});
+    }
+  }, [loading]);
 
   useEffect(() => {
-    // Wait until Expo Router's navigation state is mounted before routing.
-    if (loading || showSplash || !rootNavigationState?.key) return;
+    // Wait until Expo Router's navigation state is mounted before routing
+    if (loading || !rootNavigationState?.key) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const isRoot = !segments[0] || (segments[0] as string) === 'index';
@@ -59,32 +55,24 @@ function NavigationHandler() {
       }
     }, 10);
     return () => clearTimeout(timer);
-  }, [user, loading, showSplash, segments, router, rootNavigationState?.key]);
+  }, [user, loading, segments, router, rootNavigationState?.key]);
 
   return (
-    <View style={styles.root}>
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-        <Stack.Screen name="admin-dashboard" options={{ headerShown: false }} />
-        <Stack.Screen name="create-workout" options={{ presentation: 'modal', title: 'Log Workout' }} />
-        <Stack.Screen name="help" options={{ presentation: 'card' }} />
-        <Stack.Screen name="body-health" options={{ presentation: 'card' }} />
-        <Stack.Screen name="trainer" options={{ presentation: 'card' }} />
-        <Stack.Screen name="trainer-details" options={{ presentation: 'card', headerShown: false }} />
-        <Stack.Screen name="book-session" options={{ presentation: 'card', headerShown: false }} />
-        <Stack.Screen name="booking-success" options={{ presentation: 'card', headerShown: false }} />
-        <Stack.Screen name="my-bookings" options={{ presentation: 'card', headerShown: false }} />
-        <Stack.Screen name="+not-found" />
-      </Stack>
-
-      {showSplash && (
-        <View style={styles.splashOverlay} pointerEvents="auto">
-          <SplashScreen />
-        </View>
-      )}
-    </View>
+    <Stack screenOptions={{ headerShown: false }}>
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen name="admin-dashboard" options={{ headerShown: false }} />
+      <Stack.Screen name="create-workout" options={{ presentation: 'modal', title: 'Log Workout' }} />
+      <Stack.Screen name="help" options={{ presentation: 'card' }} />
+      <Stack.Screen name="body-health" options={{ presentation: 'card' }} />
+      <Stack.Screen name="trainer" options={{ presentation: 'card' }} />
+      <Stack.Screen name="trainer-details" options={{ presentation: 'card', headerShown: false }} />
+      <Stack.Screen name="book-session" options={{ presentation: 'card', headerShown: false }} />
+      <Stack.Screen name="booking-success" options={{ presentation: 'card', headerShown: false }} />
+      <Stack.Screen name="my-bookings" options={{ presentation: 'card', headerShown: false }} />
+      <Stack.Screen name="+not-found" />
+    </Stack>
   );
 }
 
@@ -111,10 +99,5 @@ export default function RootLayout() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-  },
-  splashOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    zIndex: 9999,
-    elevation: 9999,
   },
 });
