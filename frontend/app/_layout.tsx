@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View, StyleSheet, Platform } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { ToastProvider } from '@/components/Toast';
 import { isAdminUser } from '@/utils/isAdmin';
@@ -13,27 +13,31 @@ import * as NativeSplashScreen from 'expo-splash-screen';
 // Prevent auto-hiding of the native splash screen
 NativeSplashScreen.preventAutoHideAsync().catch(() => {});
 
-const IS_WEB = Platform.OS === 'web';
-// Splash duration is much shorter on web, but we give a slight delay for hydration
-const SPLASH_DURATION_MS = IS_WEB ? 300 : 2500;
-
-function NavigationHandler({ showSplash }: { showSplash: boolean }) {
+function NavigationHandler() {
   const { user, loading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const rootNavigationState = useRootNavigationState();
+  const [showSplash, setShowSplash] = useState(true);
+
+  useEffect(() => {
+    // Hide the native splash screen immediately to show our custom animated one
+    NativeSplashScreen.hideAsync().catch(() => {});
+
+    // Ensure the custom splash screen dismisses after 2.5 seconds
+    const timer = setTimeout(() => setShowSplash(false), 2500);
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // Wait until Expo Router's navigation state is mounted before routing.
-    // If we route too early, it silently fails or throws an error.
     if (loading || showSplash || !rootNavigationState?.key) return;
 
     const inAuthGroup = segments[0] === '(auth)';
     const isRoot = !segments[0] || (segments[0] as string) === 'index';
 
-    // Use requestAnimationFrame to safely defer navigation to the next frame
-    // This avoids the "Attempted to navigate before mounting the Root Layout" error
-    let raf = requestAnimationFrame(() => {
+    // Defer routing to ensure NavigationContainer is completely mounted
+    const timer = setTimeout(() => {
       if (!user && !inAuthGroup) {
         router.replace('/(auth)/login');
       } else if (user && inAuthGroup) {
@@ -53,12 +57,35 @@ function NavigationHandler({ showSplash }: { showSplash: boolean }) {
           router.replace(isAdmin ? '/admin-dashboard' as any : '/(tabs)/' as any);
         }
       }
-    });
-
-    return () => cancelAnimationFrame(raf);
+    }, 10);
+    return () => clearTimeout(timer);
   }, [user, loading, showSplash, segments, router, rootNavigationState?.key]);
 
-  return null;
+  return (
+    <View style={styles.root}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="admin-dashboard" options={{ headerShown: false }} />
+        <Stack.Screen name="create-workout" options={{ presentation: 'modal', title: 'Log Workout' }} />
+        <Stack.Screen name="help" options={{ presentation: 'card' }} />
+        <Stack.Screen name="body-health" options={{ presentation: 'card' }} />
+        <Stack.Screen name="trainer" options={{ presentation: 'card' }} />
+        <Stack.Screen name="trainer-details" options={{ presentation: 'card', headerShown: false }} />
+        <Stack.Screen name="book-session" options={{ presentation: 'card', headerShown: false }} />
+        <Stack.Screen name="booking-success" options={{ presentation: 'card', headerShown: false }} />
+        <Stack.Screen name="my-bookings" options={{ presentation: 'card', headerShown: false }} />
+        <Stack.Screen name="+not-found" />
+      </Stack>
+
+      {showSplash && (
+        <View style={styles.splashOverlay} pointerEvents="auto">
+          <SplashScreen />
+        </View>
+      )}
+    </View>
+  );
 }
 
 const initialSafeAreaMetrics = {
@@ -67,45 +94,12 @@ const initialSafeAreaMetrics = {
 };
 
 export default function RootLayout() {
-  const [showSplash, setShowSplash] = useState(true);
-
-  useEffect(() => {
-    // Hide the native splash screen immediately to show our custom animated one
-    NativeSplashScreen.hideAsync().catch(() => {});
-
-    // Ensure the custom splash screen dismisses
-    const timer = setTimeout(() => setShowSplash(false), SPLASH_DURATION_MS);
-    return () => clearTimeout(timer);
-  }, []);
-
   return (
     <GestureHandlerRootView style={styles.root}>
       <SafeAreaProvider initialMetrics={initialSafeAreaMetrics}>
         <ToastProvider>
           <AuthProvider>
-            <NavigationHandler showSplash={showSplash} />
-            <View style={styles.root}>
-              <Stack screenOptions={{ headerShown: false }}>
-                <Stack.Screen name="index" options={{ headerShown: false }} />
-                <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-                <Stack.Screen name="admin-dashboard" options={{ headerShown: false }} />
-                <Stack.Screen name="create-workout" options={{ presentation: 'modal', title: 'Log Workout' }} />
-                <Stack.Screen name="help" options={{ presentation: 'card' }} />
-                <Stack.Screen name="body-health" options={{ presentation: 'card' }} />
-                <Stack.Screen name="trainer" options={{ presentation: 'card' }} />
-                <Stack.Screen name="trainer-details" options={{ presentation: 'card', headerShown: false }} />
-                <Stack.Screen name="book-session" options={{ presentation: 'card', headerShown: false }} />
-                <Stack.Screen name="booking-success" options={{ presentation: 'card', headerShown: false }} />
-                <Stack.Screen name="my-bookings" options={{ presentation: 'card', headerShown: false }} />
-                <Stack.Screen name="+not-found" />
-              </Stack>
-              {showSplash && (
-                <View style={styles.splashOverlay} pointerEvents="auto">
-                  <SplashScreen />
-                </View>
-              )}
-            </View>
+            <NavigationHandler />
             <StatusBar style="light" />
           </AuthProvider>
         </ToastProvider>
