@@ -64,6 +64,13 @@ const QUICK_ACTIONS_CONFIG = [
     route: '/body-health',
     color: '#00B0FF',
   },
+  {
+    title: 'Diet & Nutrition',
+    desc: 'Manage daily meals',
+    icon: Target,
+    route: '/(tabs)/diet',
+    color: '#F59E0B',
+  },
 ];
 
 export default function HomeDashboard() {
