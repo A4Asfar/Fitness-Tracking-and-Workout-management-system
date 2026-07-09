@@ -36,21 +36,15 @@ function NavigationHandler() {
     const timer = setTimeout(() => {
       if (!user && !inAuthGroup) {
         router.replace('/(auth)/login');
-      } else if (user && inAuthGroup) {
+      } else if (user && isRoot) {
         const isAdmin = isAdminUser(user);
-        if (isAdmin) {
-          router.replace('/admin-dashboard' as any);
-        } else {
-          router.replace('/(tabs)/' as any);
-        }
+        router.replace(isAdmin ? '/admin-dashboard' as any : '/(tabs)/' as any);
       } else if (user) {
         const isAdmin = isAdminUser(user);
         const isAdminScreen = segments[0] === 'admin-dashboard' || segments[0] === 'admin';
 
         if (!isAdmin && isAdminScreen) {
           router.replace('/(tabs)/' as any);
-        } else if (isRoot) {
-          router.replace(isAdmin ? '/admin-dashboard' as any : '/(tabs)/' as any);
         }
       }
     }, 10);

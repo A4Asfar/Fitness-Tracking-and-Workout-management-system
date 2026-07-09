@@ -138,11 +138,13 @@ export default function LoginScreen() {
         visible={showWelcome}
         onClose={() => { 
           setShowWelcome(false); 
-          if (user?.membershipType === 'admin') {
-            router.replace('/admin-dashboard' as any);
-          } else {
-            router.replace('/(tabs)/' as any);
-          }
+          setTimeout(() => {
+            if (user?.membershipType === 'admin') {
+              router.replace('/admin-dashboard' as any);
+            } else {
+              router.replace('/(tabs)/' as any);
+            }
+          }, 350); // Wait for native modal fade animation to finish
         }}
         userName={user?.name || 'Athlete'}
         isNewUser={false}
