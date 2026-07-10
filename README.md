@@ -215,14 +215,14 @@ Create `.env` files in both directories. **Never commit these to version control
 
 ## 🔌 API Overview
 
-| Endpoint | Method | Protected | Functionality |
+| Endpoint | Method | Requires Login | Functionality |
 | :--- | :---: | :---: | :--- |
-| `/api/auth/register` | `POST` | ❌ | Provisions new user schema |
-| `/api/auth/login` | `POST` | ❌ | Authenticates and returns JWT |
-| `/api/workouts` | `GET` | ✅ | Fetches historic user workouts |
-| `/api/meals` | `POST` | ✅ | Commits new nutritional entry |
-| `/api/trainers` | `GET` | ❌ | Returns global trainer marketplace |
-| `/api/chat` | `POST` | ✅ | Communicates with Gemini AI |
+| `/api/auth/register` | `POST` | ❌ No | Registers a new user account |
+| `/api/auth/login` | `POST` | ❌ No | Authenticates user and returns access token |
+| `/api/workouts` | `GET` | ✅ Yes | Retrieves user's personal workout history |
+| `/api/meals` | `POST` | ✅ Yes | Logs a new daily meal entry |
+| `/api/trainers` | `GET` | ❌ No | Fetches list of available personal trainers |
+| `/api/chat` | `POST` | ✅ Yes | Sends messages to the Gemini AI Coach |
 
 ---
 
