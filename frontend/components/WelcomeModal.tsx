@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, Modal, TouchableOpacity, Dimensions } from 'react-native';
 import { Colors } from '@/constants/Theme';
 import { Trophy, ArrowRight, Zap } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
@@ -49,11 +50,17 @@ export default function WelcomeModal({ visible, onClose, userName, isNewUser = t
             </Text>
           </View>
 
-          <TouchableOpacity style={styles.button} onPress={onClose}>
+          <TouchableOpacity style={styles.button} onPress={onClose} activeOpacity={0.8}>
+            <LinearGradient
+              colors={['#10B981', '#BD00FF']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={StyleSheet.absoluteFill}
+            />
             <Text style={styles.buttonText}>
-              {isNewUser ? "Let's Start Training" : "Go to Dashboard"}
+              {isNewUser ? "LET'S START TRAINING" : "GO TO DASHBOARD"}
             </Text>
-            <ArrowRight size={20} color="#000" style={{ marginLeft: 10 }} />
+            <ArrowRight size={20} color="#FFFFFF" style={{ marginLeft: 10 }} />
           </TouchableOpacity>
         </View>
       </View>
@@ -122,16 +129,22 @@ const styles = StyleSheet.create({
   },
   button: {
     flexDirection: 'row',
-    backgroundColor: Colors.primary,
     width: '100%',
     padding: 18,
-    borderRadius: 15,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
+    overflow: 'hidden',
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 3,
   },
   buttonText: {
-    color: '#000',
-    fontSize: 18,
-    fontWeight: 'bold',
+    color: '#FFFFFF',
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
 });
