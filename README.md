@@ -1,7 +1,7 @@
 <div align="center">
 
 <!-- PROJECT LOGO PLACEHOLDER -->
-<img src="https://via.placeholder.com/150x150/000000/FFFFFF?text=Logo" alt="ElevateFit Logo" width="120" height="120">
+<img src="https://placehold.co/150x150/000000/FFFFFF.png?text=Logo" alt="ElevateFit Logo" width="120" height="120">
 
 # ElevateFit
 
@@ -230,10 +230,10 @@ Create `.env` files in both directories. **Never commit these to version control
 
 <div align="center">
   <!-- Placeholders for GitHub visual alignment -->
-  <img src="https://via.placeholder.com/200x400/000000/FFFFFF?text=Login+Screen" width="200" style="margin: 10px;">
-  <img src="https://via.placeholder.com/200x400/000000/FFFFFF?text=Dashboard" width="200" style="margin: 10px;">
-  <img src="https://via.placeholder.com/200x400/000000/FFFFFF?text=Workout+Plan" width="200" style="margin: 10px;">
-  <img src="https://via.placeholder.com/200x400/000000/FFFFFF?text=AI+Chat" width="200" style="margin: 10px;">
+  <img src="https://placehold.co/200x400/000000/FFFFFF.png?text=Login+Screen" width="200" style="margin: 10px;">
+  <img src="https://placehold.co/200x400/000000/FFFFFF.png?text=Dashboard" width="200" style="margin: 10px;">
+  <img src="https://placehold.co/200x400/000000/FFFFFF.png?text=Workout+Plan" width="200" style="margin: 10px;">
+  <img src="https://placehold.co/200x400/000000/FFFFFF.png?text=AI+Chat" width="200" style="margin: 10px;">
 </div>
 
 ---
