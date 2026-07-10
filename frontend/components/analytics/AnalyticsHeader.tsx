@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Sparkles, Calendar, Share2 } from 'lucide-react-native';
+import { Calendar, Share2 } from 'lucide-react-native';
 
 interface AnalyticsHeaderProps {
   onSharePress?: () => void;

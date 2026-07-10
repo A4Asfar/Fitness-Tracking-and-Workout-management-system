@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Colors } from '@/constants/Theme';
-import { ArrowLeft, Flame, Calendar, Sparkles } from 'lucide-react-native';
+import { ArrowLeft, Flame, Sparkles } from 'lucide-react-native';
 
 interface WorkoutHeaderProps {
   title: string;

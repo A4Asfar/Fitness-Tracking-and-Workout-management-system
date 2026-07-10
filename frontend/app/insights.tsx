@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, Animated, Easing } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { 
-  ArrowLeft, Activity, Flame, Utensils, MessageCircle, HeartPulse, Zap, Dumbbell, ShieldCheck, Sparkles, TrendingUp, RefreshCw
+  ArrowLeft, Flame, Utensils, MessageCircle, Dumbbell, Sparkles, RefreshCw
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';

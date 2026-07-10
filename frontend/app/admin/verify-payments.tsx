@@ -7,9 +7,9 @@ import { useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  ArrowLeft, Check, X, Eye, Calendar, User, Mail,
+  ArrowLeft, Check, X, Eye, Calendar, User,
   CreditCard, Sparkles, XCircle, AlertCircle, TrendingUp, Award,
-  Download, Search, Filter, Plus, Trash2, ShieldAlert
+  Download, Search, Plus, ShieldAlert
 } from 'lucide-react-native';
 import { useToast } from '@/components/Toast';
 import api from '@/services/api';

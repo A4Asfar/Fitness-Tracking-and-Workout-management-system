@@ -6,8 +6,8 @@ import { getIconComponent } from '@/services/recommendations';
 import { ContentService } from '@/services/contentService';
 import { useToast } from '@/components/Toast';
 import { 
-  ArrowLeft, Flame, Zap, Droplets, Utensils, HeartPulse, 
-  Dumbbell, Moon, Sunrise, Coffee, ChevronRight, RefreshCcw
+  ArrowLeft, Flame, Droplets, Utensils, HeartPulse, 
+  Dumbbell, Moon, Sunrise, Coffee, RefreshCcw
 } from 'lucide-react-native';
 import { useRouter, Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';

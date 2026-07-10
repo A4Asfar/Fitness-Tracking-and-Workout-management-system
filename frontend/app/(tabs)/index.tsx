@@ -1,17 +1,15 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
-  View, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Text, TouchableOpacity
+  View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
-import { Colors } from '@/constants/Theme';
 import api from '@/services/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  PlusCircle, History as HistoryIcon, TrendingUp, Users, Sparkles, Bell,
-  HeartPulse, Scale, Target, Bot, Dumbbell, Flame, Zap
+  PlusCircle, History as HistoryIcon, Users,
+  HeartPulse, Scale, Target
 } from 'lucide-react-native';
 import { useRouter, Stack } from 'expo-router';
-import { LinearGradient } from 'expo-linear-gradient';
 import SkeletonCard, { SkeletonItem } from '@/components/SkeletonCard';
 
 // Extracted Premium Components

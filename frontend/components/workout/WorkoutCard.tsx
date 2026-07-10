@@ -1,7 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Colors } from '@/constants/Theme';
-import { Dumbbell, Flame, Zap, Heart, Trash2, Pencil, CheckCircle2 } from 'lucide-react-native';
+import { Dumbbell, Flame, Zap, Heart, Trash2, Pencil } from 'lucide-react-native';
 import MetricBadge from './MetricBadge';
 
 interface WorkoutCardProps {

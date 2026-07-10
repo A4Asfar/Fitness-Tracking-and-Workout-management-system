@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Flame, Compass, Target } from 'lucide-react-native';
+import { Flame } from 'lucide-react-native';
 
 interface NutritionCardProps {
   consumed: number;

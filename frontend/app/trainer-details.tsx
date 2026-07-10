@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, Text, StyleSheet, ScrollView, TouchableOpacity, 
-  Image, ActivityIndicator, RefreshControl, Dimensions, Animated 
+  Image, ActivityIndicator, RefreshControl, Dimensions 
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Colors, SPACING } from '@/constants/Theme';
+import { Colors } from '@/constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
   ArrowLeft, Share, Heart, ShieldCheck, Star, MapPin, 

@@ -1,5 +1,4 @@
 import * as Haptics from 'expo-haptics';
-import { Platform } from 'react-native';
 
 /**
  * Trigger a success haptic notification feedback pattern (e.g. action success, purchase verified).

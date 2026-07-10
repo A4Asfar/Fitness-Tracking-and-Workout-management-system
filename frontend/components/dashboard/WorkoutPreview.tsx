@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Dumbbell, Clock, Flame, ChevronRight, Play } from 'lucide-react-native';
+import { Dumbbell, Clock, Flame, Play } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface WorkoutPreviewProps {

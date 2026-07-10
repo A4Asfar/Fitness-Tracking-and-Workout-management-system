@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   View, Text, StyleSheet, FlatList, TouchableOpacity, 
-  TextInput, ActivityIndicator, RefreshControl 
+  TextInput, RefreshControl 
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Colors, SPACING } from '@/constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
   ArrowLeft, Bell, Calendar, Award, Info, Trash2, 
-  Search, CheckCheck, AlertTriangle, ShieldAlert
+  Search, CheckCheck, AlertTriangle
 } from 'lucide-react-native';
 import api from '@/services/api';
 import SkeletonCard from '@/components/SkeletonCard';

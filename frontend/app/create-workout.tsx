@@ -3,7 +3,6 @@ import {
   View, Text, StyleSheet, TextInput, ScrollView, 
   KeyboardAvoidingView, Platform, Alert, Dimensions, UIManager, LayoutAnimation
 } from 'react-native';
-import { Colors } from '@/constants/Theme';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 

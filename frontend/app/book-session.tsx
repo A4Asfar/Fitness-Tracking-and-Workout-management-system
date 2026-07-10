@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, ScrollView, TouchableOpacity, 
-  TextInput, ActivityIndicator, Image, Alert
+  TextInput, ActivityIndicator, Image
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Colors, SPACING } from '@/constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Star, Calendar, Clock, Video, MapPin, Target } from 'lucide-react-native';
+import { ArrowLeft, Star, Calendar, Video, MapPin, Target } from 'lucide-react-native';
 import api from '@/services/api';
 
 export default function BookSessionScreen() {

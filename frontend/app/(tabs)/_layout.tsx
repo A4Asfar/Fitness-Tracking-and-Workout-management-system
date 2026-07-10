@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home, Dumbbell, TrendingUp, Settings, User, Users } from 'lucide-react-native';
+import { Home, Dumbbell, TrendingUp, User, Users } from 'lucide-react-native';
 import { Colors } from '@/constants/Theme';
 
 export default function TabLayout() {

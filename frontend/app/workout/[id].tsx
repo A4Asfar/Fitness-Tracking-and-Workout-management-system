@@ -6,11 +6,10 @@ import {
   Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Colors } from '@/constants/Theme';
 import api from '@/services/api';
 import {
   Dumbbell, Calendar, Save, Trash2, ChevronLeft,
-  Activity, Hash, Pencil, X, CheckCircle2,
+  Activity, Pencil, X, CheckCircle2,
   AlertTriangle, Flame, Zap, Heart, RotateCcw
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Modal, TextInput, TouchableOpacity, ScrollView, Platform, KeyboardAvoidingView } from 'react-native';
-import { X, Flame, ShieldAlert, Sparkles } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface AddMealModalProps {

@@ -1,13 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
-  View, StyleSheet, ActivityIndicator, Alert, ScrollView, Dimensions, Modal, Text, TouchableOpacity
+  View, StyleSheet, Alert, ScrollView, Dimensions, Modal, Text, TouchableOpacity
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { MealService } from '@/services/mealService';
 import { ContentService } from '@/services/contentService';
-import { Colors } from '@/constants/Theme';
 import { 
-  Plus, ChevronRight, Apple, Zap, Flame, Target, Sparkles
+  Plus, Target, Sparkles
 } from 'lucide-react-native';
 import { Stack, useLocalSearchParams } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';

@@ -7,8 +7,7 @@ import { useRouter, Stack } from 'expo-router';
 import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { 
   ArrowLeft, Target, History, Plus, 
-  ChevronRight, Calendar, Info, Sparkles,
-  TrendingUp
+  ChevronRight, Calendar, Info, Sparkles
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';

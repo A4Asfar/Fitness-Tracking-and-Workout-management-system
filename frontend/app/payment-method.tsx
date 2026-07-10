@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Clipboard } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Copy, CreditCard, Landmark, Smartphone, Image as ImageIcon } from 'lucide-react-native';
+import { ArrowLeft, Copy, Landmark, Smartphone, Image as ImageIcon } from 'lucide-react-native';
 import { useToast } from '@/components/Toast';
 import { APP_NAME, PAYMENTS_LABEL } from '@/constants/Brand';
 

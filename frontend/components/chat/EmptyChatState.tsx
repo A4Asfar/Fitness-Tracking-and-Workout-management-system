@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
-import { Sparkles, Bot } from 'lucide-react-native';
+import { Bot } from 'lucide-react-native';
 import { AI_COACH_NAME } from '@/constants/Brand';
 import { LinearGradient } from 'expo-linear-gradient';
 import PromptChip from './PromptChip';

@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Star, MapPin, ShieldCheck, Video, Clock } from 'lucide-react-native';
-import { Colors, SPACING } from '@/constants/Theme';
+import { Colors } from '@/constants/Theme';
 
 interface TrainerCardProps {
   trainer: any;

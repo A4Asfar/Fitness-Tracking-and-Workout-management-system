@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Colors } from '@/constants/Theme';
 import { 
   Clock, Flame, Play, ChevronLeft, CheckCircle2, Circle, TrendingUp 
 } from 'lucide-react-native';

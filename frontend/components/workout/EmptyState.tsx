@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Colors } from '@/constants/Theme';
 import { Dumbbell, Plus } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 

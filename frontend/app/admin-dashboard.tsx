@@ -7,8 +7,6 @@ import {
   ArrowLeft, 
   Users, 
   UserCheck, 
-  UserMinus, 
-  BarChart3, 
   Activity,
   ChevronRight,
   Database,
@@ -21,7 +19,6 @@ import { isAdminUser } from '@/utils/isAdmin';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
-import { LinearGradient } from 'expo-linear-gradient';
 import { APP_NAME, SUPPORT_EMAIL } from '@/constants/Brand';
 import { safeBack } from '@/utils/navigation';
 

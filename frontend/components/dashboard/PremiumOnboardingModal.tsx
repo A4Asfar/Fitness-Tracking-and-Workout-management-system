@@ -1,9 +1,9 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Animated, Easing
 } from 'react-native';
 import { BlurView } from 'expo-blur';
-import { Sparkles, Check, ArrowRight, Zap, Trophy, ShieldAlert, Heart, Star } from 'lucide-react-native';
+import { Sparkles, Check, ArrowRight, Star } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import Storage from '@/utils/storage';
 import { APP_NAME, APP_PRO } from '@/constants/Brand';

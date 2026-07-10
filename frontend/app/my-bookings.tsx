@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { 
-  View, Text, StyleSheet, FlatList, TouchableOpacity, 
-  ActivityIndicator, Image, RefreshControl
+  View, Text, StyleSheet, FlatList, TouchableOpacity, Image, RefreshControl
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Colors, SPACING } from '@/constants/Theme';

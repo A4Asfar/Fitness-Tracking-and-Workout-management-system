@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Modal, Platform, Dimensions
+  Image, Modal, Dimensions
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  User, ChevronRight, Bell, Shield, LogOut, Settings, 
-  Sparkles, Camera, Dumbbell, TrendingUp, Ruler, Scale, 
-  Award, Target, CheckCircle2, Heart, ShieldCheck, Mail, Lock, Languages, Eye, HelpCircle
+  User, ChevronRight, Bell, LogOut, 
+  Sparkles, Dumbbell, Scale, Target, Heart, ShieldCheck, Lock, Languages, Eye, HelpCircle
 } from 'lucide-react-native';
 import { BlurView } from 'expo-blur';
 import api from '@/services/api';
-import { APP_NAME, AI_COACH_NAME, APP_PRO, PAYMENTS_LABEL, SUPPORT_EMAIL } from '@/constants/Brand';
+import { APP_NAME } from '@/constants/Brand';
 import PremiumBadge from '@/components/PremiumBadge';
 import { isAdminUser } from '@/utils/isAdmin';
 

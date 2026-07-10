@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Bell, Flame, Settings, User } from 'lucide-react-native';
+import { Bell, Flame } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { usePremiumStatus } from '../PremiumGate';

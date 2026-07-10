@@ -1,6 +1,5 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Sparkles, Flame } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface AIInsightCardProps {

@@ -1,11 +1,9 @@
 import React, { useState, useCallback } from 'react';
 import { 
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, 
-  ActivityIndicator, RefreshControl, Alert, TextInput 
+  View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert, TextInput 
 } from 'react-native';
-import { Colors } from '@/constants/Theme';
 import { 
-  Dumbbell, Flame, Zap, Heart, Search, Filter, Plus, Calendar, Clock
+  Dumbbell, Flame, Zap, Heart, Search, Plus
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

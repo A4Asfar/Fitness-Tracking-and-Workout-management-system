@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
-import { Colors } from '@/constants/Theme';
 import { Trophy } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 

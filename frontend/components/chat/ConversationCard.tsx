@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { MessageSquare, MoreVertical, Trash2, Edit3 } from 'lucide-react-native';
+import { MessageSquare, Trash2, Edit3 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface ConversationCardProps {

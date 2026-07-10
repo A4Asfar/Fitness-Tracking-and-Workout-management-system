@@ -10,12 +10,9 @@ import { useRouter, Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { safeBack } from '@/utils/navigation';
 import {
-  ArrowLeft, Heart, Activity, TrendingUp,
-  AlertTriangle, CheckCircle, Info, Scale,
-  Ruler, Target, Sparkles, ChevronRight,
-  ShieldCheck, Flame,
+  ArrowLeft, Heart,
+  AlertTriangle, CheckCircle, Info, Scale, Sparkles, ChevronRight,
 } from 'lucide-react-native';
-import Svg, { Circle } from 'react-native-svg';
 
 const { width } = Dimensions.get('window');
 const GAUGE_SIZE = 200;

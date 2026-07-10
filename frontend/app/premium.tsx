@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Crown, ArrowLeft, CheckCircle, Zap, TrendingUp, HeartPulse, Sparkles, MessageCircle } from 'lucide-react-native';
+import { Crown, ArrowLeft, Zap, TrendingUp, HeartPulse, Sparkles, MessageCircle } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '@/services/api';
 

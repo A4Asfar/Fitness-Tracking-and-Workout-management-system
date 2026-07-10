@@ -17,7 +17,9 @@ requiredEnv.forEach(env => {
 
 optionalEnv.forEach(env => {
   if (!process.env[env] || process.env[env].includes('YOUR_') || process.env[env].includes('your_')) {
-    console.warn(`⚠️ WARNING: ${env} is missing or still a placeholder — related features may not work`);
+    if (process.env.NODE_ENV !== 'production' && process.env.VERCEL_ENV !== 'production') {
+      console.warn(`⚠️ WARNING: ${env} is missing or still a placeholder — related features may not work`);
+    }
   }
 });
 

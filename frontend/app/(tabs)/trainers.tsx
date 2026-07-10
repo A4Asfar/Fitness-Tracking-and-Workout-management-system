@@ -1,12 +1,12 @@
-﻿import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   View, Text, StyleSheet, FlatList, TouchableOpacity, 
-  RefreshControl, TextInput, Modal, ScrollView, Animated, KeyboardAvoidingView, Platform
+  RefreshControl, TextInput, Modal, ScrollView
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
-import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
+import { Colors, SPACING } from '@/constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Search, SlidersHorizontal, UserX, AlertCircle, X, ChevronDown, Check } from 'lucide-react-native';
+import { Search, SlidersHorizontal, UserX, AlertCircle, X, Check } from 'lucide-react-native';
 import api from '@/services/api';
 
 import TrainerCard from '@/components/trainers/TrainerCard';

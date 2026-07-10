@@ -6,8 +6,7 @@ import {
 import { useRouter, Stack } from 'expo-router';
 import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { 
-  ArrowLeft, TrendingUp, Dumbbell, Weight, 
-  Target, Sparkles, ChevronRight, ArrowUpRight, 
+  ArrowLeft, TrendingUp, Sparkles, ChevronRight, ArrowUpRight, 
   ArrowDownRight, Zap, Activity
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, Animated, Dimensions, Platform } from 'react-native';
-import { Colors, SPACING } from '@/constants/Theme';
-import { CheckCircle, AlertCircle, Info, X } from 'lucide-react-native';
+import { View, Text, StyleSheet, Animated, Platform } from 'react-native';
+import { Colors } from '@/constants/Theme';
+import { CheckCircle, AlertCircle, Info } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BlurView } from 'expo-blur';
 

@@ -1,6 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import {
-  View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, Animated, TouchableOpacity
+  View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-  View, StyleSheet, ActivityIndicator, ScrollView, RefreshControl, Text, TouchableOpacity, Alert
+  View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity, Alert
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
