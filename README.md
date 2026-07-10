@@ -6,7 +6,7 @@
 
 **Personalized coaching. Certified trainers. One seamless experience.**
 
-[![Live API](https://img.shields.io/badge/API-Live-10B981?style=flat-square&logo=railway&logoColor=white)](https://fitness-tracking-and-workout-management-system-production.up.railway.app)
+
 
 [![AI Powered](https://img.shields.io/badge/AI-Elevate_Coach-4285F4?style=flat-square&logo=google-gemini&logoColor=white)](https://ai.google.dev/)
 [![Mobile](https://img.shields.io/badge/Mobile-iOS_·_Android_·_Web-4630EB?style=flat-square&logo=expo&logoColor=white)](https://expo.dev/)
@@ -37,7 +37,7 @@ Whether you are launching a fitness app, digitizing your gym, or offering AI coa
 | **Gym & Studio Owners** | Member dashboards, trainer booking, premium tiers, admin controls |
 | **Personal Trainers** | Profile pages, session booking, reviews, and client progress visibility |
 | **Fitness Startups** | Production MERN stack, AI coach, mobile + web from day one |
-| **Agencies & Developers** | Clean codebase, Railway deployment, easy white-labeling |
+| **Agencies & Developers** | Clean codebase, easy white-labeling |
 
 ---
 
@@ -94,7 +94,7 @@ Run your platform with confidence.
 | AI + human coaches | Best of automation and personal touch |
 | Premium membership system | Monetize from day one |
 | Secure authentication | Enterprise-ready JWT & encrypted passwords |
-| Cloud-native deployment | Live on Railway in minutes |
+| Cloud-native architecture | Ready for your own hosting platform |
 
 ---
 
@@ -102,7 +102,7 @@ Run your platform with confidence.
 
 | Service | Link |
 |---------|------|
-| **Production API** | [fitness-tracking-and-workout-management-system-production.up.railway.app](https://fitness-tracking-and-workout-management-system-production.up.railway.app) |
+| **Production API** | Configure your own hosting |
 | **Health Check** | `GET /` → `{ "status": "online", "message": "ElevateFit API is running smoothly" }` |
 
 | **Mobile** | Expo Go — run locally with `npm run dev` |
@@ -118,7 +118,7 @@ Run your platform with confidence.
 | **Database** | MongoDB · Mongoose ODM |
 | **AI Engine** | Google Gemini (multi-model failover) |
 | **Authentication** | JWT · bcrypt · OTP email reset |
-| **Hosting** | Railway (API) · MongoDB Atlas |
+| **Database** | MongoDB Atlas |
 
 ---
 
@@ -136,7 +136,7 @@ flowchart TB
         API_Client[API Services]
     end
 
-    subgraph backend [ElevateFit API — Railway]
+    subgraph backend [ElevateFit API]
         Routes[REST Routes]
         Controllers[Business Logic]
         AI[Elevate Coach — Gemini]
@@ -234,20 +234,9 @@ npm run dev
 
 ## Deployment
 
-### Backend → Railway
+### Deployment
 
-1. Connect this GitHub repository to [Railway](https://railway.app)
-2. Set **Root Directory** to `backend`
-3. Add environment variables from `backend/.env.example`
-4. Deploy — your API goes live at `*.up.railway.app`
-
-
-2. Set **Root Directory** to `frontend`
-3. Add environment variable:
-   ```env
-   EXPO_PUBLIC_API_URL=https://your-railway-app.up.railway.app/api
-   ```
-4. **Build Command:** `npm run build` · **Output Directory:** `dist`
+Choose your preferred hosting provider for the Node.js backend. Simply provide the `.env` variables from `backend/.env.example` to your platform.
 
 ---
 
@@ -290,7 +279,7 @@ ElevateFit is designed to be **white-label ready**. Update your brand in two fil
 - Passwords hashed with **bcrypt** (10 salt rounds)
 - **JWT** stateless authentication on all protected routes
 - Role-based **admin access control**
-- CORS locked to approved origins (Railway, Expo)
+- CORS locked to approved origins (Expo)
 - Environment secrets never committed to source control
 - Input validation on every controller
 
@@ -321,7 +310,7 @@ Interested in **ElevateFit** for your gym, coaching business, or startup?
 | **Product** | ElevateFit — Modern AI Fitness & Coaching Platform |
 | **Support** | support@elevatefit.com |
 | **Repository** | [github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system](https://github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system) |
-| **Live API** | [Railway Production](https://fitness-tracking-and-workout-management-system-production.up.railway.app) |
+| **Live API** | Needs Deployment |
 
 *For demos, custom development, or deployment assistance — open a GitHub issue or reach out directly.*
 

@@ -4,21 +4,15 @@ import Storage from '@/utils/storage';
 
 /**
  * Base API configuration
- * Railway (backend) + local Expo dev
+ * Local Expo dev
  */
-const RAILWAY_API_URL =
-  'https://fitness-tracking-and-workout-management-system-production.up.railway.app/api';
 const LOCAL_API_URL = 'http://localhost:5000/api';
 
 function resolveApiUrl(): string {
   if (process.env.EXPO_PUBLIC_API_URL) {
     return process.env.EXPO_PUBLIC_API_URL;
   }
-  if (__DEV__) {
-    return LOCAL_API_URL;
-  }
-  // Production builds default to Railway
-  return RAILWAY_API_URL;
+  return LOCAL_API_URL;
 }
 
 export const API_URL = resolveApiUrl();

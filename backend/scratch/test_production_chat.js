@@ -1,5 +1,5 @@
 async function testProductionChat() {
-  const backendUrl = 'https://fitness-tracking-and-workout-management-system-production.up.railway.app/api';
+  const backendUrl = 'http://localhost:5000/api';
   console.log('📡 Registering test user in production...');
 
   const email = `chat_test_${Math.floor(Math.random() * 1000000)}@example.com`;

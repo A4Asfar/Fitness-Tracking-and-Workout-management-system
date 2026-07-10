@@ -70,7 +70,6 @@ const allowedOrigins = [
   'http://localhost:19000', // Expo Go
   'http://localhost:19006', // Expo Web (Legacy, kept for dev)
   'http://localhost:8081',  // New Expo Default
-  /\.railway\.app$/,         // Any Railway deployment (API)
   ...extraOrigins,
 ];
 
@@ -128,22 +127,26 @@ app.use(errorHandler);
 
 const PORT = process.env.PORT || 5000;
 
-(async () => {
-  try {
-    await connectDB();
-    
-    // Verify Gemini setup and log models on boot
-    await verifyGeminiSetup();
+if (!process.env.VERCEL) {
+  (async () => {
+    try {
+      await connectDB();
+      
+      // Verify Gemini setup and log models on boot
+      await verifyGeminiSetup();
 
-    app.listen(PORT, '0.0.0.0', () => {
-      console.log(`\n=========================================`);
-      console.log(`🚀 SERVER IS LIVE ON PORT: ${PORT}`);
-      console.log(`🌍 ENVIRONMENT: ${process.env.NODE_ENV || 'development'}`);
-      console.log(`🔗 BASE URL: http://localhost:${PORT}`);
-      console.log(`=========================================\n`);
-    });
-  } catch (error) {
-    console.error('❌ Failed to start server:', error.message);
-    process.exit(1);
-  }
-})();
+      app.listen(PORT, '0.0.0.0', () => {
+        console.log(`\n=========================================`);
+        console.log(`🚀 SERVER IS LIVE ON PORT: ${PORT}`);
+        console.log(`🌍 ENVIRONMENT: ${process.env.NODE_ENV || 'development'}`);
+        console.log(`🔗 BASE URL: http://localhost:${PORT}`);
+        console.log(`=========================================\n`);
+      });
+    } catch (error) {
+      console.error('❌ Failed to start server:', error.message);
+      process.exit(1);
+    }
+  })();
+}
+
+module.exports = app;

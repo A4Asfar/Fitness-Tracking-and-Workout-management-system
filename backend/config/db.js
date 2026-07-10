@@ -1,6 +1,10 @@
 const mongoose = require('mongoose');
 
 const connectDB = async () => {
+  if (mongoose.connection.readyState >= 1) {
+    return; // Prevent multiple connections in Vercel Serverless
+  }
+
   const maxRetries = 5;
   let retries = 0;
 
