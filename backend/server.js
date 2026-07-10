@@ -68,13 +68,9 @@ const extraOrigins = (process.env.FRONTEND_URL || process.env.CLIENT_URL || '')
 
 const allowedOrigins = [
   'http://localhost:19000', // Expo Go
-  'http://localhost:19006', // Expo Web
+  'http://localhost:19006', // Expo Web (Legacy, kept for dev)
   'http://localhost:8081',  // New Expo Default
-  'http://localhost:4173',  // Local static web preview
-  'http://localhost:3000',
-  /\.railway\.app$/,         // Any Railway deployment
-  /\.pages\.dev$/,           // Cloudflare Pages deployments
-  /\.vercel\.app$/,          // Any Vercel deployment
+  /\.railway\.app$/,         // Any Railway deployment (API)
   ...extraOrigins,
 ];
 

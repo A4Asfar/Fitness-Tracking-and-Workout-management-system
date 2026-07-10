@@ -7,7 +7,7 @@
 **Personalized coaching. Certified trainers. One seamless experience.**
 
 [![Live API](https://img.shields.io/badge/API-Live-10B981?style=flat-square&logo=railway&logoColor=white)](https://fitness-tracking-and-workout-management-system-production.up.railway.app)
-[![Web Ready](https://img.shields.io/badge/Web-Vercel_Ready-000000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com)
+
 [![AI Powered](https://img.shields.io/badge/AI-Elevate_Coach-4285F4?style=flat-square&logo=google-gemini&logoColor=white)](https://ai.google.dev/)
 [![Mobile](https://img.shields.io/badge/Mobile-iOS_·_Android_·_Web-4630EB?style=flat-square&logo=expo&logoColor=white)](https://expo.dev/)
 [![Stack](https://img.shields.io/badge/Stack-MERN-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system)
@@ -37,7 +37,7 @@ Whether you are launching a fitness app, digitizing your gym, or offering AI coa
 | **Gym & Studio Owners** | Member dashboards, trainer booking, premium tiers, admin controls |
 | **Personal Trainers** | Profile pages, session booking, reviews, and client progress visibility |
 | **Fitness Startups** | Production MERN stack, AI coach, mobile + web from day one |
-| **Agencies & Developers** | Clean codebase, Railway + Vercel deployment, easy white-labeling |
+| **Agencies & Developers** | Clean codebase, Railway deployment, easy white-labeling |
 
 ---
 
@@ -94,7 +94,7 @@ Run your platform with confidence.
 | AI + human coaches | Best of automation and personal touch |
 | Premium membership system | Monetize from day one |
 | Secure authentication | Enterprise-ready JWT & encrypted passwords |
-| Cloud-native deployment | Live on Railway & Vercel in minutes |
+| Cloud-native deployment | Live on Railway in minutes |
 
 ---
 
@@ -104,7 +104,7 @@ Run your platform with confidence.
 |---------|------|
 | **Production API** | [fitness-tracking-and-workout-management-system-production.up.railway.app](https://fitness-tracking-and-workout-management-system-production.up.railway.app) |
 | **Health Check** | `GET /` → `{ "status": "online", "message": "ElevateFit API is running smoothly" }` |
-| **Web App** | Deploy to Vercel — [instructions below](#deployment) |
+
 | **Mobile** | Expo Go — run locally with `npm run dev` |
 
 ---
@@ -118,7 +118,7 @@ Run your platform with confidence.
 | **Database** | MongoDB · Mongoose ODM |
 | **AI Engine** | Google Gemini (multi-model failover) |
 | **Authentication** | JWT · bcrypt · OTP email reset |
-| **Hosting** | Railway (API) · Vercel (Web) · MongoDB Atlas |
+| **Hosting** | Railway (API) · MongoDB Atlas |
 
 ---
 
@@ -241,9 +241,7 @@ npm run dev
 3. Add environment variables from `backend/.env.example`
 4. Deploy — your API goes live at `*.up.railway.app`
 
-### Frontend → Vercel
 
-1. Import repository on [Vercel](https://vercel.com)
 2. Set **Root Directory** to `frontend`
 3. Add environment variable:
    ```env
@@ -292,7 +290,7 @@ ElevateFit is designed to be **white-label ready**. Update your brand in two fil
 - Passwords hashed with **bcrypt** (10 salt rounds)
 - **JWT** stateless authentication on all protected routes
 - Role-based **admin access control**
-- CORS locked to approved origins (Railway, Vercel, Expo)
+- CORS locked to approved origins (Railway, Expo)
 - Environment secrets never committed to source control
 - Input validation on every controller
 

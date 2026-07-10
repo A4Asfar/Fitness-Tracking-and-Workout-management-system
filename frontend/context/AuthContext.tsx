@@ -40,7 +40,7 @@ export const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
-  const [loading, setLoading] = useState(Platform.OS !== 'web');
+  const [loading, setLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
   const { showToast } = useToast();
 
@@ -57,43 +57,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
    * Runs on app boot to check for persisted tokens and user data
    */
   useEffect(() => {
-    if (Platform.OS === 'web') {
-      const restoreWebSession = async () => {
-        try {
-          const savedToken = await Storage.getItem('authToken');
-          if (!savedToken) return;
-
-          const savedUser = await Storage.getItem('authUser');
-          setAuthToken(savedToken);
-          setToken(savedToken);
-
-          if (savedUser) {
-            try {
-              setUser(JSON.parse(savedUser));
-            } catch {
-              if (__DEV__) console.error('Failed to parse saved user');
-            }
-          }
-
-          const response = await api.get('/auth/me', { skipRetry: true, timeout: 8000 } as any);
-          setUser(response.data);
-          await Storage.setItem('authUser', JSON.stringify(response.data));
-        } catch (error: unknown) {
-          const message = error instanceof Error ? error.message : '';
-          const status = axios.isAxiosError(error) ? error.response?.status : undefined;
-          if (status === 401 || message.includes('session has expired') || message.includes('Authentication')) {
-            await Storage.removeItem('authToken');
-            await Storage.removeItem('authUser');
-            setAuthToken(null);
-            setUser(null);
-          }
-        }
-      };
-
-      restoreWebSession();
-      return;
-    }
-
     let active = true;
 
     const finishBoot = () => {

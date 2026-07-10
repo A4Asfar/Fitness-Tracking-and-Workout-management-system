@@ -4,7 +4,7 @@ import Storage from '@/utils/storage';
 
 /**
  * Base API configuration
- * Railway (backend) + Vercel (frontend web) + local Expo dev
+ * Railway (backend) + local Expo dev
  */
 const RAILWAY_API_URL =
   'https://fitness-tracking-and-workout-management-system-production.up.railway.app/api';
@@ -17,7 +17,7 @@ function resolveApiUrl(): string {
   if (__DEV__) {
     return LOCAL_API_URL;
   }
-  // Production web (Vercel) and release builds default to Railway
+  // Production builds default to Railway
   return RAILWAY_API_URL;
 }
 

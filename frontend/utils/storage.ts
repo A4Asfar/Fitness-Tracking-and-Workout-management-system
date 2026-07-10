@@ -11,11 +11,7 @@ const Storage = {
    */
   setItem: async (key: string, value: string) => {
     try {
-      if (Platform.OS === 'web') {
-        localStorage.setItem(key, value);
-      } else {
-        await AsyncStorage.setItem(key, value);
-      }
+      await AsyncStorage.setItem(key, value);
     } catch (error) {
       console.error(`[Storage] Error saving ${key}:`, error);
     }
@@ -26,11 +22,7 @@ const Storage = {
    */
   getItem: async (key: string): Promise<string | null> => {
     try {
-      if (Platform.OS === 'web') {
-        return localStorage.getItem(key);
-      } else {
-        return await AsyncStorage.getItem(key);
-      }
+      return await AsyncStorage.getItem(key);
     } catch (error) {
       console.error(`[Storage] Error reading ${key}:`, error);
       return null;
@@ -42,11 +34,7 @@ const Storage = {
    */
   removeItem: async (key: string) => {
     try {
-      if (Platform.OS === 'web') {
-        localStorage.removeItem(key);
-      } else {
-        await AsyncStorage.removeItem(key);
-      }
+      await AsyncStorage.removeItem(key);
     } catch (error) {
       console.error(`[Storage] Error removing ${key}:`, error);
     }
@@ -57,11 +45,7 @@ const Storage = {
    */
   clear: async () => {
     try {
-      if (Platform.OS === 'web') {
-        localStorage.clear();
-      } else {
-        await AsyncStorage.clear();
-      }
+      await AsyncStorage.clear();
     } catch (error) {
       console.error('[Storage] Error clearing storage:', error);
     }
