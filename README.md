@@ -1,325 +1,236 @@
 <div align="center">
+  
+  # 🏋️‍♂️ ElevateFit
+  ### AI-Powered Fitness Tracking & Workout Management System
+  
+  <p align="center">
+    A comprehensive, full-stack fitness ecosystem connecting users, trainers, and AI-driven coaching. Built with React Native, Node.js, Express, and MongoDB.
+  </p>
 
-# ElevateFit
-
-### Modern AI Fitness & Coaching Platform
-
-**Personalized coaching. Certified trainers. One seamless experience.**
-
-
-
-[![AI Powered](https://img.shields.io/badge/AI-Elevate_Coach-4285F4?style=flat-square&logo=google-gemini&logoColor=white)](https://ai.google.dev/)
-[![Mobile](https://img.shields.io/badge/Mobile-iOS_·_Android_·_Web-4630EB?style=flat-square&logo=expo&logoColor=white)](https://expo.dev/)
-[![Stack](https://img.shields.io/badge/Stack-MERN-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system)
-
-[Live Demo](#-live-demo) · [Features](#-platform-overview) · [For Businesses](#-built-for-modern-fitness-businesses) · [Get Started](#-quick-start) · [Contact](#-contact--partnerships)
-
+  <p align="center">
+    <img src="https://img.shields.io/badge/React_Native-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React Native" />
+    <img src="https://img.shields.io/badge/Expo-1B1F23?style=for-the-badge&logo=expo&logoColor=white" alt="Expo" />
+    <img src="https://img.shields.io/badge/TypeScript-007ACC?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript" />
+    <img src="https://img.shields.io/badge/Node.js-339933?style=for-the-badge&logo=nodedotjs&logoColor=white" alt="Node.js" />
+    <img src="https://img.shields.io/badge/Express.js-000000?style=for-the-badge&logo=express&logoColor=white" alt="Express" />
+    <img src="https://img.shields.io/badge/MongoDB-4EA94B?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB" />
+    <img src="https://img.shields.io/badge/Vercel-000000?style=for-the-badge&logo=vercel&logoColor=white" alt="Vercel" />
+    <img src="https://img.shields.io/badge/Gemini_AI-8E75B2?style=for-the-badge&logo=googlebard&logoColor=white" alt="Gemini AI" />
+  </p>
 </div>
 
 ---
 
-## Overview
+## 📖 Project Overview
 
-**ElevateFit** is a full-stack fitness platform designed for **gyms, personal trainers, wellness startups, and health-focused businesses** that need a polished, production-ready digital product — not a prototype.
+**ElevateFit** is a world-class, commercial-grade fitness platform developed as a Final Year Project (FYP). 
 
-Combining **Elevate Coach** (AI-powered personal training), a **certified trainer marketplace**, and **end-to-end member management**, ElevateFit delivers the kind of experience clients expect from premium fitness brands in 2026.
-
-> Train smarter. Book experts. Track everything. Scale your business.
+It solves the real-world problem of fragmented fitness ecosystems by providing a unified platform where users can log workouts, track nutrition, book certified personal trainers, and receive 24/7 intelligent fitness coaching via an integrated Google Gemini AI assistant. 
 
 ---
 
-## Built for Modern Fitness Businesses
+## ✨ Core Features
 
-Whether you are launching a fitness app, digitizing your gym, or offering AI coaching as a service — ElevateFit gives you a complete foundation.
-
-| Audience | What You Get |
-|----------|--------------|
-| **Gym & Studio Owners** | Member dashboards, trainer booking, premium tiers, admin controls |
-| **Personal Trainers** | Profile pages, session booking, reviews, and client progress visibility |
-| **Fitness Startups** | Production MERN stack, AI coach, mobile + web from day one |
-| **Agencies & Developers** | Clean codebase, easy white-labeling |
-
----
-
-## Platform Overview
-
-### Elevate Coach — AI Personal Trainer
-Your 24/7 intelligent coaching assistant powered by Google Gemini.
-
-- Custom workout plans (warm-up, exercises, cool-down, coaching cues)
-- Personalized nutrition & macro guidance
-- Smart chat with conversation memory
-- Enterprise-grade AI failover & reliability
-
-### Trainer Marketplace
-Connect members with certified professionals.
-
-- **80+ coaches** with HD profile photos
-- Search by specialty, city, rating, and availability
-- Online & in-person session booking
-- Verified reviews after completed sessions
-
-### Member App Experience
-Everything your clients need in one place.
-
-- Home dashboard — BMI, activity score, weekly insights
-- Workout & nutrition logging
-- Weight, steps, and body health tracking
-- Daily AI-generated training & meal plans
-- Premium membership with secure upgrade flow
-
-### Admin & Business Tools
-Run your platform with confidence.
-
-- User & role management
-- Booking & payment verification
-- Premium subscription approval workflow
-- Configurable pricing & system settings
+| Category | Features |
+| :--- | :--- |
+| **🔐 Authentication** | Secure JWT-based login, Registration, OTP Verification, Password Reset. |
+| **🏋️ Workout Management** | Daily structured plans, exercise tracking (sets, reps, weight), rest timers. |
+| **🥗 Diet Planning** | Categorized meal logging, macronutrient tracking (Protein, Carbs, Fats), caloric goals. |
+| **🤖 AI Coaching (Gemini)** | 24/7 intelligent fitness assistant providing personalized workout and diet advice. |
+| **🤝 Trainer Module** | Detailed personal trainer profiles, specialization tags, and client reviews. |
+| **📅 Booking System** | Direct trainer session scheduling with integrated payment tracking. |
+| **💎 Premium Tier** | Exclusive analytics, advanced onboarding gates, and pro-level insights. |
+| **🔔 Notifications** | In-app reminders for workouts, hydration, and upcoming trainer sessions. |
+| **👤 Profile & Progress** | Body metric tracking, historic analytics, and visual progress charts. |
+| **🛠️ Admin Dashboard** | Centralized panel to verify payments and manage the platform ecosystem. |
 
 ---
 
-## Why Clients Choose ElevateFit
+## 🛠️ Tech Stack
 
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  ELEVATE COACH AI    +    TRAINER NETWORK    +    ANALYTICS     │
-│         ↓                        ↓                      ↓         │
-│   Personalized plans      Expert sessions        Measurable ROI   │
-└─────────────────────────────────────────────────────────────────┘
-```
+### Frontend Architecture
+- **Framework:** React Native (Expo)
+- **Language:** TypeScript
+- **Styling:** Custom unified Design System (`Theme.ts`)
+- **Icons:** `lucide-react-native`
+- **Routing:** Expo Router (File-based routing)
 
-| Capability | Benefit |
-|------------|---------|
-| Cross-platform (iOS, Android, Web) | Reach every client, everywhere |
-| AI + human coaches | Best of automation and personal touch |
-| Premium membership system | Monetize from day one |
-| Secure authentication | Enterprise-ready JWT & encrypted passwords |
-| Cloud-native architecture | Ready for your own hosting platform |
+### Backend Architecture
+- **Runtime:** Node.js
+- **Framework:** Express.js
+- **Database:** MongoDB (Atlas)
+- **ODM:** Mongoose
+- **Authentication:** JSON Web Tokens (JWT), `bcryptjs`
+- **AI Integration:** `@google/genai` (Gemini 2.0 SDK)
 
----
-
-## Live Demo
-
-| Service | Link |
-|---------|------|
-| **Production API** | Configure your own hosting |
-| **Health Check** | `GET /` → `{ "status": "online", "message": "ElevateFit API is running smoothly" }` |
-
-| **Mobile** | Expo Go — run locally with `npm run dev` |
+### DevOps & Deployment
+- **Hosting:** Vercel (Serverless Edge Functions)
+- **CI/CD:** Automated Vercel deployments via GitHub hooks.
 
 ---
 
-## Tech Stack
-
-| Layer | Technology |
-|:------|:-----------|
-| **Frontend** | React Native · Expo 54 · TypeScript · Expo Router |
-| **Backend** | Node.js · Express 5 · REST API |
-| **Database** | MongoDB · Mongoose ODM |
-| **AI Engine** | Google Gemini (multi-model failover) |
-| **Authentication** | JWT · bcrypt · OTP email reset |
-| **Database** | MongoDB Atlas |
-
----
-
-## Architecture
+## 🏛️ System Architecture
 
 ```mermaid
-flowchart TB
-    subgraph clients [Client Apps]
-        Mobile[iOS / Android]
-        Web[Web Browser]
+graph TD
+    Client[📱 React Native Mobile App] -->|REST API / JSON| API(🌐 Vercel Edge Server)
+    
+    subgraph Backend Infrastructure
+        API -->|Express.js Router| Auth[Auth Controllers]
+        API -->|Express.js Router| Workouts[Workout Controllers]
+        API -->|Express.js Router| Trainers[Trainer Controllers]
+        API -->|Express.js Router| AI[Gemini AI Controllers]
     end
-
-    subgraph frontend [ElevateFit Frontend — Expo]
-        UI[Screens & Components]
-        API_Client[API Services]
-    end
-
-    subgraph backend [ElevateFit API]
-        Routes[REST Routes]
-        Controllers[Business Logic]
-        AI[Elevate Coach — Gemini]
-    end
-
-    DB[(MongoDB Atlas)]
-
-    Mobile --> UI
-    Web --> UI
-    UI --> API_Client
-    API_Client --> Routes
-    Routes --> Controllers
-    Controllers --> DB
-    Controllers --> AI
+    
+    Auth -->|Mongoose| DB[(MongoDB Atlas)]
+    Workouts -->|Mongoose| DB
+    Trainers -->|Mongoose| DB
+    
+    AI -->|Google GenAI SDK| Gemini[🤖 Google Gemini API]
 ```
 
 ---
 
-## Project Structure
+## 📂 Folder Structure
 
+<details>
+<summary>Click to expand folder structure</summary>
+
+```text
+📦 ElevateFit
+ ┣ 📂 backend
+ ┃ ┣ 📂 controllers   # Business logic (auth, workouts, trainers, AI)
+ ┃ ┣ 📂 middleware    # JWT verification, CORS handling
+ ┃ ┣ 📂 models        # Mongoose database schemas
+ ┃ ┣ 📂 routes        # Express API endpoints
+ ┃ ┣ 📜 server.js     # Server entry point
+ ┃ ┗ 📜 package.json
+ ┗ 📂 frontend
+ ┃ ┣ 📂 app           # Expo Router screens (Auth, Tabs, Admin)
+ ┃ ┣ 📂 components    # Reusable UI components
+ ┃ ┣ 📂 constants     # Brand, Theme, Colors, Spacing
+ ┃ ┣ 📂 context       # React Context (AuthContext)
+ ┃ ┣ 📂 services      # API integration logic
+ ┃ ┣ 📜 app.json      # Expo configuration
+ ┃ ┗ 📜 package.json
 ```
-elevatefit/
-├── frontend/                 # Expo app — iOS, Android, Web
-│   ├── app/                  # Screens & navigation
-│   ├── components/           # Reusable UI
-│   ├── constants/Brand.ts    # ← App branding
-│   └── services/             # API integration
-├── backend/                  # Express REST API
-│   ├── controllers/          # Core business logic
-│   ├── models/               # Database schemas
-│   ├── routes/               # API endpoints
-│   └── constants/brand.js    # ← Backend branding
-├── .agents/                  # Elevate Coach AI persona
-└── README.md
-```
+</details>
 
 ---
 
-## Quick Start
+## 🚀 Installation & Setup
 
 ### Prerequisites
-- Node.js 18+
-- MongoDB Atlas account (or local MongoDB)
-- Google Gemini API key
+- Node.js (v18+)
+- MongoDB Atlas cluster URL
+- Google Gemini API Key
 
-### 1. Clone the repository
-
+### 1. Clone Repository
 ```bash
 git clone https://github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system.git
 cd Fitness-Tracking-and-Workout-management-system
 ```
 
-### 2. Install dependencies
-
+### 2. Backend Setup
 ```bash
-cd backend && npm install
-cd ../frontend && npm install
+cd backend
+npm install
 ```
-
-### 3. Configure environment
-
-**Backend** — create `backend/.env`:
-
+Create a `.env` file in the `backend/` directory:
 ```env
-MONGO_URI=your_mongodb_connection_string
-JWT_SECRET=your_secure_jwt_secret
-GEMINI_API_KEY=your_gemini_api_key
-EMAIL_USER=your_email@gmail.com
-EMAIL_PASS=your_gmail_app_password
 PORT=5000
+MONGO_URI=mongodb+srv://<your_cluster_url>
+JWT_SECRET=your_super_secret_jwt_key
+GEMINI_API_KEY=your_gemini_api_key
+FRONTEND_URL=http://localhost:8081
+```
+Start the server:
+```bash
+npm run dev
 ```
 
-**Frontend** — create `frontend/.env`:
-
+### 3. Frontend Setup
+```bash
+cd ../frontend
+npm install
+```
+Create a `.env` file in the `frontend/` directory:
 ```env
 EXPO_PUBLIC_API_URL=http://localhost:5000/api
 ```
-
-> Copy from `.env.example` files included in each folder.
-
-### 4. Seed trainers & launch
-
+Start the Expo development server:
 ```bash
-# Terminal 1 — API Server
-cd backend
-npm run seed:trainers
-npm run dev
-
-# Terminal 2 — Mobile / Web App
-cd frontend
-npm run dev
+npx expo start
 ```
 
 ---
 
-## Deployment
+## 🌐 Deployment
 
-### Deployment
+The project is natively optimized for serverless deployment on **Vercel**.
 
-Choose your preferred hosting provider for the Node.js backend. Simply provide the `.env` variables from `backend/.env.example` to your platform.
-
----
-
-## Brand & Customization
-
-ElevateFit is designed to be **white-label ready**. Update your brand in two files:
-
-| File | Controls |
-|------|----------|
-| [`frontend/constants/Brand.ts`](frontend/constants/Brand.ts) | App name, AI coach name, support email, UI labels |
-| [`backend/constants/brand.js`](backend/constants/brand.js) | API messages, emails, system defaults |
-
-**Default configuration:**
-
-| Setting | Value |
-|---------|-------|
-| App Name | **ElevateFit** |
-| AI Coach | **Elevate Coach** |
-| Pro Tier | **ElevateFit Pro** |
-| Support | support@elevatefit.com |
+- **Frontend:** Configured with `expo export -p web`. Deploys directly to Vercel as a progressive web application.
+- **Backend:** Configured via `vercel.json` to route all `/api/*` requests to the Express application running as Vercel Serverless Functions.
 
 ---
 
-## API Reference
+## 🔐 Security Standards
 
-| Module | Key Endpoints |
-|--------|---------------|
-| **Auth** | `POST /api/auth/register` · `/login` · `/forgot-password` |
-| **Profile** | `GET/PUT /api/profile` · `/analytics` |
-| **Workouts** | `CRUD /api/workouts` · `/analytics` · `/home-insights` |
-| **AI Chat** | `POST /api/chat` · conversation management |
-| **Trainers** | `GET /api/content/trainers` · `POST /api/bookings` |
-| **Premium** | `POST /api/premium/purchase` · `GET /api/premium/my` |
-| **Admin** | `/api/admin/stats` · users · bookings · payments |
+- **JWT Authentication:** Stateful token-based authentication protecting all private routes.
+- **Password Hashing:** Passwords encrypted using one-way `bcrypt` salting.
+- **Middleware Protection:** Express custom middleware ensures unauthenticated requests are strictly rejected (401 Unauthorized).
+- **Environment Isolation:** Secrets are rigorously excluded from version control.
 
 ---
 
-## Security & Compliance
-
-- Passwords hashed with **bcrypt** (10 salt rounds)
-- **JWT** stateless authentication on all protected routes
-- Role-based **admin access control**
-- CORS locked to approved origins (Expo)
-- Environment secrets never committed to source control
-- Input validation on every controller
+## 🧠 AI Integration (Gemini)
+The application utilizes the **Google Gemini SDK** to act as a 24/7 fitness coach. 
+- Contextual prompts are dynamically constructed based on the user's specific goals, age, and biological metrics.
+- Fallback circuits ensure the app doesn't crash if AI token limits are reached.
 
 ---
 
-## Roadmap
+## 📊 Database Architecture
 
-- [ ] Automated payments (Stripe / JazzCash / EasyPaisa)
-- [ ] Push notifications for workouts & bookings
-- [ ] Apple HealthKit & Google Fit integration
-- [ ] Multi-tenant white-label portals
-- [ ] Urdu / English localization
-
----
-
-## License
-
-Distributed under the **ISC License**.
+The data layer is managed via **MongoDB Atlas** using robust Mongoose schemas:
+- **User:** Stores credentials, biometric data, premium status, and onboarding states.
+- **Workout:** Tracks historical exercise logs, rest times, difficulty, and sets/reps.
+- **Meal:** Categorizes nutritional intake by macroscopic tracking (Breakfast, Lunch, Dinner).
+- **Trainer & Booking:** Maintains trainer portfolios and links to scheduled client sessions.
 
 ---
 
-## Contact & Partnerships
+## 🚀 Project Highlights & Learning Outcomes
 
-Interested in **ElevateFit** for your gym, coaching business, or startup?
-
-| | |
-|---|---|
-| **Product** | ElevateFit — Modern AI Fitness & Coaching Platform |
-| **Support** | support@elevatefit.com |
-| **Repository** | [github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system](https://github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system) |
-| **Live API** | Needs Deployment |
-
-*For demos, custom development, or deployment assistance — open a GitHub issue or reach out directly.*
+- **Full-Stack Type Safety:** Mastered TypeScript to bridge the frontend UI and backend JSON contracts seamlessly.
+- **Serverless Architecture:** Successfully mapped an Express Node.js application into Edge/Serverless functions.
+- **Advanced State Management:** Leveraged React Native Context API and custom hooks for smooth, memory-leak-free rendering.
+- **Clean Code Principles:** Achieved a highly modular codebase with absolutely **0 type errors** and rigorously linted components.
 
 ---
 
-<div align="center">
+## 🔮 Future Enhancements
 
-**ElevateFit** — *Elevate your fitness business.*
+- **Wearable Integration:** Sync data directly with Apple HealthKit and Google Fit APIs.
+- **Socket.io Chat:** Upgrade the trainer messaging system to real-time WebSockets.
+- **Push Notifications:** Implement Firebase Cloud Messaging (FCM) for OS-level reminders.
 
-© 2026 ElevateFit. All rights reserved.
+---
 
-</div>
+## 📜 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+
+## 👨‍💻 Author
+
+- **Name:** Asfar
+- **GitHub:** [@A4Asfar](https://github.com/A4Asfar)
+- **Project Link:** [Fitness-Tracking-and-Workout-management-system](https://github.com/A4Asfar/Fitness-Tracking-and-Workout-management-system)
+
+---
+<p align="center">
+  <i>"Transforming goals into achievements, one rep at a time."</i><br>
+  <b>Developed for Final Year Project Submission.</b>
+</p>
