@@ -1,711 +1,275 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Modal, Dimensions
+  Image, Dimensions, ImageBackground
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  User, ChevronRight, Bell, LogOut, 
-  Sparkles, Dumbbell, Scale, Target, Heart, ShieldCheck, Lock, Languages, Eye, HelpCircle
+  User, ChevronRight, Bell, LogOut, Sparkles, Dumbbell, 
+  Target, ShieldCheck, Lock, Eye, HelpCircle, Activity, Medal, Flame, Zap
 } from 'lucide-react-native';
-import { BlurView } from 'expo-blur';
+import { LinearGradient } from 'expo-linear-gradient';
 import api from '@/services/api';
-import { APP_NAME } from '@/constants/Brand';
-import PremiumBadge from '@/components/PremiumBadge';
 import { isAdminUser } from '@/utils/isAdmin';
+import SkeletonCard from '@/components/SkeletonCard';
 
 const { width } = Dimensions.get('window');
 
-export default function SettingsCenterScreen() {
+const ACHIEVEMENTS = [
+  { id: '1', title: '7-Day Streak', icon: Flame, color: '#FF4D4D', unlocked: true },
+  { id: '2', title: 'Heavy Lifter', icon: Dumbbell, color: '#38BDF8', unlocked: true },
+  { id: '3', title: 'Early Bird', icon: Sparkles, color: '#F59E0B', unlocked: false },
+  { id: '4', title: '10k Cal Club', icon: Zap, color: '#A855F7', unlocked: false },
+];
+
+export default function ProfileSettingsScreen() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const [showLogoutModal, setShowLogoutModal] = useState(false);
-
-  const handleLogout = async () => {
-    setShowLogoutModal(false);
-    await logout();
-    router.replace('/(auth)/login');
-  };
+  
+  const [statusInfo, setStatusInfo] = useState<any>(null);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
   const isAdmin = isAdminUser(user);
   const isPremium = user?.membershipType === 'premium' || isAdmin;
   const fitnessGoal = user?.fitnessGoal || 'General Fitness';
 
-  const [statusInfo, setStatusInfo] = useState<any>(null);
-  const [loadingPayment, setLoadingPayment] = useState(true);
-
   useEffect(() => {
-    const fetchStatus = async () => {
+    const fetchProfileData = async () => {
       try {
-        const res = await api.get('/premium/my');
-        setStatusInfo(res.data);
+        const [statusRes, analyticsRes] = await Promise.all([
+          api.get('/premium/my').catch(() => ({ data: null })),
+          api.get('/workouts/analytics').catch(() => ({ data: null }))
+        ]);
+        if (statusRes.data) setStatusInfo(statusRes.data);
+        if (analyticsRes.data) setAnalytics(analyticsRes.data);
       } catch (e) {
-        console.log('Error fetching premium status:', e);
+        console.log('Error fetching profile data:', e);
       } finally {
-        setLoadingPayment(false);
+        setLoading(false);
       }
     };
-    fetchStatus();
+    fetchProfileData();
   }, [user]);
 
-  const latestPurchase = statusInfo?.latestPurchase;
+  const handleLogout = async () => {
+    await logout();
+    router.replace('/(auth)/login');
+  };
+
+  if (loading) {
+    return (
+      <View style={[s.container, { paddingTop: insets.top }]}>
+        <View style={{ padding: 24 }}><SkeletonCard /><SkeletonCard /><SkeletonCard /></View>
+      </View>
+    );
+  }
+
+  const bmiValue = analytics?.bmi ? Number(analytics.bmi).toFixed(1) : '22.5';
+  const fitnessLevel = 'Intermediate'; 
+
+  const SettingRow = ({ icon: Icon, title, subtitle, color, onPress }: any) => (
+    <TouchableOpacity style={s.settingCard} onPress={onPress} activeOpacity={0.7}>
+      <View style={[s.settingIconBox, { backgroundColor: `${color}15` }]}>
+        <Icon size={20} color={color} />
+      </View>
+      <View style={s.settingInfo}>
+        <Text style={s.settingTitle}>{title}</Text>
+        <Text style={s.settingSub}>{subtitle}</Text>
+      </View>
+      <ChevronRight size={18} color="#475569" />
+    </TouchableOpacity>
+  );
 
   return (
-    <View style={styles.container}>
+    <View style={s.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 60 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
       >
-        {/* --- Header --- */}
-        <View style={[styles.header, { paddingTop: insets.top + 20 }]}>
-          <Text style={styles.headerTitle}>Settings</Text>
-        </View>
-
-        {/* --- Profile Summary Card --- */}
-        <View style={styles.profileCardWrap}>
-          <View style={styles.profileCard}>
-            <View style={styles.profileRow}>
-              <View style={styles.avatarWrap}>
-                {user?.avatar ? (
-                  <Image source={{ uri: user.avatar }} style={styles.avatarImg} />
-                ) : (
-                  <User size={30} color="#94A3B8" />
-                )}
-              </View>
-              <View style={styles.profileText}>
-                <Text style={styles.userName}>{user?.name || 'Peak Athlete'}</Text>
-                <Text style={styles.userEmail}>{user?.email || 'user@fitai.com'}</Text>
-                
-                <View style={styles.goalRow}>
-                  <View style={styles.goalBadge}>
-                    <Text style={styles.goalBadgeText}>{fitnessGoal}</Text>
-                  </View>
-                  {isPremium && <PremiumBadge />}
-                </View>
-              </View>
-            </View>
-
-            <View style={styles.profileDivider} />
-
-            <TouchableOpacity 
-              style={styles.editShortcut}
-              onPress={() => router.push('/settings/edit-profile')}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.editShortcutText}>Edit Profile Details</Text>
-              <ChevronRight size={14} color="#10B981" />
-            </TouchableOpacity>
-
-            {/* Premium Status Card */}
-            {(latestPurchase || statusInfo?.membershipType === 'premium') && (
-              <View style={styles.premiumStatusCard}>
-                <View style={styles.statusRowHeader}>
-                  <Text style={styles.statusLabelText}>Membership Status</Text>
-                  <View style={[
-                    styles.statusBadge, 
-                    statusInfo?.membershipType === 'premium' ? styles.statusBadgeApproved : 
-                    latestPurchase?.status === 'Rejected' ? styles.statusBadgeRejected : 
-                    styles.statusBadgePending
-                  ]}>
-                    <Text style={[
-                      styles.statusBadgeText,
-                      statusInfo?.membershipType === 'premium' ? { color: '#059669' } : 
-                      latestPurchase?.status === 'Rejected' ? { color: '#EF4444' } : 
-                      { color: '#B45309' }
-                    ]}>
-                      {statusInfo?.membershipType === 'premium' ? 'Active Pro' : 
-                       latestPurchase?.status === 'Rejected' ? 'Rejected' : 
-                       'Pending'}
-                    </Text>
-                  </View>
-                </View>
-
-                <View style={styles.statusMetaGrid}>
-                  <Text style={styles.statusMetaText}>Current Plan: {statusInfo?.membershipType === 'premium' ? (latestPurchase?.plan || 'Premium') : 'Free'}</Text>
-                  {statusInfo?.membershipExpiresAt && (
-                    <Text style={styles.statusMetaText}>
-                      Expires: {new Date(statusInfo.membershipExpiresAt).toLocaleDateString()}
-                    </Text>
-                  )}
-                  {latestPurchase && latestPurchase.status === 'Pending' && (
-                    <Text style={styles.statusMetaText}>
-                      Payment Verification Pending...
-                    </Text>
-                  )}
-                </View>
-
-                <View style={styles.statusActions}>
-                  <TouchableOpacity 
-                    style={styles.statusActionBtn}
-                    onPress={() => router.push('/premium')}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.statusActionBtnText}>Renew Membership</Text>
-                  </TouchableOpacity>
-                </View>
+        {/* MASSIVE PROFILE HEADER */}
+        <LinearGradient colors={['#1E293B', '#0F172A']} style={[s.heroSection, { paddingTop: insets.top + 20 }]}>
+          <View style={s.avatarWrapper}>
+            {user?.avatar ? (
+              <Image source={{ uri: user.avatar }} style={s.avatarImg} />
+            ) : (
+              <View style={s.avatarFallback}>
+                <User size={48} color="#F8FAFC" />
               </View>
             )}
+            <View style={s.editAvatarBtn}>
+              <Text style={s.editAvatarText}>EDIT</Text>
+            </View>
           </View>
-        </View>
+          
+          <Text style={s.userName}>{user?.name || 'Athlete'}</Text>
+          <Text style={s.userEmail}>{user?.email || 'Welcome back to Elevate'}</Text>
 
-        {/* --- Settings Groups --- */}
-        
-        {/* 1. Account */}
-        <SettingsSection title="Account">
-          <SettingsRow 
-            icon={User} 
-            title="Edit Profile" 
-            subtitle="Change name, height, weight & goals"
-            onPress={() => router.push('/settings/edit-profile')} 
-          />
-          <Divider />
-          <SettingsRow 
-            icon={Lock} 
-            title="Security & Password" 
-            subtitle="Update authentication password credentials"
-            onPress={() => router.push('/forgot-password')} 
-          />
-          <Divider />
-          <SettingsRow 
-            icon={Eye} 
-            title="Privacy Settings" 
-            subtitle="Configure compliance & tracking details"
-            onPress={() => router.push('/settings/privacy')} 
-          />
-        </SettingsSection>
+          {/* VITAL STATS PILLS */}
+          <View style={s.vitalsRow}>
+            <View style={s.vitalPill}>
+              <Target size={14} color="#38BDF8" />
+              <Text style={s.vitalText}>{fitnessGoal}</Text>
+            </View>
+            <View style={s.vitalPill}>
+              <Activity size={14} color="#10B981" />
+              <Text style={s.vitalText}>BMI {bmiValue}</Text>
+            </View>
+            <View style={s.vitalPill}>
+              <Zap size={14} color="#F59E0B" />
+              <Text style={s.vitalText}>{fitnessLevel}</Text>
+            </View>
+          </View>
+        </LinearGradient>
 
-        {/* 2. Fitness */}
-        <SettingsSection title="Fitness & Goals">
-          <SettingsRow 
-            icon={Dumbbell} 
-            title="Workout Preferences" 
-            subtitle="Strength, cardio, and locations"
-            onPress={() => router.push('/settings/edit-profile')} 
-          />
-          <Divider />
-          <SettingsRow 
-            icon={Target} 
-            title="Daily Nutrition Goals" 
-            subtitle="Calorie budget and target macros"
-            onPress={() => router.push('/diet')} 
-          />
-          <Divider />
-          <SettingsRow 
-            icon={Scale} 
-            title="Units of Measure" 
-            subtitle="Metric (kg, cm) selected"
-            badgeText="Metric"
-          />
-        </SettingsSection>
-
-        {/* 3. Notifications */}
-        <SettingsSection title="Notifications">
-          <SettingsRow 
-            icon={Bell} 
-            title="Push Notifications" 
-            subtitle="Alerts for workout reminders & schedules"
-            hasSwitch={true}
-          />
-          <Divider />
-          <SettingsRow 
-            icon={Sparkles} 
-            title="Daily Workout Reminders" 
-            subtitle="Keep your training streaks active"
-            hasSwitch={true}
-            defaultSwitchValue={true}
-          />
-          <Divider />
-          <SettingsRow 
-            icon={Heart} 
-            title="Meal & Hydration Tracker" 
-            subtitle="Log meals and daily target reminders"
-            hasSwitch={true}
-            defaultSwitchValue={true}
-          />
-        </SettingsSection>
-
-        {/* 4. Application */}
-        <SettingsSection title="Application">
-          <SettingsRow 
-            icon={Languages} 
-            title="Language" 
-            subtitle="English (US) selected"
-            badgeText="English"
-          />
-          <Divider />
-          <SettingsRow 
-            icon={HelpCircle} 
-            title="Help & Support" 
-            subtitle="FAQs, support tickets and troubleshooting"
-            onPress={() => router.push('/help')} 
-          />
-          <Divider />
-          <SettingsRow 
-            icon={ShieldCheck} 
-            title="Privacy Policy" 
-            subtitle="View legal disclosures and data protection policies"
-            onPress={() => router.push('/settings/privacy')} 
-          />
-        </SettingsSection>
-
-        {/* --- Danger Zone / Logout --- */}
-        <View style={styles.dangerZoneWrap}>
-          <TouchableOpacity 
-            style={styles.logoutBtn}
-            onPress={() => setShowLogoutModal(true)}
-            activeOpacity={0.7}
-          >
-            <LogOut size={18} color="#EF4444" />
-            <Text style={styles.logoutBtnText}>Sign Out of {APP_NAME}</Text>
+        <View style={s.content}>
+          {/* PREMIUM MEMBERSHIP CARD */}
+          <TouchableOpacity style={s.premiumCardWrapper} activeOpacity={0.9} onPress={() => router.push('/premium')}>
+            <ImageBackground source={{ uri: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&q=80' }} style={s.premiumBg} imageStyle={{ borderRadius: 24 }}>
+              <LinearGradient colors={['rgba(15,23,42,0.8)', 'rgba(15,23,42,0.95)']} style={s.premiumGrad}>
+                <View style={s.premHeader}>
+                  <Text style={s.premTitle}>Elevate PRO</Text>
+                  <View style={s.premBadge}>
+                    <Text style={s.premBadgeText}>{isPremium ? 'ACTIVE' : 'FREE'}</Text>
+                  </View>
+                </View>
+                
+                <View style={s.premFooter}>
+                  <View>
+                    <Text style={s.premLabel}>MEMBER SINCE</Text>
+                    <Text style={s.premVal}>{new Date().getFullYear()}</Text>
+                  </View>
+                  <View>
+                    <Text style={s.premLabel}>STATUS</Text>
+                    <Text style={[s.premVal, { color: isPremium ? '#10B981' : '#94A3B8' }]}>{isPremium ? 'Premium Access' : 'Basic Tier'}</Text>
+                  </View>
+                </View>
+              </LinearGradient>
+            </ImageBackground>
           </TouchableOpacity>
+
+          {/* ACCOUNT STATISTICS GRID */}
+          <Text style={s.sectionTitle}>Account Statistics</Text>
+          <View style={s.statsGrid}>
+            <View style={s.statBox}>
+              <Dumbbell size={20} color="#38BDF8" style={{ marginBottom: 8 }} />
+              <Text style={s.statNum}>{analytics?.totalWorkouts || 0}</Text>
+              <Text style={s.statLab}>Workouts</Text>
+            </View>
+            <View style={s.statBox}>
+              <Flame size={20} color="#EF4444" style={{ marginBottom: 8 }} />
+              <Text style={s.statNum}>{analytics?.totalCalories || 0}</Text>
+              <Text style={s.statLab}>Calories</Text>
+            </View>
+            <View style={s.statBox}>
+              <Activity size={20} color="#10B981" style={{ marginBottom: 8 }} />
+              <Text style={s.statNum}>{analytics?.streak || 0}</Text>
+              <Text style={s.statLab}>Day Streak</Text>
+            </View>
+            <View style={s.statBox}>
+              <Medal size={20} color="#F59E0B" style={{ marginBottom: 8 }} />
+              <Text style={s.statNum}>{ACHIEVEMENTS.filter(a=>a.unlocked).length}</Text>
+              <Text style={s.statLab}>Trophies</Text>
+            </View>
+          </View>
+
+          {/* ACHIEVEMENTS */}
+          <View style={s.headerRow}>
+            <Text style={s.sectionTitle}>Achievements</Text>
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.achieveScroll}>
+            {ACHIEVEMENTS.map(ach => (
+              <View key={ach.id} style={[s.achieveCard, !ach.unlocked && s.achieveLocked]}>
+                <View style={[s.achieveIconBox, { backgroundColor: ach.unlocked ? `${ach.color}20` : '#334155' }]}>
+                  <ach.icon size={24} color={ach.unlocked ? ach.color : '#64748B'} />
+                </View>
+                <Text style={s.achieveTitle}>{ach.title}</Text>
+              </View>
+            ))}
+          </ScrollView>
+
+          {/* SETTINGS SHORTCUTS */}
+          <Text style={s.sectionTitle}>Preferences</Text>
+          <View style={s.settingsGroup}>
+            <SettingRow icon={User} title="Edit Profile" subtitle="Name, weight, and fitness goals" color="#38BDF8" onPress={() => router.push('/settings/edit-profile')} />
+            <SettingRow icon={Bell} title="Notifications" subtitle="Push alerts and reminders" color="#A855F7" />
+            <SettingRow icon={Lock} title="Security" subtitle="Password and authentication" color="#10B981" onPress={() => router.push('/forgot-password')} />
+          </View>
+
+          <Text style={s.sectionTitle}>Support & About</Text>
+          <View style={s.settingsGroup}>
+            <SettingRow icon={HelpCircle} title="Help Center" subtitle="FAQ and contact support" color="#F59E0B" onPress={() => router.push('/help')} />
+            <SettingRow icon={ShieldCheck} title="Privacy Policy" subtitle="Data usage and compliance" color="#64748B" onPress={() => router.push('/settings/privacy')} />
+          </View>
+
+          {/* LOGOUT BUTTON */}
+          <TouchableOpacity style={s.logoutBtn} onPress={handleLogout}>
+            <LogOut size={20} color="#EF4444" />
+            <Text style={s.logoutText}>Sign Out</Text>
+          </TouchableOpacity>
+
         </View>
       </ScrollView>
-
-      {/* --- Logout Modal --- */}
-      <Modal visible={showLogoutModal} transparent animationType="fade" statusBarTranslucent>
-        <BlurView intensity={8} tint="dark" style={StyleSheet.absoluteFill} />
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalIconWrap}>
-              <LogOut size={26} color="#EF4444" />
-            </View>
-            <Text style={styles.modalTitle}>Confirm Sign Out</Text>
-            <Text style={styles.modalDesc}>Are you sure you want to end your training session and sign out?</Text>
-            
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.cancelBtn} onPress={() => setShowLogoutModal(false)}>
-                <Text style={styles.cancelBtnText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.confirmBtn} onPress={handleLogout}>
-                <Text style={styles.confirmBtnText}>Sign Out</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
 
-function SettingsSection({ title, children }: { title: string, children: React.ReactNode }) {
-  return (
-    <View style={styles.sectionWrap}>
-      <Text style={styles.sectionLabel}>{title}</Text>
-      <View style={styles.sectionCard}>
-        {children}
-      </View>
-    </View>
-  );
-}
-
-function SettingsRow({ icon: Icon, title, subtitle, onPress, badgeText, hasSwitch, defaultSwitchValue = false }: any) {
-  const [isEnabled, setIsEnabled] = useState(defaultSwitchValue);
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0F172A' },
+  heroSection: { alignItems: 'center', paddingBottom: 40, borderBottomLeftRadius: 40, borderBottomRightRadius: 40, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
   
-  const content = (
-    <View style={styles.row}>
-      <View style={styles.iconBox}>
-        <Icon size={18} color="#64748B" />
-      </View>
-      <View style={{ flex: 1, marginRight: 10 }}>
-        <Text style={styles.rowTitle}>{title}</Text>
-        <Text style={styles.rowSubtitle}>{subtitle}</Text>
-      </View>
+  avatarWrapper: { width: 120, height: 120, borderRadius: 60, borderWidth: 4, borderColor: '#1E293B', marginBottom: 16, position: 'relative' },
+  avatarImg: { width: '100%', height: '100%', borderRadius: 60 },
+  avatarFallback: { flex: 1, backgroundColor: '#334155', borderRadius: 60, justifyContent: 'center', alignItems: 'center' },
+  editAvatarBtn: { position: 'absolute', bottom: -10, alignSelf: 'center', backgroundColor: '#38BDF8', paddingHorizontal: 12, paddingVertical: 4, borderRadius: 10, borderWidth: 2, borderColor: '#0F172A' },
+  editAvatarText: { color: '#0F172A', fontSize: 10, fontWeight: '900', letterSpacing: 1 },
 
-      {badgeText && (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{badgeText}</Text>
-        </View>
-      )}
+  userName: { color: '#F8FAFC', fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 4 },
+  userEmail: { color: '#94A3B8', fontSize: 14, fontWeight: '600', marginBottom: 20 },
 
-      {hasSwitch ? (
-        <TouchableOpacity 
-          onPress={() => setIsEnabled(!isEnabled)}
-          style={[styles.switchTrack, isEnabled ? { backgroundColor: '#10B981' } : null]}
-          activeOpacity={0.9}
-        >
-          <View style={[styles.switchThumb, isEnabled ? { transform: [{ translateX: 20 }] } : null]} />
-        </TouchableOpacity>
-      ) : (
-        onPress && <ChevronRight size={16} color="#94A3B8" />
-      )}
-    </View>
-  );
+  vitalsRow: { flexDirection: 'row', gap: 12, flexWrap: 'wrap', justifyContent: 'center' },
+  vitalPill: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 100, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  vitalText: { color: '#F8FAFC', fontSize: 13, fontWeight: '700', marginLeft: 6 },
 
-  if (hasSwitch || !onPress) {
-    return <View style={styles.rowContainer}>{content}</View>;
-  }
+  content: { padding: 24, marginTop: -20 },
 
-  return (
-    <TouchableOpacity style={styles.rowContainer} onPress={onPress} activeOpacity={0.7}>
-      {content}
-    </TouchableOpacity>
-  );
-}
+  premiumCardWrapper: { height: 160, borderRadius: 24, overflow: 'hidden', marginBottom: 32, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', shadowColor: '#38BDF8', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 16, elevation: 8 },
+  premiumBg: { width: '100%', height: '100%' },
+  premiumGrad: { flex: 1, padding: 24, justifyContent: 'space-between' },
+  premHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  premTitle: { color: '#F8FAFC', fontSize: 24, fontWeight: '900', letterSpacing: -1 },
+  premBadge: { backgroundColor: '#10B981', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
+  premBadgeText: { color: '#0F172A', fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  premFooter: { flexDirection: 'row', justifyContent: 'space-between' },
+  premLabel: { color: '#94A3B8', fontSize: 10, fontWeight: '800', letterSpacing: 1, marginBottom: 2 },
+  premVal: { color: '#F8FAFC', fontSize: 16, fontWeight: '700' },
 
-function Divider() {
-  return <View style={styles.divider} />;
-}
+  sectionTitle: { color: '#F8FAFC', fontSize: 20, fontWeight: '900', letterSpacing: -0.5, marginBottom: 16 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    paddingHorizontal: 24,
-    paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1.5,
-    borderColor: '#F1F5F9',
-  },
-  headerTitle: {
-    color: '#0F172A',
-    fontSize: 24,
-    fontWeight: '900',
-    letterSpacing: -0.8,
-  },
-  profileCardWrap: {
-    paddingHorizontal: 24,
-    paddingTop: 20,
-    marginBottom: 10,
-  },
-  profileCard: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 24,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  profileRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  avatarWrap: {
-    width: 60,
-    height: 60,
-    borderRadius: 20,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    overflow: 'hidden',
-  },
-  avatarImg: {
-    width: '100%',
-    height: '100%',
-  },
-  profileText: {
-    marginLeft: 14,
-    flex: 1,
-  },
-  userName: {
-    color: '#0F172A',
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  userEmail: {
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  goalRow: {
-    flexDirection: 'row',
-    gap: 6,
-    marginTop: 6,
-  },
-  goalBadge: {
-    backgroundColor: '#ECFDF5',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  goalBadgeText: {
-    color: '#059669',
-    fontSize: 9,
-    fontWeight: '800',
-  },
-  proBadge: {
-    backgroundColor: '#10B981',
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 6,
-  },
-  proBadgeText: {
-    color: '#FFFFFF',
-    fontSize: 9,
-    fontWeight: '900',
-  },
-  profileDivider: {
-    height: 1.5,
-    backgroundColor: '#E2E8F0',
-    marginVertical: 12,
-  },
-  editShortcut: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 4,
-  },
-  editShortcutText: {
-    color: '#10B981',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  sectionWrap: {
-    paddingHorizontal: 24,
-    paddingTop: 24,
-  },
-  sectionLabel: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 10,
-    marginLeft: 4,
-  },
-  sectionCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    overflow: 'hidden',
-  },
-  rowContainer: {
-    paddingHorizontal: 16,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    height: 64,
-  },
-  iconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 12,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  rowTitle: {
-    color: '#0F172A',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  rowSubtitle: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  badge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    backgroundColor: '#F1F5F9',
-    marginRight: 4,
-  },
-  badgeText: {
-    color: '#64748B',
-    fontSize: 10,
-    fontWeight: '800',
-  },
-  switchTrack: {
-    width: 44,
-    height: 24,
-    borderRadius: 12,
-    backgroundColor: '#E2E8F0',
-    padding: 2,
-    justifyContent: 'center',
-  },
-  switchThumb: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.15,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  divider: {
-    height: 1.5,
-    backgroundColor: '#F1F5F9',
-    marginHorizontal: 16,
-  },
-  dangerZoneWrap: {
-    paddingHorizontal: 24,
-    marginTop: 32,
-  },
-  logoutBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    height: 52,
-    borderRadius: 16,
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1.5,
-    borderColor: '#FEE2E2',
-  },
-  logoutBtnText: {
-    color: '#EF4444',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  modalOverlay: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: 24,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 24,
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  modalIconWrap: {
-    width: 60,
-    height: 60,
-    borderRadius: 20,
-    backgroundColor: '#FEE2E2',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    borderWidth: 1.5,
-    borderColor: '#FCA5A5',
-  },
-  modalTitle: {
-    color: '#0F172A',
-    fontSize: 18,
-    fontWeight: '900',
-    marginBottom: 8,
-  },
-  modalDesc: {
-    color: '#64748B',
-    fontSize: 13,
-    textAlign: 'center',
-    marginBottom: 24,
-    lineHeight: 18,
-  },
-  modalActions: {
-    flexDirection: 'row',
-    gap: 12,
-    width: '100%',
-  },
-  cancelBtn: {
-    flex: 1,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  cancelBtnText: {
-    color: '#0F172A',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  confirmBtn: {
-    flex: 1.2,
-    height: 48,
-    borderRadius: 14,
-    backgroundColor: '#EF4444',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  confirmBtnText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  premiumStatusCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    marginTop: 16,
-  },
-  statusRowHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  statusLabelText: {
-    color: '#0F172A',
-    fontSize: 13,
-    fontWeight: '800',
-  },
-  statusBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-    borderWidth: 1,
-  },
-  statusBadgeApproved: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
-  },
-  statusBadgeRejected: {
-    backgroundColor: '#FEF2F2',
-    borderColor: '#FCA5A5',
-  },
-  statusBadgePending: {
-    backgroundColor: '#FFFBEB',
-    borderColor: '#FDE68A',
-  },
-  statusBadgeText: {
-    fontSize: 10,
-    fontWeight: '900',
-  },
-  statusMetaGrid: {
-    gap: 4,
-    marginBottom: 14,
-  },
-  statusMetaText: {
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '600',
-  },
-  statusActions: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  statusActionBtn: {
-    flex: 1,
-    height: 38,
-    borderRadius: 10,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  statusSupportBtn: {
-    backgroundColor: '#FFFFFF',
-  },
-  statusActionBtnText: {
-    color: '#0F172A',
-    fontSize: 12,
-    fontWeight: '700',
-  },
+  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 32 },
+  statBox: { width: (width - 60) / 2, backgroundColor: '#1E293B', padding: 20, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', alignItems: 'flex-start' },
+  statNum: { color: '#F8FAFC', fontSize: 24, fontWeight: '900', marginBottom: 2 },
+  statLab: { color: '#94A3B8', fontSize: 13, fontWeight: '600' },
+
+  achieveScroll: { gap: 12, marginBottom: 32, paddingRight: 24 },
+  achieveCard: { width: 120, backgroundColor: '#1E293B', padding: 16, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  achieveLocked: { opacity: 0.5 },
+  achieveIconBox: { width: 48, height: 48, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  achieveTitle: { color: '#F8FAFC', fontSize: 12, fontWeight: '800', textAlign: 'center' },
+
+  settingsGroup: { gap: 12, marginBottom: 32 },
+  settingCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B', padding: 16, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  settingIconBox: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  settingInfo: { flex: 1 },
+  settingTitle: { color: '#F8FAFC', fontSize: 16, fontWeight: '800', marginBottom: 4 },
+  settingSub: { color: '#94A3B8', fontSize: 13, fontWeight: '500' },
+
+  logoutBtn: { flexDirection: 'row', backgroundColor: 'rgba(239,68,68,0.1)', padding: 16, borderRadius: 20, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(239,68,68,0.2)', marginBottom: 20 },
+  logoutText: { color: '#EF4444', fontSize: 16, fontWeight: '800', marginLeft: 8 },
 });
