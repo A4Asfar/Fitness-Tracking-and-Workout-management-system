@@ -70,7 +70,7 @@ export default function WriteReviewModal({
           <View style={s.modalHeader}>
             <Text style={s.modalTitle}>Write a Review</Text>
             <TouchableOpacity onPress={onClose} style={s.closeBtn}>
-              <X size={20} color="#0F172A" />
+              <X size={20} color="#94A3B8" />
             </TouchableOpacity>
           </View>
 
@@ -91,7 +91,7 @@ export default function WriteReviewModal({
               >
                 <Star
                   size={36}
-                  color={star <= rating ? '#F59E0B' : '#E2E8F0'}
+                  color={star <= rating ? '#F59E0B' : '#334155'}
                   fill={star <= rating ? '#F59E0B' : 'transparent'}
                 />
               </TouchableOpacity>
@@ -131,93 +131,18 @@ export default function WriteReviewModal({
 }
 
 const s = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#FFF',
-    borderTopLeftRadius: 28,
-    borderTopRightRadius: 28,
-    padding: 24,
-    maxHeight: height * 0.85,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#0F172A',
-  },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F1F5F9',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  label: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 12,
-  },
-  ratingRow: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 8,
-    marginBottom: 24,
-  },
-  starBtn: {
-    padding: 4,
-  },
-  textInput: {
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    borderRadius: 16,
-    padding: 16,
-    fontSize: 15,
-    color: '#0F172A',
-    height: 120,
-    textAlignVertical: 'top',
-    marginBottom: 24,
-  },
-  submitBtn: {
-    backgroundColor: Colors.primary,
-    height: 56,
-    borderRadius: 16,
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: Colors.primary,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  submitBtnDisabled: {
-    opacity: 0.7,
-  },
-  submitBtnText: {
-    color: '#FFF',
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  errorBox: {
-    backgroundColor: '#FEE2E2',
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 16,
-  },
-  errorText: {
-    color: '#EF4444',
-    fontSize: 14,
-    fontWeight: '600',
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.8)', justifyContent: 'flex-end' },
+  modalContent: { backgroundColor: '#1E293B', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, maxHeight: height * 0.85, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+  modalTitle: { fontSize: 20, fontWeight: '900', color: '#FFFFFF' },
+  closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' },
+  label: { fontSize: 15, fontWeight: '800', color: '#FFFFFF', marginBottom: 12 },
+  ratingRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginBottom: 24 },
+  starBtn: { padding: 4 },
+  textInput: { backgroundColor: '#0F172A', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: 16, padding: 16, fontSize: 15, color: '#FFFFFF', height: 120, textAlignVertical: 'top', marginBottom: 24 },
+  submitBtn: { backgroundColor: Colors.primary, height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', shadowColor: Colors.primary, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 8, elevation: 4 },
+  submitBtnDisabled: { opacity: 0.7 },
+  submitBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
+  errorBox: { backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: 12, borderRadius: 12, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.3)' },
+  errorText: { color: '#EF4444', fontSize: 14, fontWeight: '600', textAlign: 'center' },
 });
