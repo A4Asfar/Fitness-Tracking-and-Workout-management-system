@@ -23,35 +23,20 @@ const colors = ['#CCFF00', '#00D1FF', '#FF4B4B', '#9D4EDD', '#FF9E00', '#06D6A0'
 /** HD fitness portraits — Unsplash 1200px, high quality */
 const MALE_HD_IMAGES = [
   'https://images.unsplash.com/photo-1571019614242-c5c5dee9f50b?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1581009146145-b5ef769c81db?w=1200&q=85&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1601425429037-076497c30633?w=1200&q=85&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1567013127542-490d757e51fe?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1599058917833-d8e884f0a0b0?w=1200&q=85&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1549060279-7e168fcee0c2?w=1200&q=85&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1552374196-c4ebd7d26977?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1583454111551-21f2f2f1e1e5?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1574680178050-55c69a4a0a08?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1594381898411-846e597d2242?w=1200&q=85&auto=format&fit=crop&sat=-100',
   'https://images.unsplash.com/photo-1623874514711-0f321325f318?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1633332755198-876b9ddd5fda?w=1200&q=85&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?w=1200&q=85&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1504257432389-52343af06da3?w=1200&q=85&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1463453091185-61582044d556?w=1200&q=85&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1463453091185-61582044d556?w=1200&q=85&auto=format&fit=crop'
 ];
 
 const FEMALE_HD_IMAGES = [
-  'https://images.unsplash.com/photo-1594381898411-846e597d2242?w=1200&q=85&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1518310383802-640c2331ff64?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1548690312-9a81601005da?w=1200&q=85&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1518611012118-696072aa579a?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=1200&q=85&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=1200&q=85&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=1200&q=85&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=1200&q=85&auto=format&fit=crop',
@@ -59,12 +44,7 @@ const FEMALE_HD_IMAGES = [
   'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=1200&q=85&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=1200&q=85&auto=format&fit=crop',
   'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1554151228-14d0def660e6?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1508214751190-bc8584241e77?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1525134479668-1beeb7538abb?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1488426862026-3ee34a7b66e2?w=1200&q=85&auto=format&fit=crop',
-  'https://images.unsplash.com/photo-1502823403499-6cc1054d7822?w=1200&q=85&auto=format&fit=crop',
+  'https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=1200&q=85&auto=format&fit=crop'
 ];
 
 const generateRandomItem = (arr) => arr[Math.floor(Math.random() * arr.length)];

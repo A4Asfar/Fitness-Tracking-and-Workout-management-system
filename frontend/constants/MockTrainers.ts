@@ -75,7 +75,7 @@ export const MOCK_TRAINERS = [
     city: 'New York', country: 'USA',
     featuredTrainer: true,
     verifiedTrainer: true,
-    profileImage: 'https://images.unsplash.com/photo-1567598508481-65985588ce6e?w=800&h=800&fit=crop',
+    profileImage: 'https://images.unsplash.com/photo-1594381898411-846e7d193883?w=800&h=800&fit=crop',
     reviews: generateReviews('Alex'),
     transformations: generateTransformations(),
     stats: { clientsTrained: '300+', sessionsCompleted: '2.5k', yearsExperience: 8, successRate: '98%' },

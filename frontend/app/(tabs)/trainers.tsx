@@ -159,12 +159,15 @@ export default function TrainersListScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, marginBottom: 24, paddingHorizontal: 4 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 10, marginBottom: 24, paddingHorizontal: 4 }}>
         {['All', 'Strength', 'Yoga', 'HIIT', 'Cardio', 'CrossFit', 'Pilates', 'Functional'].map(spec => (
           <TouchableOpacity 
             key={spec}
             style={[s.specialtyChip, selectedSpecialty === spec && s.specialtyChipActive]}
-            onPress={() => setSelectedSpecialty(spec)}
+            onPress={() => {
+              setSelectedSpecialty(spec);
+              setPage(1);
+            }}
           >
             <Text style={[s.specialtyChipText, selectedSpecialty === spec && s.specialtyChipTextActive]}>{spec}</Text>
           </TouchableOpacity>
@@ -320,6 +323,7 @@ export default function TrainersListScreen() {
       ) : (
         <FlatList
           data={paginatedTrainers}
+          extraData={{ selectedSpecialty, searchQuery, filters, page }}
           keyExtractor={(item) => (item.id || item._id).toString()}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: SPACING.lg, paddingBottom: insets.bottom + 100 }}

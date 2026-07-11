@@ -8,6 +8,7 @@ import { isAdminUser } from '@/utils/isAdmin';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as NativeSplashScreen from 'expo-splash-screen';
+import { InactivityProvider } from '@/components/InactivityProvider';
 
 // Prevent auto-hiding of the native splash screen
 NativeSplashScreen.preventAutoHideAsync().catch(() => {});
@@ -81,8 +82,10 @@ export default function RootLayout() {
       <SafeAreaProvider initialMetrics={initialSafeAreaMetrics}>
         <ToastProvider>
           <AuthProvider>
-            <NavigationHandler />
-            <StatusBar style="light" />
+            <InactivityProvider>
+              <NavigationHandler />
+              <StatusBar style="light" />
+            </InactivityProvider>
           </AuthProvider>
         </ToastProvider>
       </SafeAreaProvider>
