@@ -13,7 +13,9 @@ import {
   History,
   LayoutDashboard,
   CreditCard,
-  Trash2
+  Trash2,
+  Calendar,
+  Settings as SettingsIcon
 } from 'lucide-react-native';
 import { isAdminUser } from '@/utils/isAdmin';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,19 +23,22 @@ import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 import { APP_NAME, SUPPORT_EMAIL } from '@/constants/Brand';
 import { safeBack } from '@/utils/navigation';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const { width } = Dimensions.get('window');
 
-function StatCard({ icon: Icon, label, value, color, delay }: { icon: any; label: string; value: string | number; color: string; delay: number }) {
+function StatCard({ icon: Icon, label, value, color }: { icon: any; label: string; value: string | number; color: string }) {
   return (
-    <View style={[styles.statCard, { borderLeftColor: color }]}>
-      <View style={[styles.statIconWrap, { backgroundColor: color + '15' }]}>
-        <Icon size={20} color={color} />
-      </View>
-      <View>
-        <Text style={styles.statLabel}>{label}</Text>
-        <Text style={styles.statValue}>{value}</Text>
-      </View>
+    <View style={styles.statCardWrap}>
+      <LinearGradient colors={[color + '15', color + '05']} style={styles.statCard}>
+        <View style={[styles.statIconWrap, { backgroundColor: color + '25' }]}>
+          <Icon size={22} color={color} />
+        </View>
+        <View style={styles.statTextWrap}>
+          <Text style={styles.statValue}>{value}</Text>
+          <Text style={styles.statLabel}>{label}</Text>
+        </View>
+      </LinearGradient>
     </View>
   );
 }
@@ -48,7 +53,9 @@ function ToolCard({ icon: Icon, title, desc, onPress }: { icon: any; title: stri
         <Text style={styles.toolTitle}>{title}</Text>
         <Text style={styles.toolDesc}>{desc}</Text>
       </View>
-      <ChevronRight size={18} color={Colors.textSecondary} />
+      <View style={styles.toolChevron}>
+        <ChevronRight size={18} color="#FFF" />
+      </View>
     </TouchableOpacity>
   );
 }
@@ -163,7 +170,7 @@ export default function AdminDashboard() {
 
   if (!user) {
     return (
-      <View style={{ flex: 1, backgroundColor: Colors.background, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: '#F8FAFC', justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
@@ -173,34 +180,49 @@ export default function AdminDashboard() {
     return null;
   }
 
+  const tabs = [
+    { id: 'Home', icon: LayoutDashboard },
+    { id: 'Users', icon: Users },
+    { id: 'Bookings', icon: Calendar },
+    { id: 'Settings', icon: SettingsIcon },
+  ];
+
   return (
-    <View style={SharedStyles.container}>
+    <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
-      {/* ── Header ── */}
-      <View style={[styles.header, { paddingTop: insets.top + SPACING.sm }]}>
-        <TouchableOpacity onPress={() => safeBack()} style={styles.backButton}>
-          <ArrowLeft size={22} color={Colors.text} />
-        </TouchableOpacity>
-        <View style={styles.headerTitleWrap}>
-          <Shield size={18} color="#FF3B30" fill="#FF3B3020" />
-          <Text style={styles.headerTitle}>Admin Control Center ({activeSubTab})</Text>
-        </View>
-        <View style={{ width: 44 }} />
-      </View>
-
-      {/* ── Navigation Tabs ── */}
-      <View style={styles.tabBar}>
-        {['Home', 'Users', 'Bookings', 'Settings'].map((t: any) => (
-          <TouchableOpacity 
-            key={t} 
-            style={[styles.tabItem, activeSubTab === t && styles.tabItemActive]}
-            onPress={() => setActiveSubTab(t)}
-          >
-            <Text style={[styles.tabText, activeSubTab === t && styles.tabTextActive]}>{t}</Text>
+      {/* ── Modern Header ── */}
+      <LinearGradient colors={['#1E293B', '#0F172A']} style={[styles.headerGradient, { paddingTop: insets.top + SPACING.sm }]}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity onPress={() => safeBack()} style={styles.backButton}>
+            <ArrowLeft size={22} color="#FFFFFF" />
           </TouchableOpacity>
-        ))}
-      </View>
+          <View style={styles.headerTitleWrap}>
+            <Shield size={20} color="#38BDF8" />
+            <Text style={styles.headerTitle}>Admin Center</Text>
+          </View>
+          <View style={{ width: 44 }} />
+        </View>
+
+        {/* ── Pill Navigation Tabs ── */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScroll}>
+          {tabs.map((t: any) => {
+            const Icon = t.icon;
+            const isActive = activeSubTab === t.id;
+            return (
+              <TouchableOpacity 
+                key={t.id} 
+                style={[styles.pillTab, isActive && styles.pillTabActive]}
+                onPress={() => setActiveSubTab(t.id as any)}
+                activeOpacity={0.7}
+              >
+                <Icon size={16} color={isActive ? '#FFF' : '#94A3B8'} style={{ marginRight: 6 }} />
+                <Text style={[styles.pillText, isActive && styles.pillTextActive]}>{t.id}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </LinearGradient>
 
       <ScrollView 
         contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + SPACING.xl }]}
@@ -213,90 +235,82 @@ export default function AdminDashboard() {
           </View>
         ) : activeSubTab === 'Home' ? (
           <>
-            {/* ── Stat Cards ── */}
+            {/* ── Stat Cards Grid ── */}
             <View style={styles.statsGrid}>
-              <StatCard 
-                icon={Users} color="#00D1FF" 
-                label="Total Users" value={stats?.totalUsers || 0} 
-                delay={0}
-              />
-              <StatCard 
-                icon={UserCheck} color="#FFD700" 
-                label="Premium" value={stats?.premiumUsers || 0} 
-                delay={100}
-              />
-              <StatCard 
-                icon={Database} color="#A855F7" 
-                label="Trainers" value={stats?.totalTrainers || 0} 
-                delay={200}
-              />
-              <StatCard 
-                icon={Activity} color="#9FE800" 
-                label="Active Bookings" value={stats?.activeBookings || 0} 
-                delay={300}
-              />
-              <StatCard 
-                icon={LayoutDashboard} color="#059669" 
-                label="Workouts Logged" value={stats?.workoutsLogged || 0} 
-                delay={400}
-              />
-              <StatCard 
-                icon={CreditCard} color="#F59E0B" 
-                label="Revenue (PKR)" value={stats?.totalRevenue || 0} 
-                delay={500}
-              />
+              <StatCard icon={Users} color="#0EA5E9" label="Total Users" value={stats?.totalUsers || 0} />
+              <StatCard icon={UserCheck} color="#F59E0B" label="Premium" value={stats?.premiumUsers || 0} />
+              <StatCard icon={Database} color="#8B5CF6" label="Trainers" value={stats?.totalTrainers || 0} />
+              <StatCard icon={Activity} color="#10B981" label="Bookings" value={stats?.activeBookings || 0} />
+              <StatCard icon={LayoutDashboard} color="#14B8A6" label="Workouts" value={stats?.workoutsLogged || 0} />
+              <StatCard icon={CreditCard} color="#F43F5E" label="Revenue (PKR)" value={stats?.totalRevenue || 0} />
             </View>
 
-            {/* ── Recent Activity ── */}
-            <View style={styles.section}>
-              <View style={styles.sectionHeader}>
-                <History size={18} color={Colors.textSecondary} />
-                <Text style={styles.sectionTitle}>Recent Registrations</Text>
-              </View>
-              <View style={styles.activityBox}>
-                {stats?.recentActivity?.users?.map((u: any, i: number) => (
-                  <View key={u._id} style={[styles.activityRow, i === 0 && { borderTopWidth: 0 }]}>
-                    <View style={styles.activityDot} />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.activityText}>
-                        New user <Text style={styles.activityHighlight}>{u.name}</Text> joined as {u.membershipType}
-                      </Text>
-                      <Text style={styles.activityTime}>{new Date(u.createdAt).toLocaleDateString()}</Text>
-                    </View>
-                  </View>
-                ))}
-              </View>
-            </View>
-
-            {/* ── Legacy Verify Payments Hook ── */}
+            {/* ── Verify Premium Box ── */}
             <View style={styles.section}>
               <ToolCard 
                 icon={CreditCard} title="Verify Premium Invoices" 
-                desc="Go to Premium Membership payment audit interface." 
+                desc="Review and approve user bank transfer receipts." 
                 onPress={() => router.push('/admin/verify-payments' as any)} 
               />
+            </View>
+
+            {/* ── Recent Activity Timeline ── */}
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Recent Registrations</Text>
+              <View style={styles.timelineBox}>
+                {stats?.recentActivity?.users?.map((u: any, i: number) => (
+                  <View key={u._id} style={styles.timelineRow}>
+                    <View style={styles.timelineLineWrapper}>
+                      <View style={styles.timelineDot} />
+                      {i !== (stats.recentActivity.users.length - 1) && <View style={styles.timelineLine} />}
+                    </View>
+                    <View style={styles.timelineContent}>
+                      <Text style={styles.timelineText}>
+                        New user <Text style={styles.timelineHighlight}>{u.name}</Text> joined as <Text style={styles.timelineHighlight}>{u.membershipType}</Text>
+                      </Text>
+                      <Text style={styles.timelineDate}>{new Date(u.createdAt).toLocaleString()}</Text>
+                    </View>
+                  </View>
+                ))}
+                {(!stats?.recentActivity?.users || stats.recentActivity.users.length === 0) && (
+                  <Text style={styles.emptyText}>No recent activity</Text>
+                )}
+              </View>
             </View>
           </>
         ) : activeSubTab === 'Users' ? (
           <View style={styles.listSection}>
-            <Text style={styles.sectionHeaderTitle}>User Directory</Text>
+            <Text style={styles.sectionTitleDark}>User Directory</Text>
             {usersList.map((u) => (
-              <View key={u._id} style={styles.adminItemCard}>
-                <View style={styles.adminItemInfo}>
-                  <Text style={styles.adminItemName}>{u.name}</Text>
-                  <Text style={styles.adminItemSub}>{u.email} ({u.membershipType})</Text>
+              <View key={u._id} style={styles.modernCard}>
+                <View style={styles.modernCardHeader}>
+                  <View style={styles.avatarCircle}>
+                    <Text style={styles.avatarText}>{u.name.charAt(0).toUpperCase()}</Text>
+                  </View>
+                  <View style={styles.modernCardInfo}>
+                    <Text style={styles.modernCardName}>{u.name}</Text>
+                    <Text style={styles.modernCardSub}>{u.email}</Text>
+                  </View>
+                  <View style={[styles.badge, u.membershipType === 'premium' ? styles.badgePremium : (u.membershipType === 'admin' ? styles.badgeAdmin : styles.badgeFree)]}>
+                    <Text style={[styles.badgeText, u.membershipType === 'premium' ? styles.badgeTextPremium : (u.membershipType === 'admin' ? styles.badgeTextAdmin : styles.badgeTextFree)]}>
+                      {u.membershipType.toUpperCase()}
+                    </Text>
+                  </View>
                 </View>
-                <View style={styles.adminActionsRow}>
+                
+                <View style={styles.modernActions}>
                   {u.membershipType !== 'admin' ? (
-                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleUpdateRole(u._id, 'admin')}>
-                      <Text style={styles.actionBtnText}>Make Admin</Text>
+                    <TouchableOpacity style={[styles.pillBtn, { backgroundColor: '#1E293B' }]} onPress={() => handleUpdateRole(u._id, 'admin')}>
+                      <Shield size={14} color="#FFF" style={{ marginRight: 6 }} />
+                      <Text style={[styles.pillBtnText, { color: '#FFF' }]}>Make Admin</Text>
                     </TouchableOpacity>
                   ) : (
-                    <TouchableOpacity style={[styles.actionBtn, styles.actionBtnSec]} onPress={() => handleUpdateRole(u._id, 'free')}>
-                      <Text style={styles.actionBtnTextSec}>Remove Admin</Text>
+                    <TouchableOpacity style={[styles.pillBtn, { backgroundColor: '#F1F5F9' }]} onPress={() => handleUpdateRole(u._id, 'free')}>
+                      <UserCheck size={14} color="#475569" style={{ marginRight: 6 }} />
+                      <Text style={[styles.pillBtnText, { color: '#475569' }]}>Remove Admin</Text>
                     </TouchableOpacity>
                   )}
-                  <TouchableOpacity style={styles.deleteBtn} onPress={() => handleDeleteUser(u._id)}>
+                  <TouchableOpacity style={styles.iconBtnDanger} onPress={() => handleDeleteUser(u._id)}>
                     <Trash2 size={16} color="#EF4444" />
                   </TouchableOpacity>
                 </View>
@@ -305,21 +319,38 @@ export default function AdminDashboard() {
           </View>
         ) : activeSubTab === 'Bookings' ? (
           <View style={styles.listSection}>
-            <Text style={styles.sectionHeaderTitle}>All Schedule Requests</Text>
+            <Text style={styles.sectionTitleDark}>Schedule Requests</Text>
             {bookingsList.map((b) => (
-              <View key={b._id} style={styles.adminItemCard}>
-                <View style={styles.adminItemInfo}>
-                  <Text style={styles.adminItemName}>Client: {b.userId?.name || 'User'}</Text>
-                  <Text style={styles.adminItemSub}>Coach: {b.trainerId?.fullName || b.trainerId?.name || 'Coach'}</Text>
-                  <Text style={styles.adminItemMeta}>{b.bookingDate} at {b.bookingTime} ({b.bookingStatus})</Text>
+              <View key={b._id} style={styles.modernCard}>
+                <View style={styles.bookingHeader}>
+                  <View>
+                    <Text style={styles.bookingRoleLabel}>Client</Text>
+                    <Text style={styles.bookingName}>{b.userId?.name || 'Unknown User'}</Text>
+                  </View>
+                  <View style={styles.bookingDivider} />
+                  <View>
+                    <Text style={styles.bookingRoleLabel}>Trainer</Text>
+                    <Text style={styles.bookingName}>{b.trainerId?.fullName || b.trainerId?.name || 'Unknown Trainer'}</Text>
+                  </View>
                 </View>
+                
+                <View style={styles.bookingDetails}>
+                  <Calendar size={14} color="#64748B" />
+                  <Text style={styles.bookingTimeText}>{b.bookingDate} at {b.bookingTime}</Text>
+                  <View style={[styles.badge, { marginLeft: 'auto' }, b.bookingStatus === 'Pending' ? styles.badgePending : styles.badgeConfirmed]}>
+                    <Text style={[styles.badgeText, b.bookingStatus === 'Pending' ? styles.badgeTextPending : styles.badgeTextConfirmed]}>
+                      {b.bookingStatus}
+                    </Text>
+                  </View>
+                </View>
+
                 {b.bookingStatus === 'Pending' && (
-                  <View style={styles.adminActionsRow}>
-                    <TouchableOpacity style={styles.actionBtn} onPress={() => handleUpdateBooking(b._id, 'Confirmed')}>
-                      <Text style={styles.actionBtnText}>Confirm</Text>
+                  <View style={styles.modernActions}>
+                    <TouchableOpacity style={[styles.pillBtn, { backgroundColor: '#10B981', flex: 1 }]} onPress={() => handleUpdateBooking(b._id, 'Confirmed')}>
+                      <Text style={[styles.pillBtnText, { color: '#FFF' }]}>Confirm</Text>
                     </TouchableOpacity>
-                    <TouchableOpacity style={[styles.actionBtn, styles.actionBtnSec]} onPress={() => handleUpdateBooking(b._id, 'Cancelled')}>
-                      <Text style={styles.actionBtnTextSec}>Cancel</Text>
+                    <TouchableOpacity style={[styles.pillBtn, { backgroundColor: '#EF4444', flex: 1 }]} onPress={() => handleUpdateBooking(b._id, 'Cancelled')}>
+                      <Text style={[styles.pillBtnText, { color: '#FFF' }]}>Cancel</Text>
                     </TouchableOpacity>
                   </View>
                 )}
@@ -328,35 +359,51 @@ export default function AdminDashboard() {
           </View>
         ) : (
           <View style={styles.listSection}>
-            <Text style={styles.sectionHeaderTitle}>Global Platform Config</Text>
-            <View style={styles.formField}>
-              <Text style={styles.formLabel}>App Title Name</Text>
-              <TextInput 
-                style={styles.formInput} 
-                value={settings.appName} 
-                onChangeText={(val) => setSettings((prev: any) => ({ ...prev, appName: val }))}
-              />
+            <Text style={styles.sectionTitleDark}>Global Configuration</Text>
+            <View style={styles.settingsForm}>
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>App Title Name</Text>
+                <View style={styles.inputWrapper}>
+                  <TextInput 
+                    style={styles.modernInput} 
+                    value={settings.appName} 
+                    onChangeText={(val) => setSettings((prev: any) => ({ ...prev, appName: val }))}
+                    placeholderTextColor="#94A3B8"
+                  />
+                </View>
+              </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Support Helpdesk Email</Text>
+                <View style={styles.inputWrapper}>
+                  <TextInput 
+                    style={styles.modernInput} 
+                    value={settings.supportEmail} 
+                    onChangeText={(val) => setSettings((prev: any) => ({ ...prev, supportEmail: val }))}
+                    placeholderTextColor="#94A3B8"
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                  />
+                </View>
+              </View>
+              <View style={styles.formGroup}>
+                <Text style={styles.formLabel}>Premium Plan Price (PKR)</Text>
+                <View style={styles.inputWrapper}>
+                  <Text style={styles.inputPrefix}>Rs.</Text>
+                  <TextInput 
+                    style={[styles.modernInput, { paddingLeft: 40 }]} 
+                    value={String(settings.premiumPricing)} 
+                    onChangeText={(val) => setSettings((prev: any) => ({ ...prev, premiumPricing: Number(val) }))}
+                    keyboardType="numeric"
+                  />
+                </View>
+              </View>
+              
+              <TouchableOpacity onPress={handleUpdateSettings} activeOpacity={0.8}>
+                <LinearGradient colors={['#10B981', '#059669']} style={styles.saveBtnGradient}>
+                  <Text style={styles.saveBtnText}>Save Changes</Text>
+                </LinearGradient>
+              </TouchableOpacity>
             </View>
-            <View style={styles.formField}>
-              <Text style={styles.formLabel}>Support Helpdesk Email</Text>
-              <TextInput 
-                style={styles.formInput} 
-                value={settings.supportEmail} 
-                onChangeText={(val) => setSettings((prev: any) => ({ ...prev, supportEmail: val }))}
-              />
-            </View>
-            <View style={styles.formField}>
-              <Text style={styles.formLabel}>Premium Plan Price (PKR)</Text>
-              <TextInput 
-                style={styles.formInput} 
-                value={String(settings.premiumPricing)} 
-                onChangeText={(val) => setSettings((prev: any) => ({ ...prev, premiumPricing: Number(val) }))}
-                keyboardType="numeric"
-              />
-            </View>
-            <TouchableOpacity style={styles.saveSettingsBtn} onPress={handleUpdateSettings}>
-              <Text style={styles.saveSettingsBtnText}>Save Settings</Text>
-            </TouchableOpacity>
           </View>
         )}
       </ScrollView>
@@ -365,22 +412,35 @@ export default function AdminDashboard() {
 }
 
 const styles = StyleSheet.create({
-  header: {
+  container: {
+    flex: 1,
+    backgroundColor: '#F8FAFC',
+  },
+  headerGradient: {
+    paddingBottom: 16,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+    zIndex: 10,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: SPACING.lg,
-    paddingBottom: SPACING.md,
+    marginBottom: 20,
   },
   backButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 14,
-    backgroundColor: Colors.card,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: '#334155',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
   headerTitleWrap: {
     flexDirection: 'row',
@@ -388,23 +448,41 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   headerTitle: {
-    color: Colors.text,
+    color: '#F8FAFC',
     fontSize: 18,
-    fontWeight: '900',
+    fontWeight: '800',
     letterSpacing: -0.5,
   },
-  subtitle: {
-    color: Colors.textSecondary,
+  tabScroll: {
+    paddingHorizontal: SPACING.lg,
+    gap: 8,
+  },
+  pillTab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#334155',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+  },
+  pillTabActive: {
+    backgroundColor: '#38BDF8',
+  },
+  pillText: {
+    color: '#94A3B8',
     fontSize: 14,
-    textAlign: 'center',
-    fontWeight: '500',
-    marginBottom: 28,
+    fontWeight: '600',
+  },
+  pillTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '800',
   },
   content: {
     paddingHorizontal: SPACING.lg,
+    paddingTop: 24,
   },
   loadingBox: {
-    height: 200,
+    height: 300,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -412,19 +490,23 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 12,
-    marginBottom: 32,
+    marginBottom: 24,
+  },
+  statCardWrap: {
+    width: (width - SPACING.lg * 2 - 12) / 2,
+    borderRadius: 20,
+    overflow: 'hidden',
+    backgroundColor: '#FFF',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 2,
   },
   statCard: {
-    width: (width - SPACING.lg * 2 - 12) / 2,
-    backgroundColor: Colors.card,
-    borderRadius: 20,
     padding: 16,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: 'column',
     gap: 12,
-    borderLeftWidth: 4,
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
   statIconWrap: {
     width: 40,
@@ -433,236 +515,316 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  statLabel: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    fontWeight: '700',
-    marginBottom: 2,
+  statTextWrap: {
+    marginTop: 4,
   },
   statValue: {
-    color: Colors.text,
-    fontSize: 18,
+    color: '#0F172A',
+    fontSize: 22,
     fontWeight: '900',
+    marginBottom: 2,
+  },
+  statLabel: {
+    color: '#64748B',
+    fontSize: 12,
+    fontWeight: '600',
   },
   section: {
-    marginBottom: 32,
-  },
-  sectionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 16,
-    marginLeft: 4,
+    marginBottom: 28,
   },
   sectionTitle: {
-    color: Colors.text,
-    fontSize: 16,
-    fontWeight: '800',
-  },
-  activityBox: {
-    backgroundColor: Colors.card,
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    overflow: 'hidden',
-  },
-  activityRow: {
-    flexDirection: 'row',
-    padding: 16,
-    gap: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.border,
-  },
-  activityDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.primary,
-    marginTop: 8,
-  },
-  activityText: {
-    color: Colors.textSecondary,
+    color: '#64748B',
     fontSize: 13,
-    fontWeight: '500',
-    lineHeight: 18,
+    fontWeight: '800',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 12,
+    marginLeft: 4,
   },
-  activityHighlight: {
-    color: Colors.text,
-    fontWeight: '700',
-  },
-  activityTime: {
-    color: Colors.textSecondary,
-    fontSize: 11,
-    marginTop: 4,
-    opacity: 0.7,
+  sectionTitleDark: {
+    color: '#0F172A',
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+    marginBottom: 16,
   },
   toolCard: {
-    backgroundColor: Colors.card,
+    backgroundColor: '#FFFFFF',
     borderRadius: 20,
     padding: 16,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: Colors.border,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
   },
   toolIcon: {
     width: 48,
     height: 48,
     borderRadius: 14,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: '#F1F5F9',
     justifyContent: 'center',
     alignItems: 'center',
   },
   toolTitle: {
-    color: Colors.text,
+    color: '#0F172A',
     fontSize: 16,
     fontWeight: '700',
     marginBottom: 2,
   },
   toolDesc: {
-    color: Colors.textSecondary,
-    fontSize: 12,
-    lineHeight: 16,
+    color: '#64748B',
+    fontSize: 13,
     fontWeight: '500',
   },
-
-  // Subtabs Navigation Style
-  tabBar: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    marginBottom: 20,
-  },
-  tabItem: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderBottomWidth: 2,
-    borderBottomColor: 'transparent',
-  },
-  tabItemActive: {
-    borderBottomColor: Colors.primary,
-  },
-  tabText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.textSecondary,
-  },
-  tabTextActive: {
-    color: Colors.primary,
-    fontWeight: '800',
-  },
-
-  // Management Views Style
-  listSection: {
-    marginTop: 8,
-  },
-  sectionHeaderTitle: {
-    fontSize: 18,
-    fontWeight: '900',
-    color: Colors.text,
-    marginBottom: 16,
-  },
-  adminItemCard: {
-    backgroundColor: Colors.card,
+  toolChevron: {
+    width: 32,
+    height: 32,
     borderRadius: 16,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.border,
-    marginBottom: 12,
+    backgroundColor: '#0F172A',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
-  adminItemInfo: {
-    marginBottom: 12,
+  timelineBox: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
   },
-  adminItemName: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: Colors.text,
+  timelineRow: {
+    flexDirection: 'row',
+    minHeight: 60,
   },
-  adminItemSub: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginTop: 2,
-    fontWeight: '500',
+  timelineLineWrapper: {
+    width: 20,
+    alignItems: 'center',
+    marginRight: 12,
   },
-  adminItemMeta: {
-    fontSize: 12,
-    color: Colors.primary,
+  timelineDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    backgroundColor: '#38BDF8',
     marginTop: 4,
+  },
+  timelineLine: {
+    width: 2,
+    flex: 1,
+    backgroundColor: '#E2E8F0',
+    marginTop: 4,
+    marginBottom: -4,
+  },
+  timelineContent: {
+    flex: 1,
+    paddingBottom: 20,
+  },
+  timelineText: {
+    color: '#475569',
+    fontSize: 14,
+    fontWeight: '500',
+    lineHeight: 20,
+  },
+  timelineHighlight: {
+    color: '#0F172A',
     fontWeight: '700',
   },
-  adminActionsRow: {
+  timelineDate: {
+    color: '#94A3B8',
+    fontSize: 12,
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  emptyText: {
+    color: '#94A3B8',
+    textAlign: 'center',
+    fontStyle: 'italic',
+  },
+  listSection: {
+    paddingBottom: 40,
+  },
+  modernCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  modernCardHeader: {
     flexDirection: 'row',
-    justifyContent: 'flex-end',
+    alignItems: 'center',
+  },
+  avatarCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
+  },
+  avatarText: {
+    color: '#0F172A',
+    fontSize: 18,
+    fontWeight: '800',
+  },
+  modernCardInfo: {
+    flex: 1,
+  },
+  modernCardName: {
+    color: '#0F172A',
+    fontSize: 16,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  modernCardSub: {
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  badge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgePremium: { backgroundColor: '#FEF3C7' },
+  badgeTextPremium: { color: '#D97706', fontSize: 10, fontWeight: '800' },
+  badgeAdmin: { backgroundColor: '#E0E7FF' },
+  badgeTextAdmin: { color: '#4338CA', fontSize: 10, fontWeight: '800' },
+  badgeFree: { backgroundColor: '#F1F5F9' },
+  badgeTextFree: { color: '#64748B', fontSize: 10, fontWeight: '800' },
+  modernActions: {
+    flexDirection: 'row',
+    marginTop: 16,
+    gap: 8,
+  },
+  pillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    height: 36,
+    paddingHorizontal: 16,
+    borderRadius: 18,
+  },
+  pillBtnText: {
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  iconBtnDanger: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: '#FEF2F2',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginLeft: 'auto',
+  },
+  bookingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#F8FAFC',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 12,
+  },
+  bookingRoleLabel: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    marginBottom: 2,
+  },
+  bookingName: {
+    color: '#0F172A',
+    fontSize: 15,
+    fontWeight: '700',
+  },
+  bookingDivider: {
+    width: 1,
+    height: 30,
+    backgroundColor: '#E2E8F0',
+  },
+  bookingDetails: {
+    flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
-  actionBtn: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 12,
-    height: 36,
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  actionBtnText: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '800' as const,
-  },
-  actionBtnSec: {
-    backgroundColor: '#F1F5F9',
-  },
-  actionBtnTextSec: {
-    color: Colors.text,
-    fontSize: 12,
-    fontWeight: '700' as const,
-  },
-  deleteBtn: {
-    width: 36,
-    height: 36,
-    backgroundColor: '#FEF2F2',
-    borderWidth: 1,
-    borderColor: '#FEE2E2',
-    borderRadius: 8,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  // Form Fields Style
-  formField: {
-    marginBottom: 16,
-  },
-  formLabel: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: Colors.text,
-    marginBottom: 8,
-  },
-  formInput: {
-    backgroundColor: Colors.card,
-    borderRadius: 12,
-    height: 48,
-    paddingHorizontal: 16,
-    borderWidth: 1.5,
-    borderColor: Colors.border,
-    color: Colors.text,
+  bookingTimeText: {
+    color: '#475569',
     fontSize: 14,
     fontWeight: '600',
   },
-  saveSettingsBtn: {
-    backgroundColor: Colors.primary,
-    height: 52,
+  badgePending: { backgroundColor: '#FFF7ED' },
+  badgeTextPending: { color: '#EA580C', fontSize: 11, fontWeight: '700' },
+  badgeConfirmed: { backgroundColor: '#ECFDF5' },
+  badgeTextConfirmed: { color: '#059669', fontSize: 11, fontWeight: '700' },
+  settingsForm: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  formGroup: {
+    marginBottom: 20,
+  },
+  formLabel: {
+    color: '#475569',
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 8,
+  },
+  inputWrapper: {
+    position: 'relative',
+    justifyContent: 'center',
+  },
+  modernInput: {
+    backgroundColor: '#F8FAFC',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
     borderRadius: 12,
+    height: 52,
+    paddingHorizontal: 16,
+    color: '#0F172A',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  inputPrefix: {
+    position: 'absolute',
+    left: 16,
+    color: '#64748B',
+    fontSize: 15,
+    fontWeight: '600',
+    zIndex: 1,
+  },
+  saveBtnGradient: {
+    height: 56,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginTop: 16,
+    marginTop: 8,
+    shadowColor: '#10B981',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
   },
-  saveSettingsBtnText: {
-    color: '#FFF',
-    fontSize: 15,
-    fontWeight: '800' as const,
+  saveBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '800',
   },
 });
