@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { 
-  View, StyleSheet, Alert, ScrollView, Dimensions, Text, TouchableOpacity, ImageBackground, Animated
-} from 'react-native';
+import { View, StyleSheet, Alert, ScrollView, Dimensions, Text, TouchableOpacity, ImageBackground, Animated, useWindowDimensions } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { MealService } from '@/services/mealService';
 import { 
@@ -12,8 +10,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SkeletonCard from '@/components/SkeletonCard';
 import AddMealModal from '@/components/nutrition/AddMealModal';
-
-const { width } = Dimensions.get('window');
 
 interface Meal {
   _id: string;
@@ -42,6 +38,7 @@ const isVegetarian = (name: string) => {
 };
 
 export default function DietScreen() {
+  const { width } = useWindowDimensions();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -150,7 +147,7 @@ export default function DietScreen() {
       
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100 , maxWidth: 1000, width: '100%', alignSelf: 'center' }}
       >
         {/* HEADER */}
         <LinearGradient colors={['#1E293B', '#0F172A']} style={[s.heroSection, { paddingTop: insets.top + 16 }]}>
@@ -308,10 +305,7 @@ export default function DietScreen() {
         </View>
       </ScrollView>
 
-      <AddMealModal 
-        visible={isModalVisible} 
-        onClose={() => setIsModalVisible(false)} 
-        onAddMeal={handleAddMeal} 
+      <AddMealModal{...{onAddMeal: handleAddMeal} as any} 
         defaultType={activeType} 
       />
     </View>

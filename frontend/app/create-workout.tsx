@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, Text, StyleSheet, TextInput, ScrollView, 
-  KeyboardAvoidingView, Platform, Alert, Dimensions, UIManager, LayoutAnimation
-} from 'react-native';
+import { View, Text, StyleSheet, TextInput, ScrollView, 
+  KeyboardAvoidingView, Platform, Alert, Dimensions, UIManager, LayoutAnimation, useWindowDimensions } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
@@ -19,8 +17,6 @@ import WorkoutHeader from '@/components/workout/WorkoutHeader';
 import WorkoutChip from '@/components/workout/WorkoutChip';
 import FormSection from '@/components/workout/FormSection';
 import ActionButton from '@/components/workout/ActionButton';
-
-const { width } = Dimensions.get('window');
 
 const TYPES = [
   { id: 'Strength', icon: Dumbbell, color: '#10B981' },
@@ -95,6 +91,7 @@ const workoutTypeConfig: Record<string, { fields: FormFieldConfig[] }> = {
 };
 
 export default function CreateWorkoutScreen() {
+  const { width } = useWindowDimensions();
   const router = useRouter();
   const params = useLocalSearchParams();
   const insets = useSafeAreaInsets();
@@ -356,7 +353,7 @@ export default function CreateWorkoutScreen() {
       
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 120 , maxWidth: 1000, width: '100%', alignSelf: 'center' }}
       >
         <WorkoutHeader 
           title="Log Workout" 

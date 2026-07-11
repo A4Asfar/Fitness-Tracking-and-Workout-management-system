@@ -127,7 +127,7 @@ export default function ResetPasswordScreen() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0F172A' },
   background: { ...StyleSheet.absoluteFillObject },
-  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 40 },
+  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 40 , maxWidth: 450, width: '100%', alignSelf: 'center' },
   
   backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' },
   

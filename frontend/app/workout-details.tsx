@@ -1,7 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated, ImageBackground 
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated, ImageBackground, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { 
   Clock, Flame, Play, ChevronLeft, CheckCircle2, Circle, TrendingUp, Activity, Info, Video
@@ -9,8 +7,6 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { safeBack } from '@/utils/navigation';
-
-const { width } = Dimensions.get('window');
 
 const PROGRAM_EXERCISES: Record<string, any[]> = {
   strength: [
@@ -98,6 +94,7 @@ const ExerciseRow = ({ item, index, accent, onToggle }: any) => {
 };
 
 export default function WorkoutDetailsScreen() {
+  const { width } = useWindowDimensions();
   const params = useLocalSearchParams();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -143,7 +140,7 @@ export default function WorkoutDetailsScreen() {
         <ChevronLeft size={24} color="#FFF" />
       </TouchableOpacity>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 120 , maxWidth: 1000, width: '100%', alignSelf: 'center' }}>
         
         {/* VIDEO PLACEHOLDER */}
         <View style={s.videoWrapper}>

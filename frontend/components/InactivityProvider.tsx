@@ -11,7 +11,7 @@ export const InactivityProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const { user, logout } = useAuth();
   const { showToast } = useToast();
   const router = useRouter();
-  const timerId = useRef<NodeJS.Timeout | null>(null);
+  const timerId = useRef<any>(null);
 
   const resetTimer = useCallback(() => {
     if (timerId.current) {

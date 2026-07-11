@@ -326,7 +326,7 @@ export default function TrainersListScreen() {
           extraData={{ selectedSpecialty, searchQuery, filters, page }}
           keyExtractor={(item) => (item.id || item._id).toString()}
           showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ padding: SPACING.lg, paddingBottom: insets.bottom + 100 }}
+          contentContainerStyle={{ padding: SPACING.lg, paddingBottom: insets.bottom + 100 , maxWidth: 1000, width: '100%', alignSelf: 'center' }}
           ListHeaderComponent={renderHeader()}
           ListEmptyComponent={renderEmpty}
           renderItem={({ item }) => (

@@ -1,7 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity, Dimensions, Animated, ImageBackground
-} from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity, Dimensions, Animated, ImageBackground, useWindowDimensions } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,8 +9,6 @@ import {
 import { Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import SkeletonCard from '@/components/SkeletonCard';
-
-const { width } = Dimensions.get('window');
 
 const ACHIEVEMENTS = [
   { id: '1', title: '7-Day Streak', desc: 'Workout for 7 consecutive days', icon: Flame, color: '#FF4D4D', unlocked: true },
@@ -28,6 +24,7 @@ const PERSONAL_RECORDS = [
 ];
 
 export default function ProgressAnalyticsScreen() {
+  const { width } = useWindowDimensions();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [data, setData] = useState<any>(null);
@@ -89,7 +86,7 @@ export default function ProgressAnalyticsScreen() {
 
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100 , maxWidth: 1000, width: '100%', alignSelf: 'center' }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#38BDF8" />}
       >
         {/* PREMIUM HEADER */}

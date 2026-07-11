@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { 
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, 
-  Image, ActivityIndicator, RefreshControl, Dimensions 
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, 
+  Image, ActivityIndicator, RefreshControl, Dimensions, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { Colors } from '@/constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,8 +12,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import api from '@/services/api';
 import WriteReviewModal from '@/components/trainers/WriteReviewModal';
 import { getMockTrainerById } from '@/constants/MockTrainers';
-
-const { width } = Dimensions.get('window');
 
 function DetailsSkeleton() {
   return (
@@ -34,6 +30,7 @@ function DetailsSkeleton() {
 }
 
 export default function TrainerDetailsScreen() {
+  const { width } = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -151,7 +148,7 @@ export default function TrainerDetailsScreen() {
       <ScrollView 
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#FFFFFF" />}
-        contentContainerStyle={{ paddingBottom: 140, backgroundColor: '#0F172A' }}
+        contentContainerStyle={{ paddingBottom: 140, backgroundColor: '#0F172A' , maxWidth: 1000, width: '100%', alignSelf: 'center' }}
         bounces={false}
       >
         <View style={s.heroContainer}>

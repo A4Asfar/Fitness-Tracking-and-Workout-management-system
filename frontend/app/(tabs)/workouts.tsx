@@ -1,7 +1,5 @@
 import React, { useState, useCallback } from 'react';
-import { 
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert, TextInput, ImageBackground, Dimensions
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, Alert, TextInput, ImageBackground, Dimensions, useWindowDimensions } from 'react-native';
 import { 
   Dumbbell, Flame, Zap, Heart, Search, Plus, Play, Clock, TrendingUp, Activity, History as HistoryIcon, Bookmark, Target
 } from 'lucide-react-native';
@@ -12,8 +10,6 @@ import api from '@/services/api';
 import SkeletonCard from '@/components/SkeletonCard';
 import { LinearGradient } from 'expo-linear-gradient';
 
-const { width } = Dimensions.get('window');
-
 const PREMIUM_PROGRAMS = [
   { id: 'strength', title: 'Full Body Power', focus: 'Total Body Hypertrophy', type: 'Strength', difficulty: 'Intermediate', duration: '45 min', calories: '450 cal', image: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=800&q=80', accent: '#10B981' },
   { id: 'hiit', title: 'HIIT Burnout', focus: 'Maximum Fat Loss', type: 'HIIT', difficulty: 'Advanced', duration: '30 min', calories: '600 cal', image: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80', accent: '#38BDF8' },
@@ -23,6 +19,7 @@ const PREMIUM_PROGRAMS = [
 ];
 
 export default function WorkoutsScreen() {
+  const { width } = useWindowDimensions();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   
@@ -229,7 +226,7 @@ export default function WorkoutsScreen() {
       </View>
 
       <ScrollView 
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100 , maxWidth: 1000, width: '100%', alignSelf: 'center' }}
         showsVerticalScrollIndicator={false}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#38BDF8" />}
       >

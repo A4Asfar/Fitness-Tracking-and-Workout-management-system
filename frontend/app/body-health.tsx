@@ -1,8 +1,6 @@
 import React, { useEffect, useRef, useMemo } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Animated, Dimensions,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  Animated, Dimensions, useWindowDimensions } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,7 +12,6 @@ import {
   AlertTriangle, CheckCircle, Info, Scale, Sparkles, ChevronRight,
 } from 'lucide-react-native';
 
-const { width } = Dimensions.get('window');
 const GAUGE_SIZE = 200;
 const STROKE_WIDTH = 14;
 const RADIUS = (GAUGE_SIZE - STROKE_WIDTH) / 2;
@@ -135,6 +132,7 @@ function ProgressBar({ label, value, maxValue, color, delay }: {
    MAIN SCREEN
    ═══════════════════════════════════════════════════════ */
 export default function BodyHealthScreen() {
+  const { width } = useWindowDimensions();
   const { user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();

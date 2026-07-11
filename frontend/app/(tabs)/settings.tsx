@@ -1,8 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Dimensions, ImageBackground
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  Image, Dimensions, ImageBackground, useWindowDimensions } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,8 +13,6 @@ import api from '@/services/api';
 import { isAdminUser } from '@/utils/isAdmin';
 import SkeletonCard from '@/components/SkeletonCard';
 
-const { width } = Dimensions.get('window');
-
 const ACHIEVEMENTS = [
   { id: '1', title: '7-Day Streak', icon: Flame, color: '#FF4D4D', unlocked: true },
   { id: '2', title: 'Heavy Lifter', icon: Dumbbell, color: '#38BDF8', unlocked: true },
@@ -25,6 +21,7 @@ const ACHIEVEMENTS = [
 ];
 
 export default function ProfileSettingsScreen() {
+  const { width } = useWindowDimensions();
   const { user, logout } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -90,7 +87,7 @@ export default function ProfileSettingsScreen() {
 
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100 , maxWidth: 1000, width: '100%', alignSelf: 'center' }}
       >
         {/* MASSIVE PROFILE HEADER */}
         <LinearGradient colors={['#1E293B', '#0F172A']} style={[s.heroSection, { paddingTop: insets.top + 20 }]}>
@@ -253,7 +250,7 @@ const s = StyleSheet.create({
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
 
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 32 },
-  statBox: { width: (width - 60) / 2, backgroundColor: '#1E293B', padding: 20, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', alignItems: 'flex-start' },
+  statBox: { flex: 1, minWidth: 100, backgroundColor: '#1E293B', padding: 20, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', alignItems: 'flex-start' },
   statNum: { color: '#F8FAFC', fontSize: 24, fontWeight: '900', marginBottom: 2 },
   statLab: { color: '#94A3B8', fontSize: 13, fontWeight: '600' },
 

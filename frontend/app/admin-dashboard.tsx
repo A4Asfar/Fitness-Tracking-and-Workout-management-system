@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, 
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, 
   RefreshControl, ActivityIndicator, Dimensions, TextInput, 
-  Animated, Easing
-} from 'react-native';
+  Animated, Easing, useWindowDimensions } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
@@ -17,8 +15,6 @@ import api from '@/services/api';
 import { isAdminUser } from '@/utils/isAdmin';
 import { APP_NAME, SUPPORT_EMAIL } from '@/constants/Brand';
 import { safeBack } from '@/utils/navigation';
-
-const { width } = Dimensions.get('window');
 
 // ── Components ──
 
@@ -45,7 +41,7 @@ function RoleBadge({ role }: { role: string }) {
     <View style={[s.badge, isPremium ? s.badgeGold : isAdmin ? s.badgeRed : s.badgeBlue]}>
       {isPremium && <Crown size={12} color="#D4AF37" style={{ marginRight: 4 }} />}
       {isAdmin && <ShieldAlert size={12} color="#EF4444" style={{ marginRight: 4 }} />}
-      <Text style={[s.badgeText, isPremium ? s.badgeTextGold : isAdmin ? s.badgeTextRed : s.badgeTextBlue]}>
+      <Text style={[s.badgeTextRed, isPremium ? s.badgeTextGold : isAdmin ? s.badgeTextRed : s.badgeTextBlue]}>
         {role.toUpperCase()}
       </Text>
     </View>
@@ -63,7 +59,7 @@ function StatusBadge({ status }: { status: string }) {
 
   return (
     <View style={[s.badge, { backgroundColor: bg, borderColor: color + '30' }]}>
-      <Text style={[s.badgeText, { color }]}>{status.toUpperCase()}</Text>
+      <Text style={[s.badgeTextRed, { color }]}>{status.toUpperCase()}</Text>
     </View>
   );
 }
@@ -71,6 +67,7 @@ function StatusBadge({ status }: { status: string }) {
 // ── Main Screen ──
 
 export default function AdminDashboard() {
+  const { width } = useWindowDimensions();
   const router = useRouter();
   const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
@@ -231,7 +228,7 @@ export default function AdminDashboard() {
 
       {/* CONTENT */}
       <ScrollView 
-        contentContainerStyle={[s.content, { paddingBottom: insets.bottom + 40 }]}
+        contentContainerStyle={[s.content, { paddingBottom: insets.bottom + 40, maxWidth: 1000, width: '100%', alignSelf: 'center' }]}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#38BDF8" />}
         showsVerticalScrollIndicator={false}
       >

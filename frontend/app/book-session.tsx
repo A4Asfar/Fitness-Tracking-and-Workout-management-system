@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, Text, StyleSheet, ScrollView, TouchableOpacity, 
-  TextInput, ActivityIndicator, Image, Dimensions, KeyboardAvoidingView, Platform
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, 
+  TextInput, ActivityIndicator, Image, Dimensions, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Star, Video, MapPin, CheckCircle2, Clock, Map, Target } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '@/services/api';
 import { getMockTrainerById } from '@/constants/MockTrainers';
-
-const { width } = Dimensions.get('window');
 
 const getNext14Days = () => {
   const dates = [];
@@ -26,6 +22,7 @@ const getNext14Days = () => {
 const TIME_SLOTS = ['08:00 AM', '09:00 AM', '10:00 AM', '11:00 AM', '13:00 PM', '15:00 PM', '17:00 PM', '19:00 PM'];
 
 export default function BookSessionScreen() {
+  const { width } = useWindowDimensions();
   const { trainerId } = useLocalSearchParams<{ trainerId: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -292,7 +289,7 @@ const s = StyleSheet.create({
   dateTextActive: { color: '#0F172A' },
 
   timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 32 },
-  timeChip: { width: (width - 60) / 3, paddingVertical: 14, backgroundColor: '#1E293B', borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  timeChip: { flex: 1, minWidth: 100, paddingVertical: 14, backgroundColor: '#1E293B', borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
   timeChipActive: { backgroundColor: '#10B981', borderColor: '#10B981' },
   timeChipText: { color: '#94A3B8', fontSize: 14, fontWeight: '700' },
   timeChipTextActive: { color: '#0F172A', fontWeight: '900' },

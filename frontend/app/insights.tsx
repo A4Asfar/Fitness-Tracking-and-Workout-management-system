@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, Animated, Easing } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, Animated, Easing, useWindowDimensions } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { 
   ArrowLeft, Flame, Utensils, MessageCircle, Dumbbell, Sparkles, RefreshCw
@@ -10,8 +10,6 @@ import { useAuth } from '@/context/AuthContext';
 import { getDashboardAnalytics } from '@/services/analyticsService';
 import Svg, { Circle } from 'react-native-svg';
 import { PremiumGate } from '@/components/PremiumGate';
-
-const { width } = Dimensions.get('window');
 
 // --- Animated Counter ---
 function Counter({ target, suffix = '' }: { target: number; suffix?: string }) {
@@ -127,6 +125,7 @@ function ActivityBar({ score }: { score: number }) {
 }
 
 export default function AnalyticsDashboardScreen() {
+  const { width } = useWindowDimensions();
   const { user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -352,7 +351,7 @@ const styles = StyleSheet.create<Record<string, any>>({
   // Grid
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
   card: {
-    width: (width - 52) / 2,
+    flex: 1, minWidth: 140,
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     padding: 16,

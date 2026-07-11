@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Image, Modal, TextInput, Dimensions, FlatList, Share, Alert
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity,
+  ActivityIndicator, Image, Modal, TextInput, Dimensions, FlatList, Share, Alert, useWindowDimensions } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -17,8 +15,6 @@ import api from '@/services/api';
 import { isAdminUser } from '@/utils/isAdmin';
 import { APP_NAME } from '@/constants/Brand';
 import { hapticSuccess, hapticError } from '@/utils/haptics';
-
-const { width, height } = Dimensions.get('window');
 
 interface PaymentRecord {
   _id: string;
@@ -58,6 +54,7 @@ interface AnalyticsData {
 }
 
 export default function PremiumManagementDashboard() {
+  const { width } = useWindowDimensions();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -1661,7 +1658,7 @@ const styles = StyleSheet.create<Record<string, any>>({
     zIndex: 10,
   },
   photoZoomImg: {
-    width: width,
+    width: '100%',
     height: height - 120,
   },
 

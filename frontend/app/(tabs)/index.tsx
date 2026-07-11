@@ -1,8 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import {
-  View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity,
-  Animated, Dimensions, ImageBackground, Image
-} from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity,
+  Animated, Dimensions, ImageBackground, Image, useWindowDimensions } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -15,8 +13,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Storage from '@/utils/storage';
 import PremiumOnboardingModal from '@/components/dashboard/PremiumOnboardingModal';
 import FloatingChatButton from '@/components/dashboard/FloatingChatButton';
-
-const { width } = Dimensions.get('window');
 
 // Premium Skeleton Loader
 const SkeletonBlock = ({ width, height, style, borderRadius = 16 }: any) => {
@@ -35,6 +31,7 @@ const SkeletonBlock = ({ width, height, style, borderRadius = 16 }: any) => {
 };
 
 export default function HomeDashboard() {
+  const { width } = useWindowDimensions();
   const { user, isNewUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -153,7 +150,7 @@ export default function HomeDashboard() {
       
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 120 , maxWidth: 1000, width: '100%', alignSelf: 'center' }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#38BDF8" />}
       >
         {/* PREMIUM HERO HEADER */}
