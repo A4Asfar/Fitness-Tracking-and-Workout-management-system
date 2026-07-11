@@ -251,6 +251,9 @@ exports.getWorkoutAnalytics = asyncHandler(async (req, res) => {
   const userId = req.userId;
   const now = new Date();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const twentyEightDaysAgo = new Date(startOfToday);
+  twentyEightDaysAgo.setDate(twentyEightDaysAgo.getDate() - 27);
+
   const sevenDaysAgo = new Date(startOfToday);
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
 
@@ -259,36 +262,61 @@ exports.getWorkoutAnalytics = asyncHandler(async (req, res) => {
   const todayStepLogs = await StepLog.find({ userId, date: { $gte: startOfToday } });
   const todaySteps = todayStepLogs.reduce((sum, log) => sum + log.steps, 0);
 
-  // 1. Fetch workouts for the last 7 days in a single query
+  // 1. Fetch workouts for the last 28 days in a single query
   const recentWorkouts = await Workout.find({
     userId,
-    date: { $gte: sevenDaysAgo }
+    date: { $gte: twentyEightDaysAgo }
   }).sort({ date: 1 });
 
-  // Build 7-day chart data and weekly stats in a single pass
+  // Build 7-day chart data and weekly stats
   const chartDataMap = {};
   const weeklyStatsMap = {};
   for (let i = 0; i < 7; i++) {
     const d = new Date(sevenDaysAgo);
     d.setDate(d.getDate() + i);
     const dateStr = getLocalDateString(d);
-    chartDataMap[dateStr] = { volume: 0, sets: 0, date: dateStr };
+    chartDataMap[dateStr] = { volume: 0, sets: 0, calories: 0, date: dateStr };
     weeklyStatsMap[dateStr] = { date: dateStr, duration: 0, calories: 0 };
   }
 
+  // Build 4-week monthly data
+  const monthlyChartDataMap = {
+    W1: { label: 'W1', volume: 0, calories: 0 },
+    W2: { label: 'W2', volume: 0, calories: 0 },
+    W3: { label: 'W3', volume: 0, calories: 0 },
+    W4: { label: 'W4', volume: 0, calories: 0 }
+  };
+
   recentWorkouts.forEach(w => {
-    const dateStr = getLocalDateString(w.date);
+    const workoutDate = new Date(w.date);
+    const dateStr = getLocalDateString(workoutDate);
+    const volume = (w.sets || 0) * (w.reps || 0) * (w.weight || 0);
+    const calories = Math.round((w.duration || 30) * 8.5);
+
     if (chartDataMap[dateStr]) {
-      chartDataMap[dateStr].volume += (w.sets || 0) * (w.reps || 0) * (w.weight || 0);
+      chartDataMap[dateStr].volume += volume;
       chartDataMap[dateStr].sets += (w.sets || 0);
+      chartDataMap[dateStr].calories += calories;
     }
     if (weeklyStatsMap[dateStr]) {
       weeklyStatsMap[dateStr].duration += (w.duration || 30);
-      weeklyStatsMap[dateStr].calories += Math.round((w.duration || 30) * 8.5);
+      weeklyStatsMap[dateStr].calories += calories;
+    }
+
+    // Determine which week it belongs to (W1 = oldest, W4 = newest)
+    const daysSinceStart = Math.floor((workoutDate - twentyEightDaysAgo) / (1000 * 60 * 60 * 24));
+    if (daysSinceStart >= 0 && daysSinceStart < 28) {
+      const weekIndex = Math.floor(daysSinceStart / 7) + 1; // 1 to 4
+      const weekKey = `W${weekIndex}`;
+      if (monthlyChartDataMap[weekKey]) {
+        monthlyChartDataMap[weekKey].volume += volume;
+        monthlyChartDataMap[weekKey].calories += calories;
+      }
     }
   });
 
   const chartData = Object.values(chartDataMap);
+  const monthlyChartData = Object.values(monthlyChartDataMap);
   const weeklyStats = Object.values(weeklyStatsMap);
 
   // 2. Weekly Summary Comparison — single query with date range
@@ -398,6 +426,7 @@ exports.getWorkoutAnalytics = asyncHandler(async (req, res) => {
     },
     streak,
     chartData,
+    monthlyChartData,
     lastWorkoutDate: allWorkouts.length > 0 ? allWorkouts[0].date : null,
     totalWorkouts,
     totalSets,

@@ -156,48 +156,60 @@ export default function ProgressAnalyticsScreen() {
           <View style={s.chartCard}>
             <View style={s.chartStatsRow}>
               <View>
-                <Text style={s.chartLabel}>Average Burn</Text>
-                <Text style={s.chartBigValue}>650<Text style={s.chartSmallValue}> kcal/day</Text></Text>
+                <Text style={s.chartLabel}>{timeframe === 'weekly' ? 'Daily Average' : 'Weekly Average'}</Text>
+                <Text style={s.chartBigValue}>
+                  {Math.round((data?.[timeframe === 'weekly' ? 'chartData' : 'monthlyChartData'] || []).reduce((acc: number, d: any) => acc + (d.calories || 0), 0) / (data?.[timeframe === 'weekly' ? 'chartData' : 'monthlyChartData']?.length || 1)) || 0}
+                  <Text style={s.chartSmallValue}> kcal</Text>
+                </Text>
               </View>
               <Flame size={24} color="#EF4444" />
             </View>
             <View style={s.barsContainer}>
-              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => {
-                const heights = [40, 80, 60, 100, 70, 30, 0]; 
-                const h = heights[idx];
-                const isToday = idx === 3; 
+              {(data?.[timeframe === 'weekly' ? 'chartData' : 'monthlyChartData'] || []).map((d: any, idx: number) => {
+                const maxCalories = Math.max(...(data?.[timeframe === 'weekly' ? 'chartData' : 'monthlyChartData'] || []).map((item: any) => item.calories || 0), 100);
+                const h = Math.max((d.calories / maxCalories) * 100, 5); 
+                const isToday = timeframe === 'weekly' && idx === 6; 
+                const label = timeframe === 'weekly' 
+                  ? new Date(d.date).toLocaleDateString(undefined, { weekday: 'narrow' }).charAt(0)
+                  : d.label;
                 return (
-                  <View key={idx} style={s.barColumn}>
-                    <View style={s.barTrack}>
-                      <LinearGradient colors={isToday ? ['#EF4444', '#DC2626'] : ['#334155', '#1E293B']} style={[s.barFill, { height: `${h}%` }]} />
+                  <View key={idx} style={[s.barColumn, timeframe === 'monthly' && { flex: 1 }]}>
+                    <View style={[s.barTrack, timeframe === 'monthly' && { width: 30 }]}>
+                      <LinearGradient colors={isToday ? ['#EF4444', '#DC2626'] : ['#334155', '#1E293B']} style={[s.barFill, { height: `${h}%`, width: '100%' }]} />
                     </View>
-                    <Text style={[s.barLabel, isToday && { color: '#EF4444', fontWeight: '900' }]}>{day}</Text>
+                    <Text style={[s.barLabel, isToday && { color: '#EF4444', fontWeight: '900' }]}>{label}</Text>
                   </View>
                 );
               })}
             </View>
           </View>
 
-          {/* WEIGHT TREND CHART */}
-          <Text style={s.sectionTitle}>Weight Trend</Text>
+          {/* WORKOUT VOLUME CHART */}
+          <Text style={s.sectionTitle}>Workout Volume</Text>
           <View style={s.chartCard}>
             <View style={s.chartStatsRow}>
               <View>
-                <Text style={s.chartLabel}>30-Day Change</Text>
-                <Text style={s.chartBigValue}>-1.2<Text style={s.chartSmallValue}> kg</Text></Text>
+                <Text style={s.chartLabel}>{timeframe === 'weekly' ? 'Total Volume' : 'Total Monthly Volume'}</Text>
+                <Text style={s.chartBigValue}>
+                  {(data?.[timeframe === 'weekly' ? 'chartData' : 'monthlyChartData'] || []).reduce((acc: number, d: any) => acc + (d.volume || 0), 0)}
+                  <Text style={s.chartSmallValue}> kg</Text>
+                </Text>
               </View>
               <Activity size={24} color="#38BDF8" />
             </View>
             <View style={s.barsContainer}>
-              {['W1', 'W2', 'W3', 'W4'].map((week, idx) => {
-                const heights = [90, 85, 75, 65]; 
-                const h = heights[idx];
+              {(data?.[timeframe === 'weekly' ? 'chartData' : 'monthlyChartData'] || []).map((d: any, idx: number) => {
+                const maxVolume = Math.max(...(data?.[timeframe === 'weekly' ? 'chartData' : 'monthlyChartData'] || []).map((item: any) => item.volume || 0), 100);
+                const h = Math.max((d.volume / maxVolume) * 100, 5); 
+                const label = timeframe === 'weekly' 
+                  ? new Date(d.date).toLocaleDateString(undefined, { weekday: 'narrow' }).charAt(0)
+                  : d.label;
                 return (
                   <View key={idx} style={[s.barColumn, { flex: 1 }]}>
                     <View style={[s.barTrack, { width: 30, backgroundColor: 'transparent', justifyContent: 'flex-end' }]}>
                       <View style={[s.barFill, { height: `${h}%`, backgroundColor: '#38BDF8', width: 30, opacity: 0.8 }]} />
                     </View>
-                    <Text style={s.barLabel}>{week}</Text>
+                    <Text style={s.barLabel}>{label}</Text>
                   </View>
                 );
               })}
