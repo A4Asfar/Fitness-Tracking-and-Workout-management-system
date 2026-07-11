@@ -1,30 +1,17 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { 
-  View, StyleSheet, Alert, ScrollView, Dimensions, Modal, Text, TouchableOpacity
+  View, StyleSheet, Alert, ScrollView, Dimensions, Text, TouchableOpacity, ImageBackground, Animated
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { MealService } from '@/services/mealService';
-import { ContentService } from '@/services/contentService';
 import { 
-  Plus, Target, Sparkles
+  Plus, Target, Sparkles, Flame, Droplet, Activity, CheckCircle2, Leaf, HeartPulse, ChevronRight, Utensils
 } from 'lucide-react-native';
-import { Stack, useLocalSearchParams } from 'expo-router';
+import { Stack, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
-import SkeletonCard, { SkeletonItem } from '@/components/SkeletonCard';
-
-import { 
-  NutritionSuggestion, 
-  getIconComponent 
-} from '@/services/recommendations';
-import { PremiumGate } from '@/components/PremiumGate';
-
-// Extracted Premium Components
-import NutritionHeader from '@/components/nutrition/NutritionHeader';
-import NutritionSummary from '@/components/nutrition/NutritionSummary';
-import WaterTracker from '@/components/nutrition/WaterTracker';
-import MealSection from '@/components/nutrition/MealSection';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import SkeletonCard from '@/components/SkeletonCard';
 import AddMealModal from '@/components/nutrition/AddMealModal';
-import EmptyState from '@/components/workout/EmptyState';
 
 const { width } = Dimensions.get('window');
 
@@ -38,55 +25,53 @@ interface Meal {
   fats?: number;
 }
 
+// Mock image mapping for premium UI
+const getMealImage = (name: string, type: string) => {
+  const lower = name.toLowerCase();
+  if (lower.includes('salad') || lower.includes('veg')) return 'https://images.unsplash.com/photo-1512621776951-a57141f2eefd?w=800&q=80';
+  if (lower.includes('chicken') || lower.includes('steak') || lower.includes('meat')) return 'https://images.unsplash.com/photo-1529042410759-befb1204b468?w=800&q=80';
+  if (lower.includes('oat') || lower.includes('pancake') || type === 'Breakfast') return 'https://images.unsplash.com/photo-1494390248081-4e521a5940db?w=800&q=80';
+  if (lower.includes('smoothie') || lower.includes('shake')) return 'https://images.unsplash.com/photo-1556881286-fc6915169721?w=800&q=80';
+  return 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?w=800&q=80'; // Default healthy food
+};
+
+// Check for badges
+const isVegetarian = (name: string) => {
+  const lower = name.toLowerCase();
+  return lower.includes('veg') || lower.includes('salad') || lower.includes('tofu') || lower.includes('oat') || lower.includes('smoothie');
+};
+
 export default function DietScreen() {
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+
   const [meals, setMeals] = useState<Meal[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalVisible, setIsModalVisible] = useState(false);
-  const [activeDefaultType, setActiveDefaultType] = useState<'Breakfast' | 'Lunch' | 'Dinner' | 'Snack'>('Breakfast');
-  
-  const [selectedMeal, setSelectedMeal] = useState<NutritionSuggestion | null>(null);
-  const [suggestions, setSuggestions] = useState<NutritionSuggestion[]>([]);
-  const { user } = useAuth();
-  const { mealName } = useLocalSearchParams<{ mealName?: string }>();
-  const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [isAdding, setIsAdding] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  
+  const [isModalVisible, setIsModalVisible] = useState(false);
+  const [activeType, setActiveType] = useState<'Breakfast' | 'Lunch' | 'Dinner' | 'Snack'>('Breakfast');
 
-  const currentGoal = user?.fitnessGoal || 'General Fitness';
+  const progressAnim = useRef(new Animated.Value(0)).current;
 
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      try {
-        const data = await ContentService.getNutritionSuggestions(user?.fitnessGoal);
-        setSuggestions(data);
-      } catch (err) {
-        if (__DEV__) console.error('Failed to fetch suggestions:', err);
-      }
-    };
-    fetchSuggestions();
-  }, [user?.fitnessGoal]);
-
-  useEffect(() => {
-    if (mealName) {
-      const fetchMeal = async () => {
-        try {
-          const meal = await ContentService.getMealByName(mealName);
-          if (meal) setSelectedMeal(meal);
-        } catch (err) {
-          if (__DEV__) console.error('Failed to fetch meal:', err);
-        }
-      };
-      fetchMeal();
-    }
-  }, [mealName]);
+  const currentGoal = user?.fitnessGoal || 'Fat Loss';
+  const calorieTarget = (user as any)?.dailyCalorieTarget || 2200;
 
   const fetchMeals = useCallback(async () => {
     setError(null);
     try {
       const data = await MealService.getMeals();
       setMeals(data);
+      
+      Animated.timing(progressAnim, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: false
+      }).start();
+
     } catch (err: any) {
-      if (__DEV__) console.error('Fetch meals error:', err);
       setError(err.message || 'Failed to fetch meals');
     } finally {
       setLoading(false);
@@ -98,15 +83,27 @@ export default function DietScreen() {
     fetchMeals();
   }, [fetchMeals]);
 
-  const handleAddMeal = async (
-    name: string,
-    type: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack',
-    calories: number,
-    protein: number,
-    carbs: number,
-    fats: number
-  ) => {
-    setIsAdding(true);
+  const onRefresh = () => {
+    setRefreshing(true);
+    progressAnim.setValue(0);
+    fetchMeals();
+  };
+
+  const handleDelete = async (id: string) => {
+    Alert.alert('Delete Entry', 'Are you sure you want to remove this meal?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Delete', style: 'destructive', onPress: async () => {
+          try {
+            await MealService.deleteMeal(id);
+            setMeals(meals.filter(m => m._id !== id));
+          } catch (err) {
+            Alert.alert('Error', 'Failed to delete meal');
+          }
+      }}
+    ]);
+  };
+
+  const handleAddMeal = async (name: string, type: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack', calories: number, protein: number, carbs: number, fats: number) => {
     try {
       const data = await MealService.logMeal({
         userId: user?._id || user?.id,
@@ -119,577 +116,284 @@ export default function DietScreen() {
         selectedAt: new Date().toISOString(),
       });
       setMeals(prev => [data, ...prev]);
-      setSelectedMeal(null);
     } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to add meal');
-    } finally {
-      setIsAdding(false);
+      Alert.alert('Error', err.message || 'Failed to log meal');
     }
   };
 
-  const deleteMeal = async (id: string) => {
-    try {
-      await MealService.deleteMeal(id);
-      setMeals(meals.filter(m => m._id !== id));
-    } catch (err: any) {
-      Alert.alert('Error', err.message || 'Failed to delete meal');
-    }
-  };
-
-  if (loading) {
+  if (loading && !refreshing) {
     return (
-      <View style={[styles.container, { paddingTop: 60, paddingHorizontal: 20 }]}>
-        <View style={{ marginBottom: 24 }}>
-          <SkeletonItem width="40%" height={24} style={{ marginBottom: 8 }} />
-          <SkeletonItem width="60%" height={16} />
-        </View>
-        <SkeletonCard style={{ height: 180, marginBottom: 20 }} />
-        <SkeletonCard style={{ height: 120, marginBottom: 20 }} />
-        <SkeletonCard style={{ height: 120 }} />
+      <View style={[s.container, { paddingTop: insets.top }]}>
+        <View style={{ padding: 24 }}><SkeletonCard /><SkeletonCard /><SkeletonCard /></View>
       </View>
     );
   }
 
-  if (error && !refreshing) {
-    return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>SYNC ERROR</Text>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity 
-          onPress={() => { setLoading(true); fetchMeals(); }} 
-          style={styles.retryBtn}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.retryText}>RETRY SYNC</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  // Calculate Aggregates
   const totalCalories = meals.reduce((sum, m) => sum + (m.calories || 0), 0);
   const totalProtein = meals.reduce((sum, m) => sum + (m.protein || 0), 0);
   const totalCarbs = meals.reduce((sum, m) => sum + (m.carbs || 0), 0);
   const totalFat = meals.reduce((sum, m) => sum + (m.fats || 0), 0);
 
-  const breakfastMeals = meals.filter(m => m.mealType === 'Breakfast');
-  const lunchMeals = meals.filter(m => m.mealType === 'Lunch');
-  const dinnerMeals = meals.filter(m => m.mealType === 'Dinner');
-  const snackMeals = meals.filter(m => m.mealType === 'Snack');
+  const calPercent = Math.min(totalCalories / calorieTarget, 1);
+  const proPercent = Math.min(totalProtein / 150, 1); // Mock targets
+  const carbPercent = Math.min(totalCarbs / 250, 1);
+  const fatPercent = Math.min(totalFat / 70, 1);
 
-  const triggerAddFood = (type: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack') => {
-    setActiveDefaultType(type);
-    setIsModalVisible(true);
-  };
+  const calWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${calPercent * 100}%`] });
+  const proWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${proPercent * 100}%`] });
+  const carbWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${carbPercent * 100}%`] });
+  const fatWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${fatPercent * 100}%`] });
 
   return (
-    <View style={styles.container}>
-      <Stack.Screen 
-        options={{ 
-          title: 'Smart Nutrition',
-          headerShown: true,
-          headerStyle: { backgroundColor: '#F8FAFC' },
-          headerTintColor: '#0F172A',
-          headerShadowVisible: false,
-        }} 
-      />
-
+    <View style={s.container}>
+      <Stack.Screen options={{ headerShown: false }} />
+      
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 100 }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
       >
-        {/* Customized header showing goal info */}
-        <NutritionHeader goalName={currentGoal} />
+        {/* HEADER */}
+        <LinearGradient colors={['#1E293B', '#0F172A']} style={[s.heroSection, { paddingTop: insets.top + 16 }]}>
+          <Text style={s.headerSubtitle}>Nutrition Center</Text>
+          <Text style={s.headerTitle}>Diet Plan</Text>
 
-        {/* Energy Summary + Macro indicators */}
-        <NutritionSummary 
-          consumed={totalCalories}
-          target={(user as any)?.dailyCalorieTarget || 2000}
-          protein={totalProtein}
-          carbs={totalCarbs}
-          fat={totalFat}
-        />
-
-        {/* Water / Hydration Tracker */}
-        <WaterTracker />
-
-        <PremiumGate
-          featureTitle="AI Nutrition Planner"
-          featureDescription="Unlock progressive AI meal suggestions custom-designed to hit your macro targets, food choices, and fitness goals."
-          style={{ marginHorizontal: 20, marginBottom: 20 }}
-        >
-          {/* AI Suggestions Section */}
-          <View style={styles.bannerContainer}>
-            <LinearGradient
-              colors={['#10B98115', '#10B98103']}
-              style={styles.banner}
-            >
-              <View style={styles.bannerContent}>
-                <View style={styles.bannerTextContainer}>
-                  <View style={styles.bannerTag}>
-                    <Sparkles size={12} color="#10B981" fill="#10B981" />
-                    <Text style={styles.bannerTagText}>AI COACH RECOMMENDATIONS</Text>
-                  </View>
-                  <Text style={styles.bannerTitle}>Daily Meal suggestions</Text>
-                  <Text style={styles.bannerSubtitle}>Based on your {currentGoal} target goal.</Text>
-                </View>
+          {/* DAILY NUTRITION SUMMARY */}
+          <View style={s.summaryCard}>
+            <View style={s.calRow}>
+              <View style={s.calLeft}>
+                <Flame size={24} color="#38BDF8" style={{ marginBottom: 8 }} />
+                <Text style={s.calLabel}>Calories Eaten</Text>
+                <Text style={s.calValue}>{totalCalories} <Text style={s.calTarget}>/ {calorieTarget}</Text></Text>
               </View>
+              <View style={s.calRight}>
+                <Text style={s.calRemaining}>{(calorieTarget - totalCalories) > 0 ? (calorieTarget - totalCalories) : 0}</Text>
+                <Text style={s.calRemainingLabel}>Left Today</Text>
+              </View>
+            </View>
+            
+            <View style={s.macroBarBg}>
+              <Animated.View style={[s.macroBarFill, { width: calWidth, backgroundColor: '#38BDF8' }]} />
+            </View>
+
+            <View style={s.macrosRow}>
+              <View style={s.macroItem}>
+                <Text style={s.macroName}>Protein</Text>
+                <Text style={s.macroVal}>{totalProtein}g</Text>
+                <View style={s.miniBarBg}><Animated.View style={[s.miniBarFill, { width: proWidth, backgroundColor: '#10B981' }]} /></View>
+              </View>
+              <View style={s.macroItem}>
+                <Text style={s.macroName}>Carbs</Text>
+                <Text style={s.macroVal}>{totalCarbs}g</Text>
+                <View style={s.miniBarBg}><Animated.View style={[s.miniBarFill, { width: carbWidth, backgroundColor: '#F59E0B' }]} /></View>
+              </View>
+              <View style={s.macroItem}>
+                <Text style={s.macroName}>Fat</Text>
+                <Text style={s.macroVal}>{totalFat}g</Text>
+                <View style={s.miniBarBg}><Animated.View style={[s.miniBarFill, { width: fatWidth, backgroundColor: '#EF4444' }]} /></View>
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
+
+        <View style={s.content}>
+          {/* AI RECOMMENDATION CARD */}
+          <View style={s.aiCard}>
+            <LinearGradient colors={['#10B98115', 'rgba(15,23,42,0)']} style={s.aiGrad}>
+              <View style={s.aiHeader}>
+                <Sparkles size={20} color="#10B981" fill="#10B981" />
+                <Text style={s.aiTitle}>AI Coach Suggestion</Text>
+              </View>
+              <Text style={s.aiText}>Based on your <Text style={{ color: '#F8FAFC', fontWeight: '800' }}>{currentGoal}</Text> goal, try adding a <Text style={{ color: '#10B981', fontWeight: '800' }}>High-Protein Quinoa Bowl</Text> for dinner to hit your remaining macro targets today.</Text>
+              <TouchableOpacity style={s.aiBtn}>
+                <Text style={s.aiBtnText}>View Recipe</Text>
+                <ChevronRight size={16} color="#0F172A" />
+              </TouchableOpacity>
             </LinearGradient>
           </View>
 
-          {/* Horizontal Suggestions Carousel */}
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.suggestionScroll}
-          >
-            {suggestions.map((item, idx) => {
-              const SuggestionIcon = getIconComponent(item.icon);
-              return (
-                <TouchableOpacity 
-                  key={idx} 
-                  style={styles.suggestionCard}
-                  onPress={() => setSelectedMeal(item)}
-                  activeOpacity={0.8}
-                >
-                  <View style={styles.suggestionHeader}>
-                    <View style={styles.suggestionIconBox}>
-                      <SuggestionIcon size={18} color="#10B981" />
+          {/* WEEKLY NUTRITION CHART */}
+          <Text style={s.sectionTitle}>Weekly Average</Text>
+          <View style={s.chartCard}>
+            <View style={s.chartStatsRow}>
+              <View>
+                <Text style={s.chartLabel}>Avg. Caloric Intake</Text>
+                <Text style={s.chartBigValue}>2,150<Text style={s.chartSmallValue}> /day</Text></Text>
+              </View>
+              <Activity size={24} color="#38BDF8" />
+            </View>
+            <View style={s.barsContainer}>
+              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => {
+                const heights = [60, 80, 50, 95, 75, 40, 100]; // Mock chart data
+                const h = heights[idx];
+                const isToday = idx === 3; 
+                return (
+                  <View key={idx} style={s.barColumn}>
+                    <View style={s.barTrack}>
+                      <LinearGradient colors={isToday ? ['#38BDF8', '#0EA5E9'] : ['#334155', '#1E293B']} style={[s.barFill, { height: `${h}%` }]} />
                     </View>
-                    <Text style={styles.suggestionType}>{item.type}</Text>
+                    <Text style={[s.barLabel, isToday && s.barLabelToday]}>{day}</Text>
                   </View>
-                  <Text style={styles.suggestionName} numberOfLines={1}>{item.name}</Text>
-                  <Text style={styles.suggestionNote} numberOfLines={2}>{item.note}</Text>
-                  <View style={styles.quickAdd}>
-                    <Plus size={12} color="#FFFFFF" strokeWidth={2.5} />
-                    <Text style={styles.quickAddText}>View details</Text>
-                  </View>
-                </TouchableOpacity>
-              );
-            })}
-          </ScrollView>
-        </PremiumGate>
-
-        {/* Expandable Meal Sections */}
-        <View style={styles.mealSectionsContainer}>
-          <MealSection 
-            type="Breakfast"
-            meals={breakfastMeals}
-            onAddPress={() => triggerAddFood('Breakfast')}
-            onDeleteMeal={deleteMeal}
-          />
-          <MealSection 
-            type="Lunch"
-            meals={lunchMeals}
-            onAddPress={() => triggerAddFood('Lunch')}
-            onDeleteMeal={deleteMeal}
-          />
-          <MealSection 
-            type="Dinner"
-            meals={dinnerMeals}
-            onAddPress={() => triggerAddFood('Dinner')}
-            onDeleteMeal={deleteMeal}
-          />
-          <MealSection 
-            type="Snack"
-            meals={snackMeals}
-            onAddPress={() => triggerAddFood('Snack')}
-            onDeleteMeal={deleteMeal}
-          />
-        </View>
-
-        {/* Large Empty state when logs are completely blank */}
-        {meals.length === 0 && (
-          <EmptyState 
-            title="Log Your Nutrition"
-            description="Keep track of your breakfast, lunch, and dinner to hit your daily macro budget targets."
-            buttonLabel="Add Custom Meal"
-            onButtonPress={() => triggerAddFood('Breakfast')}
-            accentColor="#10B981"
-          />
-        )}
-
-        {/* Meal Detail Modal */}
-        <Modal
-          visible={!!selectedMeal}
-          transparent
-          animationType="slide"
-          onRequestClose={() => setSelectedMeal(null)}
-        >
-          <View style={styles.modalOverlay}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHandle} />
-              {selectedMeal && (
-                <ScrollView showsVerticalScrollIndicator={false}>
-                  <View style={styles.modalHeader}>
-                    <View style={styles.modalIconBox}>
-                      {React.createElement(getIconComponent(selectedMeal.icon), { size: 28, color: '#10B981' })}
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.modalTitle}>{selectedMeal.name}</Text>
-                      <Text style={styles.modalType}>{selectedMeal.type} • Recommendation</Text>
-                    </View>
-                    <TouchableOpacity onPress={() => setSelectedMeal(null)} style={styles.closeBtn} activeOpacity={0.7}>
-                      <Plus size={24} color="#64748B" style={{ transform: [{ rotate: '45deg' }] }} />
-                    </TouchableOpacity>
-                  </View>
-
-                  <View style={styles.macroGrid}>
-                    <MacroItem label="Calories" value={selectedMeal.calories} unit="kcal" />
-                    <MacroItem label="Protein" value={selectedMeal.protein} unit="g" />
-                    <MacroItem label="Carbs" value={selectedMeal.carbs} unit="g" />
-                    <MacroItem label="Fats" value={selectedMeal.fats} unit="g" />
-                  </View>
-
-                  <View style={styles.detailSection}>
-                    <Text style={styles.detailLabel}>Health Benefit</Text>
-                    <Text style={styles.detailText}>{selectedMeal.benefit}</Text>
-                  </View>
-
-                  <View style={[styles.detailSection, { backgroundColor: '#E6F4EA', borderColor: '#A7F3D0' }]}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                      <Target size={16} color="#10B981" />
-                      <Text style={[styles.detailLabel, { color: '#10B981', marginBottom: 0 }]}>Why it matches your goal</Text>
-                    </View>
-                    <Text style={[styles.detailText, { color: '#0F172A' }]}>
-                      This meal is optimized for {currentGoal} by providing {selectedMeal.calories} clean calories with a high {selectedMeal.protein}g protein ratio.
-                    </Text>
-                  </View>
-
-                  <TouchableOpacity 
-                    style={[styles.logBtn, isAdding && { opacity: 0.7 }]}
-                    onPress={() => handleAddMeal(
-                      selectedMeal.name, 
-                      selectedMeal.type as any, 
-                      selectedMeal.calories, 
-                      selectedMeal.protein, 
-                      selectedMeal.carbs, 
-                      selectedMeal.fats
-                    )}
-                    disabled={isAdding}
-                  >
-                    <Text style={styles.logBtnText}>{isAdding ? 'Logging...' : 'Log This Meal'}</Text>
-                  </TouchableOpacity>
-                </ScrollView>
-              )}
+                );
+              })}
             </View>
           </View>
-        </Modal>
 
-        {/* Global Manual Food Logger Modal */}
-        <AddMealModal 
-          visible={isModalVisible}
-          onClose={() => setIsModalVisible(false)}
-          onAdd={handleAddMeal}
-          defaultType={activeDefaultType}
-        />
+          {/* MEAL LOGS */}
+          <View style={s.mealsHeaderRow}>
+            <Text style={s.sectionTitle}>Today's Meals</Text>
+            <TouchableOpacity onPress={() => { setActiveType('Breakfast'); setIsModalVisible(true); }}>
+              <Text style={s.addMealLink}>+ Add Log</Text>
+            </TouchableOpacity>
+          </View>
+
+          {['Breakfast', 'Lunch', 'Dinner', 'Snack'].map(mealType => {
+            const typedMeals = meals.filter(m => m.mealType === mealType);
+            const totalCal = typedMeals.reduce((s, m) => s + (m.calories || 0), 0);
+            
+            return (
+              <View key={mealType} style={s.mealSection}>
+                <View style={s.mealSecHeader}>
+                  <Text style={s.mealSecTitle}>{mealType}</Text>
+                  <Text style={s.mealSecCal}>{totalCal} cal</Text>
+                </View>
+
+                {typedMeals.length === 0 ? (
+                  <TouchableOpacity style={s.emptyMealAdd} onPress={() => { setActiveType(mealType as any); setIsModalVisible(true); }}>
+                    <Plus size={20} color="#64748B" />
+                    <Text style={s.emptyMealText}>Add {mealType}</Text>
+                  </TouchableOpacity>
+                ) : (
+                  <View style={s.mealList}>
+                    {typedMeals.map(m => (
+                      <View key={m._id} style={s.premiumMealCard}>
+                        <ImageBackground source={{ uri: getMealImage(m.selectedMeal, m.mealType) }} style={s.mealImg} imageStyle={{ borderTopLeftRadius: 20, borderBottomLeftRadius: 20 }}>
+                          <View style={s.mealImgOverlay}>
+                            {isVegetarian(m.selectedMeal) && (
+                              <View style={s.vegBadge}>
+                                <Leaf size={10} color="#10B981" fill="#10B981" />
+                                <Text style={s.vegBadgeText}>VEG</Text>
+                              </View>
+                            )}
+                          </View>
+                        </ImageBackground>
+                        
+                        <View style={s.mealCardInfo}>
+                          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                            <Text style={s.mealCardTitle}>{m.selectedMeal}</Text>
+                            <TouchableOpacity onPress={() => handleDelete(m._id)} style={{ padding: 4 }}>
+                              <Text style={s.mealDelText}>✕</Text>
+                            </TouchableOpacity>
+                          </View>
+
+                          <View style={s.mealHealthyBadge}>
+                            <HeartPulse size={12} color="#F59E0B" />
+                            <Text style={s.mealHealthyText}>Healthy Choice</Text>
+                          </View>
+
+                          <View style={s.mealCardMacros}>
+                            <View style={s.mCardMacro}><Text style={s.mCardVal}>{m.calories}</Text><Text style={s.mCardLab}>cal</Text></View>
+                            <View style={s.mCardMacro}><Text style={s.mCardVal}>{m.protein || 0}g</Text><Text style={s.mCardLab}>P</Text></View>
+                            <View style={s.mCardMacro}><Text style={s.mCardVal}>{m.carbs || 0}g</Text><Text style={s.mCardLab}>C</Text></View>
+                            <View style={s.mCardMacro}><Text style={s.mCardVal}>{m.fats || 0}g</Text><Text style={s.mCardLab}>F</Text></View>
+                          </View>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                )}
+              </View>
+            );
+          })}
+
+        </View>
       </ScrollView>
+
+      <AddMealModal 
+        visible={isModalVisible} 
+        onClose={() => setIsModalVisible(false)} 
+        onAddMeal={handleAddMeal} 
+        defaultType={activeType} 
+      />
     </View>
   );
 }
 
-function MacroItem({ label, value, unit }: any) {
-  return (
-    <View style={styles.macroGridItem}>
-      <Text style={styles.macroValue}>{value}<Text style={styles.macroUnit}>{unit}</Text></Text>
-      <Text style={styles.macroLabel}>{label}</Text>
-    </View>
-  );
-}
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0F172A' },
+  heroSection: { paddingHorizontal: 24, paddingBottom: 32, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
+  headerSubtitle: { color: '#94A3B8', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
+  headerTitle: { color: '#F8FAFC', fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 24 },
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  loaderContainer: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 14,
-  },
-  loaderText: {
-    color: '#64748B',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  errorContainer: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  errorTitle: {
-    color: '#FF4D4D',
-    fontSize: 18,
-    fontWeight: '900',
-    marginBottom: 8,
-  },
-  errorText: {
-    color: '#64748B',
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginBottom: 28,
-    lineHeight: 22,
-  },
-  retryBtn: {
-    height: 52,
-    width: 160,
-    borderRadius: 16,
-    backgroundColor: '#10B981',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  retryText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '900',
-  },
-  bannerContainer: {
-    paddingHorizontal: 20,
-    marginTop: 10,
-  },
-  banner: {
-    borderRadius: 24,
-    padding: 20,
-    borderWidth: 1.5,
-    borderColor: '#10B98130',
-  },
-  bannerContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  bannerTextContainer: {
-    flex: 1,
-  },
-  bannerTag: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: 8,
-  },
-  bannerTagText: {
-    color: '#10B981',
-    fontSize: 10,
-    fontWeight: '900',
-    letterSpacing: 1.2,
-  },
-  bannerTitle: {
-    color: '#0F172A',
-    fontSize: 18,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    marginBottom: 4,
-  },
-  bannerSubtitle: {
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  suggestionScroll: {
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    gap: 12,
-  },
-  suggestionCard: {
-    width: width * 0.65,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.02,
-    shadowRadius: 8,
-    elevation: 1,
-  },
-  suggestionHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginBottom: 12,
-  },
-  suggestionIconBox: {
-    width: 32,
-    height: 32,
-    borderRadius: 10,
-    backgroundColor: '#E6F4EA',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  suggestionType: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-  },
-  suggestionName: {
-    color: '#0F172A',
-    fontSize: 15,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  suggestionNote: {
-    color: '#64748B',
-    fontSize: 12,
-    lineHeight: 16,
-    fontWeight: '500',
-    marginBottom: 14,
-  },
-  quickAdd: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#10B981',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 10,
-    alignSelf: 'flex-start',
-    gap: 6,
-  },
-  quickAddText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '800',
-  },
-  mealSectionsContainer: {
-    marginTop: 10,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(15, 23, 42, 0.4)',
-    justifyContent: 'flex-end',
-  },
-  modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    padding: 24,
-    maxHeight: '85%',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  modalHandle: {
-    width: 40,
-    height: 5,
-    backgroundColor: '#CBD5E1',
-    borderRadius: 10,
-    alignSelf: 'center',
-    marginBottom: 20,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  modalIconBox: {
-    width: 56,
-    height: 56,
-    borderRadius: 18,
-    backgroundColor: '#E6F4EA',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-    borderWidth: 1,
-    borderColor: '#A7F3D0',
-  },
-  modalTitle: {
-    color: '#0F172A',
-    fontSize: 20,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  modalType: {
-    color: '#64748B',
-    fontSize: 13,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  closeBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  macroGrid: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 28,
-    marginTop: 8,
-  },
-  macroGridItem: {
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
-    padding: 12,
-    borderRadius: 16,
-    width: (width - 48 - 30) / 4,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  macroValue: {
-    color: '#0F172A',
-    fontSize: 14,
-    fontWeight: '800',
-  },
-  macroUnit: {
-    fontSize: 10,
-    color: '#64748B',
-    fontWeight: '600',
-  },
-  macroLabel: {
-    color: '#64748B',
-    fontSize: 9,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    marginTop: 4,
-  },
-  detailSection: {
-    backgroundColor: '#FFFFFF',
-    padding: 16,
-    borderRadius: 20,
-    marginBottom: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-  },
-  detailLabel: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
-    marginBottom: 8,
-  },
-  detailText: {
-    color: '#64748B',
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '500',
-  },
-  logBtn: {
-    backgroundColor: '#10B981',
-    paddingVertical: 16,
-    borderRadius: 16,
-    alignItems: 'center',
-    marginTop: 8,
-    marginBottom: 20,
-  },
-  logBtnText: {
-    color: '#FFFFFF',
-    fontSize: 15,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
+  summaryCard: { backgroundColor: '#1E293B', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  calRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 },
+  calLeft: { flex: 1 },
+  calLabel: { color: '#94A3B8', fontSize: 14, fontWeight: '700', marginBottom: 4 },
+  calValue: { color: '#F8FAFC', fontSize: 36, fontWeight: '900', letterSpacing: -1 },
+  calTarget: { color: '#64748B', fontSize: 18, fontWeight: '600' },
+  calRight: { alignItems: 'flex-end' },
+  calRemaining: { color: '#38BDF8', fontSize: 24, fontWeight: '900' },
+  calRemainingLabel: { color: '#94A3B8', fontSize: 12, fontWeight: '700' },
+
+  macroBarBg: { height: 12, backgroundColor: '#0F172A', borderRadius: 6, overflow: 'hidden', marginBottom: 24 },
+  macroBarFill: { height: '100%', borderRadius: 6 },
+
+  macrosRow: { flexDirection: 'row', justifyContent: 'space-between', gap: 16 },
+  macroItem: { flex: 1 },
+  macroName: { color: '#94A3B8', fontSize: 12, fontWeight: '700', marginBottom: 4 },
+  macroVal: { color: '#F8FAFC', fontSize: 16, fontWeight: '800', marginBottom: 8 },
+  miniBarBg: { height: 6, backgroundColor: '#0F172A', borderRadius: 3, overflow: 'hidden' },
+  miniBarFill: { height: '100%', borderRadius: 3 },
+
+  content: { padding: 24 },
+
+  aiCard: { backgroundColor: '#1E293B', borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: '#10B98130', marginBottom: 32 },
+  aiGrad: { padding: 20 },
+  aiHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  aiTitle: { color: '#10B981', fontSize: 15, fontWeight: '900', marginLeft: 8, letterSpacing: 0.5 },
+  aiText: { color: '#94A3B8', fontSize: 14, lineHeight: 22, marginBottom: 16 },
+  aiBtn: { backgroundColor: '#10B981', alignSelf: 'flex-start', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 100, flexDirection: 'row', alignItems: 'center' },
+  aiBtnText: { color: '#0F172A', fontSize: 13, fontWeight: '900', marginRight: 4 },
+
+  sectionTitle: { color: '#F8FAFC', fontSize: 20, fontWeight: '900', letterSpacing: -0.5, marginBottom: 16 },
+  
+  chartCard: { backgroundColor: '#1E293B', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 32 },
+  chartStatsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 },
+  chartLabel: { color: '#94A3B8', fontSize: 12, fontWeight: '700', marginBottom: 4 },
+  chartBigValue: { color: '#F8FAFC', fontSize: 24, fontWeight: '900' },
+  chartSmallValue: { color: '#64748B', fontSize: 14, fontWeight: '600' },
+  barsContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 120 },
+  barColumn: { alignItems: 'center', width: 32 },
+  barTrack: { width: 12, height: 100, backgroundColor: '#0F172A', borderRadius: 6, justifyContent: 'flex-end', marginBottom: 12 },
+  barFill: { width: 12, borderRadius: 6 },
+  barLabel: { color: '#64748B', fontSize: 12, fontWeight: '700' },
+  barLabelToday: { color: '#38BDF8', fontWeight: '900' },
+
+  mealsHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  addMealLink: { color: '#38BDF8', fontSize: 14, fontWeight: '800' },
+
+  mealSection: { marginBottom: 24 },
+  mealSecHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  mealSecTitle: { color: '#F8FAFC', fontSize: 16, fontWeight: '800' },
+  mealSecCal: { color: '#94A3B8', fontSize: 14, fontWeight: '700' },
+  
+  emptyMealAdd: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(30,41,59,0.5)', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', borderStyle: 'dashed' },
+  emptyMealText: { color: '#94A3B8', fontSize: 14, fontWeight: '600', marginLeft: 8 },
+
+  mealList: { gap: 12 },
+  premiumMealCard: { flexDirection: 'row', backgroundColor: '#1E293B', borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  mealImg: { width: 100, height: '100%' },
+  mealImgOverlay: { flex: 1, backgroundColor: 'rgba(15,23,42,0.2)', padding: 8, alignItems: 'flex-start' },
+  vegBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.8)', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 6 },
+  vegBadgeText: { color: '#10B981', fontSize: 9, fontWeight: '900', marginLeft: 4, letterSpacing: 0.5 },
+  
+  mealCardInfo: { flex: 1, padding: 16 },
+  mealCardTitle: { color: '#F8FAFC', fontSize: 16, fontWeight: '800', marginBottom: 6, flex: 1, marginRight: 8 },
+  mealDelText: { color: '#EF4444', fontSize: 12, fontWeight: '800' },
+  mealHealthyBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245,158,11,0.1)', alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginBottom: 12 },
+  mealHealthyText: { color: '#F59E0B', fontSize: 10, fontWeight: '800', marginLeft: 4 },
+  
+  mealCardMacros: { flexDirection: 'row', gap: 16 },
+  mCardMacro: { flexDirection: 'row', alignItems: 'baseline' },
+  mCardVal: { color: '#F8FAFC', fontSize: 14, fontWeight: '900' },
+  mCardLab: { color: '#64748B', fontSize: 11, fontWeight: '700', marginLeft: 2 },
 });
