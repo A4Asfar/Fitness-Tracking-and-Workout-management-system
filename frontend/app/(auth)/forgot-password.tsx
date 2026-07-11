@@ -1,163 +1,118 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity
+  View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity,
+  TextInput, ActivityIndicator, Animated
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Mail, ArrowLeft } from 'lucide-react-native';
+import { Mail, ArrowLeft, KeyRound } from 'lucide-react-native';
 import { useToast } from '@/components/Toast';
-import { getRecoveryErrorMessage, postAuthRecovery } from '@/services/authRecovery';
-
-import LogoSection from '@/components/auth/LogoSection';
-import InputField from '@/components/auth/InputField';
-import PrimaryButton from '@/components/auth/PrimaryButton';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import api from '@/services/api';
 
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { showToast } = useToast();
 
-  const handleRequestOTP = async () => {
-    const normalizedEmail = email.trim().toLowerCase();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
 
-    if (!normalizedEmail) {
-      setError('Email address is required');
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 600, useNativeDriver: true })
+    ]).start();
+  }, []);
+
+  const handleSendOtp = async () => {
+    if (!email) {
+      showToast('Please enter your email address', 'error');
       return;
     }
-    if (!/\S+@\S+\.\S+/.test(normalizedEmail)) {
-      setError('Enter a valid email address');
-      return;
-    }
-
-    setError(null);
     setLoading(true);
     try {
-      const data = await postAuthRecovery<{ message: string; devOtp?: string }>(
-        '/auth/forgot-password',
-        { email: normalizedEmail }
-      );
-
-      if (__DEV__ && data.devOtp) {
-        showToast(`Dev OTP: ${data.devOtp}`, 'info');
-      } else {
-        showToast('Reset code sent to your email!', 'success');
-      }
-
-      router.push({
-        pathname: '/(auth)/verify-otp',
-        params: { email: normalizedEmail },
-      });
-    } catch (err: unknown) {
-      showToast(getRecoveryErrorMessage(err, 'Failed to send OTP'), 'error');
+      await api.post('/auth/forgot-password', { email });
+      showToast('OTP sent to your email', 'success');
+      router.push(`/(auth)/verify-otp?email=${encodeURIComponent(email)}`);
+    } catch (error: any) {
+      showToast(error.response?.data?.message || 'Failed to send OTP', 'error');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      style={styles.container}
-    >
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        <TouchableOpacity
-          onPress={() => router.back()}
-          style={styles.backBtn}
-          activeOpacity={0.7}
-        >
-          <ArrowLeft size={20} color="#0F172A" />
+    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.container}>
+      <LinearGradient colors={['#0F172A', '#1E293B']} style={s.background} />
+      
+      <ScrollView contentContainerStyle={[s.scroll, { paddingTop: insets.top + 20 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+        
+        <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
+          <ArrowLeft size={24} color="#F8FAFC" />
         </TouchableOpacity>
 
-        <LogoSection />
+        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], alignItems: 'center', marginBottom: 40, marginTop: 20 }}>
+          <View style={s.logoWrapper}>
+            <KeyRound size={36} color="#8B5CF6" />
+          </View>
+          <Text style={s.title}>Password Recovery</Text>
+          <Text style={s.subtitle}>Enter your email to receive a secure reset code</Text>
+        </Animated.View>
 
-        <View style={styles.card}>
-          <Text style={styles.title}>Forgot Password</Text>
-          <Text style={styles.subtitle}>
-            Enter your email and we will send a 6-digit verification code
-          </Text>
+        <Animated.View style={[s.formCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+          
+          <View style={s.inputContainer}>
+            <Text style={s.inputLabel}>Registered Email</Text>
+            <View style={s.inputWrapper}>
+              <Mail size={18} color="#64748B" style={s.inputIcon} />
+              <TextInput
+                style={s.inputField}
+                placeholder="e.g. champion@fitai.com"
+                placeholderTextColor="#64748B"
+                value={email}
+                onChangeText={setEmail}
+                keyboardType="email-address"
+                autoCapitalize="none"
+                editable={!loading}
+              />
+            </View>
+          </View>
 
-          <InputField
-            label="Email Address"
-            icon={Mail}
-            placeholder="e.g. champion@elevatefit.com"
-            value={email}
-            onChangeText={(txt) => {
-              setEmail(txt);
-              if (error) setError(null);
-            }}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            error={error || undefined}
-            editable={!loading}
-          />
+          <TouchableOpacity onPress={handleSendOtp} disabled={loading} activeOpacity={0.8} style={s.primaryBtnWrapper}>
+            <LinearGradient colors={['#8B5CF6', '#6D28D9']} style={s.primaryBtn}>
+              {loading ? <ActivityIndicator color="#FFF" /> : <Text style={s.primaryBtnText}>Send Recovery Code</Text>}
+            </LinearGradient>
+          </TouchableOpacity>
 
-          <PrimaryButton
-            title={loading ? 'Sending code...' : 'Send Code'}
-            onPress={handleRequestOTP}
-            loading={loading}
-          />
-        </View>
+        </Animated.View>
       </ScrollView>
     </KeyboardAvoidingView>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  scroll: {
-    flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 36,
-  },
-  backBtn: {
-    position: 'absolute',
-    top: 50,
-    left: 24,
-    width: 40,
-    height: 40,
-    borderRadius: 14,
-    backgroundColor: '#FFFFFF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    zIndex: 10,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 28,
-    padding: 24,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 10 },
-    shadowOpacity: 0.04,
-    shadowRadius: 20,
-    elevation: 3,
-  },
-  title: {
-    color: '#0F172A',
-    fontSize: 22,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-    textAlign: 'center',
-  },
-  subtitle: {
-    color: '#64748B',
-    fontSize: 13,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginTop: 4,
-    marginBottom: 24,
-    lineHeight: 18,
-  },
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0F172A' },
+  background: { ...StyleSheet.absoluteFillObject },
+  scroll: { flexGrow: 1, paddingHorizontal: 24, paddingBottom: 40 },
+  
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' },
+  
+  logoWrapper: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(139,92,246,0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(139,92,246,0.2)' },
+  title: { color: '#F8FAFC', fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8 },
+  subtitle: { color: '#94A3B8', fontSize: 15, fontWeight: '500', textAlign: 'center', paddingHorizontal: 20 },
+  
+  formCard: { backgroundColor: '#1E293B', borderRadius: 32, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.3, shadowRadius: 30, elevation: 10 },
+  
+  inputContainer: { marginBottom: 24 },
+  inputLabel: { color: '#94A3B8', fontSize: 13, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 },
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0F172A', borderRadius: 16, height: 56, paddingHorizontal: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  inputIcon: { marginRight: 12 },
+  inputField: { flex: 1, color: '#F8FAFC', fontSize: 16, fontWeight: '600' },
+
+  primaryBtnWrapper: { borderRadius: 16, overflow: 'hidden' },
+  primaryBtn: { height: 56, justifyContent: 'center', alignItems: 'center' },
+  primaryBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' }
 });
