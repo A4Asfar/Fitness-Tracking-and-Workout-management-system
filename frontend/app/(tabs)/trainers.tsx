@@ -25,6 +25,7 @@ export default function TrainersListScreen() {
 
   // Search & Filter State
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedSpecialty, setSelectedSpecialty] = useState('All');
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [filters, setFilters] = useState({
     verifiedOnly: false,
@@ -79,6 +80,14 @@ export default function TrainersListScreen() {
         (t.city || '').toLowerCase().includes(q) ||
         (t.specializations || []).some((s: string) => s.toLowerCase().includes(q)) ||
         (t.specialization || '').toLowerCase().includes(q)
+      );
+    }
+
+    // Specialty Filter
+    if (selectedSpecialty !== 'All') {
+      result = result.filter(t => 
+        (t.specializations || []).some((s: string) => s.toLowerCase().includes(selectedSpecialty.toLowerCase())) || 
+        (t.specialization || '').toLowerCase().includes(selectedSpecialty.toLowerCase())
       );
     }
 
@@ -150,6 +159,18 @@ export default function TrainersListScreen() {
         </TouchableOpacity>
       </View>
 
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, marginBottom: 24, paddingHorizontal: 4 }}>
+        {['All', 'Strength', 'Yoga', 'HIIT', 'Cardio', 'CrossFit', 'Pilates', 'Functional'].map(spec => (
+          <TouchableOpacity 
+            key={spec}
+            style={[s.specialtyChip, selectedSpecialty === spec && s.specialtyChipActive]}
+            onPress={() => setSelectedSpecialty(spec)}
+          >
+            <Text style={[s.specialtyChipText, selectedSpecialty === spec && s.specialtyChipTextActive]}>{spec}</Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
       {featuredTrainers.length > 0 && !searchQuery && (
         <View style={s.featuredSection}>
           <Text style={s.sectionTitle}>Featured Coaches</Text>
@@ -179,14 +200,17 @@ export default function TrainersListScreen() {
     if (loading) return null;
     return (
       <View style={s.emptyContainer}>
-        <UserX size={48} color="#CBD5E1" style={{ marginBottom: 16 }} />
+        <View style={s.emptyIconBox}>
+          <Search size={32} color="#94A3B8" />
+        </View>
         <Text style={s.emptyTitle}>No Coaches Found</Text>
-        <Text style={s.emptySub}>We couldn't find any trainers matching your current filters or search.</Text>
+        <Text style={s.emptySub}>We couldn't find any elite trainers matching your specific filters or search query.</Text>
         <TouchableOpacity style={s.clearBtn} onPress={() => {
           setSearchQuery('');
+          setSelectedSpecialty('All');
           setFilters({ verifiedOnly: false, featuredOnly: false, availability: 'All', sortBy: 'Highest Rated' });
         }}>
-          <Text style={s.clearBtnText}>Clear All Filters</Text>
+          <Text style={s.clearBtnText}>Reset All Filters</Text>
         </TouchableOpacity>
       </View>
     );
@@ -395,32 +419,63 @@ const s = StyleSheet.create({
   emptyContainer: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingVertical: 60,
+    paddingVertical: 80,
+    paddingHorizontal: 24,
+  },
+  emptyIconBox: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: '#F1F5F9',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
   },
   emptyTitle: {
-    fontSize: 18,
-    fontWeight: '800',
+    fontSize: 22,
+    fontWeight: '900',
     color: '#0F172A',
-    marginBottom: 8,
+    marginBottom: 12,
   },
   emptySub: {
-    fontSize: 14,
+    fontSize: 15,
     color: '#64748B',
     textAlign: 'center',
     lineHeight: 22,
-    paddingHorizontal: 20,
-    marginBottom: 24,
+    marginBottom: 32,
   },
   clearBtn: {
+    backgroundColor: '#0F172A',
     paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 20,
+    paddingVertical: 14,
+    borderRadius: 16,
   },
   clearBtnText: {
-    color: '#0F172A',
-    fontWeight: '700',
+    color: '#FFF',
+    fontSize: 15,
+    fontWeight: '800',
+  },
+  specialtyChip: {
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 100,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  specialtyChipActive: {
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
+  },
+  specialtyChipText: {
     fontSize: 14,
+    fontWeight: '700',
+    color: '#475569',
+  },
+  specialtyChipTextActive: {
+    color: '#FFFFFF',
   },
   errorContainer: {
     flex: 1,
