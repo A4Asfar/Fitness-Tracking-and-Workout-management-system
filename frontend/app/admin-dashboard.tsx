@@ -15,7 +15,8 @@ import {
   CreditCard,
   Trash2,
   Calendar,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  LogOut
 } from 'lucide-react-native';
 import { isAdminUser } from '@/utils/isAdmin';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -62,7 +63,7 @@ function ToolCard({ icon: Icon, title, desc, onPress }: { icon: any; title: stri
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const insets = useSafeAreaInsets();
 
   const [refreshing, setRefreshing] = useState(false);
@@ -201,7 +202,15 @@ export default function AdminDashboard() {
             <Shield size={20} color="#38BDF8" />
             <Text style={styles.headerTitle}>Admin Center</Text>
           </View>
-          <View style={{ width: 44 }} />
+          <TouchableOpacity 
+            onPress={async () => {
+              await logout();
+              router.replace('/login');
+            }} 
+            style={[styles.backButton, { backgroundColor: '#EF444420' }]}
+          >
+            <LogOut size={20} color="#EF4444" />
+          </TouchableOpacity>
         </View>
 
         {/* ── Pill Navigation Tabs ── */}
