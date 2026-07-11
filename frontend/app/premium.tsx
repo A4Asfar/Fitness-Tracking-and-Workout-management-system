@@ -36,7 +36,7 @@ export default function PremiumScreen() {
         const res = await api.get('/premium/my');
         setStatus(res.data);
       } catch (err) {
-        console.log(err);
+
       } finally {
         setLoading(false);
       }

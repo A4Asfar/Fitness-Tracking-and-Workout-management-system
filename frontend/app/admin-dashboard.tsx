@@ -110,7 +110,7 @@ export default function AdminDashboard() {
       setBookingsList(bk.data.bookings);
       setSettings(se.data);
     } catch (e) {
-      console.log('Admin Fetch Error:', e);
+
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -136,7 +136,7 @@ export default function AdminDashboard() {
       await api.patch(`/admin/users/${userId}/role`, { role: newRole });
       fetchData();
     } catch (e) {
-      console.log(e);
+
     }
   };
 
@@ -145,7 +145,7 @@ export default function AdminDashboard() {
       await api.delete(`/admin/users/${userId}`);
       fetchData();
     } catch (e) {
-      console.log(e);
+
     }
   };
 
@@ -154,7 +154,7 @@ export default function AdminDashboard() {
       await api.patch(`/bookings/${bookingId}/status`, { status: 'Confirmed' });
       fetchData();
     } catch (e) {
-      console.log(e);
+
     }
   };
 
@@ -163,7 +163,7 @@ export default function AdminDashboard() {
       await api.put('/admin/settings', settings);
       alert('System Settings updated successfully!');
     } catch (e) {
-      console.log(e);
+
     }
   };
 

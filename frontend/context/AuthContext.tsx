@@ -104,7 +104,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         setUser(response.data);
         await Storage.setItem('authUser', JSON.stringify(response.data));
-        if (__DEV__) console.log('✅ Session synchronized for:', response.data.email);
+
       } catch (error: unknown) {
         const message = error instanceof Error ? error.message : '';
         const status = axios.isAxiosError(error) ? error.response?.status : undefined;
@@ -119,7 +119,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           setAuthToken(null);
           setUser(null);
         } else if (__DEV__) {
-          console.log('Session refresh skipped (offline or server unavailable)');
+
         }
       }
     };
@@ -146,7 +146,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await Storage.setItem('authToken', newToken);
     await Storage.setItem('authUser', JSON.stringify(userData));
     setIsNewUser(false);
-    if (__DEV__) console.log('🔑 Login successful for:', userData.email);
+
   }, []);
 
   /**
@@ -163,7 +163,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await Storage.setItem('authToken', newToken);
     await Storage.setItem('authUser', JSON.stringify(userData));
     setIsNewUser(true);
-    if (__DEV__) console.log('✨ Account created for:', userData.email);
+
   }, []);
 
   /**
@@ -175,7 +175,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUser(null);
     await Storage.removeItem('authToken');
     await Storage.removeItem('authUser');
-    if (__DEV__) console.log('🔒 Session cleared - user logged out');
+
   }, []);
   
   /**
@@ -200,7 +200,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(response.data);
       await Storage.setItem('authUser', JSON.stringify(response.data));
     } catch (error) {
-      console.log('Failed to refresh user data');
+
     }
   }, []);
 

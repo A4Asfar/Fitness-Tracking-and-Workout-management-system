@@ -83,7 +83,7 @@ export default function HomeDashboard() {
       }).start();
 
     } catch (e: any) {
-      if (__DEV__) console.log('Home fetch error:', e);
+
       setError(e.message || 'Failed to sync dashboard.');
     } finally {
       setLoading(false);

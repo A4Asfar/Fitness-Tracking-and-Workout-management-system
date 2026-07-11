@@ -47,7 +47,7 @@ export default function ProfileSettingsScreen() {
         if (statusRes.data) setStatusInfo(statusRes.data);
         if (analyticsRes.data) setAnalytics(analyticsRes.data);
       } catch (e) {
-        console.log('Error fetching profile data:', e);
+
       } finally {
         setLoading(false);
       }
