@@ -44,10 +44,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { showToast } = useToast();
 
   useEffect(() => {
-    setOnUnauthorized(() => {
+    setOnUnauthorized((silent = false) => {
       setUser(null);
       setToken(null);
-      showToast('Your session has expired. Please sign in again.', 'error');
+      if (!silent) {
+        showToast('Your session has expired. Please sign in again.', 'error');
+      }
     });
   }, [showToast]);
 
@@ -92,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         finishBoot();
 
         const response = await Promise.race([
-          api.get('/auth/me', { skipRetry: true, timeout: 15000 } as any),
+          api.get('/auth/me', { skipRetry: true, timeout: 15000, skipSessionAlert: true } as any),
           new Promise<never>((_, reject) =>
             setTimeout(() => reject(new Error('Session check timed out')), 15000)
           ),

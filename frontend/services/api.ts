@@ -33,13 +33,13 @@ const api = axios.create({
  * Global memory cache for the token to avoid repeated storage reads
  */
 let authToken: string | null = null;
-let onUnauthorized: (() => void) | null = null;
+let onUnauthorized: ((silent?: boolean) => void) | null = null;
 
 export const setAuthToken = (token: string | null) => {
   authToken = token;
 };
 
-export const setOnUnauthorized = (callback: () => void) => {
+export const setOnUnauthorized = (callback: (silent?: boolean) => void) => {
   onUnauthorized = callback;
 };
 
@@ -122,8 +122,9 @@ api.interceptors.response.use(
         authToken = null;
         await Storage.removeItem('authToken');
         await Storage.removeItem('authUser');
+        const skipSessionAlert = Boolean((config as any).skipSessionAlert);
         if (onUnauthorized) {
-          onUnauthorized();
+          onUnauthorized(skipSessionAlert);
         }
         return Promise.reject(new Error('Your session has expired. Please sign in again.'));
       }
