@@ -112,7 +112,7 @@ export default function TrainersListScreen() {
     }
 
     return result;
-  }, [trainers, searchQuery, filters]);
+  }, [trainers, searchQuery, filters, selectedSpecialty]);
 
   const featuredTrainers = useMemo(() => {
     return filteredAndSortedTrainers.filter(t => t.featuredTrainer).slice(0, 5);
