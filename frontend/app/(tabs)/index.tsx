@@ -1,87 +1,57 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity
+  View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity,
+  Animated, Dimensions, ImageBackground, Image
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  PlusCircle, History as HistoryIcon, Users,
-  HeartPulse, Scale, Target
+  Plus, History as HistoryIcon, Users, Settings, Bell,
+  HeartPulse, Scale, Target, Flame, Droplet, Play, ChevronRight, Activity, Calendar, Zap, CheckCircle2, Dumbbell
 } from 'lucide-react-native';
 import { useRouter, Stack } from 'expo-router';
-import SkeletonCard, { SkeletonItem } from '@/components/SkeletonCard';
-
-// Extracted Premium Components
-import DashboardHeader from '@/components/dashboard/DashboardHeader';
-import HeroCard from '@/components/dashboard/HeroCard';
-import QuickActionCard from '@/components/dashboard/QuickActionCard';
-import WorkoutPreview from '@/components/dashboard/WorkoutPreview';
-import NutritionCard from '@/components/dashboard/NutritionCard';
-import AIInsightCard from '@/components/dashboard/AIInsightCard';
-import RecentActivityCard from '@/components/dashboard/RecentActivityCard';
-import SectionHeader from '@/components/dashboard/SectionHeader';
-import EmptyState from '@/components/workout/EmptyState';
+import { LinearGradient } from 'expo-linear-gradient';
 import Storage from '@/utils/storage';
 import PremiumOnboardingModal from '@/components/dashboard/PremiumOnboardingModal';
 import FloatingChatButton from '@/components/dashboard/FloatingChatButton';
 
-const QUICK_ACTIONS_CONFIG = [
-  {
-    title: 'Log Workout',
-    desc: 'Log training logs',
-    icon: PlusCircle,
-    route: '/create-workout',
-    color: '#10B981',
-  },
-  {
-    title: 'Find Trainer',
-    desc: 'Hire an expert',
-    icon: Users,
-    route: '/(tabs)/trainers',
-    color: '#00B0FF',
-  },
-  {
-    title: 'My Bookings',
-    desc: 'View sessions',
-    icon: HistoryIcon,
-    route: '/my-bookings',
-    color: '#A855F7',
-  },
-  {
-    title: 'Weight Logger',
-    desc: 'Record body weight',
-    icon: Scale,
-    route: '/weight-logger',
-    color: '#10B981',
-  },
-  {
-    title: 'Body Health',
-    desc: 'Track BMI & status',
-    icon: HeartPulse,
-    route: '/body-health',
-    color: '#00B0FF',
-  },
-  {
-    title: 'Diet & Nutrition',
-    desc: 'Manage daily meals',
-    icon: Target,
-    route: '/(tabs)/diet',
-    color: '#F59E0B',
-  },
-];
+const { width } = Dimensions.get('window');
+
+// Premium Skeleton Loader
+const SkeletonBlock = ({ width, height, style, borderRadius = 16 }: any) => {
+  const anim = useRef(new Animated.Value(0.3)).current;
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, { toValue: 0.7, duration: 800, useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 0.3, duration: 800, useNativeDriver: true })
+      ])
+    ).start();
+  }, []);
+  return (
+    <Animated.View style={[{ width, height, backgroundColor: '#1E293B', borderRadius, opacity: anim }, style]} />
+  );
+};
 
 export default function HomeDashboard() {
   const { user, isNewUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  
   const [stats, setStats] = useState<any>(null);
   const [recent, setRecent] = useState<any>(null);
-  const [insights, setInsights] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showOnboarding, setShowOnboarding] = useState(false);
+
+  // Premium UI Local States for Demo
+  const [waterGlasses, setWaterGlasses] = useState(4);
+  const totalWaterGoal = 8;
+  const quote = "Discipline is doing what you hate to do, but doing it like you love it.";
+
+  const fillAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const checkOnboarding = async () => {
@@ -102,22 +72,19 @@ export default function HomeDashboard() {
         api.get('/workouts/analytics'),
         api.get('/workouts'),
       ]);
-      
       setStats(analyticsRes.data);
-      setRecent(workoutsRes.data.slice(0, 3)); // Get top 3 recent workouts
+      setRecent(workoutsRes.data.slice(0, 3));
 
-      // Fetch premium insights if applicable
-      if (user?.membershipType === 'premium' || user?.membershipType === 'admin') {
-        const insightsRes = await api.get('/workouts/home-insights');
-        setInsights(insightsRes.data);
-      } else {
-        setInsights({
-          advice: "Upgrade to PRO to unlock advanced AI-driven training insights and personalized recovery scores."
-        });
-      }
+      // Trigger metric animations
+      Animated.timing(fillAnim, {
+        toValue: 1,
+        duration: 1500,
+        useNativeDriver: false,
+      }).start();
+
     } catch (e: any) {
       if (__DEV__) console.log('Home fetch error:', e);
-      setError(e.message || 'Failed to sync dashboard. Please check your connection.');
+      setError(e.message || 'Failed to sync dashboard.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -126,11 +93,8 @@ export default function HomeDashboard() {
 
   useEffect(() => {
     if (authLoading) return;
-    if (user) {
-      fetchData();
-    } else {
-      setLoading(false);
-    }
+    if (user) fetchData();
+    else setLoading(false);
   }, [user, authLoading]);
 
   const onRefresh = () => {
@@ -138,199 +102,254 @@ export default function HomeDashboard() {
     fetchData();
   };
 
-  const fmt = (d: string) => {
-    if (!d) return 'Never';
-    const diff = Math.floor((Date.now() - new Date(d).getTime()) / 86400000);
-    if (diff === 0) return 'Today';
-    if (diff === 1) return 'Yesterday';
-    if (diff < 7) return `${diff}d ago`;
-    return new Date(d).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return "Good Morning";
+    if (hour < 18) return "Good Afternoon";
+    return "Good Evening";
   };
 
   if (loading && !refreshing) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top + 16, paddingHorizontal: 20 }]}>
-        <View style={{ marginBottom: 24 }}>
-          <SkeletonItem width="40%" height={24} style={{ marginBottom: 8 }} />
-          <SkeletonItem width="60%" height={16} />
+      <View style={[s.container, { paddingTop: insets.top }]}>
+        <View style={{ padding: 24 }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 }}>
+            <View>
+              <SkeletonBlock width={120} height={16} style={{ marginBottom: 8 }} />
+              <SkeletonBlock width={180} height={28} />
+            </View>
+            <SkeletonBlock width={48} height={48} borderRadius={24} />
+          </View>
+          <SkeletonBlock width="100%" height={200} style={{ marginBottom: 24 }} borderRadius={32} />
+          <View style={{ flexDirection: 'row', gap: 16, marginBottom: 24 }}>
+            <SkeletonBlock width={(width - 64) / 2} height={140} borderRadius={24} />
+            <SkeletonBlock width={(width - 64) / 2} height={140} borderRadius={24} />
+          </View>
+          <SkeletonBlock width="100%" height={100} borderRadius={24} />
         </View>
-        <SkeletonCard style={{ height: 180, marginBottom: 20 }} />
-        <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20 }}>
-          <SkeletonCard style={{ flex: 1, height: 100 }} />
-          <SkeletonCard style={{ flex: 1, height: 100 }} />
-        </View>
-        <SkeletonCard style={{ height: 120 }} />
       </View>
     );
   }
 
   if (error && !refreshing) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorTitle}>SYNC ERROR</Text>
-        <Text style={styles.errorText}>{error}</Text>
-        <TouchableOpacity 
-          onPress={() => { setLoading(true); fetchData(); }} 
-          style={styles.retryBtn}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.retryText}>RETRY SYNC</Text>
+      <View style={s.errorContainer}>
+        <Activity size={48} color="#EF4444" style={{ marginBottom: 16 }} />
+        <Text style={s.errorTitle}>CONNECTION ERROR</Text>
+        <Text style={s.errorText}>{error}</Text>
+        <TouchableOpacity onPress={() => { setLoading(true); fetchData(); }} style={s.retryBtn}>
+          <Text style={s.retryText}>RETRY SYNC</Text>
         </TouchableOpacity>
       </View>
     );
   }
 
-  const isPremium = user?.membershipType === 'premium' || user?.membershipType === 'admin';
+  const calBurned = stats?.todayCalories || stats?.weeklyStats?.[6]?.calories || 0;
+  const calGoal = 600; 
 
   return (
-    <View style={styles.container}>
+    <View style={s.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
       <ScrollView
-        style={styles.scrollView}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 }}
         showsVerticalScrollIndicator={false}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#10B981" />
-        }
+        contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#38BDF8" />}
       >
-        {/* Dynamic header welcome */}
-        <DashboardHeader 
-          userName={user?.name || 'Athlete'}
-          streakCount={stats?.streak || 0}
-          onNotificationPress={() => router.push('/notifications' as any)}
-          onSettingsPress={() => router.push('/settings' as any)}
-        />
-
-        <View style={styles.content}>
-          {/* Main Hero Card stats */}
-          <HeroCard 
-            steps={stats?.todaySteps || 0}
-            calories={stats?.weeklyStats?.[6]?.calories || 0}
-            activeMinutes={stats?.weeklyStats?.[6]?.duration || 0}
-            streak={stats?.streak || 0}
-          />
-
-          {/* Quick Actions Shortcuts */}
-          <SectionHeader title="Quick Actions" />
-          <View style={styles.actionsGrid}>
-            <View style={styles.gridRow}>
-              <QuickActionCard 
-                title={QUICK_ACTIONS_CONFIG[0].title}
-                desc={QUICK_ACTIONS_CONFIG[0].desc}
-                icon={QUICK_ACTIONS_CONFIG[0].icon}
-                accentColor={QUICK_ACTIONS_CONFIG[0].color}
-                onPress={() => router.push(QUICK_ACTIONS_CONFIG[0].route as any)}
-              />
-              <QuickActionCard 
-                title={QUICK_ACTIONS_CONFIG[1].title}
-                desc={QUICK_ACTIONS_CONFIG[1].desc}
-                icon={QUICK_ACTIONS_CONFIG[1].icon}
-                accentColor={QUICK_ACTIONS_CONFIG[1].color}
-                onPress={() => router.push(QUICK_ACTIONS_CONFIG[1].route as any)}
-              />
+        {/* PREMIUM HERO HEADER */}
+        <LinearGradient colors={['#1E293B', '#0F172A']} style={[s.heroSection, { paddingTop: insets.top + 16 }]}>
+          <View style={s.headerRow}>
+            <View>
+              <Text style={s.greetingText}>{getGreeting()},</Text>
+              <Text style={s.userName}>{user?.name?.split(' ')[0] || 'Athlete'}</Text>
             </View>
-            <View style={styles.gridRow}>
-              <QuickActionCard 
-                title={QUICK_ACTIONS_CONFIG[2].title}
-                desc={QUICK_ACTIONS_CONFIG[2].desc}
-                icon={QUICK_ACTIONS_CONFIG[2].icon}
-                accentColor={QUICK_ACTIONS_CONFIG[2].color}
-                onPress={() => router.push(QUICK_ACTIONS_CONFIG[2].route as any)}
-              />
-              <QuickActionCard 
-                title={QUICK_ACTIONS_CONFIG[3].title}
-                desc={QUICK_ACTIONS_CONFIG[3].desc}
-                icon={QUICK_ACTIONS_CONFIG[3].icon}
-                accentColor={QUICK_ACTIONS_CONFIG[3].color}
-                onPress={() => router.push(QUICK_ACTIONS_CONFIG[3].route as any)}
-              />
-            </View>
-            <View style={styles.gridRow}>
-              <QuickActionCard 
-                title={QUICK_ACTIONS_CONFIG[4].title}
-                desc={QUICK_ACTIONS_CONFIG[4].desc}
-                icon={QUICK_ACTIONS_CONFIG[4].icon}
-                accentColor={QUICK_ACTIONS_CONFIG[4].color}
-                onPress={() => router.push(QUICK_ACTIONS_CONFIG[4].route as any)}
-              />
-              <QuickActionCard 
-                title={QUICK_ACTIONS_CONFIG[5].title}
-                desc={QUICK_ACTIONS_CONFIG[5].desc}
-                icon={QUICK_ACTIONS_CONFIG[5].icon}
-                accentColor={QUICK_ACTIONS_CONFIG[5].color}
-                onPress={() => router.push(QUICK_ACTIONS_CONFIG[5].route as any)}
-              />
+            <View style={s.headerIcons}>
+              <TouchableOpacity style={s.iconBtn} onPress={() => router.push('/notifications' as any)}>
+                <Bell size={22} color="#F8FAFC" />
+                <View style={s.notificationDot} />
+              </TouchableOpacity>
+              <TouchableOpacity style={s.iconBtn} onPress={() => router.push('/settings' as any)}>
+                <Image source={{ uri: user?.avatar || 'https://via.placeholder.com/150' }} style={s.avatarImg} />
+              </TouchableOpacity>
             </View>
           </View>
 
-          {/* AI Coach Insights */}
-          <AIInsightCard 
-            insightText={stats?.insight || insights?.advice || 'Upgrade to PRO to unlock advanced AI-driven training insights and recovery scores.'}
-            isPremium={isPremium}
-            onPress={() => router.push(isPremium ? '/insights' : '/premium' as any)}
-          />
+          {/* MOTIVATIONAL QUOTE */}
+          <View style={s.quoteBox}>
+            <Zap size={16} color="#FDE047" fill="#FDE047" style={{ marginRight: 8 }} />
+            <Text style={s.quoteText}>{quote}</Text>
+          </View>
 
-          {/* Today's Recommended Routine */}
-          <WorkoutPreview 
-            workoutName="Full Body Strength Routine"
-            duration="45 min"
-            calories={350}
-            difficulty="Intermediate"
-            targetMuscles="Chest, Legs, Back, Core"
-            onPress={() => router.push('/create-workout?type=Strength' as any)}
-          />
+          {/* MAIN STATS OVERVIEW */}
+          <View style={s.heroStatsRow}>
+            <View style={s.heroStatItem}>
+              <View style={[s.heroStatIconBox, { backgroundColor: 'rgba(239,68,68,0.15)' }]}>
+                <Flame size={20} color="#EF4444" />
+              </View>
+              <Text style={s.heroStatValue}>{calBurned}</Text>
+              <Text style={s.heroStatLabel}>Kcal Burned</Text>
+            </View>
+            
+            <View style={s.heroStatDivider} />
+            
+            <View style={s.heroStatItem}>
+              <View style={[s.heroStatIconBox, { backgroundColor: 'rgba(56,189,248,0.15)' }]}>
+                <Activity size={20} color="#38BDF8" />
+              </View>
+              <Text style={s.heroStatValue}>{stats?.todaySteps || 0}</Text>
+              <Text style={s.heroStatLabel}>Steps Today</Text>
+            </View>
 
-          {/* Energy balance & Macros */}
-          <NutritionCard 
-            consumed={stats?.caloriesSummary?.consumed || 0}
-            burned={stats?.caloriesSummary?.burned || 0}
-            target={stats?.caloriesSummary?.target || 2000}
-          />
+            <View style={s.heroStatDivider} />
+            
+            <View style={s.heroStatItem}>
+              <View style={[s.heroStatIconBox, { backgroundColor: 'rgba(245,158,11,0.15)' }]}>
+                <Target size={20} color="#F59E0B" />
+              </View>
+              <Text style={s.heroStatValue}>{stats?.streak || 0}</Text>
+              <Text style={s.heroStatLabel}>Day Streak</Text>
+            </View>
+          </View>
+        </LinearGradient>
 
-          {/* Recent sessions tracker */}
-          <SectionHeader 
-            title="Recent Sessions" 
-            actionLabel="View All"
-            onActionPress={() => router.push('/(tabs)/workouts' as any)}
-          />
+        <View style={s.mainContent}>
+          {/* TODAY'S WORKOUT ACTION CARD */}
+          <TouchableOpacity style={s.todaysWorkoutCard} activeOpacity={0.9} onPress={() => router.push('/create-workout')}>
+            <ImageBackground source={{ uri: 'https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80' }} style={s.workoutBg} imageStyle={{ borderRadius: 28 }}>
+              <LinearGradient colors={['transparent', 'rgba(15,23,42,0.95)']} style={s.workoutGradient}>
+                <View style={s.workoutTag}><Text style={s.workoutTagText}>TODAY'S PLAN</Text></View>
+                <Text style={s.workoutTitle}>Full Body Power</Text>
+                <View style={s.workoutMetaRow}>
+                  <Text style={s.workoutMetaText}>45 Min</Text>
+                  <Text style={s.workoutMetaDot}>•</Text>
+                  <Text style={s.workoutMetaText}>Intermediate</Text>
+                  <Text style={s.workoutMetaDot}>•</Text>
+                  <Text style={s.workoutMetaText}>Strength</Text>
+                </View>
+                <View style={s.playBtn}>
+                  <Play size={20} color="#0F172A" fill="#0F172A" style={{ marginLeft: 3 }} />
+                  <Text style={s.playBtnText}>Start Workout</Text>
+                </View>
+              </LinearGradient>
+            </ImageBackground>
+          </TouchableOpacity>
 
-          <View style={styles.timelineList}>
-            {recent && recent.length > 0 ? (
-              recent.map((item: any, index: number) => {
-                const getAccent = (typeStr: string) => {
-                  switch (typeStr) {
-                    case 'Strength': return '#10B981';
-                    case 'Cardio': return '#FF4B4B';
-                    case 'HIIT': return '#00B0FF';
-                    case 'Yoga': return '#BD00FF';
-                    default: return '#10B981';
-                  }
-                };
+          {/* DUAL METRICS GRID */}
+          <View style={s.metricsGrid}>
+            {/* WATER TRACKER */}
+            <TouchableOpacity style={s.metricCard} onPress={() => setWaterGlasses(Math.min(waterGlasses + 1, 10))}>
+              <View style={s.metricCardHeader}>
+                <View style={[s.metricIconBox, { backgroundColor: 'rgba(56,189,248,0.15)' }]}><Droplet size={18} color="#38BDF8" /></View>
+                <Text style={s.metricCardTitle}>Hydration</Text>
+              </View>
+              <Text style={s.metricMainValue}>{waterGlasses}<Text style={s.metricSubValue}> / {totalWaterGoal}</Text></Text>
+              <View style={s.progressBarBg}>
+                <Animated.View style={[s.progressBarFill, { backgroundColor: '#38BDF8', width: `${Math.min((waterGlasses / totalWaterGoal) * 100, 100)}%` }]} />
+              </View>
+              <Text style={s.metricActionText}>+ Tap to log water</Text>
+            </TouchableOpacity>
+
+            {/* WEIGHT PROGRESS */}
+            <TouchableOpacity style={s.metricCard} onPress={() => router.push('/weight-logger' as any)}>
+              <View style={s.metricCardHeader}>
+                <View style={[s.metricIconBox, { backgroundColor: 'rgba(16,185,129,0.15)' }]}><Scale size={18} color="#10B981" /></View>
+                <Text style={s.metricCardTitle}>Weight</Text>
+              </View>
+              <Text style={s.metricMainValue}>72.5<Text style={s.metricSubValue}> kg</Text></Text>
+              <View style={s.progressBarBg}>
+                <Animated.View style={[s.progressBarFill, { backgroundColor: '#10B981', width: '65%' }]} />
+              </View>
+              <Text style={s.metricActionText}>2.5 kg to goal</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* WEEKLY PROGRESS CHART */}
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>Weekly Progress</Text>
+            <TouchableOpacity><Text style={s.sectionAction}>Details</Text></TouchableOpacity>
+          </View>
+          <View style={s.chartCard}>
+            <View style={s.chartStatsRow}>
+              <View>
+                <Text style={s.chartLabel}>Avg. Calories</Text>
+                <Text style={s.chartBigValue}>420<Text style={s.chartSmallValue}> /day</Text></Text>
+              </View>
+              <View>
+                <Text style={s.chartLabel}>Total Workouts</Text>
+                <Text style={s.chartBigValue}>{stats?.weeklyStats?.length || 4}</Text>
+              </View>
+            </View>
+            <View style={s.barsContainer}>
+              {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, idx) => {
+                const heights = [40, 70, 30, 85, 50, 0, 0];
+                const h = heights[idx];
+                const isToday = idx === 3; // Mock Thursday for visual
                 return (
-                  <RecentActivityCard 
-                    key={item._id || index}
-                    title={item.exercise}
-                    time={fmt(item.date)}
-                    calories={Math.round((item.duration || 30) * 8.5)}
-                    duration={`${item.duration || 30} min`}
-                    accentColor={getAccent(item.type)}
-                    onPress={() => router.push(`/workout/${item._id}` as any)}
-                  />
+                  <View key={idx} style={s.barColumn}>
+                    <View style={s.barTrack}>
+                      <LinearGradient colors={isToday ? ['#38BDF8', '#0EA5E9'] : ['#334155', '#1E293B']} style={[s.barFill, { height: `${h}%` }]} />
+                    </View>
+                    <Text style={[s.barLabel, isToday && s.barLabelToday]}>{day}</Text>
+                  </View>
                 );
-              })
-            ) : (
-              <EmptyState 
-                title="No Workouts Logged"
-                description="Your activity history is clean. Tap below to log your first training session!"
-                buttonLabel="Start Workout"
-                onButtonPress={() => router.push('/create-workout' as any)}
-                accentColor="#10B981"
-              />
+              })}
+            </View>
+          </View>
+
+          {/* QUICK ACTIONS */}
+          <Text style={s.sectionTitle}>Quick Actions</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.quickActionsScroll}>
+            {[
+              { title: 'Log Workout', icon: Plus, color: '#10B981', route: '/create-workout' },
+              { title: 'Find Coach', icon: Users, color: '#38BDF8', route: '/(tabs)/trainers' },
+              { title: 'My Bookings', icon: HistoryIcon, color: '#A855F7', route: '/my-bookings' },
+              { title: 'Diet Plan', icon: Target, color: '#F59E0B', route: '/(tabs)/diet' },
+            ].map((act, i) => (
+              <TouchableOpacity key={i} style={s.quickActionCard} onPress={() => router.push(act.route as any)}>
+                <View style={[s.qaIconBox, { backgroundColor: `${act.color}15` }]}>
+                  <act.icon size={24} color={act.color} />
+                </View>
+                <Text style={s.qaTitle}>{act.title}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          {/* RECENT ACTIVITY */}
+          <View style={s.sectionHeader}>
+            <Text style={s.sectionTitle}>Recent Activity</Text>
+            <TouchableOpacity onPress={() => router.push('/(tabs)/workouts' as any)}><Text style={s.sectionAction}>View All</Text></TouchableOpacity>
+          </View>
+          
+          <View style={s.recentContainer}>
+            {recent && recent.length > 0 ? recent.map((item: any, i: number) => {
+              const dateObj = new Date(item.date);
+              return (
+                <TouchableOpacity key={item._id || i} style={s.recentCard} onPress={() => router.push(`/workout/${item._id}`)}>
+                  <View style={s.recentIconBox}>
+                    <Dumbbell size={20} color="#F8FAFC" />
+                  </View>
+                  <View style={s.recentInfo}>
+                    <Text style={s.recentTitle}>{item.exercise}</Text>
+                    <Text style={s.recentMeta}>{item.duration || 30} Min • {Math.round((item.duration || 30) * 8.5)} Kcal</Text>
+                  </View>
+                  <Text style={s.recentDate}>{dateObj.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })}</Text>
+                </TouchableOpacity>
+              );
+            }) : (
+              <View style={s.emptyStateBox}>
+                <Activity size={32} color="#334155" style={{ marginBottom: 12 }} />
+                <Text style={s.emptyStateTitle}>No Recent Workouts</Text>
+                <Text style={s.emptyStateSub}>Your fitness journey starts today. Log your first session to see it here.</Text>
+                <TouchableOpacity style={s.emptyStateBtn} onPress={() => router.push('/create-workout')}>
+                  <Text style={s.emptyStateBtnText}>Log Workout</Text>
+                </TouchableOpacity>
+              </View>
             )}
           </View>
+
         </View>
       </ScrollView>
+
       {user && (
         <PremiumOnboardingModal
           visible={showOnboarding}
@@ -343,80 +362,90 @@ export default function HomeDashboard() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  scrollView: {
-    flex: 1,
-  },
-  content: {
-    paddingHorizontal: 20,
-    marginTop: 10,
-  },
-  loaderContainer: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    gap: 14,
-  },
-  loaderText: {
-    color: '#64748B',
-    fontSize: 14,
-    fontWeight: '600',
-  },
-  errorContainer: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  errorTitle: {
-    color: '#FF4D4D',
-    fontSize: 18,
-    fontWeight: '900',
-    marginBottom: 8,
-    letterSpacing: 0.5,
-  },
-  errorText: {
-    color: '#64748B',
-    fontSize: 14,
-    fontWeight: '500',
-    textAlign: 'center',
-    marginBottom: 28,
-    lineHeight: 22,
-  },
-  retryBtn: {
-    height: 52,
-    width: 160,
-    borderRadius: 16,
-    backgroundColor: '#10B981',
-    justifyContent: 'center',
-    alignItems: 'center',
-    shadowColor: '#10B981',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 3,
-  },
-  retryText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '900',
-    letterSpacing: 0.5,
-  },
-  actionsGrid: {
-    gap: 12,
-    marginBottom: 20,
-  },
-  gridRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  timelineList: {
-    marginTop: 4,
-  },
+const s = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#0F172A' },
+  heroSection: { borderBottomLeftRadius: 32, borderBottomRightRadius: 32, paddingHorizontal: 24, paddingBottom: 32, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
+  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+  greetingText: { fontSize: 16, color: '#94A3B8', fontWeight: '600', letterSpacing: 0.5 },
+  userName: { fontSize: 32, color: '#F8FAFC', fontWeight: '900', letterSpacing: -1, marginTop: 4 },
+  headerIcons: { flexDirection: 'row', gap: 12, alignItems: 'center' },
+  iconBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  notificationDot: { position: 'absolute', top: 12, right: 12, width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444', borderWidth: 2, borderColor: '#1E293B' },
+  avatarImg: { width: 44, height: 44, borderRadius: 22 },
+  
+  quoteBox: { flexDirection: 'row', backgroundColor: 'rgba(255,255,255,0.05)', padding: 16, borderRadius: 16, alignItems: 'center', marginBottom: 32, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  quoteText: { flex: 1, color: '#CBD5E1', fontSize: 13, fontStyle: 'italic', fontWeight: '500', lineHeight: 20 },
+
+  heroStatsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  heroStatItem: { alignItems: 'center', flex: 1 },
+  heroStatIconBox: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 8 },
+  heroStatValue: { fontSize: 20, color: '#F8FAFC', fontWeight: '900', letterSpacing: -0.5 },
+  heroStatLabel: { fontSize: 11, color: '#94A3B8', fontWeight: '700', marginTop: 4, textTransform: 'uppercase' },
+  heroStatDivider: { width: 1, height: 40, backgroundColor: 'rgba(255,255,255,0.1)' },
+
+  mainContent: { paddingHorizontal: 20, paddingTop: 24 },
+  
+  todaysWorkoutCard: { height: 200, borderRadius: 28, overflow: 'hidden', marginBottom: 24, shadowColor: '#38BDF8', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.2, shadowRadius: 16, elevation: 8 },
+  workoutBg: { width: '100%', height: '100%' },
+  workoutGradient: { flex: 1, padding: 24, justifyContent: 'flex-end' },
+  workoutTag: { alignSelf: 'flex-start', backgroundColor: '#38BDF8', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 10, marginBottom: 12 },
+  workoutTagText: { color: '#0F172A', fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  workoutTitle: { color: '#F8FAFC', fontSize: 28, fontWeight: '900', letterSpacing: -1, marginBottom: 8 },
+  workoutMetaRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 20 },
+  workoutMetaText: { color: '#CBD5E1', fontSize: 13, fontWeight: '600' },
+  workoutMetaDot: { color: '#64748B', fontSize: 14, marginHorizontal: 8 },
+  playBtn: { flexDirection: 'row', backgroundColor: '#F8FAFC', alignSelf: 'flex-start', paddingHorizontal: 20, paddingVertical: 12, borderRadius: 100, alignItems: 'center' },
+  playBtnText: { color: '#0F172A', fontSize: 14, fontWeight: '900', marginLeft: 8 },
+
+  metricsGrid: { flexDirection: 'row', gap: 16, marginBottom: 32 },
+  metricCard: { flex: 1, backgroundColor: '#1E293B', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  metricCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
+  metricIconBox: { width: 32, height: 32, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  metricCardTitle: { color: '#94A3B8', fontSize: 13, fontWeight: '700' },
+  metricMainValue: { color: '#F8FAFC', fontSize: 24, fontWeight: '900', marginBottom: 12 },
+  metricSubValue: { color: '#64748B', fontSize: 14, fontWeight: '600' },
+  progressBarBg: { height: 6, backgroundColor: '#0F172A', borderRadius: 3, overflow: 'hidden', marginBottom: 12 },
+  progressBarFill: { height: '100%', borderRadius: 3 },
+  metricActionText: { color: '#94A3B8', fontSize: 12, fontWeight: '600' },
+
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  sectionTitle: { color: '#F8FAFC', fontSize: 20, fontWeight: '900', letterSpacing: -0.5 },
+  sectionAction: { color: '#38BDF8', fontSize: 14, fontWeight: '700' },
+
+  chartCard: { backgroundColor: '#1E293B', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 32 },
+  chartStatsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 },
+  chartLabel: { color: '#94A3B8', fontSize: 12, fontWeight: '700', marginBottom: 4 },
+  chartBigValue: { color: '#F8FAFC', fontSize: 24, fontWeight: '900' },
+  chartSmallValue: { color: '#64748B', fontSize: 14, fontWeight: '600' },
+  barsContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 120 },
+  barColumn: { alignItems: 'center', width: 32 },
+  barTrack: { width: 12, height: 100, backgroundColor: '#0F172A', borderRadius: 6, justifyContent: 'flex-end', marginBottom: 12 },
+  barFill: { width: 12, borderRadius: 6 },
+  barLabel: { color: '#64748B', fontSize: 12, fontWeight: '700' },
+  barLabelToday: { color: '#38BDF8', fontWeight: '900' },
+
+  quickActionsScroll: { gap: 16, marginBottom: 32, paddingRight: 20 },
+  quickActionCard: { width: 110, height: 120, backgroundColor: '#1E293B', borderRadius: 24, padding: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  qaIconBox: { width: 52, height: 52, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
+  qaTitle: { color: '#CBD5E1', fontSize: 12, fontWeight: '700', textAlign: 'center' },
+
+  recentContainer: { gap: 12, marginBottom: 20 },
+  recentCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B', padding: 16, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  recentIconBox: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#38BDF8', justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  recentInfo: { flex: 1 },
+  recentTitle: { color: '#F8FAFC', fontSize: 16, fontWeight: '800', marginBottom: 4 },
+  recentMeta: { color: '#94A3B8', fontSize: 13, fontWeight: '600' },
+  recentDate: { color: '#64748B', fontSize: 12, fontWeight: '700' },
+  
+  emptyStateBox: { backgroundColor: '#1E293B', borderRadius: 24, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', borderStyle: 'dashed' },
+  emptyStateTitle: { color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginBottom: 8 },
+  emptyStateSub: { color: '#94A3B8', fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  emptyStateBtn: { backgroundColor: '#38BDF8', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 100 },
+  emptyStateBtnText: { color: '#0F172A', fontSize: 14, fontWeight: '900' },
+
+  errorContainer: { flex: 1, backgroundColor: '#0F172A', justifyContent: 'center', alignItems: 'center', padding: 24 },
+  errorTitle: { color: '#EF4444', fontSize: 18, fontWeight: '900', marginBottom: 8, letterSpacing: 0.5 },
+  errorText: { color: '#94A3B8', fontSize: 15, textAlign: 'center', marginBottom: 32, lineHeight: 22 },
+  retryBtn: { backgroundColor: '#1E293B', paddingHorizontal: 24, paddingVertical: 14, borderRadius: 16, borderWidth: 1, borderColor: '#334155' },
+  retryText: { color: '#F8FAFC', fontWeight: '800', fontSize: 14 },
 });
