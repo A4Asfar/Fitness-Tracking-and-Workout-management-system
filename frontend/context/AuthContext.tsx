@@ -20,6 +20,7 @@ export interface User {
   trainingLevel: 'Beginner' | 'Intermediate' | 'Advanced' | 'Elite';
   preferredWorkoutFocus?: 'Strength' | 'Cardio' | 'HIIT' | 'Yoga';
   avatar: string;
+  bio?: string;
 }
 
 interface AuthContextType {

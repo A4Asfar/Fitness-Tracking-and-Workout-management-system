@@ -15,6 +15,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useToast } from '@/components/Toast';
 import { hapticSuccess, hapticError, hapticWarning } from '@/utils/haptics';
+import WebCropper from '@/components/WebCropper';
 
 const GOALS = ['Weight Loss', 'Muscle Gain', 'Maintain Fitness', 'Endurance', 'General Fitness'] as const;
 const LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Elite'] as const;
@@ -31,11 +32,13 @@ export default function EditProfileScreen() {
     height: user?.height?.toString() || '',
     fitnessGoal: user?.fitnessGoal || 'General Fitness',
     trainingLevel: user?.trainingLevel || 'Beginner',
-    avatar: user?.avatar || ''
+    avatar: user?.avatar || '',
+    bio: user?.bio || ''
   });
 
   const [errors, setErrors] = useState<any>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [croppingImage, setCroppingImage] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -45,7 +48,8 @@ export default function EditProfileScreen() {
         height: user.height?.toString() || '',
         fitnessGoal: user.fitnessGoal || 'General Fitness',
         trainingLevel: user.trainingLevel || 'Beginner',
-        avatar: user.avatar || ''
+        avatar: user.avatar || '',
+        bio: user.bio || ''
       });
     }
   }, [user]);
@@ -66,7 +70,12 @@ export default function EditProfileScreen() {
     });
 
     if (!result.canceled && result.assets[0].base64) {
-      setFormData(prev => ({ ...prev, avatar: `data:image/jpeg;base64,${result.assets[0].base64}` }));
+      const uri = `data:image/jpeg;base64,${result.assets[0].base64}`;
+      if (Platform.OS === 'web') {
+        setCroppingImage(uri);
+      } else {
+        setFormData(prev => ({ ...prev, avatar: uri }));
+      }
     }
   };
 
@@ -210,6 +219,28 @@ export default function EditProfileScreen() {
             </View>
           </View>
 
+          {/* --- Bio Section --- */}
+          <View style={styles.formGroup}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <InputLabel label="Bio" icon={User} />
+              <Text style={{ fontSize: 10, color: '#94A3B8' }}>{formData.bio.length}/500</Text>
+            </View>
+            <TextInput 
+              style={[styles.input, styles.textArea]}
+              value={formData.bio}
+              onChangeText={(t) => {
+                if (t.length <= 500) {
+                  setFormData(p => ({ ...p, bio: t }));
+                }
+              }}
+              placeholder="Tell us a bit about yourself..."
+              placeholderTextColor="#94A3B8"
+              multiline
+              numberOfLines={4}
+              textAlignVertical="top"
+            />
+          </View>
+
           {/* --- Fitness Goals Section --- */}
           <SectionTitle title="Fitness Focus" />
           
@@ -276,6 +307,16 @@ export default function EditProfileScreen() {
           </TouchableOpacity>
         </ScrollView>
       </KeyboardAvoidingView>
+      {Platform.OS === 'web' && croppingImage && (
+        <WebCropper
+          imageSrc={croppingImage}
+          onCropComplete={(base64: string) => {
+            setFormData(prev => ({ ...prev, avatar: base64 }));
+            setCroppingImage(null);
+          }}
+          onCancel={() => setCroppingImage(null)}
+        />
+      )}
     </View>
   );
 }
@@ -400,6 +441,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
+  },
+  textArea: {
+    height: 100,
+    paddingTop: 16,
+    paddingBottom: 16,
   },
   inputError: {
     borderColor: '#EF4444',

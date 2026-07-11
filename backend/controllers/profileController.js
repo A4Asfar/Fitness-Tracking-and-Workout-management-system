@@ -13,14 +13,14 @@ exports.getProfile = asyncHandler(async (req, res) => {
 });
 
 exports.updateProfile = asyncHandler(async (req, res) => {
-  const { name, weight, height, fitnessGoal, trainingLevel, workoutFocus, avatar } = req.body;
+  const { name, weight, height, fitnessGoal, trainingLevel, workoutFocus, avatar, bio } = req.body;
   if (!name) {
     res.status(400);
     throw new Error('Please provide name');
   }
   const user = await User.findByIdAndUpdate(
     req.userId,
-    { name, weight, height, fitnessGoal, trainingLevel, workoutFocus, avatar },
+    { name, weight, height, fitnessGoal, trainingLevel, workoutFocus, avatar, bio },
     { new: true }
   ).select('-password');
   console.log('📝 Profile updated in MongoDB for user:', req.userId);
