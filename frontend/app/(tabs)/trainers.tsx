@@ -292,7 +292,7 @@ export default function TrainersListScreen() {
           keyExtractor={(item) => (item.id || item._id).toString()}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: SPACING.lg, paddingBottom: insets.bottom + 100 }}
-          ListHeaderComponent={renderHeader}
+          ListHeaderComponent={renderHeader()}
           ListEmptyComponent={renderEmpty}
           renderItem={({ item }) => (
             <TrainerCard 
