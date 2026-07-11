@@ -26,9 +26,10 @@ exports.createBooking = asyncHandler(async (req, res) => {
     throw new Error('Trainer not found');
   }
 
-  // Price calculation
+  // Price calculation with fallback for legacy trainers
+  const rate = trainer.hourlyPrice || 1500;
   const hours = duration / 60;
-  const totalPrice = trainer.hourlyPrice * hours;
+  const totalPrice = rate * hours;
 
   // Create booking
   const booking = new TrainerBooking({

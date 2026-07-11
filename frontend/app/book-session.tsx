@@ -44,7 +44,8 @@ export default function BookSessionScreen() {
     fetchTrainer();
   }, [trainerId]);
 
-  const totalPrice = trainer ? (trainer.hourlyPrice * (form.duration / 60)) : 0;
+  const rate = trainer?.hourlyPrice || 1500;
+  const totalPrice = trainer ? (rate * (form.duration / 60)) : 0;
 
   const handleBook = async () => {
     if (!form.date || !form.time || !form.fitnessGoal) {
@@ -126,7 +127,7 @@ export default function BookSessionScreen() {
               <Text style={s.statDot}>•</Text>
               <Text style={s.statText}>{trainer.experienceYears} Yrs Exp</Text>
             </View>
-            <Text style={s.priceText}>PKR {trainer.hourlyPrice}<Text style={s.priceUnit}>/hr</Text></Text>
+            <Text style={s.priceText}>PKR {trainer.hourlyPrice || 1500}<Text style={s.priceUnit}>/hr</Text></Text>
           </View>
         </View>
 
