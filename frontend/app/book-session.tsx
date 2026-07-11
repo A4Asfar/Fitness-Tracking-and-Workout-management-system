@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { 
   View, Text, StyleSheet, ScrollView, TouchableOpacity, 
-  TextInput, ActivityIndicator, Image, Dimensions
+  TextInput, ActivityIndicator, Image, Dimensions, KeyboardAvoidingView, Platform
 } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Star, Video, MapPin, Target, CheckCircle2 } from 'lucide-react-native';
+import { ArrowLeft, Star, Video, MapPin, CheckCircle2, Clock, Map, Target } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '@/services/api';
 import { getMockTrainerById } from '@/constants/MockTrainers';
@@ -41,7 +41,6 @@ export default function BookSessionScreen() {
     time: '',
     duration: 60,
     fitnessGoal: '',
-    notes: '',
   });
 
   const [bookingLoading, setBookingLoading] = useState(false);
@@ -71,7 +70,7 @@ export default function BookSessionScreen() {
 
   const handleBook = async () => {
     if (!form.time || !form.fitnessGoal) {
-      setError('Please select a time slot and enter your fitness goal.');
+      setError('Please select a time slot and enter your primary goal.');
       return;
     }
 
@@ -79,7 +78,6 @@ export default function BookSessionScreen() {
     setError('');
 
     try {
-      // Format Date to YYYY-MM-DD safely
       const d = selectedDate;
       const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
@@ -90,7 +88,7 @@ export default function BookSessionScreen() {
         duration: form.duration,
         sessionType: form.sessionType,
         fitnessGoal: form.fitnessGoal,
-        notes: form.notes,
+        notes: '',
       });
 
       router.push(`/booking-success?bookingId=${res.data._id}`);
@@ -103,7 +101,7 @@ export default function BookSessionScreen() {
   if (loadingTrainer) {
     return (
       <View style={[s.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#38BDF8" />
+        <ActivityIndicator size="large" color="#10B981" />
       </View>
     );
   }
@@ -111,7 +109,7 @@ export default function BookSessionScreen() {
   if (!trainer) {
     return (
       <View style={[s.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <Text style={s.errorMsg}>Trainer not found.</Text>
+        <Text style={{ color: '#F8FAFC' }}>Trainer not found.</Text>
       </View>
     );
   }
@@ -119,11 +117,13 @@ export default function BookSessionScreen() {
   const isOnline = form.sessionType === 'Online';
 
   return (
-    <View style={s.container}>
+    <KeyboardAvoidingView style={s.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <Stack.Screen options={{ headerShown: false }} />
+      
+      {/* HEADER */}
       <View style={[s.header, { paddingTop: insets.top + 16 }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
-          <ArrowLeft size={24} color="#FFF" />
+          <ArrowLeft size={24} color="#F8FAFC" />
         </TouchableOpacity>
         <Text style={s.headerTitle}>Schedule Session</Text>
         <View style={{ width: 44 }} />
@@ -131,24 +131,25 @@ export default function BookSessionScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={s.content}>
         
-        {/* TRAINER HEADER */}
+        {/* TRAINER PREVIEW */}
         <View style={s.trainerCard}>
           <Image source={{ uri: trainer.profileImage || trainer.image }} style={s.trainerImg} />
           <View style={s.trainerInfo}>
             <Text style={s.trainerName}>{trainer.fullName || trainer.name}</Text>
+            <Text style={s.trainerSpec}>{trainer.specializations?.[0] || 'Fitness Coach'}</Text>
             <View style={s.trainerStatsRow}>
               <Star size={14} color="#F59E0B" fill="#F59E0B" />
-              <Text style={s.statText}>{trainer.rating || 4.9}</Text>
-              <Text style={s.statDot}>•</Text>
-              <Text style={s.statText}>{trainer.specializations?.[0] || 'Fitness Coach'}</Text>
+              <Text style={s.statText}>{trainer.rating || 4.9} ({trainer.totalReviews || 120} reviews)</Text>
             </View>
           </View>
         </View>
 
         {error ? <View style={s.errorBox}><Text style={s.errorText}>{error}</Text></View> : null}
 
-        {/* DATE SELECTOR (Calendly Style) */}
-        <Text style={s.sectionTitle}>Select Date</Text>
+        {/* DATE SELECTOR */}
+        <View style={s.sectionHeader}>
+          <Text style={s.sectionTitle}>Select Date</Text>
+        </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.dateScroll}>
           {availableDates.map((date, idx) => {
             const isSelected = selectedDate.getDate() === date.getDate() && selectedDate.getMonth() === date.getMonth();
@@ -181,153 +182,128 @@ export default function BookSessionScreen() {
           ))}
         </View>
 
-        {/* SESSION TYPE */}
-        <Text style={s.sectionTitle}>Session Format</Text>
-        <View style={s.rowOptions}>
-          <TouchableOpacity 
-            style={[s.typeCard, isOnline && s.typeCardActive]}
-            onPress={() => setForm(p => ({ ...p, sessionType: 'Online' }))}
-          >
-            <View style={[s.iconBox, isOnline && s.iconBoxActive]}>
-              <Video size={20} color={isOnline ? '#FFF' : '#38BDF8'} />
+        {/* DURATION & FORMAT */}
+        <View style={s.formatContainer}>
+          <View style={{ flex: 1 }}>
+            <Text style={s.sectionTitle}>Duration</Text>
+            <View style={s.optionList}>
+              <TouchableOpacity style={[s.optBtn, form.duration === 30 && s.optBtnActive]} onPress={() => setForm(p => ({...p, duration: 30}))}>
+                <Clock size={16} color={form.duration === 30 ? '#0F172A' : '#94A3B8'} style={{ marginRight: 6 }}/>
+                <Text style={[s.optText, form.duration === 30 && s.optTextActive]}>30 Min</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.optBtn, form.duration === 60 && s.optBtnActive]} onPress={() => setForm(p => ({...p, duration: 60}))}>
+                <Clock size={16} color={form.duration === 60 ? '#0F172A' : '#94A3B8'} style={{ marginRight: 6 }}/>
+                <Text style={[s.optText, form.duration === 60 && s.optTextActive]}>60 Min</Text>
+              </TouchableOpacity>
             </View>
-            <View>
-              <Text style={[s.typeText, isOnline && s.typeTextActive]}>Virtual</Text>
-              <Text style={s.typeSub}>Via Zoom or Meet</Text>
+          </View>
+          <View style={{ width: 16 }} />
+          <View style={{ flex: 1 }}>
+            <Text style={s.sectionTitle}>Format</Text>
+            <View style={s.optionList}>
+              <TouchableOpacity style={[s.optBtn, isOnline && s.optBtnActive]} onPress={() => setForm(p => ({...p, sessionType: 'Online'}))}>
+                <Video size={16} color={isOnline ? '#0F172A' : '#94A3B8'} style={{ marginRight: 6 }}/>
+                <Text style={[s.optText, isOnline && s.optTextActive]}>Virtual</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[s.optBtn, !isOnline && s.optBtnActive]} onPress={() => setForm(p => ({...p, sessionType: 'In-Person'}))}>
+                <MapPin size={16} color={!isOnline ? '#0F172A' : '#94A3B8'} style={{ marginRight: 6 }}/>
+                <Text style={[s.optText, !isOnline && s.optTextActive]}>In-Person</Text>
+              </TouchableOpacity>
             </View>
-            {isOnline && <CheckCircle2 size={20} color="#38BDF8" style={{ marginLeft: 'auto' }} />}
-          </TouchableOpacity>
-          
-          <TouchableOpacity 
-            style={[s.typeCard, !isOnline && s.typeCardActive]}
-            onPress={() => setForm(p => ({ ...p, sessionType: 'In-Person' }))}
-          >
-            <View style={[s.iconBox, !isOnline && s.iconBoxActive]}>
-              <MapPin size={20} color={!isOnline ? '#FFF' : '#38BDF8'} />
-            </View>
-            <View>
-              <Text style={[s.typeText, !isOnline && s.typeTextActive]}>In-Person</Text>
-              <Text style={s.typeSub}>At Local Gym</Text>
-            </View>
-            {!isOnline && <CheckCircle2 size={20} color="#38BDF8" style={{ marginLeft: 'auto' }} />}
-          </TouchableOpacity>
+          </View>
         </View>
 
-        {/* DURATION */}
-        <Text style={s.sectionTitle}>Duration</Text>
-        <View style={s.durationRow}>
-          {[30, 45, 60, 90].map(mins => (
-            <TouchableOpacity 
-              key={mins}
-              style={[s.durationChip, form.duration === mins && s.durationChipActive]}
-              onPress={() => setForm(p => ({ ...p, duration: mins }))}
-            >
-              <Text style={[s.durationChipText, form.duration === mins && s.durationChipTextActive]}>{mins} min</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* FITNESS GOAL */}
-        <Text style={s.sectionTitle}>Primary Goal</Text>
+        {/* GOAL INPUT */}
+        <Text style={s.sectionTitle}>Session Goal</Text>
         <View style={s.inputWrapper}>
-          <Target size={20} color="#38BDF8" style={s.inputIcon} />
-          <TextInput 
-            style={s.input} 
-            placeholder="e.g. Weight Loss, Muscle Gain, Form Check"
+          <Target size={20} color="#64748B" style={s.inputIcon} />
+          <TextInput
+            style={s.textInput}
+            placeholder="What do you want to focus on?"
             placeholderTextColor="#64748B"
             value={form.fitnessGoal}
-            onChangeText={val => setForm(p => ({ ...p, fitnessGoal: val }))}
+            onChangeText={(t) => { setForm(p => ({...p, fitnessGoal: t})); setError(''); }}
           />
         </View>
 
-        {/* NOTES */}
-        <Text style={s.sectionTitle}>Additional Notes</Text>
-        <TextInput 
-          style={[s.input, s.textArea]} 
-          placeholder="Any injuries, equipment limits, or specific focus areas?"
-          placeholderTextColor="#64748B"
-          multiline
-          numberOfLines={4}
-          value={form.notes}
-          onChangeText={val => setForm(p => ({ ...p, notes: val }))}
-        />
       </ScrollView>
 
-      {/* STICKY BOTTOM BAR */}
-      <View style={[s.footer, { paddingBottom: insets.bottom + 16 }]}>
-        <View style={s.totalBox}>
-          <Text style={s.totalLabel}>Total Investment</Text>
-          <Text style={s.totalPrice}>PKR {totalPrice}</Text>
+      {/* FLOATING BOTTOM BAR */}
+      <View style={[s.bottomBar, { paddingBottom: insets.bottom + 16 }]}>
+        <View style={s.priceSummary}>
+          <Text style={s.priceLabel}>Total Price</Text>
+          <Text style={s.priceValue}>PKR {totalPrice.toLocaleString()}</Text>
         </View>
-        <TouchableOpacity style={s.bookBtn} onPress={handleBook} disabled={bookingLoading}>
-          <LinearGradient colors={['#38BDF8', '#0EA5E9']} style={s.bookBtnGradient}>
-            {bookingLoading ? <ActivityIndicator color="#FFF" /> : <Text style={s.bookBtnText}>Confirm Booking</Text>}
-          </LinearGradient>
+        
+        <TouchableOpacity 
+          style={[s.bookBtn, (!form.time || !form.fitnessGoal || bookingLoading) && s.bookBtnDisabled]} 
+          onPress={handleBook}
+          disabled={!form.time || !form.fitnessGoal || bookingLoading}
+          activeOpacity={0.8}
+        >
+          {bookingLoading ? (
+            <ActivityIndicator size="small" color="#0F172A" />
+          ) : (
+            <Text style={s.bookBtnText}>Confirm & Book</Text>
+          )}
         </TouchableOpacity>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0F172A' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
-  backBtn: { width: 44, height: 44, backgroundColor: '#1E293B', borderRadius: 22, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
-  headerTitle: { fontSize: 18, fontWeight: '800', color: '#F8FAFC' },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16, backgroundColor: '#0F172A' },
+  backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#1E293B', justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { color: '#F8FAFC', fontSize: 18, fontWeight: '800' },
+  
   content: { padding: 24, paddingBottom: 120 },
-  
-  trainerCard: { flexDirection: 'row', backgroundColor: '#1E293B', padding: 16, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 32, alignItems: 'center' },
-  trainerImg: { width: 64, height: 64, borderRadius: 32 },
-  trainerInfo: { marginLeft: 16, flex: 1 },
-  trainerName: { fontSize: 18, fontWeight: '900', color: '#F8FAFC' },
-  trainerStatsRow: { flexDirection: 'row', alignItems: 'center', marginVertical: 4 },
-  statText: { fontSize: 13, fontWeight: '700', color: '#94A3B8', marginLeft: 4 },
-  statDot: { fontSize: 14, color: '#334155', marginHorizontal: 8 },
 
-  sectionTitle: { fontSize: 18, fontWeight: '900', color: '#F8FAFC', marginBottom: 16, letterSpacing: -0.5 },
-  
-  dateScroll: { gap: 12, marginBottom: 32 },
-  dateCard: { width: 68, height: 86, backgroundColor: '#1E293B', borderRadius: 20, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
-  dateCardActive: { backgroundColor: '#38BDF8', borderColor: '#38BDF8', shadowColor: '#38BDF8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
-  dateName: { fontSize: 12, fontWeight: '800', color: '#94A3B8', marginBottom: 4 },
-  dateNumber: { fontSize: 22, fontWeight: '900', color: '#F8FAFC' },
-  dateTextActive: { color: '#FFFFFF' },
-
-  timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 32 },
-  timeChip: { width: (width - 48 - 24) / 3, backgroundColor: '#1E293B', paddingVertical: 14, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
-  timeChipActive: { backgroundColor: 'rgba(56,189,248,0.15)', borderColor: '#38BDF8' },
-  timeChipText: { fontSize: 14, fontWeight: '800', color: '#CBD5E1' },
-  timeChipTextActive: { color: '#38BDF8' },
-
-  rowOptions: { gap: 16, marginBottom: 32 },
-  typeCard: { flexDirection: 'row', backgroundColor: '#1E293B', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', borderRadius: 20, padding: 16, alignItems: 'center' },
-  typeCardActive: { borderColor: '#38BDF8', backgroundColor: 'rgba(56,189,248,0.05)' },
-  iconBox: { width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center', marginRight: 16 },
-  iconBoxActive: { backgroundColor: '#38BDF8' },
-  typeText: { fontSize: 16, fontWeight: '900', color: '#F8FAFC', marginBottom: 2 },
-  typeTextActive: { color: '#38BDF8' },
-  typeSub: { fontSize: 12, color: '#64748B', fontWeight: '600' },
-
-  durationRow: { flexDirection: 'row', gap: 12, marginBottom: 32 },
-  durationChip: { flex: 1, backgroundColor: '#1E293B', paddingVertical: 12, borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
-  durationChipActive: { backgroundColor: 'rgba(56,189,248,0.15)', borderColor: '#38BDF8' },
-  durationChipText: { fontSize: 14, fontWeight: '800', color: '#94A3B8' },
-  durationChipTextActive: { color: '#38BDF8' },
-
-  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B', borderRadius: 20, paddingHorizontal: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 32 },
-  inputIcon: { marginRight: 12 },
-  input: { flex: 1, height: 64, color: '#F8FAFC', fontSize: 15, fontWeight: '600' },
-  textArea: { height: 120, paddingTop: 20, backgroundColor: '#1E293B', borderRadius: 20, paddingHorizontal: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', color: '#F8FAFC', fontSize: 15, textAlignVertical: 'top' },
+  trainerCard: { flexDirection: 'row', backgroundColor: '#1E293B', padding: 16, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 32 },
+  trainerImg: { width: 64, height: 64, borderRadius: 20, marginRight: 16 },
+  trainerInfo: { flex: 1, justifyContent: 'center' },
+  trainerName: { color: '#F8FAFC', fontSize: 18, fontWeight: '800', marginBottom: 2 },
+  trainerSpec: { color: '#94A3B8', fontSize: 13, fontWeight: '600', marginBottom: 6 },
+  trainerStatsRow: { flexDirection: 'row', alignItems: 'center' },
+  statText: { color: '#F8FAFC', fontSize: 13, fontWeight: '700', marginLeft: 6 },
 
   errorBox: { backgroundColor: 'rgba(239,68,68,0.1)', padding: 16, borderRadius: 16, marginBottom: 24, borderWidth: 1, borderColor: 'rgba(239,68,68,0.3)' },
-  errorText: { color: '#EF4444', fontSize: 14, fontWeight: '700', textAlign: 'center' },
-  errorMsg: { color: '#EF4444', fontSize: 16, fontWeight: '800', textAlign: 'center' },
+  errorText: { color: '#EF4444', fontSize: 14, fontWeight: '600' },
 
-  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(15,23,42,0.95)', flexDirection: 'row', paddingHorizontal: 24, paddingTop: 20, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.1)', alignItems: 'center' },
-  totalBox: { flex: 1 },
-  totalLabel: { fontSize: 13, color: '#94A3B8', fontWeight: '700', marginBottom: 4 },
-  totalPrice: { fontSize: 24, fontWeight: '900', color: '#F8FAFC', letterSpacing: -1 },
-  bookBtn: { flex: 1.2, marginLeft: 16 },
-  bookBtnGradient: { height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', shadowColor: '#38BDF8', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 16, elevation: 8 },
-  bookBtnText: { color: '#FFFFFF', fontSize: 16, fontWeight: '900', letterSpacing: 0.5 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
+  sectionTitle: { color: '#F8FAFC', fontSize: 18, fontWeight: '900', letterSpacing: -0.5, marginBottom: 16 },
+  
+  dateScroll: { gap: 12, marginBottom: 32 },
+  dateCard: { width: 68, height: 84, backgroundColor: '#1E293B', borderRadius: 20, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  dateCardActive: { backgroundColor: '#10B981', borderColor: '#10B981' },
+  dateName: { color: '#94A3B8', fontSize: 12, fontWeight: '700', marginBottom: 6 },
+  dateNumber: { color: '#F8FAFC', fontSize: 22, fontWeight: '900' },
+  dateTextActive: { color: '#0F172A' },
+
+  timeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 32 },
+  timeChip: { width: (width - 60) / 3, paddingVertical: 14, backgroundColor: '#1E293B', borderRadius: 16, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  timeChipActive: { backgroundColor: '#10B981', borderColor: '#10B981' },
+  timeChipText: { color: '#94A3B8', fontSize: 14, fontWeight: '700' },
+  timeChipTextActive: { color: '#0F172A', fontWeight: '900' },
+
+  formatContainer: { flexDirection: 'row', marginBottom: 32 },
+  optionList: { gap: 12 },
+  optBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B', padding: 14, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  optBtnActive: { backgroundColor: '#10B981', borderColor: '#10B981' },
+  optText: { color: '#94A3B8', fontSize: 14, fontWeight: '700' },
+  optTextActive: { color: '#0F172A', fontWeight: '900' },
+
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B', borderRadius: 16, paddingHorizontal: 16, height: 56, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 40 },
+  inputIcon: { marginRight: 12 },
+  textInput: { flex: 1, color: '#F8FAFC', fontSize: 15, fontWeight: '600' },
+
+  bottomBar: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#1E293B', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 24, paddingTop: 20, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  priceSummary: { flex: 1 },
+  priceLabel: { color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
+  priceValue: { color: '#F8FAFC', fontSize: 24, fontWeight: '900' },
+  
+  bookBtn: { backgroundColor: '#10B981', paddingHorizontal: 32, paddingVertical: 16, borderRadius: 100 },
+  bookBtnDisabled: { backgroundColor: '#334155' },
+  bookBtnText: { color: '#0F172A', fontSize: 16, fontWeight: '900' },
 });
