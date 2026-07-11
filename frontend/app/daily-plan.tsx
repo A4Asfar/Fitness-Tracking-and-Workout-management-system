@@ -33,7 +33,7 @@ export default function DailyPlanScreen() {
       const data = await ContentService.getDailyPlan({
         goal: user?.fitnessGoal,
         level: user?.trainingLevel,
-        focus: user?.preferredWorkoutFocus
+        focus: user?.workoutFocus
       });
       setPlan(data);
     } catch (err: any) {

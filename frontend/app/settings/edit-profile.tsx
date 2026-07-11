@@ -19,6 +19,7 @@ import WebCropper from '@/components/WebCropper';
 
 const GOALS = ['Weight Loss', 'Muscle Gain', 'Maintain Fitness', 'Endurance', 'General Fitness'] as const;
 const LEVELS = ['Beginner', 'Intermediate', 'Advanced', 'Elite'] as const;
+const FOCUSES = ['Strength', 'Cardio', 'HIIT', 'Yoga'] as const;
 
 export default function EditProfileScreen() {
   const router = useRouter();
@@ -32,6 +33,7 @@ export default function EditProfileScreen() {
     height: user?.height?.toString() || '',
     fitnessGoal: user?.fitnessGoal || 'General Fitness',
     trainingLevel: user?.trainingLevel || 'Beginner',
+    workoutFocus: user?.workoutFocus || '',
     avatar: user?.avatar || '',
     bio: user?.bio || ''
   });
@@ -48,6 +50,7 @@ export default function EditProfileScreen() {
         height: user.height?.toString() || '',
         fitnessGoal: user.fitnessGoal || 'General Fitness',
         trainingLevel: user.trainingLevel || 'Beginner',
+        workoutFocus: user.workoutFocus || '',
         avatar: user.avatar || '',
         bio: user.bio || ''
       });
@@ -277,6 +280,23 @@ export default function EditProfileScreen() {
                   activeOpacity={0.8}
                 >
                   <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>{l}</Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <InputLabel label="Preferred Workout Focus" icon={Target} />
+          <View style={styles.chipGrid}>
+            {FOCUSES.map(f => {
+              const isSelected = formData.workoutFocus === f;
+              return (
+                <TouchableOpacity 
+                  key={f}
+                  style={[styles.chip, isSelected && styles.chipActive]}
+                  onPress={() => setFormData(p => ({ ...p, workoutFocus: f }))}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[styles.chipText, isSelected && styles.chipTextActive]}>{f}</Text>
                 </TouchableOpacity>
               );
             })}

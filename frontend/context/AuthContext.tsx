@@ -18,7 +18,7 @@ export interface User {
   height: number;
   fitnessGoal: 'Weight Loss' | 'Muscle Gain' | 'Maintain Fitness' | 'Endurance' | 'General Fitness' | 'None';
   trainingLevel: 'Beginner' | 'Intermediate' | 'Advanced' | 'Elite';
-  preferredWorkoutFocus?: 'Strength' | 'Cardio' | 'HIIT' | 'Yoga';
+  workoutFocus?: 'Strength' | 'Cardio' | 'HIIT' | 'Yoga';
   avatar: string;
   bio?: string;
 }
