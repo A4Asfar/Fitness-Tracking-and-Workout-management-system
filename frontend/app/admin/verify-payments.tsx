@@ -11,6 +11,7 @@ import {
   CreditCard, Sparkles, XCircle, AlertCircle, TrendingUp, Award,
   Download, Search, Plus, ShieldAlert
 } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useToast } from '@/components/Toast';
 import api from '@/services/api';
 import { isAdminUser } from '@/utils/isAdmin';
@@ -325,50 +326,41 @@ export default function PremiumManagementDashboard() {
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
-      {/* ── Header ── */}
-      <View style={[styles.header, { paddingTop: insets.top + 16 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton} activeOpacity={0.7}>
-          <ArrowLeft size={20} color="#0F172A" />
-        </TouchableOpacity>
-        <View style={styles.headerCenter}>
-          <Text style={styles.headerTitle}>Premium Management</Text>
-          <Text style={styles.headerSubtitle}>{APP_NAME} Admin Panel</Text>
+      {/* ── Modern Header ── */}
+      <LinearGradient colors={['#1E293B', '#0F172A']} style={[styles.headerGradient, { paddingTop: insets.top + 16 }]}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.modernBackButton} activeOpacity={0.7}>
+            <ArrowLeft size={22} color="#FFFFFF" />
+          </TouchableOpacity>
+          <View style={styles.headerTitleWrap}>
+            <ShieldAlert size={20} color="#38BDF8" />
+            <Text style={styles.headerTitleDark}>Premium Management</Text>
+          </View>
+          <View style={{ width: 44 }} />
         </View>
-        <View style={{ width: 40 }} />
-      </View>
 
-      {/* ── Tabs Selector ── */}
-      <View style={styles.tabsRow}>
-        <TouchableOpacity
-          onPress={() => setActiveTab('verifications')}
-          style={[styles.tabButton, activeTab === 'verifications' && styles.activeTabButton]}
-        >
-          <CreditCard size={16} color={activeTab === 'verifications' ? '#10B981' : '#64748B'} />
-          <Text style={[styles.tabButtonText, activeTab === 'verifications' && styles.activeTabButtonText]}>
-            Verifications
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setActiveTab('users')}
-          style={[styles.tabButton, activeTab === 'users' && styles.activeTabButton]}
-        >
-          <User size={16} color={activeTab === 'users' ? '#10B981' : '#64748B'} />
-          <Text style={[styles.tabButtonText, activeTab === 'users' && styles.activeTabButtonText]}>
-            Active Users
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          onPress={() => setActiveTab('analytics')}
-          style={[styles.tabButton, activeTab === 'analytics' && styles.activeTabButton]}
-        >
-          <TrendingUp size={16} color={activeTab === 'analytics' ? '#10B981' : '#64748B'} />
-          <Text style={[styles.tabButtonText, activeTab === 'analytics' && styles.activeTabButtonText]}>
-            Analytics
-          </Text>
-        </TouchableOpacity>
-      </View>
+        {/* ── Pill Navigation Tabs ── */}
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabScroll}>
+          {[ 
+            { id: 'verifications', label: 'Verifications', icon: CreditCard },
+            { id: 'users', label: 'Active Users', icon: User },
+            { id: 'analytics', label: 'Analytics', icon: TrendingUp }
+          ].map(t => {
+            const isActive = activeTab === t.id;
+            return (
+              <TouchableOpacity
+                key={t.id}
+                onPress={() => setActiveTab(t.id as any)}
+                style={[styles.pillTab, isActive && styles.pillTabActive]}
+                activeOpacity={0.7}
+              >
+                <t.icon size={16} color={isActive ? '#FFF' : '#94A3B8'} style={{ marginRight: 6 }} />
+                <Text style={[styles.pillText, isActive && styles.pillTextActive]}>{t.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </LinearGradient>
 
       {/* ── MAIN CONTENT ── */}
       {activeTab === 'verifications' && (
@@ -977,72 +969,66 @@ const styles = StyleSheet.create<Record<string, any>>({
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  header: {
+  headerGradient: {
+    paddingBottom: 16,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+    zIndex: 10,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1.5,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
+    marginBottom: 20,
   },
-  backButton: {
+  modernBackButton: {
     width: 40,
     height: 40,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    borderRadius: 20,
+    backgroundColor: '#334155',
     justifyContent: 'center',
     alignItems: 'center',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
   },
-  headerCenter: {
-    alignItems: 'center',
-  },
-  headerTitle: {
-    color: '#0F172A',
-    fontSize: 16,
-    fontWeight: '900',
-    letterSpacing: -0.5,
-  },
-  headerSubtitle: {
-    color: '#64748B',
-    fontSize: 11,
-    fontWeight: '600',
-    marginTop: 2,
-  },
-  tabsRow: {
+  headerTitleWrap: {
     flexDirection: 'row',
-    padding: 12,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1.5,
-    borderColor: '#E2E8F0',
+    alignItems: 'center',
     gap: 8,
   },
-  tabButton: {
-    flex: 1,
+  headerTitleDark: {
+    color: '#F8FAFC',
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: -0.5,
+  },
+  tabScroll: {
+    paddingHorizontal: 20,
+    gap: 8,
+  },
+  pillTab: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: '#334155',
+    paddingHorizontal: 16,
     paddingVertical: 10,
-    borderRadius: 12,
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
-    gap: 6,
+    borderRadius: 24,
   },
-  activeTabButton: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
+  pillTabActive: {
+    backgroundColor: '#38BDF8',
   },
-  tabButtonText: {
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '700',
+  pillText: {
+    color: '#94A3B8',
+    fontSize: 14,
+    fontWeight: '600',
   },
-  activeTabButtonText: {
-    color: '#047857',
+  pillTextActive: {
+    color: '#FFFFFF',
+    fontWeight: '800',
   },
 
   // Filters Area
@@ -1130,16 +1116,15 @@ const styles = StyleSheet.create<Record<string, any>>({
   // Payments lists
   recordCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
     marginBottom: 12,
-    shadowColor: '#0F172A',
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.03,
-    shadowRadius: 10,
+    shadowRadius: 8,
     elevation: 2,
+    borderWidth: 0,
   },
   avatarInitials: {
     width: 38,
@@ -1238,11 +1223,15 @@ const styles = StyleSheet.create<Record<string, any>>({
   // Premium Users tab
   userCard: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
     marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
+    borderWidth: 0,
   },
   planProBadge: {
     flexDirection: 'row',
@@ -1329,10 +1318,14 @@ const styles = StyleSheet.create<Record<string, any>>({
   analyticCard: {
     flex: 1,
     backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    borderRadius: 20,
     padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    elevation: 2,
+    borderWidth: 0,
   },
   analyticHeader: {
     flexDirection: 'row',
