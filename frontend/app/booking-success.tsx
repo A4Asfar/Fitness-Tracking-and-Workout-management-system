@@ -18,6 +18,38 @@ export default function BookingSuccessScreen() {
 
   useEffect(() => {
     if (!bookingId) return;
+
+    const triggerAnimations = () => {
+      Animated.sequence([
+        Animated.spring(scaleAnim, {
+          toValue: 1,
+          tension: 50,
+          friction: 5,
+          useNativeDriver: true,
+        }),
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        })
+      ]).start();
+    };
+
+    if (bookingId.startsWith('mock-')) {
+      setBooking({
+        _id: bookingId,
+        trainerId: { fullName: 'Mock Trainer' },
+        bookingDate: new Date().toISOString().split('T')[0],
+        bookingTime: 'Select Time',
+        duration: 60,
+        sessionType: 'Online',
+        totalPrice: 1500
+      });
+      setLoading(false);
+      triggerAnimations();
+      return;
+    }
+
     const fetchBooking = async () => {
       try {
         const res = await api.get(`/bookings/${bookingId}`);
@@ -26,20 +58,7 @@ export default function BookingSuccessScreen() {
         console.log(err);
       } finally {
         setLoading(false);
-        // Trigger animations
-        Animated.sequence([
-          Animated.spring(scaleAnim, {
-            toValue: 1,
-            tension: 50,
-            friction: 5,
-            useNativeDriver: true,
-          }),
-          Animated.timing(fadeAnim, {
-            toValue: 1,
-            duration: 400,
-            useNativeDriver: true,
-          })
-        ]).start();
+        triggerAnimations();
       }
     };
     fetchBooking();

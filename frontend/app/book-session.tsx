@@ -81,8 +81,18 @@ export default function BookSessionScreen() {
       const d = selectedDate;
       const dateStr = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
 
+      const tId = trainer._id || trainer.id;
+      
+      // Bypass real API call for mock trainers to prevent backend rejection
+      if (String(tId).startsWith('mock-')) {
+        setTimeout(() => {
+          router.push(`/booking-success?bookingId=mock-booking-${Date.now()}`);
+        }, 600);
+        return;
+      }
+
       const res = await api.post('/bookings', {
-        trainerId: trainer._id || trainer.id,
+        trainerId: tId,
         bookingDate: dateStr,
         bookingTime: form.time,
         duration: form.duration,
