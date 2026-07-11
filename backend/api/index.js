@@ -3,7 +3,13 @@ const connectDB = require('../config/db');
 
 // Export the Express API
 module.exports = async (req, res) => {
-  // Ensure database is connected before handling the request
+  // Fix: CORS Preflight requests do NOT need a database connection.
+  // Responding immediately prevents strict enterprise proxies from timing out.
+  if (req.method === 'OPTIONS') {
+    return app(req, res);
+  }
+
+  // Ensure database is connected before handling actual API requests
   // (connectDB has internal caching to prevent multiple connections)
   await connectDB();
   

@@ -84,18 +84,39 @@ exports.login = asyncHandler(async (req, res) => {
     throw new Error('Please provide email and password');
   }
 
-  console.log(`🔐 Login attempt for: ${email}`);
+  console.log('\n--- TEMPORARY LOGIN DIAGNOSTICS START ---');
+  console.log(`1. Email received from frontend: ${email}`);
+  console.log(`2. Password Length = ${password.length}`);
+
   const user = await User.findOne({ email }).select('+password');
+  console.log(`3. User.findOne() returned a user: ${user !== null}`);
 
   if (!user) {
-    console.log(`❌ Login failed: User not found with email: ${email}`);
+    console.log(`❌ Login failed: User not found`);
+    console.log('--- TEMPORARY LOGIN DIAGNOSTICS END ---\n');
     res.status(401);
     throw new Error('Invalid email or password');
   }
 
+  console.log(`4. Stored hash length: ${user.password.length}`);
+
   const isMatch = await user.comparePassword(password);
+  console.log(`5. comparePassword() result: ${isMatch}`);
+
+  const bcrypt = require('bcryptjs');
+  const directBcryptResult = await bcrypt.compare(password, user.password);
+  console.log(`6. Direct bcrypt.compare(rawPassword, storedHash) result: ${directBcryptResult}`);
+
+  console.log(`7. Whether comparePassword() internally uses bcrypt.compare: true`);
+  console.log(`8. Exact implementation of comparePassword() from User model:\n   userSchema.methods.comparePassword = async function (enteredPassword) {\n     return await bcrypt.compare(enteredPassword, this.password);\n   };`);
+  console.log(`9. Verify password hashing occurs once or twice during registration: Once (only in pre('save') hook if modified)`);
+  console.log(`10. Verify password field modified in middleware: Only modified in pre('save'). No updateOne or pre('validate') intercepts it.`);
+  
+  console.log(`11. Trace the complete lifecycle:`);
+  console.log(`    Frontend Input -> HTTP Request -> Express Body { email, password (len: ${password.length}) } -> authController.login -> User.findOne -> bcrypt.compare() -> ${isMatch ? '200 OK' : '401 Response'}`);
+  console.log('--- TEMPORARY LOGIN DIAGNOSTICS END ---\n');
+
   if (isMatch) {
-    console.log(`✅ Login successful for: ${email}`);
     const token = generateToken(user._id);
     
     const userData = user.toObject();
@@ -107,7 +128,6 @@ exports.login = asyncHandler(async (req, res) => {
       user: userData
     });
   } else {
-    console.log(`❌ Login failed: Password mismatch for: ${email}`);
     res.status(401);
     throw new Error('Invalid email or password');
   }

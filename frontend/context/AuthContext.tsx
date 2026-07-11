@@ -92,9 +92,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         finishBoot();
 
         const response = await Promise.race([
-          api.get('/auth/me', { skipRetry: true, timeout: 8000 } as any),
+          api.get('/auth/me', { skipRetry: true, timeout: 15000 } as any),
           new Promise<never>((_, reject) =>
-            setTimeout(() => reject(new Error('Session check timed out')), 8000)
+            setTimeout(() => reject(new Error('Session check timed out')), 15000)
           ),
         ]);
 

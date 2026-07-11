@@ -136,11 +136,22 @@ api.interceptors.response.use(
 
     // Request Timeouts
     if (error.code === 'ECONNABORTED' || error.message?.includes('timeout') || error.code === 'ETIMEDOUT') {
+      console.log(`⏳ Timeout Error [${error.code}]: ${error.message} on ${config?.url}`);
       return Promise.reject(new Error('Server is starting or temporarily unavailable. Please try again in a few moments.'));
     }
 
     // Network failures / offline drops
-    return Promise.reject(new Error('Unable to reach the server. Please check your connection.'));
+    const cause = error.code ? `[Code: ${error.code}]` : (error.message || 'Unknown Network Error');
+    console.error(`🔌 Connection Failed to ${config?.baseURL || ''}${config?.url || ''}`);
+    console.error(`   -> Details: ${cause}`);
+    console.error(`   -> IsAxiosError: ${axios.isAxiosError(error)} | Response Status: ${error.response?.status || 'None'}`);
+    
+    // Check if it's likely a CORS or DNS issue
+    if (!error.response && !error.code) {
+      console.error(`   -> Suspected CORS preflight failure, DNS block, or invalid SSL certificate on this network.`);
+    }
+
+    return Promise.reject(new Error(`Connection failed: ${cause}. Please check your connection.`));
   }
 );
 

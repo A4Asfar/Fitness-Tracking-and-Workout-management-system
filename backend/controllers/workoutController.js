@@ -453,9 +453,9 @@ exports.getHomeInsights = asyncHandler(async (req, res) => {
   }
 
   // Calculate intensity based on volume vs average
-  const totalVolume = lastWorkouts.reduce((acc, w) => acc + (w.sets * w.reps * (w.weight || 1)), 0);
+  const totalVolume = lastWorkouts.reduce((acc, w) => acc + ((w.sets || 0) * (w.reps || 0) * (w.weight || 1)), 0);
   const avgVolume = totalVolume / lastWorkouts.length;
-  const lastVolume = lastWorkout.sets * lastWorkout.reps * (lastWorkout.weight || 1);
+  const lastVolume = (lastWorkout.sets || 0) * (lastWorkout.reps || 0) * (lastWorkout.weight || 1);
 
   let intensityLevel = 'Balanced';
   if (lastVolume > avgVolume * 1.2) {

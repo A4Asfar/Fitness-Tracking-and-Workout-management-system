@@ -606,6 +606,7 @@ const styles = StyleSheet.create({
   modalActions: {
     flexDirection: 'row',
     gap: 12,
+    width: '100%',
   },
   cancelBtn: {
     flex: 1,

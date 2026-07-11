@@ -72,6 +72,7 @@ const allowedOrigins = [
   'http://localhost:19000', // Expo Go
   'http://localhost:19006', // Expo Web (Legacy, kept for dev)
   'http://localhost:8081',  // New Expo Default
+  /\.vercel\.app$/,         // Vercel Preview & Production domains
   ...extraOrigins,
 ];
 
