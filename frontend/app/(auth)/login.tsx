@@ -83,12 +83,14 @@ export default function LoginScreen() {
               <Mail size={18} color="#64748B" style={s.inputIcon} />
               <TextInput
                 style={s.inputField}
-                placeholder="e.g. champion@fitai.com"
+                placeholder="Enter your email"
                 placeholderTextColor="#64748B"
                 value={email}
                 onChangeText={t => { setEmail(t); if(errors.email) setErrors({...errors, email: null}); }}
                 keyboardType="email-address"
                 autoCapitalize="none"
+                autoComplete="email"
+                textContentType="emailAddress"
                 editable={!loading}
               />
             </View>
@@ -107,6 +109,8 @@ export default function LoginScreen() {
                 value={password}
                 onChangeText={t => { setPassword(t); if(errors.password) setErrors({...errors, password: null}); }}
                 secureTextEntry={!showPassword}
+                autoComplete="password"
+                textContentType="password"
                 editable={!loading}
               />
               <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={s.eyeBtn}>
