@@ -48,7 +48,7 @@ export default function AIChatScreen() {
   const [errorMessages, setErrorMessages] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [isTyping, setIsTyping] = useState(false);
-  const flatListRef = useRef<FlatList initialNumToRender={10} maxToRenderPerBatch={10} windowSize={5}>(null);
+  const flatListRef = useRef<FlatList>(null);
 
   const userMessageCount = messages.filter(m => m.sender === 'user').length;
   const isChatLocked = !isPremium && userMessageCount >= 3;
@@ -327,7 +327,7 @@ export default function AIChatScreen() {
           ) : (
             <FlatList
               data={conversations}
-              keyExtractor={item = initialNumToRender={10} maxToRenderPerBatch={10} windowSize={5}> item._id}
+              keyExtractor={item => item._id}
               contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 100 }}
               renderItem={({ item }) => (
                 <ConversationCard
@@ -417,7 +417,7 @@ export default function AIChatScreen() {
             <FlatList
               ref={flatListRef}
               data={messages}
-              keyExtractor={item = initialNumToRender={10} maxToRenderPerBatch={10} windowSize={5}> item.id}
+              keyExtractor={item => item.id}
               contentContainerStyle={styles.chatContent}
               renderItem={({ item }) => (
                 <MessageBubble message={item} />

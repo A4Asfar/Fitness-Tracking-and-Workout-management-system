@@ -51,7 +51,7 @@ export default function ProgressAnalyticsScreen() {
       }).start();
 
     } catch (e: any) {
-
+      if (__DEV__) console.log('Analytics error:', e.message);
       setError(e.message || 'Failed to sync progress data.');
     } finally {
       setLoading(false);

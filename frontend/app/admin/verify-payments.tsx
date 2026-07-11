@@ -440,7 +440,7 @@ export default function PremiumManagementDashboard() {
           ) : (
             <FlatList
               data={payments}
-              keyExtractor={(item) = initialNumToRender={10} maxToRenderPerBatch={10} windowSize={5}> item._id}
+              keyExtractor={(item) => item._id}
               contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 80 }}
               renderItem={({ item }) => (
                 <TouchableOpacity 
@@ -546,7 +546,7 @@ export default function PremiumManagementDashboard() {
           ) : (
             <FlatList
               data={filteredUsers}
-              keyExtractor={(item) = initialNumToRender={10} maxToRenderPerBatch={10} windowSize={5}> item._id}
+              keyExtractor={(item) => item._id}
               contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 80 }}
               renderItem={({ item }) => (
                 <View style={styles.userCard}>

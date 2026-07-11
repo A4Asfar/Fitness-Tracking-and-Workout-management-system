@@ -178,7 +178,7 @@ export default function TrainersListScreen() {
             horizontal
             showsHorizontalScrollIndicator={false}
             data={featuredTrainers}
-            keyExtractor={item = initialNumToRender={10} maxToRenderPerBatch={10} windowSize={5}> 'feat-' + (item.id || item._id)}
+            keyExtractor={item => 'feat-' + (item.id || item._id)}
             renderItem={({ item }) => (
               <FeaturedTrainerCard 
                 trainer={item} 
@@ -317,7 +317,7 @@ export default function TrainersListScreen() {
       ) : (
         <FlatList
           data={paginatedTrainers}
-          keyExtractor={(item) = initialNumToRender={10} maxToRenderPerBatch={10} windowSize={5}> (item.id || item._id).toString()}
+          keyExtractor={(item) => (item.id || item._id).toString()}
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ padding: SPACING.lg, paddingBottom: insets.bottom + 100 }}
           ListHeaderComponent={renderHeader()}

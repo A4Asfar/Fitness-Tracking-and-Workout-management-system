@@ -56,7 +56,7 @@ export default function NotificationsScreen() {
       setRawNotifications(prev => prev.map(n => n._id === id ? { ...n, isRead: true } : n));
       setUnreadCount(c => Math.max(0, c - 1));
     } catch (err) {
-
+      console.log('Error marking as read:', err);
     }
   };
 
@@ -66,7 +66,7 @@ export default function NotificationsScreen() {
       setRawNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
       setUnreadCount(0);
     } catch (err) {
-
+      console.log('Error marking all read:', err);
     }
   };
 
@@ -75,7 +75,7 @@ export default function NotificationsScreen() {
       await api.delete(`/notifications/${id}`);
       setRawNotifications(prev => prev.filter(n => n._id !== id));
     } catch (err) {
-
+      console.log('Error deleting notification:', err);
     }
   };
 
@@ -195,7 +195,7 @@ export default function NotificationsScreen() {
       {/* LIST */}
       <SectionList
         sections={sections}
-        keyExtractor={(item) = initialNumToRender={10} maxToRenderPerBatch={10} windowSize={5}> item._id}
+        keyExtractor={(item) => item._id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: insets.bottom + 20 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#38BDF8" />}

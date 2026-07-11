@@ -18,7 +18,7 @@ function resolveApiUrl(): string {
 export const API_URL = resolveApiUrl();
 
 if (__DEV__) {
-
+  console.log('📡 API Connection Point:', API_URL, Platform.OS);
 }
 
 const api = axios.create({
@@ -97,7 +97,7 @@ api.interceptors.response.use(
 
       if (!skipRetry && isRetryableError && !isExplicitNonRetryable && config.__retryCount < maxRetries) {
         config.__retryCount += 1;
-
+        console.log(`🔄 Retrying request (${config.__retryCount}/${maxRetries}): ${config.url}`);
         
         // Exponential backoff delay (1s, 2s, 4s)
         const delay = Math.pow(2, config.__retryCount - 1) * 1000;
@@ -118,7 +118,7 @@ api.interceptors.response.use(
           return Promise.reject(new Error(backendMessage || 'Invalid email or password.'));
         }
 
-
+        console.log('🔒 Unauthorized (401) - clearing session');
         authToken = null;
         await Storage.removeItem('authToken');
         await Storage.removeItem('authUser');
@@ -143,7 +143,7 @@ api.interceptors.response.use(
 
     // Request Timeouts
     if (error.code === 'ECONNABORTED' || error.message?.includes('timeout') || error.code === 'ETIMEDOUT') {
-
+      console.log(`⏳ Timeout Error [${error.code}]: ${error.message} on ${config?.url}`);
       return Promise.reject(new Error('Server is starting or temporarily unavailable. Please try again in a few moments.'));
     }
 

@@ -69,7 +69,7 @@ export default function TrainerDetailsScreen() {
       const res = await api.get(`/reviews/trainers/${id}/reviews`);
       setReviewsData(res.data);
     } catch (e) {
-
+      console.log('Error fetching reviews:', e);
     } finally {
       setReviewsLoading(false);
     }
@@ -84,7 +84,7 @@ export default function TrainerDetailsScreen() {
       });
       setCompletedBookings(filtered);
     } catch (e) {
-
+      console.log('Error fetching user bookings for review check:', e);
     }
   }, [id]);
 

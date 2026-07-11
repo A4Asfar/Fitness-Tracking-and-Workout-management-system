@@ -23,7 +23,7 @@ export default function BookingSuccessScreen() {
         const res = await api.get(`/bookings/${bookingId}`);
         setBooking(res.data);
       } catch (err) {
-
+        console.log(err);
       } finally {
         setLoading(false);
         // Trigger animations
