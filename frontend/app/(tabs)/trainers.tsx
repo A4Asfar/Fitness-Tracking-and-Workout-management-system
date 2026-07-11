@@ -159,7 +159,7 @@ export default function TrainersListScreen() {
         </TouchableOpacity>
       </View>
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ gap: 10, marginBottom: 24, paddingHorizontal: 4 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginBottom: 24, paddingHorizontal: 4 }}>
         {['All', 'Strength', 'Yoga', 'HIIT', 'Cardio', 'CrossFit', 'Pilates', 'Functional'].map(spec => (
           <TouchableOpacity 
             key={spec}
@@ -172,7 +172,7 @@ export default function TrainersListScreen() {
             <Text style={[s.specialtyChipText, selectedSpecialty === spec && s.specialtyChipTextActive]}>{spec}</Text>
           </TouchableOpacity>
         ))}
-      </ScrollView>
+      </View>
 
       {featuredTrainers.length > 0 && !searchQuery && (
         <View style={s.featuredSection}>
