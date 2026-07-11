@@ -112,6 +112,12 @@ api.interceptors.response.use(
 
       // 401 Unauthorized (Expired or Invalid Token)
       if (status === 401) {
+        // If it's a login request, do not wipe session and do not override the error message
+        if (config.url && config.url.includes('/auth/login')) {
+          const backendMessage = error.response.data?.message;
+          return Promise.reject(new Error(backendMessage || 'Invalid email or password.'));
+        }
+
         console.log('🔒 Unauthorized (401) - clearing session');
         authToken = null;
         await Storage.removeItem('authToken');
