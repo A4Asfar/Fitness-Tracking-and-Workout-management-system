@@ -327,6 +327,9 @@ export default function AIChatScreen() {
           ) : (
             <FlatList
               data={conversations}
+              initialNumToRender={10}
+              maxToRenderPerBatch={10}
+              windowSize={5}
               keyExtractor={item => item._id}
               contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 100 }}
               renderItem={({ item }) => (
@@ -417,6 +420,9 @@ export default function AIChatScreen() {
             <FlatList
               ref={flatListRef}
               data={messages}
+              initialNumToRender={10}
+              maxToRenderPerBatch={10}
+              windowSize={5}
               keyExtractor={item => item.id}
               contentContainerStyle={styles.chatContent}
               renderItem={({ item }) => (

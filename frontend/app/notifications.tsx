@@ -195,6 +195,9 @@ export default function NotificationsScreen() {
       {/* LIST */}
       <SectionList
         sections={sections}
+        initialNumToRender={10}
+        maxToRenderPerBatch={10}
+        windowSize={5}
         keyExtractor={(item) => item._id}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: insets.bottom + 20 }}

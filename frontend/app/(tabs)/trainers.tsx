@@ -178,6 +178,9 @@ export default function TrainersListScreen() {
             horizontal
             showsHorizontalScrollIndicator={false}
             data={featuredTrainers}
+            initialNumToRender={10}
+            maxToRenderPerBatch={10}
+            windowSize={5}
             keyExtractor={item => 'feat-' + (item.id || item._id)}
             renderItem={({ item }) => (
               <FeaturedTrainerCard 

@@ -440,6 +440,9 @@ export default function PremiumManagementDashboard() {
           ) : (
             <FlatList
               data={payments}
+              initialNumToRender={10}
+              maxToRenderPerBatch={10}
+              windowSize={5}
               keyExtractor={(item) => item._id}
               contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 80 }}
               renderItem={({ item }) => (
@@ -546,6 +549,9 @@ export default function PremiumManagementDashboard() {
           ) : (
             <FlatList
               data={filteredUsers}
+              initialNumToRender={10}
+              maxToRenderPerBatch={10}
+              windowSize={5}
               keyExtractor={(item) => item._id}
               contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 80 }}
               renderItem={({ item }) => (

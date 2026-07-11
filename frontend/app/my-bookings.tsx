@@ -157,6 +157,9 @@ export default function MyBookingsScreen() {
       ) : (
         <FlatList
           data={filteredBookings}
+          initialNumToRender={10}
+          maxToRenderPerBatch={10}
+          windowSize={5}
           keyExtractor={item => item._id}
           renderItem={renderBookingCard}
           contentContainerStyle={s.listContainer}
