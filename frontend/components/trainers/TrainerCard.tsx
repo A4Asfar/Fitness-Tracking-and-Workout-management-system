@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { Star, MapPin, ShieldCheck, Video, Clock } from 'lucide-react-native';
 import { Colors } from '@/constants/Theme';
@@ -8,11 +8,11 @@ interface TrainerCardProps {
   onPress: () => void;
 }
 
-export default function TrainerCard({ trainer, onPress }: TrainerCardProps) {
+const TrainerCard = memo(({ trainer, onPress }: TrainerCardProps) => {
   return (
     <TouchableOpacity 
       style={s.card} 
-      activeOpacity={0.8} 
+      activeOpacity={0.9} 
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`View profile of ${trainer.fullName || trainer.name}`}
@@ -31,9 +31,18 @@ export default function TrainerCard({ trainer, onPress }: TrainerCardProps) {
             )}
           </View>
           
-          <Text style={s.specialization} numberOfLines={1}>
-            {trainer.specializations ? trainer.specializations.join(' • ') : trainer.specialization}
-          </Text>
+          <View style={s.chipRow}>
+            <View style={s.chip}>
+              <Text style={s.chipText} numberOfLines={1}>
+                {trainer.specializations ? trainer.specializations[0] : trainer.specialization}
+              </Text>
+            </View>
+            {trainer.featuredTrainer && (
+              <View style={[s.chip, s.featuredChip]}>
+                <Text style={s.featuredChipText}>PRO</Text>
+              </View>
+            )}
+          </View>
 
           <View style={s.statsRow}>
             <View style={s.statItem}>
@@ -68,61 +77,90 @@ export default function TrainerCard({ trainer, onPress }: TrainerCardProps) {
             {trainer.availabilityStatus === 'Online' ? 'Online Sessions' : trainer.city || 'Local'}
           </Text>
         </View>
-        <Text style={s.priceText}>
-          PKR {trainer.hourlyPrice || '3000'}<Text style={s.priceUnit}>/hr</Text>
-        </Text>
+        
+        <View style={s.priceRow}>
+          <Text style={s.priceText}>
+            PKR {trainer.hourlyPrice || '3000'}<Text style={s.priceUnit}>/hr</Text>
+          </Text>
+          <View style={s.bookBtn}>
+            <Text style={s.bookBtnText}>Book</Text>
+          </View>
+        </View>
       </View>
     </TouchableOpacity>
   );
-}
+});
+
+export default TrainerCard;
 
 const s = StyleSheet.create({
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 20,
+    borderRadius: 24,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#F1F5F9',
     shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 4 },
+    shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.04,
-    shadowRadius: 12,
-    elevation: 2,
-    marginBottom: 16,
+    shadowRadius: 16,
+    elevation: 3,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: '#F8FAFC',
   },
   topRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 14,
   },
   image: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    width: 72,
+    height: 72,
+    borderRadius: 20,
     backgroundColor: '#F1F5F9',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
   },
   infoContainer: {
     flex: 1,
-    marginLeft: 14,
+    marginLeft: 16,
   },
   nameRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 2,
+    marginBottom: 4,
   },
   name: {
     fontSize: 18,
     fontWeight: '800',
     color: '#0F172A',
     flexShrink: 1,
+    letterSpacing: -0.5,
   },
-  specialization: {
-    fontSize: 13,
-    color: Colors.primary,
+  chipRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  chip: {
+    backgroundColor: '#F1F5F9',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  chipText: {
+    color: '#475569',
+    fontSize: 11,
     fontWeight: '700',
-    marginBottom: 6,
+  },
+  featuredChip: {
+    backgroundColor: '#FFFBEB',
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  featuredChipText: {
+    color: '#D97706',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.5,
   },
   statsRow: {
     flexDirection: 'row',
@@ -134,19 +172,19 @@ const s = StyleSheet.create({
     gap: 4,
   },
   statText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
     color: '#475569',
+    fontWeight: '700',
   },
   statDot: {
-    marginHorizontal: 8,
     color: '#CBD5E1',
-    fontSize: 14,
+    marginHorizontal: 8,
+    fontSize: 12,
   },
   bio: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#64748B',
-    lineHeight: 20,
+    lineHeight: 18,
     fontWeight: '500',
   },
   divider: {
@@ -165,18 +203,34 @@ const s = StyleSheet.create({
     gap: 6,
   },
   locationText: {
-    fontSize: 13,
-    fontWeight: '600',
+    fontSize: 12,
     color: '#475569',
+    fontWeight: '700',
+  },
+  priceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   priceText: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#0F172A',
   },
   priceUnit: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '600',
     color: '#94A3B8',
+  },
+  bookBtn: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  bookBtnText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '800',
   },
 });

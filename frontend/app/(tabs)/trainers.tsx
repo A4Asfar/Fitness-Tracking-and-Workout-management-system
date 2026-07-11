@@ -12,6 +12,7 @@ import api from '@/services/api';
 import TrainerCard from '@/components/trainers/TrainerCard';
 import FeaturedTrainerCard from '@/components/trainers/FeaturedTrainerCard';
 import SkeletonCard from '@/components/SkeletonCard';
+import { MOCK_TRAINERS } from '@/constants/MockTrainers';
 
 export default function TrainersListScreen() {
   const router = useRouter();
@@ -41,7 +42,10 @@ export default function TrainersListScreen() {
       const res = await api.get('/content/trainers');
       // Simulated delay to show beautiful skeletons
       setTimeout(() => {
-        setTrainers(res.data);
+        const backendTrainers = Array.isArray(res.data) ? res.data : [];
+        const combinedTrainers = [...MOCK_TRAINERS, ...backendTrainers];
+        
+        setTrainers(combinedTrainers);
         setError(null);
         setLoading(false);
         setRefreshing(false);

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
 import { Star, ShieldCheck } from 'lucide-react-native';
 import { Colors } from '@/constants/Theme';
@@ -12,7 +12,7 @@ interface FeaturedTrainerCardProps {
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.75;
 
-export default function FeaturedTrainerCard({ trainer, onPress }: FeaturedTrainerCardProps) {
+const FeaturedTrainerCard = memo(({ trainer, onPress }: FeaturedTrainerCardProps) => {
   return (
     <TouchableOpacity 
       style={s.card} 
@@ -27,13 +27,13 @@ export default function FeaturedTrainerCard({ trainer, onPress }: FeaturedTraine
         resizeMode="cover"
       />
       <LinearGradient
-        colors={['transparent', 'rgba(0,0,0,0.8)']}
+        colors={['transparent', 'rgba(15,23,42,0.6)', 'rgba(15,23,42,0.95)']}
         style={s.gradientOverlay}
       >
         <View style={s.content}>
           <View style={s.topRow}>
             <View style={s.featuredBadge}>
-              <Text style={s.featuredText}>FEATURED</Text>
+              <Text style={s.featuredText}>PRO</Text>
             </View>
             <View style={s.ratingBadge}>
               <Star size={12} color="#F59E0B" fill="#F59E0B" />
@@ -45,7 +45,7 @@ export default function FeaturedTrainerCard({ trainer, onPress }: FeaturedTraine
             <View style={s.nameRow}>
               <Text style={s.name} numberOfLines={1}>{trainer.fullName || trainer.name}</Text>
               {trainer.verifiedTrainer && (
-                <ShieldCheck size={16} color={Colors.primary} style={{ marginLeft: 6 }} />
+                <ShieldCheck size={18} color="#38BDF8" style={{ marginLeft: 6 }} />
               )}
             </View>
             <Text style={s.specialization} numberOfLines={1}>
@@ -56,21 +56,23 @@ export default function FeaturedTrainerCard({ trainer, onPress }: FeaturedTraine
       </LinearGradient>
     </TouchableOpacity>
   );
-}
+});
+
+export default FeaturedTrainerCard;
 
 const s = StyleSheet.create({
   card: {
     width: CARD_WIDTH,
-    height: 220,
+    height: 260, // taller for more dramatic hero effect
     borderRadius: 24,
     overflow: 'hidden',
     marginRight: 16,
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#1E293B',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.15,
     shadowRadius: 16,
-    elevation: 4,
+    elevation: 6,
   },
   imageBackground: {
     width: '100%',
@@ -83,7 +85,7 @@ const s = StyleSheet.create({
   },
   content: {
     flex: 1,
-    padding: 16,
+    padding: 20,
     justifyContent: 'space-between',
   },
   topRow: {
@@ -92,31 +94,32 @@ const s = StyleSheet.create({
     alignItems: 'center',
   },
   featuredBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    paddingHorizontal: 10,
+    backgroundColor: 'rgba(245, 158, 11, 0.2)',
+    paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: 12,
-    backdropFilter: 'blur(10px)',
+    borderWidth: 1,
+    borderColor: 'rgba(245, 158, 11, 0.4)',
   },
   featuredText: {
-    color: '#FFFFFF',
+    color: '#FDE68A',
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '900',
     letterSpacing: 1,
   },
   ratingBadge: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 8,
+    backgroundColor: 'rgba(15, 23, 42, 0.6)',
+    paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
     gap: 4,
   },
   ratingText: {
-    color: '#0F172A',
+    color: '#FFFFFF',
     fontSize: 12,
-    fontWeight: '700',
+    fontWeight: '800',
   },
   bottomInfo: {
     marginTop: 'auto',
@@ -129,14 +132,13 @@ const s = StyleSheet.create({
   name: {
     color: '#FFFFFF',
     fontSize: 22,
-    fontWeight: '800',
-    textShadowColor: 'rgba(0,0,0,0.3)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
+    fontWeight: '900',
+    flexShrink: 1,
+    letterSpacing: -0.5,
   },
   specialization: {
-    color: '#E2E8F0',
-    fontSize: 14,
+    color: '#94A3B8',
+    fontSize: 13,
     fontWeight: '600',
   },
 });
