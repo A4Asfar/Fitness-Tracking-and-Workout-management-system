@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Stack, useRouter, useSegments, useRootNavigationState } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet } from 'react-native';
@@ -9,12 +9,14 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import * as NativeSplashScreen from 'expo-splash-screen';
 import { InactivityProvider } from '@/components/InactivityProvider';
+import SplashScreen from '@/components/SplashScreen';
 
 // Prevent auto-hiding of the native splash screen
 NativeSplashScreen.preventAutoHideAsync().catch(() => {});
 
 function NavigationHandler() {
   const { user, loading } = useAuth();
+  const [isSplashVisible, setIsSplashVisible] = useState(true);
   const segments = useSegments();
   const router = useRouter();
   const rootNavigationState = useRootNavigationState();
@@ -53,6 +55,7 @@ function NavigationHandler() {
   }, [user, loading, segments, router, rootNavigationState?.key]);
 
   return (
+    <>
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="index" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
@@ -68,6 +71,10 @@ function NavigationHandler() {
       <Stack.Screen name="my-bookings" options={{ presentation: 'card', headerShown: false }} />
       <Stack.Screen name="+not-found" />
     </Stack>
+    {isSplashVisible && !loading && (
+      <SplashScreen onFinish={() => setIsSplashVisible(false)} />
+    )}
+    </>
   );
 }
 
