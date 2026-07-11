@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     fontSize: 9,
     fontWeight: '800',
   },
-  name: {
+  name: { flexShrink: 1, 
     color: '#0F172A',
     fontSize: 18,
     fontWeight: '800',

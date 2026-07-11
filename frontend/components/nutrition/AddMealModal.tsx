@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F1F5F9',
     marginBottom: 20,
   },
-  title: {
+  title: { flexShrink: 1, 
     color: '#0F172A',
     fontSize: 18,
     fontWeight: '800',

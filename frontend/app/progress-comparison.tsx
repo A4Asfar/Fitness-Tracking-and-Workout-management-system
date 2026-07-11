@@ -285,8 +285,8 @@ const styles = StyleSheet.create({
   headerTitle: { color: Colors.text, fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
   content: { padding: PAD },
   introSection: { marginBottom: 32 },
-  title: { color: Colors.text, fontSize: 32, fontWeight: '900', letterSpacing: -1 },
-  subtitle: { color: Colors.textSecondary, fontSize: 16, marginTop: 8, fontWeight: '500' },
+  title: { flexShrink: 1,  color: Colors.text, fontSize: 32, fontWeight: '900', letterSpacing: -1 },
+  subtitle: { flexShrink: 1,  color: Colors.textSecondary, fontSize: 16, marginTop: 8, fontWeight: '500' },
   
   grid: { flexDirection: 'row', gap: 16, marginBottom: 24 },
   compareCard: {

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert, Animated, Dimensions, useWindowDimensions } from 'react-native';
+  TextInput, ActivityIndicator, Alert, Animated, Dimensions, useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { 
@@ -93,7 +93,8 @@ export default function StepLoggerScreen() {
   const progressPercent = Math.min(100, Math.round((todaySteps / dailyGoal) * 100));
 
   return (
-    <View style={SharedStyles.container}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={SharedStyles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
       {/* ── Header ── */}
@@ -228,6 +229,7 @@ export default function StepLoggerScreen() {
         </Animated.View>
       </ScrollView>
     </View>
+    </KeyboardAvoidingView>
   );
 }
 

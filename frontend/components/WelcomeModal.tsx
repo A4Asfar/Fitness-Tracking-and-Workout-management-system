@@ -99,14 +99,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
-  title: {
+  title: { flexShrink: 1, 
     color: Colors.text,
     fontSize: 24,
     fontWeight: 'bold',
     textAlign: 'center',
     marginBottom: 10,
   },
-  subtitle: {
+  subtitle: { flexShrink: 1, 
     color: Colors.textSecondary,
     fontSize: 16,
     textAlign: 'center',

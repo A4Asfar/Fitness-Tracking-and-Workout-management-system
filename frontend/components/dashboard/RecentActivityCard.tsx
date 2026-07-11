@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  title: {
+  title: { flexShrink: 1, 
     color: '#0F172A',
     fontSize: 15,
     fontWeight: '800',

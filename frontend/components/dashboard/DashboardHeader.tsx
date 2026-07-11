@@ -118,7 +118,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.8,
   },
-  name: {
+  name: { flexShrink: 1, 
     color: '#0F172A',
     fontSize: 18,
     fontWeight: '800',

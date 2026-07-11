@@ -129,13 +129,13 @@ const styles = StyleSheet.create({
   titleSection: {
     marginBottom: 16,
   },
-  title: {
+  title: { flexShrink: 1, 
     color: '#0F172A',
     fontSize: 32,
     fontWeight: '900',
     letterSpacing: -0.8,
   },
-  subtitle: {
+  subtitle: { flexShrink: 1, 
     color: '#64748B',
     fontSize: 15,
     fontWeight: '500',

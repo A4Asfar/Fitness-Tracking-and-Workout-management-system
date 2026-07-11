@@ -167,8 +167,8 @@ const s = StyleSheet.create({
   heroSection: { alignItems: 'center', marginBottom: 40 },
   iconCircle: { width: 100, height: 100, borderRadius: 50, backgroundColor: 'rgba(16,185,129,0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 24 },
   iconInner: { width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(16,185,129,0.2)', justifyContent: 'center', alignItems: 'center' },
-  title: { color: '#F8FAFC', fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 8 },
-  subtitle: { color: '#94A3B8', fontSize: 15, fontWeight: '500' },
+  title: { flexShrink: 1,  color: '#F8FAFC', fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 8 },
+  subtitle: { flexShrink: 1,  color: '#94A3B8', fontSize: 15, fontWeight: '500' },
 
   receiptContainer: { paddingHorizontal: 24 },
   receiptCard: { backgroundColor: '#1E293B', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 32 },

@@ -129,7 +129,7 @@ const s = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 4,
   },
-  name: {
+  name: { flexShrink: 1, 
     color: '#FFFFFF',
     fontSize: 22,
     fontWeight: '900',

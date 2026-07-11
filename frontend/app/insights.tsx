@@ -345,7 +345,7 @@ const styles = StyleSheet.create<Record<string, any>>({
     borderColor: '#E2E8F0',
   },
   headerTitle: { color: '#0F172A', fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
-  subtitle: { color: '#64748B', fontSize: 12, textAlign: 'center', fontWeight: '700', marginBottom: 24, marginTop: 16 },
+  subtitle: { flexShrink: 1,  color: '#64748B', fontSize: 12, textAlign: 'center', fontWeight: '700', marginBottom: 24, marginTop: 16 },
   content: { padding: 20 },
   
   // Grid

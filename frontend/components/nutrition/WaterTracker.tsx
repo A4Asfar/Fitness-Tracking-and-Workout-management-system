@@ -95,7 +95,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  title: {
+  title: { flexShrink: 1, 
     color: '#0F172A',
     fontSize: 15,
     fontWeight: '800',

@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
-import { 
-  View, Text, StyleSheet, TouchableOpacity, TextInput, 
-  Modal, ActivityIndicator, Dimensions 
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, 
+  Modal, ActivityIndicator, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { Colors } from '@/constants/Theme';
 import { Star, X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

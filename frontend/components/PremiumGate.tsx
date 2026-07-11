@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     letterSpacing: -0.5,
   },
-  modalSubtitle: {
+  modalSubtitle: { flexShrink: 1, 
     color: '#64748B',
     fontSize: 13,
     fontWeight: '600',

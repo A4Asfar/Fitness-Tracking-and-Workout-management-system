@@ -239,7 +239,7 @@ export default function WorkoutsScreen() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0F172A' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 24, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
-  headerSubtitle: { color: '#94A3B8', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
+  headerSubtitle: { flexShrink: 1,  color: '#94A3B8', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
   headerTitle: { color: '#F8FAFC', fontSize: 28, fontWeight: '900', letterSpacing: -1 },
   logBtn: { flexDirection: 'row', backgroundColor: '#38BDF8', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 100, alignItems: 'center' },
   logBtnText: { color: '#0F172A', fontSize: 14, fontWeight: '900', marginLeft: 6 },

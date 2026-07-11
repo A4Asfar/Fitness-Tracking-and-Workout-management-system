@@ -309,7 +309,7 @@ const s = StyleSheet.create({
 
   /* Title */
   titleWrap: { marginTop: ORBITAL_SIZE / 2 + 28, alignItems: 'center' },
-  title: {
+  title: { flexShrink: 1, 
     color: '#FFFFFF', fontSize: 26, fontWeight: '900',
     letterSpacing: 8, textAlign: 'center',
   },

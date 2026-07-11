@@ -240,7 +240,7 @@ const s = StyleSheet.create({
 
   content: { padding: 24, marginTop: -32, borderTopLeftRadius: 32, borderTopRightRadius: 32, backgroundColor: '#0F172A' },
   headerRow: { marginBottom: 24 },
-  title: { fontSize: 32, color: '#F8FAFC', fontWeight: '900', letterSpacing: -1, marginBottom: 4 },
+  title: { flexShrink: 1,  fontSize: 32, color: '#F8FAFC', fontWeight: '900', letterSpacing: -1, marginBottom: 4 },
   focus: { fontSize: 15, color: '#94A3B8', fontWeight: '600' },
   
   badgesRow: { flexDirection: 'row', gap: 12, marginBottom: 32, flexWrap: 'wrap' },

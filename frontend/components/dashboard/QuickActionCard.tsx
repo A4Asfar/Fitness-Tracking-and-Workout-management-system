@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 12,
   },
-  title: {
+  title: { flexShrink: 1, 
     color: '#0F172A',
     fontSize: 14,
     fontWeight: '800',

@@ -76,13 +76,13 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  title: {
+  title: { flexShrink: 1, 
     color: '#0F172A',
     fontSize: 22,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
-  subtitle: {
+  subtitle: { flexShrink: 1, 
     color: '#64748B',
     fontSize: 14,
     fontWeight: '500',

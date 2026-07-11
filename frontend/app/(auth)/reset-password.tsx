@@ -132,8 +132,8 @@ const s = StyleSheet.create({
   backBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' },
   
   logoWrapper: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(16,185,129,0.1)', justifyContent: 'center', alignItems: 'center', marginBottom: 20, borderWidth: 1, borderColor: 'rgba(16,185,129,0.2)' },
-  title: { color: '#F8FAFC', fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8 },
-  subtitle: { color: '#94A3B8', fontSize: 15, fontWeight: '500', textAlign: 'center', paddingHorizontal: 20, lineHeight: 22 },
+  title: { flexShrink: 1,  color: '#F8FAFC', fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8 },
+  subtitle: { flexShrink: 1,  color: '#94A3B8', fontSize: 15, fontWeight: '500', textAlign: 'center', paddingHorizontal: 20, lineHeight: 22 },
   
   formCard: { backgroundColor: '#1E293B', borderRadius: 32, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.3, shadowRadius: 30, elevation: 10 },
   

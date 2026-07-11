@@ -111,7 +111,7 @@ const s = StyleSheet.create({
   image: { width: 72, height: 72, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.1)' },
   infoContainer: { flex: 1, marginLeft: 16 },
   nameRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
-  name: { fontSize: 18, fontWeight: '800', color: '#FFFFFF', flexShrink: 1, letterSpacing: -0.5 },
+  name: { flexShrink: 1,  fontSize: 18, fontWeight: '800', color: '#FFFFFF', flexShrink: 1, letterSpacing: -0.5 },
   chipRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
   chip: { backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 8, paddingVertical: 3, borderRadius: 8 },
   chipText: { color: '#94A3B8', fontSize: 11, fontWeight: '700' },

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, ActivityIndicator, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ArrowLeft, Upload, Camera, Trash2, CheckCircle, FileText, Hash } from 'lucide-react-native';
@@ -67,7 +67,8 @@ export default function PaymentSubmissionScreen() {
   };
 
   return (
-    <View style={s.container}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={s.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={[s.header, { paddingTop: insets.top + 16 }]}>
         <TouchableOpacity onPress={() => router.back()} style={s.backBtn}>
@@ -139,6 +140,7 @@ export default function PaymentSubmissionScreen() {
         </TouchableOpacity>
       </View>
     </View>
+    </KeyboardAvoidingView>
   );
 }
 

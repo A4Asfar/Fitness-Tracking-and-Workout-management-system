@@ -521,7 +521,7 @@ const s = StyleSheet.create({
   reviewerInfo: { flex: 1, marginLeft: 12 },
   reviewerName: { fontSize: 15, fontWeight: '800', color: '#F8FAFC' },
   reviewDate: { fontSize: 12, color: '#94A3B8', fontWeight: '600' },
-  reviewText: { fontSize: 15, color: '#CBD5E1', lineHeight: 22, fontWeight: '500' },
+  reviewText: { flexShrink: 1,  fontSize: 15, color: '#CBD5E1', lineHeight: 22, fontWeight: '500' },
   helpfulBtn: { paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, backgroundColor: 'rgba(255,255,255,0.05)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
   helpfulText: { color: '#94A3B8', fontSize: 12, fontWeight: '700' },
   trainerReplyBox: { marginTop: 16, backgroundColor: 'rgba(56,189,248,0.1)', padding: 16, borderRadius: 16, borderLeftWidth: 3, borderLeftColor: '#38BDF8' },

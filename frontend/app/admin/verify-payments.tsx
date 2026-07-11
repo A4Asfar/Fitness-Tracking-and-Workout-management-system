@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Image, Modal, TextInput, Dimensions, FlatList, Share, Alert, useWindowDimensions } from 'react-native';
+  ActivityIndicator, Image, Modal, TextInput, Dimensions, FlatList, Share, Alert, useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -320,7 +320,8 @@ export default function PremiumManagementDashboard() {
   );
 
   return (
-    <View style={styles.container}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* ── Modern Header ── */}
@@ -959,6 +960,7 @@ export default function PremiumManagementDashboard() {
         </View>
       </Modal>
     </View>
+    </KeyboardAvoidingView>
   );
 }
 
@@ -1675,7 +1677,7 @@ const styles = StyleSheet.create<Record<string, any>>({
     fontSize: 16,
     fontWeight: '900',
   },
-  rejectionSubtitle: {
+  rejectionSubtitle: { flexShrink: 1, 
     color: '#64748B',
     fontSize: 12,
     fontWeight: '600',

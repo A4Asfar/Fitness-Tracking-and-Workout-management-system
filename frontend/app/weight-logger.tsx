@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert, Animated, Dimensions, useWindowDimensions } from 'react-native';
+  TextInput, ActivityIndicator, Alert, Animated, Dimensions, useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { 
@@ -94,7 +94,8 @@ export default function WeightLoggerScreen() {
   const diff = (lastWeight && prevWeight) ? (lastWeight - prevWeight).toFixed(1) : null;
 
   return (
-    <View style={SharedStyles.container}>
+    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <View style={SharedStyles.container}>
       <Stack.Screen options={{ headerShown: false }} />
       
       {/* ── Header ── */}
@@ -237,6 +238,7 @@ export default function WeightLoggerScreen() {
         </Animated.View>
       </ScrollView>
     </View>
+    </KeyboardAvoidingView>
   );
 }
 

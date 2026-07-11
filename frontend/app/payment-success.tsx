@@ -39,8 +39,8 @@ export default function PaymentSuccessScreen() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F8FAFC' },
   content: { flex: 1, alignItems: 'center', paddingHorizontal: 24 },
-  title: { fontSize: 28, fontWeight: '900', color: '#0F172A', marginBottom: 8 },
-  subtitle: { fontSize: 16, color: '#64748B', textAlign: 'center', marginBottom: 32 },
+  title: { flexShrink: 1,  fontSize: 28, fontWeight: '900', color: '#0F172A', marginBottom: 8 },
+  subtitle: { flexShrink: 1,  fontSize: 16, color: '#64748B', textAlign: 'center', marginBottom: 32 },
   
   alertBox: { flexDirection: 'row', backgroundColor: '#FFFBEB', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#FDE68A', alignItems: 'center' },
   alertText: { flex: 1, marginLeft: 12, fontSize: 14, color: '#92400E', lineHeight: 22, fontWeight: '500' },

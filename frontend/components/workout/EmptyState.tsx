@@ -89,14 +89,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 2,
   },
-  title: {
+  title: { flexShrink: 1, 
     color: '#0F172A',
     fontSize: 18,
     fontWeight: '800',
     textAlign: 'center',
     marginBottom: 8,
   },
-  description: {
+  description: { flexShrink: 1, 
     color: '#64748B',
     fontSize: 14,
     fontWeight: '500',

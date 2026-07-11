@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingHorizontal: 4,
   },
-  title: {
+  title: { flexShrink: 1, 
     color: '#64748B',
     fontSize: 13,
     fontWeight: '800',

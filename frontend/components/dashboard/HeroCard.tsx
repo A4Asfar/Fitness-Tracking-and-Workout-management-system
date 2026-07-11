@@ -122,13 +122,13 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
   },
-  title: {
+  title: { flexShrink: 1, 
     color: '#0F172A',
     fontSize: 22,
     fontWeight: '900',
     letterSpacing: -0.5,
   },
-  subtitle: {
+  subtitle: { flexShrink: 1, 
     color: '#64748B',
     fontSize: 13,
     fontWeight: '500',

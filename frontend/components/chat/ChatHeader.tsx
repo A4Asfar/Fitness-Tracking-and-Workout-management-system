@@ -89,12 +89,12 @@ const styles = StyleSheet.create({
     marginLeft: 12,
     flex: 1,
   },
-  title: {
+  title: { flexShrink: 1, 
     color: '#0F172A',
     fontSize: 16,
     fontWeight: '800',
   },
-  subtitle: {
+  subtitle: { flexShrink: 1, 
     color: '#64748B',
     fontSize: 11,
     fontWeight: '600',

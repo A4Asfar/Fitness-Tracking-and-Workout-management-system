@@ -37,7 +37,7 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
     elevation: 4,
   },
-  title: {
+  title: { flexShrink: 1, 
     color: '#0F172A',
     fontSize: 26,
     fontWeight: '900',

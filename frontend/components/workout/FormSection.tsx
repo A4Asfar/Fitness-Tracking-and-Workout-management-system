@@ -33,14 +33,14 @@ const styles = StyleSheet.create({
     marginBottom: 10,
     paddingLeft: 4,
   },
-  title: {
+  title: { flexShrink: 1, 
     color: '#0F172A',
     fontSize: 14,
     fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 1.2,
   },
-  subtitle: {
+  subtitle: { flexShrink: 1, 
     color: '#64748B',
     fontSize: 12,
     fontWeight: '500',

@@ -55,7 +55,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginRight: 12,
   },
-  name: {
+  name: { flexShrink: 1, 
     color: '#0F172A',
     fontSize: 14,
     fontWeight: '700',

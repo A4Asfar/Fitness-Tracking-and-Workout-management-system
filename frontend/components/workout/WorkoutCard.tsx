@@ -137,7 +137,7 @@ const styles = StyleSheet.create({
   info: {
     flex: 1,
   },
-  name: {
+  name: { flexShrink: 1, 
     color: '#0F172A',
     fontSize: 16,
     fontWeight: '800',

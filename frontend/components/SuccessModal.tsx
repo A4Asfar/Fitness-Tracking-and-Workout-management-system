@@ -64,7 +64,7 @@ const styles = StyleSheet.create({
   iconContainer: {
     marginBottom: 20,
   },
-  title: {
+  title: { flexShrink: 1, 
     color: Colors.text,
     fontSize: 24,
     fontWeight: 'bold',

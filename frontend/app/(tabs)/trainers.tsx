@@ -361,7 +361,7 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0F172A' },
   headerContainer: { marginBottom: 8 },
   mainTitle: { fontSize: 32, fontWeight: '900', color: '#FFFFFF', letterSpacing: -1 },
-  subtitle: { fontSize: 15, color: '#94A3B8', fontWeight: '500', marginTop: 4, marginBottom: 24 },
+  subtitle: { flexShrink: 1,  fontSize: 15, color: '#94A3B8', fontWeight: '500', marginTop: 4, marginBottom: 24 },
   searchRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
   searchBar: { flex: 1, flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B', borderRadius: 16, paddingHorizontal: 16, height: 56, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
   searchInput: { flex: 1, marginLeft: 10, fontSize: 15, color: '#FFFFFF', fontWeight: '500' },
