@@ -92,11 +92,8 @@ exports.login = asyncHandler(async (req, res) => {
   console.log(`3. User.findOne() returned a user: ${user !== null}`);
 
   if (!user) {
-    const isRightDB = process.env.MONGO_URI === 'mongodb+srv://asfaramir790_db_user:asfaramir456@fitness013.hrkgejq.mongodb.net/fitnessapp';
-    console.log(`❌ Login failed: User not found for email ${email}`);
-    console.log('--- TEMPORARY LOGIN DIAGNOSTICS END ---\n');
     res.status(401);
-    throw new Error(`User not found for email: ${email}. Right DB? ${isRightDB}`);
+    throw new Error('Invalid email or password');
   }
 
   console.log(`4. Stored hash length: ${user.password.length}`);
@@ -116,9 +113,8 @@ exports.login = asyncHandler(async (req, res) => {
       user: userData
     });
   } else {
-    const isRightDB = process.env.MONGO_URI === 'mongodb+srv://asfaramir790_db_user:asfaramir456@fitness013.hrkgejq.mongodb.net/fitnessapp';
     res.status(401);
-    throw new Error(`Password mismatch. Right DB? ${isRightDB}`);
+    throw new Error('Invalid email or password');
   }
 });
 
