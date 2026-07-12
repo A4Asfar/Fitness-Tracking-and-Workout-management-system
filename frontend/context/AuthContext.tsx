@@ -57,6 +57,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   useEffect(() => {
+    if (request) {
+      console.log('=== GOOGLE OAUTH FORENSIC AUDIT ===');
+      console.log('1. ENV Client ID:', process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
+      console.log('2. Request Config:', JSON.stringify(request, null, 2));
+      console.log('3. Redirect URI:', request.redirectUri);
+      console.log('4. Client ID sent to Google:', request.clientId);
+      console.log('===================================');
+    }
+  }, [request]);
+
+  useEffect(() => {
     if (response?.type === 'success') {
       const { id_token } = response.params;
       if (id_token) {

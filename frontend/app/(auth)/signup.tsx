@@ -20,7 +20,7 @@ export default function SignupScreen() {
   const [errors, setErrors] = useState<any>({});
   const [loading, setLoading] = useState(false);
   
-  const { signup, user } = useAuth();
+  const { signup, loginWithGoogle } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showWelcome, setShowWelcome] = useState(false);

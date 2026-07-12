@@ -19,7 +19,7 @@ export default function LoginScreen() {
   const [errors, setErrors] = useState<any>({});
   const [loading, setLoading] = useState(false);
   
-  const { login, user } = useAuth();
+  const { login, user, loginWithGoogle } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showWelcome, setShowWelcome] = useState(false);
@@ -138,7 +138,18 @@ export default function LoginScreen() {
             <View style={s.sepLine} />
           </View>
 
-          <GoogleSignInButton isLoading={loading} />
+          <GoogleSignInButton onPress={loginWithGoogle} />
+
+          {/* OAUTH FORENSIC AUDIT */}
+          <View style={{ marginTop: 20, padding: 10, backgroundColor: '#ffebee', borderRadius: 8 }}>
+            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#c62828' }}>OAUTH FORENSIC AUDIT</Text>
+            <Text style={{ fontSize: 10, color: '#b71c1c' }}>
+              ENV: {process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ? `'${process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID}'` : 'UNDEFINED'}
+            </Text>
+            <Text style={{ fontSize: 10, color: '#b71c1c' }}>
+              Check for trailing spaces or missing Vercel config!
+            </Text>
+          </View>
 
           {/* Footer */}
           <View style={s.footer}>
