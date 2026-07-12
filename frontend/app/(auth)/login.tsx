@@ -151,26 +151,6 @@ export default function LoginScreen() {
 
           <GoogleSignInButton />
 
-          {/* MASSIVE OAUTH FORENSIC AUDIT ON-SCREEN */}
-          <View style={{ marginTop: 20, padding: 10, backgroundColor: '#ffebee', borderRadius: 8 }}>
-            <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#c62828', marginBottom: 5 }}>RUNTIME FORENSIC DIAGNOSTICS</Text>
-            <Text style={{ fontSize: 10, color: '#b71c1c' }}>
-              NODE_ENV: {process.env.NODE_ENV}
-            </Text>
-            <Text style={{ fontSize: 10, color: '#b71c1c' }}>
-              EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: {process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ? `'${process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID}'` : 'UNDEFINED'}
-            </Text>
-            <Text style={{ fontSize: 10, color: '#b71c1c' }}>
-              Client ID Used by Request: {requestConfig?.clientId || 'Loading...'}
-            </Text>
-            <Text style={{ fontSize: 10, color: '#b71c1c' }}>
-              Redirect URI: {requestConfig?.redirectUri || 'Loading...'}
-            </Text>
-            <Text style={{ fontSize: 10, color: '#b71c1c' }}>
-              Scopes: {requestConfig?.scopes?.join(', ') || 'Loading...'}
-            </Text>
-          </View>
-
           <View style={s.footer}>
             <Text style={s.footerLabel}>Don't have an account?</Text>
             <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
