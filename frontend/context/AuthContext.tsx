@@ -51,8 +51,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { showToast } = useToast();
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '1097357098571-j3lggh5valv6ba5v0p1fn48guadrrmfq.apps.googleusercontent.com',
-    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '1097357098571-j3lggh5valv6ba5v0p1fn48guadrrmfq.apps.googleusercontent.com',
+    clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '1097357098571-a47vluk83pvb118k6da6ck7o6n3ei39e.apps.googleusercontent.com',
+    webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '1097357098571-a47vluk83pvb118k6da6ck7o6n3ei39e.apps.googleusercontent.com',
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
   });
