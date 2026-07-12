@@ -19,7 +19,7 @@ export default function LoginScreen() {
   const [errors, setErrors] = useState<any>({});
   const [loading, setLoading] = useState(false);
   
-  const { login, user, loginWithGoogle } = useAuth();
+  const { login, user, loginWithGoogle, requestConfig } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showWelcome, setShowWelcome] = useState(false);
@@ -62,77 +62,87 @@ export default function LoginScreen() {
   };
 
   return (
-    <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={s.container}>
+    <KeyboardAvoidingView 
+      style={s.container}
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+    >
       <LinearGradient colors={['#0F172A', '#1E293B']} style={s.background} />
       
-      <ScrollView contentContainerStyle={[s.scroll, { paddingTop: insets.top + 40 }]} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
-        
-        <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }], alignItems: 'center', marginBottom: 40 }}>
+      <ScrollView 
+        contentContainerStyle={[s.scrollContent, { paddingTop: Math.max(insets.top, 20) }]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+      >
+        <Animated.View style={[s.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           <View style={s.logoWrapper}>
             <ShieldCheck size={40} color="#38BDF8" />
           </View>
           <Text style={s.title}>Welcome Back</Text>
-          <Text style={s.subtitle}>Sign in to continue your elite training</Text>
+          <Text style={s.subtitle}>Sign in to continue your fitness journey</Text>
         </Animated.View>
 
-        <Animated.View style={[s.formCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-          
-          {/* Email Input */}
+        <Animated.View style={[s.form, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           <View style={s.inputContainer}>
             <Text style={s.inputLabel}>Email Address</Text>
             <View style={[s.inputWrapper, errors.email && s.inputError]}>
-              <Mail size={18} color="#64748B" style={s.inputIcon} />
+              <Mail color="#64748B" size={20} style={s.inputIcon} />
               <TextInput
-                style={s.inputField}
+                style={s.input}
                 placeholder="Enter your email"
                 placeholderTextColor="#64748B"
                 value={email}
-                onChangeText={t => { setEmail(t); if(errors.email) setErrors({...errors, email: null}); }}
+                onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                autoComplete="email"
-                textContentType="emailAddress"
-                editable={!loading}
               />
             </View>
             {errors.email && <Text style={s.errorText}>{errors.email}</Text>}
           </View>
 
-          {/* Password Input */}
           <View style={s.inputContainer}>
             <Text style={s.inputLabel}>Password</Text>
             <View style={[s.inputWrapper, errors.password && s.inputError]}>
-              <Lock size={18} color="#64748B" style={s.inputIcon} />
+              <Lock color="#64748B" size={20} style={s.inputIcon} />
               <TextInput
-                style={s.inputField}
+                style={s.input}
                 placeholder="Enter your password"
                 placeholderTextColor="#64748B"
                 value={password}
-                onChangeText={t => { setPassword(t); if(errors.password) setErrors({...errors, password: null}); }}
+                onChangeText={setPassword}
                 secureTextEntry={!showPassword}
-                autoComplete="password"
-                textContentType="password"
-                editable={!loading}
               />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={s.eyeBtn}>
-                {showPassword ? <EyeOff size={18} color="#64748B" /> : <Eye size={18} color="#64748B" />}
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={s.eyeIcon}>
+                {showPassword ? <EyeOff color="#64748B" size={20} /> : <Eye color="#64748B" size={20} />}
               </TouchableOpacity>
             </View>
             {errors.password && <Text style={s.errorText}>{errors.password}</Text>}
+            <TouchableOpacity style={s.forgotPassword} onPress={() => router.push('/(auth)/forgot-password' as any)}>
+              <Text style={s.forgotPasswordText}>Forgot Password?</Text>
+            </TouchableOpacity>
           </View>
 
-          <TouchableOpacity onPress={() => router.push('/(auth)/forgot-password' as any)} style={s.forgotBtn} activeOpacity={0.7}>
-            <Text style={s.forgotText}>Forgot Password?</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity onPress={handleLogin} disabled={loading} activeOpacity={0.8} style={s.primaryBtnWrapper}>
-            <LinearGradient colors={['#38BDF8', '#0284C7']} style={s.primaryBtn}>
-              {loading ? <ActivityIndicator color="#FFF" /> : <Text style={s.primaryBtnText}>Sign In</Text>}
+          <TouchableOpacity
+            style={[s.button, loading && s.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading}
+          >
+            <LinearGradient
+              colors={['#38BDF8', '#0284C7']}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={s.gradient}
+            >
+              {loading ? (
+                <ActivityIndicator color="#FFFFFF" size="small" />
+              ) : (
+                <Text style={s.buttonText}>Sign In</Text>
+              )}
             </LinearGradient>
           </TouchableOpacity>
+        </Animated.View>
 
-          {/* Social Separator */}
-          <View style={s.sepRow}>
+        <View style={s.socialSection}>
+          <View style={s.divider}>
             <View style={s.sepLine} />
             <Text style={s.sepText}>OR CONTINUE WITH</Text>
             <View style={s.sepLine} />
@@ -140,14 +150,23 @@ export default function LoginScreen() {
 
           <GoogleSignInButton onPress={loginWithGoogle} />
 
-          {/* OAUTH FORENSIC AUDIT */}
+          {/* MASSIVE OAUTH FORENSIC AUDIT ON-SCREEN */}
           <View style={{ marginTop: 20, padding: 10, backgroundColor: '#ffebee', borderRadius: 8 }}>
-            <Text style={{ fontSize: 12, fontWeight: 'bold', color: '#c62828' }}>OAUTH FORENSIC AUDIT</Text>
+            <Text style={{ fontSize: 14, fontWeight: 'bold', color: '#c62828', marginBottom: 5 }}>RUNTIME FORENSIC DIAGNOSTICS</Text>
             <Text style={{ fontSize: 10, color: '#b71c1c' }}>
-              ENV: {process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ? `'${process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID}'` : 'UNDEFINED'}
+              NODE_ENV: {process.env.NODE_ENV}
             </Text>
             <Text style={{ fontSize: 10, color: '#b71c1c' }}>
-              Check for trailing spaces or missing Vercel config!
+              EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: {process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ? `'${process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID}'` : 'UNDEFINED'}
+            </Text>
+            <Text style={{ fontSize: 10, color: '#b71c1c' }}>
+              Client ID Used by Request: {requestConfig?.clientId || 'Loading...'}
+            </Text>
+            <Text style={{ fontSize: 10, color: '#b71c1c' }}>
+              Redirect URI: {requestConfig?.redirectUri || 'Loading...'}
+            </Text>
+            <Text style={{ fontSize: 10, color: '#b71c1c' }}>
+              Scopes: {requestConfig?.scopes?.join(', ') || 'Loading...'}
             </Text>
           </View>
 

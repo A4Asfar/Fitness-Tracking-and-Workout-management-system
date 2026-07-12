@@ -38,6 +38,7 @@ interface AuthContextType {
   updateUser: (userData: Partial<User>) => void;
   refreshUser: () => Promise<void>;
   loginWithGoogle: () => void;
+  requestConfig?: any;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -275,7 +276,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       logout, 
       updateUser,
       refreshUser,
-      loginWithGoogle
+      loginWithGoogle,
+      requestConfig: request
     }}>
       {children}
     </AuthContext.Provider>
