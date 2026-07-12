@@ -90,7 +90,7 @@ export default function VerifyOtpScreen() {
             {otp.map((digit, index) => (
               <TextInput
                 key={index}
-                ref={(ref) => (inputs.current[index] = ref)}
+                ref={(el) => { if (el) inputs.current[index] = el; }}
                 style={[s.otpBox, digit ? s.otpBoxFilled : null]}
                 keyboardType="number-pad"
                 maxLength={1}

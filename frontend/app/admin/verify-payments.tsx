@@ -735,7 +735,7 @@ export default function PremiumManagementDashboard() {
 
               <Text style={styles.modalHeading}>Payment Request</Text>
               
-              <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: height * 0.65 }}>
+              <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: Dimensions.get('window').height * 0.65 }}>
                 <View style={styles.modalSection}>
                   <Text style={styles.modalSectionTitle}>USER INFORMATION</Text>
                   <View style={styles.modalUserRow}>
@@ -1661,7 +1661,7 @@ const styles = StyleSheet.create<Record<string, any>>({
   },
   photoZoomImg: {
     width: '100%',
-    height: height - 120,
+    height: Dimensions.get('window').height - 120,
   },
 
   // Modal: Rejection Form

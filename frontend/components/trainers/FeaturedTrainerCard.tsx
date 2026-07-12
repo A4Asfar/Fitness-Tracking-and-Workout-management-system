@@ -133,7 +133,6 @@ const s = StyleSheet.create({
     color: '#FFFFFF',
     fontSize: 22,
     fontWeight: '900',
-    flexShrink: 1,
     letterSpacing: -0.5,
   },
   specialization: {

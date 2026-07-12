@@ -355,7 +355,7 @@ const s = StyleSheet.create({
   },
   hScrollContent: { paddingHorizontal: 24, alignItems: 'center', gap: 16 },
   hStatCard: {
-    width: width * 0.75, height: 130, backgroundColor: 'rgba(255,255,255,0.03)',
+    width: Dimensions.get('window').width * 0.75, height: 130, backgroundColor: 'rgba(255,255,255,0.03)',
     borderRadius: 28, padding: 24, justifyContent: 'center',
     borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.08)',
   },

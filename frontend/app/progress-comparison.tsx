@@ -54,17 +54,16 @@ export default function ProgressComparisonScreen() {
     setRefreshing(true);
     fetchData();
   };
-
   if (error && !data) {
     return (
       <View style={[SharedStyles.container, { justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
         <Stack.Screen options={{ headerShown: false }} />
         <Text style={{ color: Colors.error, fontSize: 16, textAlign: 'center', marginBottom: 16, fontWeight: '600' }}>{error}</Text>
         <TouchableOpacity 
-          style={[SharedStyles.button, { paddingHorizontal: 32, height: 48, borderRadius: 12 }]} 
+          style={[SharedStyles.buttonPrimary, { paddingHorizontal: 32, height: 48, borderRadius: 12 }]} 
           onPress={fetchData}
         >
-          <Text style={[SharedStyles.buttonText, { color: '#000000', fontWeight: 'bold' }]}>Retry</Text>
+          <Text style={[SharedStyles.buttonTextPrimary, { color: '#000000', fontWeight: 'bold' }]}>Retry</Text>
         </TouchableOpacity>
       </View>
     );

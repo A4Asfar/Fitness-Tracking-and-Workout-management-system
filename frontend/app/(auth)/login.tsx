@@ -149,7 +149,7 @@ export default function LoginScreen() {
             <View style={s.sepLine} />
           </View>
 
-          <GoogleSignInButton onPress={loginWithGoogle} />
+          <GoogleSignInButton />
 
           {/* MASSIVE OAUTH FORENSIC AUDIT ON-SCREEN */}
           <View style={{ marginTop: 20, padding: 10, backgroundColor: '#ffebee', borderRadius: 8 }}>
