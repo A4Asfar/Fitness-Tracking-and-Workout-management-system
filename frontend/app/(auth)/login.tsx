@@ -69,11 +69,11 @@ export default function LoginScreen() {
       <LinearGradient colors={['#0F172A', '#1E293B']} style={s.background} />
       
       <ScrollView 
-        contentContainerStyle={[s.scrollContent, { paddingTop: Math.max(insets.top, 20) }]}
+        contentContainerStyle={[s.scroll, { paddingTop: Math.max(insets.top, 20) }]}
         showsVerticalScrollIndicator={false}
         keyboardShouldPersistTaps="handled"
       >
-        <Animated.View style={[s.header, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <Animated.View style={{ alignItems: 'center', marginBottom: 40, opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
           <View style={s.logoWrapper}>
             <ShieldCheck size={40} color="#38BDF8" />
           </View>
@@ -81,13 +81,13 @@ export default function LoginScreen() {
           <Text style={s.subtitle}>Sign in to continue your fitness journey</Text>
         </Animated.View>
 
-        <Animated.View style={[s.form, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <Animated.View style={[s.formCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           <View style={s.inputContainer}>
             <Text style={s.inputLabel}>Email Address</Text>
             <View style={[s.inputWrapper, errors.email && s.inputError]}>
               <Mail color="#64748B" size={20} style={s.inputIcon} />
               <TextInput
-                style={s.input}
+                style={s.inputField}
                 placeholder="Enter your email"
                 placeholderTextColor="#64748B"
                 value={email}
@@ -104,25 +104,26 @@ export default function LoginScreen() {
             <View style={[s.inputWrapper, errors.password && s.inputError]}>
               <Lock color="#64748B" size={20} style={s.inputIcon} />
               <TextInput
-                style={s.input}
+                style={s.inputField}
                 placeholder="Enter your password"
                 placeholderTextColor="#64748B"
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry={!showPassword}
               />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={s.eyeIcon}>
+              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={s.eyeBtn}>
                 {showPassword ? <EyeOff color="#64748B" size={20} /> : <Eye color="#64748B" size={20} />}
               </TouchableOpacity>
             </View>
             {errors.password && <Text style={s.errorText}>{errors.password}</Text>}
-            <TouchableOpacity style={s.forgotPassword} onPress={() => router.push('/(auth)/forgot-password' as any)}>
-              <Text style={s.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
           </View>
 
+          <TouchableOpacity style={s.forgotBtn} onPress={() => router.push('/(auth)/forgot-password' as any)}>
+            <Text style={s.forgotText}>Forgot Password?</Text>
+          </TouchableOpacity>
+
           <TouchableOpacity
-            style={[s.button, loading && s.buttonDisabled]}
+            style={s.primaryBtnWrapper}
             onPress={handleLogin}
             disabled={loading}
           >
@@ -130,19 +131,19 @@ export default function LoginScreen() {
               colors={['#38BDF8', '#0284C7']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
-              style={s.gradient}
+              style={s.primaryBtn}
             >
               {loading ? (
                 <ActivityIndicator color="#FFFFFF" size="small" />
               ) : (
-                <Text style={s.buttonText}>Sign In</Text>
+                <Text style={s.primaryBtnText}>Sign In</Text>
               )}
             </LinearGradient>
           </TouchableOpacity>
         </Animated.View>
 
-        <View style={s.socialSection}>
-          <View style={s.divider}>
+        <View style={{ marginTop: 24, alignItems: 'center' }}>
+          <View style={s.sepRow}>
             <View style={s.sepLine} />
             <Text style={s.sepText}>OR CONTINUE WITH</Text>
             <View style={s.sepLine} />
@@ -170,7 +171,6 @@ export default function LoginScreen() {
             </Text>
           </View>
 
-          {/* Footer */}
           <View style={s.footer}>
             <Text style={s.footerLabel}>Don't have an account?</Text>
             <TouchableOpacity onPress={() => router.push('/(auth)/signup')}>
@@ -178,7 +178,7 @@ export default function LoginScreen() {
             </TouchableOpacity>
           </View>
 
-        </Animated.View>
+        </View>
       </ScrollView>
 
       <WelcomeModal
