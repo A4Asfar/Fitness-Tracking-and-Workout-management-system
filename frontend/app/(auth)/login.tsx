@@ -5,7 +5,8 @@ import {
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
-import { Mail, Lock, Eye, EyeOff, Github, Chrome, ShieldCheck } from 'lucide-react-native';
+import { Mail, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react-native';
+import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
 import WelcomeModal from '@/components/WelcomeModal';
 import { useToast } from '@/components/Toast';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -137,16 +138,7 @@ export default function LoginScreen() {
             <View style={s.sepLine} />
           </View>
 
-          <View style={s.socialRow}>
-            <TouchableOpacity style={s.socialBtn} activeOpacity={0.7}>
-              <Chrome size={20} color="#F8FAFC" />
-              <Text style={s.socialBtnText}>Google</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={s.socialBtn} activeOpacity={0.7}>
-              <Github size={20} color="#F8FAFC" />
-              <Text style={s.socialBtnText}>Apple</Text>
-            </TouchableOpacity>
-          </View>
+          <GoogleSignInButton isLoading={loading} />
 
           {/* Footer */}
           <View style={s.footer}>
@@ -206,9 +198,7 @@ const s = StyleSheet.create({
   sepLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.05)' },
   sepText: { color: '#64748B', fontSize: 10, fontWeight: '800', letterSpacing: 1, paddingHorizontal: 12 },
 
-  socialRow: { flexDirection: 'row', gap: 12, marginBottom: 32 },
-  socialBtn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', height: 52, backgroundColor: '#0F172A', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', gap: 8 },
-  socialBtnText: { color: '#F8FAFC', fontSize: 14, fontWeight: '700' },
+
 
   footer: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: 6 },
   footerLabel: { color: '#94A3B8', fontSize: 14, fontWeight: '500' },

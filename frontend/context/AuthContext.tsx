@@ -3,6 +3,10 @@ import Storage from '@/utils/storage';
 import api, { setAuthToken, setOnUnauthorized } from '@/services/api';
 import axios from 'axios';
 import { useToast } from '@/components/Toast';
+import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
+
+WebBrowser.maybeCompleteAuthSession();
 
 /**
  * User Type definition matching backend schema
@@ -33,6 +37,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
   refreshUser: () => Promise<void>;
+  loginWithGoogle: () => void;
 }
 
 export const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -43,6 +48,48 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [loading, setLoading] = useState(true);
   const [isNewUser, setIsNewUser] = useState(false);
   const { showToast } = useToast();
+
+  const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
+    clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || 'dummy-web-id',
+    iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID || 'dummy-ios-id',
+    androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID || 'dummy-android-id',
+  });
+
+  useEffect(() => {
+    if (response?.type === 'success') {
+      const { id_token } = response.params;
+      if (id_token) {
+        handleGoogleLogin(id_token);
+      }
+    } else if (response?.type === 'error') {
+      showToast('Google Sign-In Failed or Canceled', 'error');
+    }
+  }, [response]);
+
+  const handleGoogleLogin = async (idToken: string) => {
+    try {
+      setLoading(true);
+      const res = await api.post('/auth/google', { idToken });
+      const { token: newToken, user: userData } = res.data;
+      
+      setAuthToken(newToken);
+      setToken(newToken);
+      setUser(userData);
+      
+      await Storage.setItem('authToken', newToken);
+      await Storage.setItem('authUser', JSON.stringify(userData));
+      setIsNewUser(false);
+      if (__DEV__) console.log('🔑 Google Login successful for:', userData.email);
+    } catch (error: any) {
+      showToast(error.response?.data?.message || 'Google Authentication Failed', 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginWithGoogle = useCallback(() => {
+    promptAsync();
+  }, [promptAsync]);
 
   useEffect(() => {
     setOnUnauthorized((silent = false) => {
@@ -215,7 +262,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signup, 
       logout, 
       updateUser,
-      refreshUser
+      refreshUser,
+      loginWithGoogle
     }}>
       {children}
     </AuthContext.Provider>

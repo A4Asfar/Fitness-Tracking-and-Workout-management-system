@@ -1,4 +1,5 @@
 const User = require('../models/User');
+const { OAuth2Client } = require('google-auth-library');
 const jwt = require('jsonwebtoken');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 const { APP_NAME, APP_PRO } = require('../constants/brand');
@@ -257,4 +258,97 @@ exports.resetPassword = asyncHandler(async (req, res) => {
 
   console.log('✅ Password successfully reset for:', user.email);
   res.json({ message: 'Password reset successful' });
+});
+
+/**
+ * @desc    Google OAuth Login
+ * @route   POST /api/auth/google
+ * @access  Public
+ */
+exports.googleLogin = asyncHandler(async (req, res) => {
+  const { idToken } = req.body;
+
+  if (!idToken) {
+    res.status(400);
+    throw new Error('Please provide a Google ID Token');
+  }
+
+  // The client ID is not strictly needed for basic token decoding and verification if you allow multiple clients (iOS, Android, Web).
+  // But verifying with audience is safer.
+  const client = new OAuth2Client();
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken,
+      audience: [
+        process.env.GOOGLE_WEB_CLIENT_ID,
+        process.env.GOOGLE_IOS_CLIENT_ID,
+        process.env.GOOGLE_ANDROID_CLIENT_ID
+      ].filter(Boolean),
+    });
+    
+    const payload = ticket.getPayload();
+    const { sub: googleId, email, name, picture } = payload;
+
+    let user = await User.findOne({ 
+      $or: [
+        { googleId },
+        { email }
+      ]
+    });
+
+    if (user) {
+      // If user exists but doesn't have googleId yet (e.g. existing email/password user), link them
+      let updated = false;
+      if (!user.googleId) {
+        user.googleId = googleId;
+        updated = true;
+      }
+      if (user.authenticationProvider !== 'google') {
+        user.authenticationProvider = 'google';
+        updated = true;
+      }
+      if (updated) {
+        await user.save();
+      }
+    } else {
+      // Create new user
+      user = await User.create({
+        name,
+        email,
+        googleId,
+        authenticationProvider: 'google',
+        membershipType: 'free',
+        avatar: picture || '',
+      });
+      console.log('👤 New Google User registered in MongoDB:', user.email);
+      
+      // Trigger in-app Welcome notification
+      try {
+        const { createInAppNotification } = require('./notificationController');
+        await createInAppNotification(
+          user._id,
+          `Welcome to ${APP_NAME}! 🎉`,
+          'We are thrilled to join you on your fitness journey. Start checking out workout suggestors, meal planners, and trainers.',
+          'Welcome',
+          'bell'
+        );
+      } catch (err) {
+        console.log('Error triggering welcome notification:', err.message);
+      }
+    }
+
+    const token = generateToken(user._id);
+    const userData = user.toObject();
+    delete userData.password;
+    userData.id = user._id.toString();
+
+    res.json({
+      token,
+      user: userData
+    });
+  } catch (error) {
+    res.status(401);
+    throw new Error('Invalid Google ID Token');
+  }
 });
