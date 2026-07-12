@@ -55,6 +55,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '1097357098571-a47vluk83pvb118k6da6ck7o6n3ei39e.apps.googleusercontent.com',
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
+    redirectUri: 'https://fitness-tracking-and-workout-manage.vercel.app',
   });
 
   useEffect(() => {
