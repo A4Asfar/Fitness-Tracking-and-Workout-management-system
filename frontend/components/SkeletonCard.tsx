@@ -66,14 +66,14 @@ export default function SkeletonCard({ style }: { style?: any }) {
 
 const styles = StyleSheet.create({
   skeleton: {
-    backgroundColor: '#E2E8F0', // slate-200
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
   },
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#1E293B', // Colors.card
     borderRadius: 20,
     padding: 16,
-    borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.05)',
     marginBottom: 12,
   },
   headerRow: {

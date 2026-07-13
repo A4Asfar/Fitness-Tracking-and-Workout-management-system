@@ -10,6 +10,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '@/services/api';
 
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { SharedStyles } from '@/constants/Theme';
+
 export default function ForgotPasswordScreen() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
@@ -62,30 +66,24 @@ export default function ForgotPasswordScreen() {
           <Text style={s.subtitle}>Enter your email to receive a secure reset code</Text>
         </Animated.View>
 
-        <Animated.View style={[s.formCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <Animated.View style={[SharedStyles.card, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           
-          <View style={s.inputContainer}>
-            <Text style={s.inputLabel}>Registered Email</Text>
-            <View style={s.inputWrapper}>
-              <Mail size={18} color="#64748B" style={s.inputIcon} />
-              <TextInput
-                style={s.inputField}
-                placeholder="e.g. champion@fitai.com"
-                placeholderTextColor="#64748B"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                editable={!loading}
-              />
-            </View>
-          </View>
+          <Input
+            label="Registered Email"
+            placeholder="e.g. champion@fitai.com"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            editable={!loading}
+            icon={Mail}
+          />
 
-          <TouchableOpacity onPress={handleSendOtp} disabled={loading} activeOpacity={0.8} style={s.primaryBtnWrapper}>
-            <LinearGradient colors={['#8B5CF6', '#6D28D9']} style={s.primaryBtn}>
-              {loading ? <ActivityIndicator color="#FFF" /> : <Text style={s.primaryBtnText}>Send Recovery Code</Text>}
-            </LinearGradient>
-          </TouchableOpacity>
+          <Button
+            title="Send Recovery Code"
+            onPress={handleSendOtp}
+            loading={loading}
+          />
 
         </Animated.View>
       </ScrollView>

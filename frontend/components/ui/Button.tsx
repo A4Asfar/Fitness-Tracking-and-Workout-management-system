@@ -110,7 +110,9 @@ const s = StyleSheet.create({
   },
   
   secondary: {
-    backgroundColor: '#F3F4F6', // Subtle Gray
+    backgroundColor: Colors.card,
+    borderWidth: 1,
+    borderColor: Colors.border,
   },
   secondaryText: {
     color: Colors.text,
@@ -118,8 +120,8 @@ const s = StyleSheet.create({
   
   outlined: {
     backgroundColor: 'transparent',
-    borderWidth: 2,
-    borderColor: Colors.border,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
   },
   outlinedText: {
     color: Colors.text,

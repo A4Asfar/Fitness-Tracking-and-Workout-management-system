@@ -10,6 +10,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import SkeletonCard from '@/components/SkeletonCard';
 import AddMealModal from '@/components/nutrition/AddMealModal';
+import { SharedStyles } from '@/constants/Theme';
 
 interface Meal {
   _id: string;
@@ -155,7 +156,7 @@ export default function DietScreen() {
           <Text style={s.headerTitle}>Diet Plan</Text>
 
           {/* DAILY NUTRITION SUMMARY */}
-          <View style={s.summaryCard}>
+          <View style={[SharedStyles.card, s.summaryCard]}>
             <View style={s.calRow}>
               <View style={s.calLeft}>
                 <Flame size={24} color="#38BDF8" style={{ marginBottom: 8 }} />
@@ -194,7 +195,7 @@ export default function DietScreen() {
 
         <View style={s.content}>
           {/* AI RECOMMENDATION CARD */}
-          <View style={s.aiCard}>
+          <View style={[SharedStyles.card, s.aiCard, { borderColor: '#10B98130' }]}>
             <LinearGradient colors={['#10B98115', 'rgba(15,23,42,0)']} style={s.aiGrad}>
               <View style={s.aiHeader}>
                 <Sparkles size={20} color="#10B981" fill="#10B981" />
@@ -210,7 +211,7 @@ export default function DietScreen() {
 
           {/* WEEKLY NUTRITION CHART */}
           <Text style={s.sectionTitle}>Weekly Average</Text>
-          <View style={s.chartCard}>
+          <View style={[SharedStyles.card, s.chartCard]}>
             <View style={s.chartStatsRow}>
               <View>
                 <Text style={s.chartLabel}>Avg. Caloric Intake</Text>
@@ -255,14 +256,14 @@ export default function DietScreen() {
                 </View>
 
                 {typedMeals.length === 0 ? (
-                  <TouchableOpacity style={s.emptyMealAdd} onPress={() => { setActiveType(mealType as any); setIsModalVisible(true); }}>
+                  <TouchableOpacity style={[SharedStyles.card, s.emptyMealAdd, { backgroundColor: 'rgba(30,41,59,0.5)' }]} onPress={() => { setActiveType(mealType as any); setIsModalVisible(true); }}>
                     <Plus size={20} color="#64748B" />
                     <Text style={s.emptyMealText}>Add {mealType}</Text>
                   </TouchableOpacity>
                 ) : (
                   <View style={s.mealList}>
                     {typedMeals.map(m => (
-                      <View key={m._id} style={s.premiumMealCard}>
+                      <View key={m._id} style={[SharedStyles.card, s.premiumMealCard]}>
                         <ImageBackground source={{ uri: getMealImage(m.selectedMeal, m.mealType) }} style={s.mealImg} imageStyle={{ borderTopLeftRadius: 20, borderBottomLeftRadius: 20 }}>
                           <View style={s.mealImgOverlay}>
                             {isVegetarian(m.selectedMeal) && (
@@ -318,7 +319,7 @@ const s = StyleSheet.create({
   headerSubtitle: { flexShrink: 1,  color: '#94A3B8', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
   headerTitle: { color: '#F8FAFC', fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 24 },
 
-  summaryCard: { backgroundColor: '#1E293B', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  summaryCard: { padding: 24 },
   calRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 },
   calLeft: { flex: 1 },
   calLabel: { color: '#94A3B8', fontSize: 14, fontWeight: '700', marginBottom: 4 },
@@ -340,7 +341,7 @@ const s = StyleSheet.create({
 
   content: { padding: 24 },
 
-  aiCard: { backgroundColor: '#1E293B', borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: '#10B98130', marginBottom: 32 },
+  aiCard: { overflow: 'hidden', marginBottom: 32 },
   aiGrad: { padding: 20 },
   aiHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   aiTitle: { color: '#10B981', fontSize: 15, fontWeight: '900', marginLeft: 8, letterSpacing: 0.5 },
@@ -350,7 +351,7 @@ const s = StyleSheet.create({
 
   sectionTitle: { color: '#F8FAFC', fontSize: 20, fontWeight: '900', letterSpacing: -0.5, marginBottom: 16 },
   
-  chartCard: { backgroundColor: '#1E293B', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 32 },
+  chartCard: { padding: 24, marginBottom: 32 },
   chartStatsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 },
   chartLabel: { color: '#94A3B8', fontSize: 12, fontWeight: '700', marginBottom: 4 },
   chartBigValue: { color: '#F8FAFC', fontSize: 24, fontWeight: '900' },
@@ -370,11 +371,11 @@ const s = StyleSheet.create({
   mealSecTitle: { color: '#F8FAFC', fontSize: 16, fontWeight: '800' },
   mealSecCal: { color: '#94A3B8', fontSize: 14, fontWeight: '700' },
   
-  emptyMealAdd: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(30,41,59,0.5)', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', borderStyle: 'dashed' },
+  emptyMealAdd: { flexDirection: 'row', alignItems: 'center', padding: 16, borderStyle: 'dashed' },
   emptyMealText: { color: '#94A3B8', fontSize: 14, fontWeight: '600', marginLeft: 8 },
 
   mealList: { gap: 12 },
-  premiumMealCard: { flexDirection: 'row', backgroundColor: '#1E293B', borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  premiumMealCard: { flexDirection: 'row' },
   mealImg: { width: 100, height: '100%' },
   mealImgOverlay: { flex: 1, backgroundColor: 'rgba(15,23,42,0.2)', padding: 8, alignItems: 'flex-start' },
   vegBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.8)', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 6 },

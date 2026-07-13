@@ -12,6 +12,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import api from '@/services/api';
 import { isAdminUser } from '@/utils/isAdmin';
 import SkeletonCard from '@/components/SkeletonCard';
+import { SharedStyles } from '@/constants/Theme';
 
 const ACHIEVEMENTS = [
   { id: '1', title: '7-Day Streak', icon: Flame, color: '#FF4D4D', unlocked: true },
@@ -69,7 +70,7 @@ export default function ProfileSettingsScreen() {
   const fitnessLevel = 'Intermediate'; 
 
   const SettingRow = ({ icon: Icon, title, subtitle, color, onPress }: any) => (
-    <TouchableOpacity style={s.settingCard} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity style={[SharedStyles.card, s.settingCard]} onPress={onPress} activeOpacity={0.7}>
       <View style={[s.settingIconBox, { backgroundColor: `${color}15` }]}>
         <Icon size={20} color={color} />
       </View>
@@ -153,22 +154,22 @@ export default function ProfileSettingsScreen() {
           {/* ACCOUNT STATISTICS GRID */}
           <Text style={s.sectionTitle}>Account Statistics</Text>
           <View style={s.statsGrid}>
-            <View style={s.statBox}>
+            <View style={[SharedStyles.card, s.statBox]}>
               <Dumbbell size={20} color="#38BDF8" style={{ marginBottom: 8 }} />
               <Text style={s.statNum}>{analytics?.totalWorkouts || 0}</Text>
               <Text style={s.statLab}>Workouts</Text>
             </View>
-            <View style={s.statBox}>
+            <View style={[SharedStyles.card, s.statBox]}>
               <Flame size={20} color="#EF4444" style={{ marginBottom: 8 }} />
               <Text style={s.statNum}>{analytics?.totalCalories || 0}</Text>
               <Text style={s.statLab}>Calories</Text>
             </View>
-            <View style={s.statBox}>
+            <View style={[SharedStyles.card, s.statBox]}>
               <Activity size={20} color="#10B981" style={{ marginBottom: 8 }} />
               <Text style={s.statNum}>{analytics?.streak || 0}</Text>
               <Text style={s.statLab}>Day Streak</Text>
             </View>
-            <View style={s.statBox}>
+            <View style={[SharedStyles.card, s.statBox]}>
               <Medal size={20} color="#F59E0B" style={{ marginBottom: 8 }} />
               <Text style={s.statNum}>{ACHIEVEMENTS.filter(a=>a.unlocked).length}</Text>
               <Text style={s.statLab}>Trophies</Text>
@@ -181,7 +182,7 @@ export default function ProfileSettingsScreen() {
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.achieveScroll}>
             {ACHIEVEMENTS.map(ach => (
-              <View key={ach.id} style={[s.achieveCard, !ach.unlocked && s.achieveLocked]}>
+              <View key={ach.id} style={[SharedStyles.card, s.achieveCard, !ach.unlocked && s.achieveLocked]}>
                 <View style={[s.achieveIconBox, { backgroundColor: ach.unlocked ? `${ach.color}20` : '#334155' }]}>
                   <ach.icon size={24} color={ach.unlocked ? ach.color : '#64748B'} />
                 </View>
@@ -250,18 +251,18 @@ const s = StyleSheet.create({
   headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
 
   statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 32 },
-  statBox: { flex: 1, minWidth: 100, backgroundColor: '#1E293B', padding: 20, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', alignItems: 'flex-start' },
+  statBox: { flex: 1, minWidth: 100, padding: 20, alignItems: 'flex-start' },
   statNum: { color: '#F8FAFC', fontSize: 24, fontWeight: '900', marginBottom: 2 },
   statLab: { color: '#94A3B8', fontSize: 13, fontWeight: '600' },
 
   achieveScroll: { gap: 12, marginBottom: 32, paddingRight: 24 },
-  achieveCard: { width: 120, backgroundColor: '#1E293B', padding: 16, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  achieveCard: { width: 120, padding: 16, alignItems: 'center' },
   achieveLocked: { opacity: 0.5 },
   achieveIconBox: { width: 48, height: 48, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
   achieveTitle: { color: '#F8FAFC', fontSize: 12, fontWeight: '800', textAlign: 'center' },
 
   settingsGroup: { gap: 12, marginBottom: 32 },
-  settingCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B', padding: 16, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  settingCard: { flexDirection: 'row', alignItems: 'center', padding: 16 },
   settingIconBox: { width: 44, height: 44, borderRadius: 14, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
   settingInfo: { flex: 1 },
   settingTitle: { color: '#F8FAFC', fontSize: 16, fontWeight: '800', marginBottom: 4 },

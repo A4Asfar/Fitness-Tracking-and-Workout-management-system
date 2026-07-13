@@ -6,11 +6,14 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { Mail, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react-native';
-import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
+
 import WelcomeModal from '@/components/WelcomeModal';
 import { useToast } from '@/components/Toast';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { SharedStyles } from '@/constants/Theme';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -19,7 +22,7 @@ export default function LoginScreen() {
   const [errors, setErrors] = useState<any>({});
   const [loading, setLoading] = useState(false);
   
-  const { login, user, loginWithGoogle, requestConfig } = useAuth();
+  const { login, user } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showWelcome, setShowWelcome] = useState(false);
@@ -81,75 +84,42 @@ export default function LoginScreen() {
           <Text style={s.subtitle}>Sign in to continue your fitness journey</Text>
         </Animated.View>
 
-        <Animated.View style={[s.formCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-          <View style={s.inputContainer}>
-            <Text style={s.inputLabel}>Email Address</Text>
-            <View style={[s.inputWrapper, errors.email && s.inputError]}>
-              <Mail color="#64748B" size={20} style={s.inputIcon} />
-              <TextInput
-                style={s.inputField}
-                placeholder="Enter your email"
-                placeholderTextColor="#64748B"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
-            {errors.email && <Text style={s.errorText}>{errors.email}</Text>}
-          </View>
+        <Animated.View style={[SharedStyles.card, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+          <Input
+            label="Email Address"
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            icon={Mail}
+            error={errors.email}
+          />
 
-          <View style={s.inputContainer}>
-            <Text style={s.inputLabel}>Password</Text>
-            <View style={[s.inputWrapper, errors.password && s.inputError]}>
-              <Lock color="#64748B" size={20} style={s.inputIcon} />
-              <TextInput
-                style={s.inputField}
-                placeholder="Enter your password"
-                placeholderTextColor="#64748B"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry={!showPassword}
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={s.eyeBtn}>
-                {showPassword ? <EyeOff color="#64748B" size={20} /> : <Eye color="#64748B" size={20} />}
-              </TouchableOpacity>
-            </View>
-            {errors.password && <Text style={s.errorText}>{errors.password}</Text>}
-          </View>
+          <Input
+            label="Password"
+            placeholder="Enter your password"
+            value={password}
+            onChangeText={setPassword}
+            isPassword
+            icon={Lock}
+            error={errors.password}
+          />
 
           <TouchableOpacity style={s.forgotBtn} onPress={() => router.push('/(auth)/forgot-password' as any)}>
             <Text style={s.forgotText}>Forgot Password?</Text>
           </TouchableOpacity>
 
-          <TouchableOpacity
-            style={s.primaryBtnWrapper}
+          <Button
+            title="Sign In"
             onPress={handleLogin}
-            disabled={loading}
-          >
-            <LinearGradient
-              colors={['#38BDF8', '#0284C7']}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={s.primaryBtn}
-            >
-              {loading ? (
-                <ActivityIndicator color="#FFFFFF" size="small" />
-              ) : (
-                <Text style={s.primaryBtnText}>Sign In</Text>
-              )}
-            </LinearGradient>
-          </TouchableOpacity>
+            loading={loading}
+            style={{ marginBottom: 16 }}
+          />
         </Animated.View>
 
         <View style={{ marginTop: 24, alignItems: 'center' }}>
-          <View style={s.sepRow}>
-            <View style={s.sepLine} />
-            <Text style={s.sepText}>OR CONTINUE WITH</Text>
-            <View style={s.sepLine} />
-          </View>
 
-          <GoogleSignInButton />
 
           <View style={s.footer}>
             <Text style={s.footerLabel}>Don't have an account?</Text>
@@ -186,27 +156,8 @@ const s = StyleSheet.create({
   title: { flexShrink: 1,  color: '#F8FAFC', fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 8 },
   subtitle: { flexShrink: 1,  color: '#94A3B8', fontSize: 15, fontWeight: '500' },
   
-  formCard: { backgroundColor: '#1E293B', borderRadius: 32, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', shadowColor: '#000', shadowOffset: { width: 0, height: 20 }, shadowOpacity: 0.3, shadowRadius: 30, elevation: 10 },
-  
-  inputContainer: { marginBottom: 20 },
-  inputLabel: { color: '#94A3B8', fontSize: 13, fontWeight: '700', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 1 },
-  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#0F172A', borderRadius: 16, height: 56, paddingHorizontal: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
-  inputError: { borderColor: '#EF4444', backgroundColor: 'rgba(239,68,68,0.05)' },
-  inputIcon: { marginRight: 12 },
-  inputField: { flex: 1, color: '#F8FAFC', fontSize: 16, fontWeight: '600' },
-  eyeBtn: { padding: 4 },
-  errorText: { color: '#EF4444', fontSize: 12, fontWeight: '600', marginTop: 8, marginLeft: 4 },
-
-  forgotBtn: { alignSelf: 'flex-end', marginBottom: 24 },
+  forgotBtn: { alignSelf: 'flex-end', marginBottom: 24, marginTop: -8 },
   forgotText: { color: '#38BDF8', fontSize: 13, fontWeight: '800' },
-
-  primaryBtnWrapper: { borderRadius: 16, overflow: 'hidden', marginBottom: 32 },
-  primaryBtn: { height: 56, justifyContent: 'center', alignItems: 'center' },
-  primaryBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
-
-  sepRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
-  sepLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.05)' },
-  sepText: { color: '#64748B', fontSize: 10, fontWeight: '800', letterSpacing: 1, paddingHorizontal: 12 },
 
 
 

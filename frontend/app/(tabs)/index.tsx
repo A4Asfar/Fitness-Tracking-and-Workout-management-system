@@ -13,6 +13,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import Storage from '@/utils/storage';
 import PremiumOnboardingModal from '@/components/dashboard/PremiumOnboardingModal';
 import FloatingChatButton from '@/components/dashboard/FloatingChatButton';
+import { SharedStyles } from '@/constants/Theme';
 
 // Premium Skeleton Loader
 const SkeletonBlock = ({ width, height, style, borderRadius = 16 }: any) => {
@@ -234,7 +235,7 @@ export default function HomeDashboard() {
           {/* DUAL METRICS GRID */}
           <View style={s.metricsGrid}>
             {/* WATER TRACKER */}
-            <TouchableOpacity style={s.metricCard} onPress={() => setWaterGlasses(Math.min(waterGlasses + 1, 10))}>
+            <TouchableOpacity style={[SharedStyles.card, s.metricCard]} onPress={() => setWaterGlasses(Math.min(waterGlasses + 1, 10))}>
               <View style={s.metricCardHeader}>
                 <View style={[s.metricIconBox, { backgroundColor: 'rgba(56,189,248,0.15)' }]}><Droplet size={18} color="#38BDF8" /></View>
                 <Text style={s.metricCardTitle}>Hydration</Text>
@@ -247,7 +248,7 @@ export default function HomeDashboard() {
             </TouchableOpacity>
 
             {/* WEIGHT PROGRESS */}
-            <TouchableOpacity style={s.metricCard} onPress={() => router.push('/weight-logger' as any)}>
+            <TouchableOpacity style={[SharedStyles.card, s.metricCard]} onPress={() => router.push('/weight-logger' as any)}>
               <View style={s.metricCardHeader}>
                 <View style={[s.metricIconBox, { backgroundColor: 'rgba(16,185,129,0.15)' }]}><Scale size={18} color="#10B981" /></View>
                 <Text style={s.metricCardTitle}>Weight</Text>
@@ -265,7 +266,7 @@ export default function HomeDashboard() {
             <Text style={s.sectionTitle}>Weekly Progress</Text>
             <TouchableOpacity><Text style={s.sectionAction}>Details</Text></TouchableOpacity>
           </View>
-          <View style={s.chartCard}>
+          <View style={[SharedStyles.card, s.chartCard]}>
             <View style={s.chartStatsRow}>
               <View>
                 <Text style={s.chartLabel}>Avg. Calories</Text>
@@ -302,7 +303,7 @@ export default function HomeDashboard() {
               { title: 'My Bookings', icon: HistoryIcon, color: '#A855F7', route: '/my-bookings' },
               { title: 'Diet Plan', icon: Target, color: '#F59E0B', route: '/(tabs)/diet' },
             ].map((act, i) => (
-              <TouchableOpacity key={i} style={s.quickActionCard} onPress={() => router.push(act.route as any)}>
+              <TouchableOpacity key={i} style={[SharedStyles.card, s.quickActionCard]} onPress={() => router.push(act.route as any)}>
                 <View style={[s.qaIconBox, { backgroundColor: `${act.color}15` }]}>
                   <act.icon size={24} color={act.color} />
                 </View>
@@ -321,7 +322,7 @@ export default function HomeDashboard() {
             {recent && recent.length > 0 ? recent.map((item: any, i: number) => {
               const dateObj = new Date(item.date);
               return (
-                <TouchableOpacity key={item._id || i} style={s.recentCard} onPress={() => router.push(`/workout/${item._id}`)}>
+                <TouchableOpacity key={item._id || i} style={[SharedStyles.card, s.recentCard]} onPress={() => router.push(`/workout/${item._id}`)}>
                   <View style={s.recentIconBox}>
                     <Dumbbell size={20} color="#F8FAFC" />
                   </View>
@@ -333,7 +334,7 @@ export default function HomeDashboard() {
                 </TouchableOpacity>
               );
             }) : (
-              <View style={s.emptyStateBox}>
+              <View style={[SharedStyles.card, s.emptyStateBox]}>
                 <Activity size={32} color="#334155" style={{ marginBottom: 12 }} />
                 <Text style={s.emptyStateTitle}>No Recent Workouts</Text>
                 <Text style={s.emptyStateSub}>Your fitness journey starts today. Log your first session to see it here.</Text>
@@ -395,7 +396,7 @@ const s = StyleSheet.create({
   playBtnText: { color: '#0F172A', fontSize: 14, fontWeight: '900', marginLeft: 8 },
 
   metricsGrid: { flexDirection: 'row', gap: 16, marginBottom: 32 },
-  metricCard: { flex: 1, backgroundColor: '#1E293B', borderRadius: 24, padding: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  metricCard: { flex: 1, padding: 20 },
   metricCardHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 12 },
   metricIconBox: { width: 32, height: 32, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
   metricCardTitle: { color: '#94A3B8', fontSize: 13, fontWeight: '700' },
@@ -409,7 +410,7 @@ const s = StyleSheet.create({
   sectionTitle: { color: '#F8FAFC', fontSize: 20, fontWeight: '900', letterSpacing: -0.5 },
   sectionAction: { color: '#38BDF8', fontSize: 14, fontWeight: '700' },
 
-  chartCard: { backgroundColor: '#1E293B', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 32 },
+  chartCard: { padding: 24, marginBottom: 32 },
   chartStatsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 },
   chartLabel: { color: '#94A3B8', fontSize: 12, fontWeight: '700', marginBottom: 4 },
   chartBigValue: { color: '#F8FAFC', fontSize: 24, fontWeight: '900' },
@@ -422,19 +423,19 @@ const s = StyleSheet.create({
   barLabelToday: { color: '#38BDF8', fontWeight: '900' },
 
   quickActionsScroll: { gap: 16, marginBottom: 32, paddingRight: 20 },
-  quickActionCard: { width: 110, height: 120, backgroundColor: '#1E293B', borderRadius: 24, padding: 16, alignItems: 'center', justifyContent: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  quickActionCard: { width: 110, height: 120, padding: 16, alignItems: 'center', justifyContent: 'center' },
   qaIconBox: { width: 52, height: 52, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
   qaTitle: { color: '#CBD5E1', fontSize: 12, fontWeight: '700', textAlign: 'center' },
 
   recentContainer: { gap: 12, marginBottom: 20 },
-  recentCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B', padding: 16, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  recentCard: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 20 },
   recentIconBox: { width: 48, height: 48, borderRadius: 14, backgroundColor: '#38BDF8', justifyContent: 'center', alignItems: 'center', marginRight: 16 },
   recentInfo: { flex: 1 },
   recentTitle: { color: '#F8FAFC', fontSize: 16, fontWeight: '800', marginBottom: 4 },
   recentMeta: { color: '#94A3B8', fontSize: 13, fontWeight: '600' },
   recentDate: { color: '#64748B', fontSize: 12, fontWeight: '700' },
   
-  emptyStateBox: { backgroundColor: '#1E293B', borderRadius: 24, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', borderStyle: 'dashed' },
+  emptyStateBox: { alignItems: 'center', borderStyle: 'dashed' },
   emptyStateTitle: { color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginBottom: 8 },
   emptyStateSub: { color: '#94A3B8', fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
   emptyStateBtn: { backgroundColor: '#38BDF8', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 100 },

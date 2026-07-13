@@ -10,11 +10,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '@/services/api';
 
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { SharedStyles } from '@/constants/Theme';
+
 export default function ResetPasswordScreen() {
   const { email, otp } = useLocalSearchParams<{ email: string; otp: string }>();
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   
   const router = useRouter();
@@ -75,48 +78,33 @@ export default function ResetPasswordScreen() {
           <Text style={s.subtitle}>Create a new secure password for your account</Text>
         </Animated.View>
 
-        <Animated.View style={[s.formCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <Animated.View style={[SharedStyles.card, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           
-          <View style={s.inputContainer}>
-            <Text style={s.inputLabel}>New Password</Text>
-            <View style={s.inputWrapper}>
-              <Lock size={18} color="#64748B" style={s.inputIcon} />
-              <TextInput
-                style={s.inputField}
-                placeholder="Enter new password"
-                placeholderTextColor="#64748B"
-                value={newPassword}
-                onChangeText={setNewPassword}
-                secureTextEntry={!showPassword}
-                editable={!loading}
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={s.eyeBtn}>
-                {showPassword ? <EyeOff size={18} color="#64748B" /> : <Eye size={18} color="#64748B" />}
-              </TouchableOpacity>
-            </View>
-          </View>
+          <Input
+            label="New Password"
+            placeholder="Enter new password"
+            value={newPassword}
+            onChangeText={setNewPassword}
+            isPassword
+            editable={!loading}
+            icon={Lock}
+          />
 
-          <View style={s.inputContainer}>
-            <Text style={s.inputLabel}>Confirm Password</Text>
-            <View style={s.inputWrapper}>
-              <Lock size={18} color="#64748B" style={s.inputIcon} />
-              <TextInput
-                style={s.inputField}
-                placeholder="Repeat new password"
-                placeholderTextColor="#64748B"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry={!showPassword}
-                editable={!loading}
-              />
-            </View>
-          </View>
+          <Input
+            label="Confirm Password"
+            placeholder="Repeat new password"
+            value={confirmPassword}
+            onChangeText={setConfirmPassword}
+            isPassword
+            editable={!loading}
+            icon={Lock}
+          />
 
-          <TouchableOpacity onPress={handleReset} disabled={loading} activeOpacity={0.8} style={s.primaryBtnWrapper}>
-            <LinearGradient colors={['#10B981', '#059669']} style={s.primaryBtn}>
-              {loading ? <ActivityIndicator color="#FFF" /> : <Text style={s.primaryBtnText}>Update Password</Text>}
-            </LinearGradient>
-          </TouchableOpacity>
+          <Button
+            title="Update Password"
+            onPress={handleReset}
+            loading={loading}
+          />
 
         </Animated.View>
       </ScrollView>

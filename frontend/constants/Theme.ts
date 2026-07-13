@@ -87,6 +87,18 @@ export const SharedStyles = StyleSheet.create({
     paddingHorizontal: SPACING.lg,
     paddingVertical: SPACING.xl,
   },
+  responsiveWrapper: {
+    width: '100%',
+    maxWidth: 1200,
+    alignSelf: 'center',
+    paddingHorizontal: SPACING.md,
+  },
+  authWrapper: {
+    width: '100%',
+    maxWidth: 480,
+    alignSelf: 'center',
+    paddingHorizontal: SPACING.lg,
+  },
   
   // CARDS
   card: {
@@ -131,6 +143,7 @@ export const SharedStyles = StyleSheet.create({
     borderWidth: 1,
     borderColor: Colors.border,
     marginBottom: SPACING.md,
+    width: '100%',
   },
   inputField: {
     flex: 1,
@@ -138,6 +151,7 @@ export const SharedStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: SPACING.sm,
+    height: '100%',
   },
   inputLabel: {
     color: Colors.textSecondary,
@@ -155,10 +169,11 @@ export const SharedStyles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     backgroundColor: Colors.primary,
+    width: '100%',
     ...SHADOWS.glowPrimary,
   },
   buttonTextPrimary: {
-    color: '#FFFFFF', // Keep white for high contrast on colored buttons
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '800',
     letterSpacing: 0.5,
@@ -171,6 +186,7 @@ export const SharedStyles = StyleSheet.create({
     backgroundColor: Colors.card,
     borderWidth: 1,
     borderColor: Colors.border,
+    width: '100%',
   },
   buttonTextSecondary: {
     color: Colors.text,
@@ -202,6 +218,7 @@ export const SharedStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: SPACING.xxl * 2,
+    width: '100%',
   },
   emptyIconRing: {
     width: 100,
@@ -219,6 +236,7 @@ export const SharedStyles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '800',
     marginBottom: SPACING.sm,
+    textAlign: 'center',
   },
   emptySubtitle: {
     color: Colors.textSecondary,

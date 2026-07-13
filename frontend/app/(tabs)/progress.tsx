@@ -9,6 +9,7 @@ import {
 import { Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import SkeletonCard from '@/components/SkeletonCard';
+import { SharedStyles } from '@/constants/Theme';
 
 const ACHIEVEMENTS = [
   { id: '1', title: '7-Day Streak', desc: 'Workout for 7 consecutive days', icon: Flame, color: '#FF4D4D', unlocked: true },
@@ -96,7 +97,7 @@ export default function ProgressAnalyticsScreen() {
 
           {/* MAIN MACRO METRICS */}
           <View style={s.topMetricsGrid}>
-            <View style={s.topMetricCard}>
+            <View style={[SharedStyles.card, s.topMetricCard]}>
               <View style={[s.iconBox, { backgroundColor: 'rgba(56,189,248,0.1)' }]}><Weight size={18} color="#38BDF8" /></View>
               <Text style={s.topMetricLabel}>Current Weight</Text>
               <View style={s.weightRow}>
@@ -108,7 +109,7 @@ export default function ProgressAnalyticsScreen() {
               </View>
             </View>
 
-            <View style={s.topMetricCard}>
+            <View style={[SharedStyles.card, s.topMetricCard]}>
               <View style={[s.iconBox, { backgroundColor: 'rgba(245,158,11,0.1)' }]}><Trophy size={18} color="#F59E0B" /></View>
               <Text style={s.topMetricLabel}>Workout Streak</Text>
               <Text style={s.topMetricVal}>{data?.streak ?? 5}<Text style={s.topMetricUnit}> Days</Text></Text>
@@ -118,7 +119,7 @@ export default function ProgressAnalyticsScreen() {
 
         <View style={s.content}>
           {/* GOAL COMPLETION */}
-          <View style={s.goalCard}>
+          <View style={[SharedStyles.card, s.goalCard, { borderColor: '#10B98130' }]}>
             <View style={s.goalHeader}>
               <View style={s.goalTitleRow}>
                 <Target size={20} color="#10B981" />
@@ -150,7 +151,7 @@ export default function ProgressAnalyticsScreen() {
 
           {/* CALORIES CHART */}
           <Text style={s.sectionTitle}>Active Calories</Text>
-          <View style={s.chartCard}>
+          <View style={[SharedStyles.card, s.chartCard]}>
             <View style={s.chartStatsRow}>
               <View>
                 <Text style={s.chartLabel}>{timeframe === 'weekly' ? 'Daily Average' : 'Weekly Average'}</Text>
@@ -183,7 +184,7 @@ export default function ProgressAnalyticsScreen() {
 
           {/* WORKOUT VOLUME CHART */}
           <Text style={s.sectionTitle}>Workout Volume</Text>
-          <View style={s.chartCard}>
+          <View style={[SharedStyles.card, s.chartCard]}>
             <View style={s.chartStatsRow}>
               <View>
                 <Text style={s.chartLabel}>{timeframe === 'weekly' ? 'Total Volume' : 'Total Monthly Volume'}</Text>
@@ -220,7 +221,7 @@ export default function ProgressAnalyticsScreen() {
           </View>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.achieveScroll}>
             {ACHIEVEMENTS.map(ach => (
-              <View key={ach.id} style={[s.achieveCard, !ach.unlocked && s.achieveLocked]}>
+              <View key={ach.id} style={[SharedStyles.card, s.achieveCard, !ach.unlocked && s.achieveLocked]}>
                 <View style={[s.achieveIconBox, { backgroundColor: ach.unlocked ? `${ach.color}20` : '#334155' }]}>
                   <ach.icon size={28} color={ach.unlocked ? ach.color : '#64748B'} />
                 </View>
@@ -239,7 +240,7 @@ export default function ProgressAnalyticsScreen() {
           <Text style={s.sectionTitle}>Personal Records</Text>
           <View style={s.prContainer}>
             {PERSONAL_RECORDS.map((pr, idx) => (
-              <View key={idx} style={s.prCard}>
+              <View key={idx} style={[SharedStyles.card, s.prCard]}>
                 <View style={s.prLeft}>
                   <View style={s.prIconBg}><Medal size={20} color="#FDE047" /></View>
                   <View>
@@ -268,7 +269,7 @@ const s = StyleSheet.create({
   headerTitle: { color: '#F8FAFC', fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 24 },
 
   topMetricsGrid: { flexDirection: 'row', gap: 16 },
-  topMetricCard: { flex: 1, backgroundColor: '#1E293B', padding: 20, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  topMetricCard: { flex: 1, padding: 20 },
   iconBox: { width: 36, height: 36, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
   topMetricLabel: { color: '#94A3B8', fontSize: 13, fontWeight: '700', marginBottom: 4 },
   weightRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -279,7 +280,7 @@ const s = StyleSheet.create({
 
   content: { padding: 24 },
 
-  goalCard: { backgroundColor: '#1E293B', borderRadius: 24, padding: 20, marginBottom: 32, borderWidth: 1, borderColor: '#10B98130' },
+  goalCard: { padding: 20, marginBottom: 32, borderWidth: 1 },
   goalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   goalTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   goalTitle: { color: '#F8FAFC', fontSize: 16, fontWeight: '800' },
@@ -296,7 +297,7 @@ const s = StyleSheet.create({
 
   sectionTitle: { color: '#F8FAFC', fontSize: 20, fontWeight: '900', letterSpacing: -0.5, marginBottom: 16 },
   
-  chartCard: { backgroundColor: '#1E293B', borderRadius: 24, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 32 },
+  chartCard: { padding: 24, marginBottom: 32 },
   chartStatsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 },
   chartLabel: { color: '#94A3B8', fontSize: 12, fontWeight: '700', marginBottom: 4 },
   chartBigValue: { color: '#F8FAFC', fontSize: 24, fontWeight: '900' },
@@ -311,7 +312,7 @@ const s = StyleSheet.create({
   viewAllLink: { color: '#38BDF8', fontSize: 14, fontWeight: '700' },
 
   achieveScroll: { gap: 16, marginBottom: 32, paddingRight: 24 },
-  achieveCard: { width: 140, backgroundColor: '#1E293B', padding: 20, borderRadius: 24, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  achieveCard: { width: 140, padding: 20, alignItems: 'center' },
   achieveLocked: { opacity: 0.6 },
   achieveIconBox: { width: 64, height: 64, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
   achieveTitle: { color: '#F8FAFC', fontSize: 14, fontWeight: '900', textAlign: 'center', marginBottom: 4 },
@@ -320,7 +321,7 @@ const s = StyleSheet.create({
   lockText: { color: '#CBD5E1', fontSize: 9, fontWeight: '900', letterSpacing: 0.5 },
 
   prContainer: { gap: 12 },
-  prCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#1E293B', padding: 16, borderRadius: 20, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  prCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
   prLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   prIconBg: { width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(253,224,71,0.1)', justifyContent: 'center', alignItems: 'center' },
   prEx: { color: '#F8FAFC', fontSize: 16, fontWeight: '800', marginBottom: 2 },

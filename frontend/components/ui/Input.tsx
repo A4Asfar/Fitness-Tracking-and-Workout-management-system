@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, TextInput, Text, StyleSheet, TextInputProps, TouchableOpacity } from 'react-native';
+import { View, TextInput, Text, StyleSheet, TextInputProps, TouchableOpacity, Platform } from 'react-native';
 import { Colors } from '@/constants/Theme';
 import { LucideIcon, Eye, EyeOff } from 'lucide-react-native';
 
@@ -26,7 +26,7 @@ export default function Input({ label, error, icon: Icon, isPassword, style, ...
         {Icon && <Icon size={20} color={isFocused ? Colors.primary : Colors.textSecondary} style={s.icon} />}
         
         <TextInput
-          style={[s.input, style]}
+          style={[s.input, Platform.OS === 'web' && ({ outlineStyle: 'none' } as any), style]}
           placeholderTextColor={Colors.textSecondary}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
@@ -64,20 +64,20 @@ const s = StyleSheet.create({
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.inputBg,
+    backgroundColor: 'rgba(15, 23, 42, 0.5)', // Subtle dark transparent
     borderRadius: 16,
-    borderWidth: 1.5,
-    borderColor: 'transparent',
+    borderWidth: 1,
+    borderColor: Colors.border,
     paddingHorizontal: 16,
     height: 56,
   },
   inputFocused: {
     borderColor: Colors.primary,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(56, 189, 248, 0.05)', // Subtle blue tint
   },
   inputError: {
     borderColor: Colors.error,
-    backgroundColor: '#FEF2F2',
+    backgroundColor: 'rgba(239, 68, 68, 0.05)',
   },
   icon: {
     marginRight: 12,

@@ -10,6 +10,9 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '@/services/api';
 
+import Button from '@/components/ui/Button';
+import { SharedStyles } from '@/constants/Theme';
+
 export default function VerifyOtpScreen() {
   const { email } = useLocalSearchParams<{ email: string }>();
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
@@ -84,7 +87,7 @@ export default function VerifyOtpScreen() {
           <Text style={s.subtitle}>Enter the 6-digit code sent to{'\n'}<Text style={{color: '#F8FAFC', fontWeight: '800'}}>{email}</Text></Text>
         </Animated.View>
 
-        <Animated.View style={[s.formCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <Animated.View style={[SharedStyles.card, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           
           <View style={s.otpContainer}>
             {otp.map((digit, index) => (
@@ -102,11 +105,11 @@ export default function VerifyOtpScreen() {
             ))}
           </View>
 
-          <TouchableOpacity onPress={handleVerify} disabled={loading} activeOpacity={0.8} style={s.primaryBtnWrapper}>
-            <LinearGradient colors={['#38BDF8', '#0284C7']} style={s.primaryBtn}>
-              {loading ? <ActivityIndicator color="#FFF" /> : <Text style={s.primaryBtnText}>Verify Code</Text>}
-            </LinearGradient>
-          </TouchableOpacity>
+          <Button
+            title="Verify Code"
+            onPress={handleVerify}
+            loading={loading}
+          />
 
         </Animated.View>
       </ScrollView>

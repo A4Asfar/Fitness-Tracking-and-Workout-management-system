@@ -6,11 +6,14 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'expo-router';
 import { Mail, Lock, Eye, EyeOff, User, UserPlus } from 'lucide-react-native';
-import GoogleSignInButton from '@/components/auth/GoogleSignInButton';
+
 import WelcomeModal from '@/components/WelcomeModal';
 import { useToast } from '@/components/Toast';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import Button from '@/components/ui/Button';
+import Input from '@/components/ui/Input';
+import { SharedStyles } from '@/constants/Theme';
 
 export default function SignupScreen() {
   const [name, setName] = useState('');
@@ -20,7 +23,7 @@ export default function SignupScreen() {
   const [errors, setErrors] = useState<any>({});
   const [loading, setLoading] = useState(false);
   
-  const { signup, loginWithGoogle } = useAuth();
+  const { signup } = useAuth();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showWelcome, setShowWelcome] = useState(false);
@@ -91,68 +94,45 @@ export default function SignupScreen() {
           <Text style={s.subtitle}>Create your account and transform your body</Text>
         </Animated.View>
 
-        <Animated.View style={[s.formCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+        <Animated.View style={[SharedStyles.card, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
           
-          {/* Name Input */}
-          <View style={s.inputContainer}>
-            <Text style={s.inputLabel}>Full Name</Text>
-            <View style={[s.inputWrapper, errors.name && s.inputError]}>
-              <User size={18} color="#64748B" style={s.inputIcon} />
-              <TextInput
-                style={s.inputField}
-                placeholder="e.g. John Doe"
-                placeholderTextColor="#64748B"
-                value={name}
-                onChangeText={t => { setName(t); if(errors.name) setErrors({...errors, name: null}); }}
-                editable={!loading}
-              />
-            </View>
-            {errors.name && <Text style={s.errorText}>{errors.name}</Text>}
-          </View>
+          <Input
+            label="Full Name"
+            placeholder="e.g. John Doe"
+            value={name}
+            onChangeText={t => { setName(t); if(errors.name) setErrors({...errors, name: null}); }}
+            editable={!loading}
+            icon={User}
+            error={errors.name}
+          />
 
-          {/* Email Input */}
-          <View style={s.inputContainer}>
-            <Text style={s.inputLabel}>Email Address</Text>
-            <View style={[s.inputWrapper, errors.email && s.inputError]}>
-              <Mail size={18} color="#64748B" style={s.inputIcon} />
-              <TextInput
-                style={s.inputField}
-                placeholder="Enter your email"
-                placeholderTextColor="#64748B"
-                value={email}
-                onChangeText={t => { setEmail(t); if(errors.email) setErrors({...errors, email: null}); }}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="email"
-                textContentType="emailAddress"
-                editable={!loading}
-              />
-            </View>
-            {errors.email && <Text style={s.errorText}>{errors.email}</Text>}
-          </View>
+          <Input
+            label="Email Address"
+            placeholder="Enter your email"
+            value={email}
+            onChangeText={t => { setEmail(t); if(errors.email) setErrors({...errors, email: null}); }}
+            keyboardType="email-address"
+            autoCapitalize="none"
+            autoComplete="email"
+            textContentType="emailAddress"
+            editable={!loading}
+            icon={Mail}
+            error={errors.email}
+          />
 
-          {/* Password Input */}
-          <View style={s.inputContainer}>
-            <Text style={s.inputLabel}>Password</Text>
-            <View style={[s.inputWrapper, errors.password && s.inputError]}>
-              <Lock size={18} color="#64748B" style={s.inputIcon} />
-              <TextInput
-                style={s.inputField}
-                placeholder="Create a password"
-                placeholderTextColor="#64748B"
-                value={password}
-                onChangeText={t => { setPassword(t); if(errors.password) setErrors({...errors, password: null}); }}
-                secureTextEntry={!showPassword}
-                autoComplete="new-password"
-                textContentType="newPassword"
-                editable={!loading}
-              />
-              <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={s.eyeBtn}>
-                {showPassword ? <EyeOff size={18} color="#64748B" /> : <Eye size={18} color="#64748B" />}
-              </TouchableOpacity>
-            </View>
-            
-            {/* Password Strength */}
+          <View style={{ marginBottom: 12 }}>
+            <Input
+              label="Password"
+              placeholder="Create a password"
+              value={password}
+              onChangeText={t => { setPassword(t); if(errors.password) setErrors({...errors, password: null}); }}
+              isPassword
+              autoComplete="new-password"
+              textContentType="newPassword"
+              editable={!loading}
+              icon={Lock}
+              error={errors.password}
+            />
             {password.length > 0 && (
               <View style={s.strengthContainer}>
                 <View style={s.strengthBars}>
@@ -163,23 +143,16 @@ export default function SignupScreen() {
                 <Text style={[s.strengthText, { color: strengthColors[strength] }]}>{strengthLabels[strength]}</Text>
               </View>
             )}
-            {errors.password && <Text style={s.errorText}>{errors.password}</Text>}
           </View>
 
-          <TouchableOpacity onPress={handleSignup} disabled={loading} activeOpacity={0.8} style={s.primaryBtnWrapper}>
-            <LinearGradient colors={['#10B981', '#059669']} style={s.primaryBtn}>
-              {loading ? <ActivityIndicator color="#FFF" /> : <Text style={s.primaryBtnText}>Create Account</Text>}
-            </LinearGradient>
-          </TouchableOpacity>
+          <Button
+            title="Create Account"
+            onPress={handleSignup}
+            loading={loading}
+            style={{ marginBottom: 16 }}
+          />
 
-          {/* Social Separator */}
-          <View style={s.sepRow}>
-            <View style={s.sepLine} />
-            <Text style={s.sepText}>OR CONTINUE WITH</Text>
-            <View style={s.sepLine} />
-          </View>
 
-          <GoogleSignInButton isLoading={loading} />
 
           {/* Footer */}
           <View style={s.footer}>
@@ -236,9 +209,7 @@ const s = StyleSheet.create({
   primaryBtn: { height: 56, justifyContent: 'center', alignItems: 'center' },
   primaryBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
 
-  sepRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
-  sepLine: { flex: 1, height: 1, backgroundColor: 'rgba(255,255,255,0.05)' },
-  sepText: { color: '#64748B', fontSize: 10, fontWeight: '800', letterSpacing: 1, paddingHorizontal: 12 },
+
 
 
 
