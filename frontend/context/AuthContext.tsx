@@ -5,6 +5,7 @@ import axios from 'axios';
 import { useToast } from '@/components/Toast';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
+import { makeRedirectUri } from 'expo-auth-session';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -51,32 +52,39 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { showToast } = useToast();
 
   const [request, response, promptAsync] = Google.useIdTokenAuthRequest({
-    clientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '1097357098571-a47vluk83pvb118k6da6ck7o6n3ei39e.apps.googleusercontent.com',
     webClientId: process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID || '1097357098571-a47vluk83pvb118k6da6ck7o6n3ei39e.apps.googleusercontent.com',
     iosClientId: process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID,
     androidClientId: process.env.EXPO_PUBLIC_GOOGLE_ANDROID_CLIENT_ID,
-    redirectUri: 'https://fitness-tracking-and-workout-manage.vercel.app',
+    redirectUri: makeRedirectUri(),
   });
 
   useEffect(() => {
-    if (request) {
-      console.log('=== GOOGLE OAUTH FORENSIC AUDIT ===');
-      console.log('1. ENV Client ID:', process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID);
-      console.log('2. Request Config:', JSON.stringify(request, null, 2));
-      console.log('3. Redirect URI:', request.redirectUri);
-      console.log('4. Client ID sent to Google:', request.clientId);
-      console.log('===================================');
+    if (request?.redirectUri) {
+      console.log('✅ EXPO AUTH SESSION REDIRECT URI GENERATED:');
+      console.log('➡️ ', request.redirectUri);
+      console.log('If you get Error 400: redirect_uri_mismatch, add the URL above to Google Cloud Console!');
     }
   }, [request]);
 
   useEffect(() => {
+    console.log('=== FORENSIC LOG: Response handler entered ===');
+    console.log('Response Object:', JSON.stringify(response, null, 2));
+
     if (response?.type === 'success') {
-      const { id_token } = response.params;
-      if (id_token) {
-        handleGoogleLogin(id_token);
+      const idToken = response.authentication?.idToken || response.params?.id_token;
+      console.log('Forensic: response.type is success. id_token exists?', !!idToken);
+      if (idToken) {
+        console.log('Forensic: ID Token length:', idToken.length);
+        handleGoogleLogin(idToken);
+      } else {
+        showToast('Google Sign-In failed: No ID Token returned', 'error');
+        console.error('Google Auth Success but missing ID Token', response);
       }
     } else if (response?.type === 'error') {
+      console.log('Forensic: response.type is error', response.error);
       showToast('Google Sign-In Failed or Canceled', 'error');
+    } else {
+      console.log('Forensic: response is null or unhandled type:', response?.type);
     }
   }, [response]);
 
@@ -102,7 +110,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const loginWithGoogle = useCallback(() => {
-    promptAsync();
+    console.log('Forensic: Google button pressed. promptAsync() started');
+    promptAsync().then((res) => {
+      console.log('Forensic: promptAsync() finished. Returned res:', JSON.stringify(res, null, 2));
+    }).catch(err => {
+      console.log('Forensic: promptAsync() error:', err);
+    });
   }, [promptAsync]);
 
   useEffect(() => {
