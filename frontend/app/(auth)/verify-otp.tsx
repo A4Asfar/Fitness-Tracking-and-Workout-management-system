@@ -59,7 +59,7 @@ export default function VerifyOtpScreen() {
 
     setLoading(true);
     try {
-      await api.post('/auth/verify-otp', { email, otp: otpCode });
+      await api.post('/auth/verify-reset-code', { email, otp: otpCode });
       showToast('Verification successful', 'success');
       router.push(`/(auth)/reset-password?email=${encodeURIComponent(email || '')}&otp=${encodeURIComponent(otpCode)}`);
     } catch (error: any) {
