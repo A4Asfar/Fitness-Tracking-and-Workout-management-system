@@ -4,6 +4,7 @@ import {
   TextInput, ActivityIndicator, Animated
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
+import { isAdminUser } from '@/utils/isAdmin';
 import { useRouter } from 'expo-router';
 import { Mail, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react-native';
 
@@ -23,6 +24,7 @@ export default function LoginScreen() {
   const [loading, setLoading] = useState(false);
   
   const { login, user } = useAuth();
+  const [loggedInUser, setLoggedInUser] = useState<any>(null);
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const [showWelcome, setShowWelcome] = useState(false);
@@ -55,7 +57,8 @@ export default function LoginScreen() {
     setErrors({});
     setLoading(true);
     try {
-      await login(email, password);
+      const loggedInUser = await login(email, password);
+      setLoggedInUser(loggedInUser);
       setShowWelcome(true);
     } catch (error) {
       showToast((error as Error).message, 'error');
@@ -135,12 +138,13 @@ export default function LoginScreen() {
         visible={showWelcome}
         onClose={() => { 
           setShowWelcome(false); 
+          const resolvedUser = loggedInUser || user;
           setTimeout(() => {
-            if (user?.membershipType === 'admin') router.replace('/admin-dashboard' as any);
+            if (isAdminUser(resolvedUser)) router.replace('/admin-dashboard' as any);
             else router.replace('/(tabs)/' as any);
           }, 350);
         }}
-        userName={user?.name || 'Athlete'}
+        userName={(loggedInUser?.name || user?.name) || 'Athlete'}
         isNewUser={false}
       />
     </KeyboardAvoidingView>

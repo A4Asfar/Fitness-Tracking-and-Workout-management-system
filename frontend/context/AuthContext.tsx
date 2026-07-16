@@ -28,7 +28,7 @@ interface AuthContextType {
   token: string | null;
   loading: boolean;
   isNewUser: boolean;
-  login: (email: string, password: string) => Promise<void>;
+  login: (email: string, password: string) => Promise<any>;
   signup: (name: string, email: string, password: string, membershipType: string) => Promise<void>;
   logout: () => Promise<void>;
   updateUser: (userData: Partial<User>) => void;
@@ -150,6 +150,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await Storage.setItem('authUser', JSON.stringify(userData));
     setIsNewUser(false);
     if (__DEV__) console.log('🔑 Login successful for:', userData.email);
+    return userData;
   }, []);
 
   /**
