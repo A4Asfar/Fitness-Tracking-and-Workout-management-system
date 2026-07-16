@@ -87,7 +87,7 @@ const s = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: Colors.text,
-    height: '100%',
+    height: 56,
   },
   eyeIcon: {
     padding: 4,
