@@ -306,8 +306,11 @@ export default function DietScreen() {
         </View>
       </ScrollView>
 
-      <AddMealModal{...{onAddMeal: handleAddMeal} as any} 
-        defaultType={activeType} 
+      <AddMealModal
+        visible={isModalVisible}
+        onClose={() => setIsModalVisible(false)}
+        onAdd={handleAddMeal}
+        defaultType={activeType}
       />
     </View>
   );
@@ -357,7 +360,7 @@ const s = StyleSheet.create({
   chartBigValue: { color: '#F8FAFC', fontSize: 24, fontWeight: '900' },
   chartSmallValue: { color: '#64748B', fontSize: 14, fontWeight: '600' },
   barsContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 120 },
-  barColumn: { alignItems: 'center', width: 32 },
+  barColumn: { alignItems: 'center', flex: 1, minWidth: 0 },
   barTrack: { width: 12, height: 100, backgroundColor: '#0F172A', borderRadius: 6, justifyContent: 'flex-end', marginBottom: 12 },
   barFill: { width: 12, borderRadius: 6 },
   barLabel: { color: '#64748B', fontSize: 12, fontWeight: '700' },
@@ -376,18 +379,18 @@ const s = StyleSheet.create({
 
   mealList: { gap: 12 },
   premiumMealCard: { flexDirection: 'row' },
-  mealImg: { width: 100, height: '100%' },
+  mealImg: { width: 90, minHeight: 110, alignSelf: 'stretch' },
   mealImgOverlay: { flex: 1, backgroundColor: 'rgba(15,23,42,0.2)', padding: 8, alignItems: 'flex-start' },
   vegBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(15,23,42,0.8)', paddingHorizontal: 6, paddingVertical: 4, borderRadius: 6 },
   vegBadgeText: { color: '#10B981', fontSize: 9, fontWeight: '900', marginLeft: 4, letterSpacing: 0.5 },
   
   mealCardInfo: { flex: 1, padding: 16 },
-  mealCardTitle: { color: '#F8FAFC', fontSize: 16, fontWeight: '800', marginBottom: 6, flex: 1, marginRight: 8 },
+  mealCardTitle: { color: '#F8FAFC', fontSize: 15, fontWeight: '800', marginBottom: 6, flex: 1, marginRight: 8, flexShrink: 1 },
   mealDelText: { color: '#EF4444', fontSize: 12, fontWeight: '800' },
   mealHealthyBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245,158,11,0.1)', alignSelf: 'flex-start', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginBottom: 12 },
   mealHealthyText: { color: '#F59E0B', fontSize: 10, fontWeight: '800', marginLeft: 4 },
   
-  mealCardMacros: { flexDirection: 'row', gap: 16 },
+  mealCardMacros: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
   mCardMacro: { flexDirection: 'row', alignItems: 'baseline' },
   mCardVal: { color: '#F8FAFC', fontSize: 14, fontWeight: '900' },
   mCardLab: { color: '#64748B', fontSize: 11, fontWeight: '700', marginLeft: 2 },
