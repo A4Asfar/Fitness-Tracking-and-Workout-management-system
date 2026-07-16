@@ -74,7 +74,11 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             }
           ]}
         >
-          <BlurView intensity={Platform.OS === 'ios' ? 40 : 100} tint="dark" style={StyleSheet.absoluteFill} />
+          {Platform.OS !== 'web' ? (
+            <BlurView intensity={Platform.OS === 'ios' ? 40 : 100} tint="dark" style={StyleSheet.absoluteFill} />
+          ) : (
+            <View style={[StyleSheet.absoluteFill, styles.webBlur]} />
+          )}
           <View style={styles.content}>
             <View style={styles.iconArea}>
               {getIcon()}
@@ -131,5 +135,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     letterSpacing: -0.2,
+  },
+  webBlur: {
+    backgroundColor: 'rgba(15,23,42,0.92)',
   },
 });
