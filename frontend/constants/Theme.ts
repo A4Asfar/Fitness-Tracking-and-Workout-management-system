@@ -151,7 +151,7 @@ export const SharedStyles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
     marginLeft: SPACING.sm,
-    height: '100%',
+    height: 56,
   },
   inputLabel: {
     color: Colors.textSecondary,
