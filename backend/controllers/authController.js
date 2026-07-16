@@ -85,22 +85,14 @@ exports.login = asyncHandler(async (req, res) => {
     throw new Error('Please provide email and password');
   }
 
-  console.log('\n--- TEMPORARY LOGIN DIAGNOSTICS START ---');
-  console.log(`1. Email received from frontend: ${email}`);
-  console.log(`2. Password Length = ${password.length}`);
-
   const user = await User.findOne({ email }).select('+password');
-  console.log(`3. User.findOne() returned a user: ${user !== null}`);
 
-  if (!user) {
+  if (!user || !user.password) {
     res.status(401);
     throw new Error('Invalid email or password');
   }
 
-  console.log(`4. Stored hash length: ${user.password.length}`);
-
   const isMatch = await user.comparePassword(password);
-  console.log(`5. comparePassword() result: ${isMatch}`);
 
   if (isMatch) {
     const token = generateToken(user._id);
