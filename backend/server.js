@@ -113,6 +113,7 @@ app.get('/api/gemini-status', (req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/workouts', workoutRoutes);
 app.use('/api/meals', mealRoutes);
+app.use('/api/diet-plans', require('./routes/dietPlanRoutes'));
 app.use('/api/profile', profileRoutes);
 app.use('/api/weight', weightRoutes);
 app.use('/api/steps', require('./routes/steps'));

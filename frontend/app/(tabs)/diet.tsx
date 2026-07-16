@@ -153,7 +153,7 @@ export default function DietScreen() {
         {/* HEADER */}
         <LinearGradient colors={['#1E293B', '#0F172A']} style={[s.heroSection, { paddingTop: insets.top + 16 }]}>
           <Text style={s.headerSubtitle}>Nutrition Center</Text>
-          <Text style={s.headerTitle}>Diet Plan</Text>
+          <Text style={s.headerTitle}>Food Records</Text>
 
           {/* DAILY NUTRITION SUMMARY */}
           <View style={[SharedStyles.card, s.summaryCard]}>

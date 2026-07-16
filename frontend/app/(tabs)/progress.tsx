@@ -1,56 +1,110 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity, Dimensions, Animated, ImageBackground, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity, Animated, Easing, useWindowDimensions } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
+import { MealService } from '@/services/mealService';
+import { generateIntelligence, IntelligenceResult } from '@/utils/intelligenceEngine';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  Weight, Activity, Trophy, Flame, Dumbbell, Sparkles, TrendingDown, TrendingUp, Calendar, Medal, Crown, Target
+  Activity, Flame, Dumbbell, Sparkles, Target, HeartPulse, Zap, AlertTriangle, TrendingUp, TrendingDown, Crown
 } from 'lucide-react-native';
 import { Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import SkeletonCard from '@/components/SkeletonCard';
 import { SharedStyles } from '@/constants/Theme';
+import Svg, { Circle } from 'react-native-svg';
 
-const ACHIEVEMENTS = [
-  { id: '1', title: '7-Day Streak', desc: 'Workout for 7 consecutive days', icon: Flame, color: '#FF4D4D', unlocked: true },
-  { id: '2', title: 'Heavy Lifter', desc: 'Log over 10,000 kg volume', icon: Dumbbell, color: '#38BDF8', unlocked: true },
-  { id: '3', title: 'Early Bird', desc: 'Complete 5 workouts before 8 AM', icon: Sparkles, color: '#F59E0B', unlocked: false },
-  { id: '4', title: 'Century Club', desc: 'Burn 100,000 total calories', icon: Crown, color: '#A855F7', unlocked: false },
-];
+const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-const PERSONAL_RECORDS = [
-  { exercise: 'Barbell Squat', weight: '140 kg', date: 'Oct 12' },
-  { exercise: 'Bench Press', weight: '100 kg', date: 'Nov 02' },
-  { exercise: 'Deadlift', weight: '180 kg', date: 'Nov 15' },
-];
+function FitnessGauge({ score, grade }: { score: number; grade: string }) {
+  const size = 160;
+  const strokeWidth = 14;
+  const radius = (size - strokeWidth) / 2;
+  const circumference = radius * 2 * Math.PI;
+  
+  const animatedValue = useRef(new Animated.Value(0)).current;
 
-export default function ProgressAnalyticsScreen() {
+  useEffect(() => {
+    Animated.timing(animatedValue, {
+      toValue: score / 100,
+      duration: 1500,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+      delay: 300
+    }).start();
+  }, [score]);
+
+  const strokeDashoffset = animatedValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: [circumference, 0]
+  });
+
+  const getColor = () => {
+    if (score >= 90) return '#10B981'; // Green
+    if (score >= 80) return '#38BDF8'; // Blue
+    if (score >= 65) return '#F59E0B'; // Orange
+    return '#EF4444'; // Red
+  };
+
+  return (
+    <View style={{ position: 'relative', width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
+      <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <Circle cx={size/2} cy={size/2} r={radius} stroke="#1E293B" strokeWidth={strokeWidth} fill="none" />
+        <AnimatedCircle
+          cx={size/2} cy={size/2} r={radius}
+          stroke={getColor()} strokeWidth={strokeWidth}
+          fill="none" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset}
+          strokeLinecap="round" transform={`rotate(-90 ${size/2} ${size/2})`}
+        />
+      </Svg>
+      <View style={{ position: 'absolute', alignItems: 'center' }}>
+        <Text style={{ color: '#F8FAFC', fontSize: 36, fontWeight: '900' }}>{score}</Text>
+        <Text style={{ color: getColor(), fontSize: 16, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 }}>{grade}</Text>
+      </View>
+    </View>
+  );
+}
+
+function IconSelector({ name, color, size }: { name: string; color: string; size: number }) {
+  if (name === 'Flame') return <Flame color={color} size={size} />;
+  if (name === 'Dumbbell') return <Dumbbell color={color} size={size} />;
+  if (name === 'Target') return <Target color={color} size={size} />;
+  if (name === 'Activity') return <Activity color={color} size={size} />;
+  if (name === 'HeartPulse') return <HeartPulse color={color} size={size} />;
+  return <Crown color={color} size={size} />;
+}
+
+import { DietPlanService } from '@/services/dietPlanService';
+
+export default function IntelligenceDashboardScreen() {
   const { width } = useWindowDimensions();
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [data, setData] = useState<any>(null);
-  const [timeframe, setTimeframe] = useState<'weekly' | 'monthly'>('weekly');
+  const [data, setData] = useState<IntelligenceResult | null>(null);
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const [error, setError] = useState<string | null>(null);
 
-  const fillAnim = useRef(new Animated.Value(0)).current;
-
-  const fetchAnalytics = async () => {
+  const fetchData = async () => {
     setError(null);
     try {
-      const res = await api.get('/workouts/analytics');
-      setData(res.data);
+      const [analyticsRes, mealsRes, dietPlan] = await Promise.all([
+        api.get('/workouts/analytics'),
+        MealService.getMeals(),
+        DietPlanService.getMyDietPlan()
+      ]);
       
-      Animated.timing(fillAnim, {
-        toValue: 1,
-        duration: 1200,
-        useNativeDriver: false
-      }).start();
-
+      const intelligence = generateIntelligence({
+        user,
+        analytics: analyticsRes.data,
+        meals: mealsRes,
+        dietPlan
+      });
+      
+      setData(intelligence);
     } catch (e: any) {
-      if (__DEV__) console.log('Analytics error:', e.message);
-      setError(e.message || 'Failed to sync progress data.');
+      if (__DEV__) console.log('Intelligence error:', e.message);
+      setError(e.message || 'Failed to sync intelligence data.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -58,17 +112,13 @@ export default function ProgressAnalyticsScreen() {
   };
 
   useEffect(() => {
-    fetchAnalytics();
-  }, []);
+    fetchData();
+  }, [user]);
 
   const onRefresh = () => {
     setRefreshing(true);
-    fillAnim.setValue(0);
-    fetchAnalytics();
+    fetchData();
   };
-
-  const weightKg = user?.weight || 75;
-  const weightTrend = -1.2; // Mock weight loss trend
 
   if (loading && !refreshing) {
     return (
@@ -78,8 +128,20 @@ export default function ProgressAnalyticsScreen() {
     );
   }
 
-  const goalCompletionPercent = 0.75; // Mock 75%
-  const goalWidth = fillAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${goalCompletionPercent * 100}%`] });
+  if (error && !loading) {
+    return (
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <Text style={{ color: '#EF4444', fontSize: 16 }}>{error}</Text>
+        <TouchableOpacity onPress={fetchData} style={{ marginTop: 20, padding: 12, backgroundColor: '#38BDF8', borderRadius: 8 }}>
+          <Text style={{ color: '#fff', fontWeight: 'bold' }}>Retry</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  if (!data) return null;
+
+  const isWide = width > 768;
 
   return (
     <View style={s.container}>
@@ -87,125 +149,154 @@ export default function ProgressAnalyticsScreen() {
 
       <ScrollView 
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 100 , maxWidth: 1000, width: '100%', alignSelf: 'center' }}
+        contentContainerStyle={{ paddingBottom: insets.bottom + 100, maxWidth: 1000, width: '100%', alignSelf: 'center' }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#38BDF8" />}
       >
-        {/* PREMIUM HEADER */}
+        {/* HERO SECTION */}
         <LinearGradient colors={['#1E293B', '#0F172A']} style={[s.heroSection, { paddingTop: insets.top + 16 }]}>
-          <Text style={s.headerSubtitle}>Performance Data</Text>
-          <Text style={s.headerTitle}>Analytics</Text>
-
-          {/* MAIN MACRO METRICS */}
-          <View style={s.topMetricsGrid}>
-            <View style={[SharedStyles.card, s.topMetricCard]}>
-              <View style={[s.iconBox, { backgroundColor: 'rgba(56,189,248,0.1)' }]}><Weight size={18} color="#38BDF8" /></View>
-              <Text style={s.topMetricLabel}>Current Weight</Text>
-              <View style={s.weightRow}>
-                <Text style={s.topMetricVal}>{weightKg}<Text style={s.topMetricUnit}> kg</Text></Text>
-                <View style={s.trendBadge}>
-                  <TrendingDown size={12} color="#10B981" />
-                  <Text style={s.trendText}>{Math.abs(weightTrend)}%</Text>
-                </View>
+          <Text style={s.headerSubtitle}>Fitness Intelligence</Text>
+          <Text style={s.headerTitle}>Engine</Text>
+          
+          <View style={[s.gaugeWrapper, isWide && { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }]}>
+            <View style={{ alignItems: 'center', marginBottom: isWide ? 0 : 24 }}>
+              <FitnessGauge score={data.fitnessScore} grade={data.healthGrade} />
+              <View style={[s.scoreBadge, { backgroundColor: `${data.netCaloriesColor}20` }]}>
+                <Text style={[s.scoreLabel, { color: data.netCaloriesColor }]}>{data.scoreLabel} Overall</Text>
               </View>
             </View>
 
-            <View style={[SharedStyles.card, s.topMetricCard]}>
-              <View style={[s.iconBox, { backgroundColor: 'rgba(245,158,11,0.1)' }]}><Trophy size={18} color="#F59E0B" /></View>
-              <Text style={s.topMetricLabel}>Workout Streak</Text>
-              <Text style={s.topMetricVal}>{data?.streak ?? 5}<Text style={s.topMetricUnit}> Days</Text></Text>
+            <View style={[s.summaryGrid, isWide && { flex: 1, marginLeft: 40 }]}>
+              <View style={s.sumCard}>
+                <Text style={s.sumCardLab}>Net Calories</Text>
+                <Text style={[s.sumCardVal, { color: data.netCaloriesColor }]}>
+                  {data.netCalories > 0 ? '+' : ''}{data.netCalories}
+                </Text>
+                <Text style={[s.sumCardSub, { color: data.netCaloriesColor }]}>{data.netCaloriesLabel}</Text>
+              </View>
+              <View style={s.sumCard}>
+                <Text style={s.sumCardLab}>Weekly Effort</Text>
+                <Text style={s.sumCardVal}>{data.comparison.workoutEffort}%</Text>
+                <Text style={s.sumCardSub}>vs Last Week</Text>
+              </View>
             </View>
           </View>
         </LinearGradient>
 
         <View style={s.content}>
-          {/* GOAL COMPLETION */}
-          <View style={[SharedStyles.card, s.goalCard, { borderColor: '#10B98130' }]}>
-            <View style={s.goalHeader}>
-              <View style={s.goalTitleRow}>
-                <Target size={20} color="#10B981" />
-                <Text style={s.goalTitle}>Fat Loss Goal Progress</Text>
-              </View>
-              <Text style={s.goalPercent}>{Math.round(goalCompletionPercent * 100)}%</Text>
-            </View>
-            <View style={s.goalBarBg}>
-              <Animated.View style={[s.goalBarFill, { width: goalWidth }]} />
-            </View>
-            <Text style={s.goalSub}>2.5 kg remaining to hit your target.</Text>
-          </View>
-
-          {/* TOGGLE TIMEFRAME */}
-          <View style={s.toggleRow}>
-            <TouchableOpacity 
-              style={[s.toggleBtn, timeframe === 'weekly' && s.toggleActive]} 
-              onPress={() => setTimeframe('weekly')}
-            >
-              <Text style={[s.toggleText, timeframe === 'weekly' && s.toggleTextActive]}>Weekly</Text>
-            </TouchableOpacity>
-            <TouchableOpacity 
-              style={[s.toggleBtn, timeframe === 'monthly' && s.toggleActive]} 
-              onPress={() => setTimeframe('monthly')}
-            >
-              <Text style={[s.toggleText, timeframe === 'monthly' && s.toggleTextActive]}>Monthly</Text>
-            </TouchableOpacity>
-          </View>
-
-          {/* CALORIES CHART */}
-          <Text style={s.sectionTitle}>Active Calories</Text>
-          <View style={[SharedStyles.card, s.chartCard]}>
-            <View style={s.chartStatsRow}>
-              <View>
-                <Text style={s.chartLabel}>{timeframe === 'weekly' ? 'Daily Average' : 'Weekly Average'}</Text>
-                <Text style={s.chartBigValue}>
-                  {Math.round((data?.[timeframe === 'weekly' ? 'chartData' : 'monthlyChartData'] || []).reduce((acc: number, d: any) => acc + (d.calories || 0), 0) / (data?.[timeframe === 'weekly' ? 'chartData' : 'monthlyChartData']?.length || 1)) || 0}
-                  <Text style={s.chartSmallValue}> kcal</Text>
-                </Text>
-              </View>
-              <Flame size={24} color="#EF4444" />
-            </View>
-            <View style={s.barsContainer}>
-              {(data?.[timeframe === 'weekly' ? 'chartData' : 'monthlyChartData'] || []).map((d: any, idx: number) => {
-                const maxCalories = Math.max(...(data?.[timeframe === 'weekly' ? 'chartData' : 'monthlyChartData'] || []).map((item: any) => item.calories || 0), 100);
-                const h = Math.max((d.calories / maxCalories) * 100, 5); 
-                const isToday = timeframe === 'weekly' && idx === 6; 
-                const label = timeframe === 'weekly' 
-                  ? new Date(d.date).toLocaleDateString(undefined, { weekday: 'narrow' }).charAt(0)
-                  : d.label;
-                return (
-                  <View key={idx} style={[s.barColumn, timeframe === 'monthly' && { flex: 1 }]}>
-                    <View style={[s.barTrack, timeframe === 'monthly' && { width: 30 }]}>
-                      <LinearGradient colors={isToday ? ['#EF4444', '#DC2626'] : ['#334155', '#1E293B']} style={[s.barFill, { height: `${h}%`, width: '100%' }]} />
-                    </View>
-                    <Text style={[s.barLabel, isToday && { color: '#EF4444', fontWeight: '900' }]}>{label}</Text>
+          {/* AI COACH INSIGHT */}
+          {(data.goalInsight || data.aiCoachMessages.length > 0) && (
+            <View style={[SharedStyles.card, s.aiCard]}>
+              <LinearGradient colors={['rgba(16,185,129,0.15)', 'rgba(15,23,42,0)']} style={s.aiGrad}>
+                <View style={s.aiHeader}>
+                  <Sparkles size={20} color="#10B981" fill="#10B981" />
+                  <Text style={s.aiTitle}>AI Coach Assessment</Text>
+                </View>
+                {data.goalInsight ? (
+                  <View style={s.warningRow}>
+                    <AlertTriangle size={18} color="#F59E0B" />
+                    <Text style={s.warningText}>{data.goalInsight}</Text>
                   </View>
-                );
-              })}
+                ) : null}
+                {data.aiCoachMessages.map((msg, i) => (
+                  <Text key={i} style={s.aiText}>• {msg}</Text>
+                ))}
+              </LinearGradient>
+            </View>
+          )}
+
+          {/* NUTRITION VS WORKOUT COMPARISON */}
+          {data.dietPlanComparison && (
+            <>
+              <Text style={s.sectionTitle}>Diet Plan Adherence</Text>
+              <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+                  <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '800' }}>Completion: {data.dietPlanComparison.completionPct}%</Text>
+                  <Text style={{ color: data.dietPlanComparison.statusLabel === 'On Track' ? '#10B981' : '#F59E0B', fontWeight: '800' }}>{data.dietPlanComparison.statusLabel}</Text>
+                </View>
+                
+                <View style={{ gap: 12 }}>
+                  <View>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>Calories</Text>
+                      <Text style={{ color: '#F8FAFC', fontSize: 12, fontWeight: '800' }}>{data.dietPlanComparison.caloriesConsumed} / {data.dietPlanComparison.caloriesPlanned}</Text>
+                    </View>
+                    <View style={s.compBarBg}>
+                      <View style={[s.compBarFill, { width: `${Math.min((data.dietPlanComparison.caloriesConsumed / (data.dietPlanComparison.caloriesPlanned || 1)) * 100, 100)}%`, backgroundColor: '#F59E0B' }]} />
+                    </View>
+                  </View>
+
+                  <View>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                      <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>Protein</Text>
+                      <Text style={{ color: '#F8FAFC', fontSize: 12, fontWeight: '800' }}>{data.dietPlanComparison.proteinConsumed}g / {data.dietPlanComparison.proteinPlanned}g</Text>
+                    </View>
+                    <View style={s.compBarBg}>
+                      <View style={[s.compBarFill, { width: `${Math.min((data.dietPlanComparison.proteinConsumed / (data.dietPlanComparison.proteinPlanned || 1)) * 100, 100)}%`, backgroundColor: '#10B981' }]} />
+                    </View>
+                  </View>
+                </View>
+              </View>
+            </>
+          )}
+
+          <Text style={s.sectionTitle}>Intelligence Analysis</Text>
+          <View style={[isWide && { flexDirection: 'row', gap: 16 }]}>
+            <View style={[SharedStyles.card, s.compCard, isWide && { flex: 1 }]}>
+              <View style={s.compHeader}>
+                <Dumbbell size={20} color="#38BDF8" />
+                <Text style={s.compTitle}>Workout Effort</Text>
+              </View>
+              <View style={s.compBarBg}>
+                <View style={[s.compBarFill, { width: `${data.comparison.workoutEffort}%`, backgroundColor: '#38BDF8' }]} />
+              </View>
+              <Text style={s.compVal}>{data.comparison.workoutEffort}% <Text style={s.compSub}>Capacity</Text></Text>
+            </View>
+            
+            <View style={[SharedStyles.card, s.compCard, isWide && { flex: 1 }]}>
+              <View style={s.compHeader}>
+                <Flame size={20} color="#F59E0B" />
+                <Text style={s.compTitle}>Nutrition Quality</Text>
+              </View>
+              <View style={s.compBarBg}>
+                <View style={[s.compBarFill, { width: `${data.comparison.nutritionQuality}%`, backgroundColor: '#F59E0B' }]} />
+              </View>
+              <Text style={s.compVal}>{data.comparison.nutritionQuality}% <Text style={s.compSub}>Optimization</Text></Text>
             </View>
           </View>
 
-          {/* WORKOUT VOLUME CHART */}
-          <Text style={s.sectionTitle}>Workout Volume</Text>
+          {/* TRENDS CHART */}
+          <Text style={s.sectionTitle}>Caloric Trend</Text>
           <View style={[SharedStyles.card, s.chartCard]}>
             <View style={s.chartStatsRow}>
-              <View>
-                <Text style={s.chartLabel}>{timeframe === 'weekly' ? 'Total Volume' : 'Total Monthly Volume'}</Text>
-                <Text style={s.chartBigValue}>
-                  {(data?.[timeframe === 'weekly' ? 'chartData' : 'monthlyChartData'] || []).reduce((acc: number, d: any) => acc + (d.volume || 0), 0)}
-                  <Text style={s.chartSmallValue}> kg</Text>
-                </Text>
+              <View style={s.chartLegend}>
+                <View style={s.legendItem}>
+                  <View style={[s.legendDot, { backgroundColor: '#EF4444' }]} />
+                  <Text style={s.legendText}>Consumed</Text>
+                </View>
+                <View style={s.legendItem}>
+                  <View style={[s.legendDot, { backgroundColor: '#38BDF8' }]} />
+                  <Text style={s.legendText}>Burned</Text>
+                </View>
               </View>
-              <Activity size={24} color="#38BDF8" />
             </View>
             <View style={s.barsContainer}>
-              {(data?.[timeframe === 'weekly' ? 'chartData' : 'monthlyChartData'] || []).map((d: any, idx: number) => {
-                const maxVolume = Math.max(...(data?.[timeframe === 'weekly' ? 'chartData' : 'monthlyChartData'] || []).map((item: any) => item.volume || 0), 100);
-                const h = Math.max((d.volume / maxVolume) * 100, 5); 
-                const label = timeframe === 'weekly' 
-                  ? new Date(d.date).toLocaleDateString(undefined, { weekday: 'narrow' }).charAt(0)
-                  : d.label;
+              {data.weeklyTrends.labels.map((label, idx) => {
+                const consumed = data.weeklyTrends.caloriesConsumed[idx] || 0;
+                const burned = data.weeklyTrends.caloriesBurned[idx] || 0;
+                
+                // For a dynamic look, we'll size everything relative to 3500 max cap
+                const cHeight = Math.min((consumed / 3500) * 100, 100);
+                const bHeight = Math.min((burned / 1000) * 100, 100);
+                
                 return (
-                  <View key={idx} style={[s.barColumn, { flex: 1 }]}>
-                    <View style={[s.barTrack, { width: 30, backgroundColor: 'transparent', justifyContent: 'flex-end' }]}>
-                      <View style={[s.barFill, { height: `${h}%`, backgroundColor: '#38BDF8', width: 30, opacity: 0.8 }]} />
+                  <View key={idx} style={s.barColumn}>
+                    <View style={s.multiBarWrap}>
+                      <View style={[s.barTrack, { marginRight: 4 }]}>
+                        <View style={[s.barFill, { height: `${Math.max(cHeight, 5)}%`, backgroundColor: '#EF4444' }]} />
+                      </View>
+                      <View style={s.barTrack}>
+                        <View style={[s.barFill, { height: `${Math.max(bHeight, 5)}%`, backgroundColor: '#38BDF8' }]} />
+                      </View>
                     </View>
                     <Text style={s.barLabel}>{label}</Text>
                   </View>
@@ -214,19 +305,15 @@ export default function ProgressAnalyticsScreen() {
             </View>
           </View>
 
-          {/* ACHIEVEMENTS TROPHY ROOM */}
-          <View style={s.headerRow}>
-            <Text style={s.sectionTitle}>Trophy Room</Text>
-            <Text style={s.viewAllLink}>View All</Text>
-          </View>
+          {/* ACHIEVEMENTS */}
+          <Text style={s.sectionTitle}>Smart Achievements</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.achieveScroll}>
-            {ACHIEVEMENTS.map(ach => (
+            {data.achievements.map((ach) => (
               <View key={ach.id} style={[SharedStyles.card, s.achieveCard, !ach.unlocked && s.achieveLocked]}>
-                <View style={[s.achieveIconBox, { backgroundColor: ach.unlocked ? `${ach.color}20` : '#334155' }]}>
-                  <ach.icon size={28} color={ach.unlocked ? ach.color : '#64748B'} />
+                <View style={[s.achieveIconBox, { backgroundColor: ach.unlocked ? 'rgba(56,189,248,0.15)' : '#334155' }]}>
+                  <IconSelector name={ach.icon} color={ach.unlocked ? '#38BDF8' : '#64748B'} size={28} />
                 </View>
                 <Text style={s.achieveTitle}>{ach.title}</Text>
-                <Text style={s.achieveDesc} numberOfLines={2}>{ach.desc}</Text>
                 {!ach.unlocked && (
                   <View style={s.lockOverlay}>
                     <Text style={s.lockText}>LOCKED</Text>
@@ -235,26 +322,6 @@ export default function ProgressAnalyticsScreen() {
               </View>
             ))}
           </ScrollView>
-
-          {/* PERSONAL RECORDS */}
-          <Text style={s.sectionTitle}>Personal Records</Text>
-          <View style={s.prContainer}>
-            {PERSONAL_RECORDS.map((pr, idx) => (
-              <View key={idx} style={[SharedStyles.card, s.prCard]}>
-                <View style={s.prLeft}>
-                  <View style={s.prIconBg}><Medal size={20} color="#FDE047" /></View>
-                  <View>
-                    <Text style={s.prEx}>{pr.exercise}</Text>
-                    <Text style={s.prDate}>{pr.date}</Text>
-                  </View>
-                </View>
-                <View style={s.prRight}>
-                  <Text style={s.prWeight}>{pr.weight}</Text>
-                  <Text style={s.prLab}>Max</Text>
-                </View>
-              </View>
-            ))}
-          </View>
 
         </View>
       </ScrollView>
@@ -265,68 +332,58 @@ export default function ProgressAnalyticsScreen() {
 const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0F172A' },
   heroSection: { paddingHorizontal: 24, paddingBottom: 32, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
-  headerSubtitle: { flexShrink: 1,  color: '#94A3B8', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
+  headerSubtitle: { color: '#94A3B8', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
   headerTitle: { color: '#F8FAFC', fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 24 },
-
-  topMetricsGrid: { flexDirection: 'row', gap: 16 },
-  topMetricCard: { flex: 1, padding: 20 },
-  iconBox: { width: 36, height: 36, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginBottom: 12 },
-  topMetricLabel: { color: '#94A3B8', fontSize: 13, fontWeight: '700', marginBottom: 4 },
-  weightRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  topMetricVal: { color: '#F8FAFC', fontSize: 24, fontWeight: '900' },
-  topMetricUnit: { color: '#64748B', fontSize: 14, fontWeight: '700' },
-  trendBadge: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(16,185,129,0.1)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
-  trendText: { color: '#10B981', fontSize: 11, fontWeight: '800', marginLeft: 2 },
+  
+  gaugeWrapper: { alignItems: 'center' },
+  scoreBadge: { marginTop: -16, paddingHorizontal: 16, paddingVertical: 6, borderRadius: 100, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  scoreLabel: { fontSize: 13, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5 },
+  
+  summaryGrid: { flexDirection: 'row', gap: 16, marginTop: 24, width: '100%' },
+  sumCard: { flex: 1, backgroundColor: 'rgba(30,41,59,0.5)', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#334155' },
+  sumCardLab: { color: '#94A3B8', fontSize: 12, fontWeight: '700', marginBottom: 4 },
+  sumCardVal: { color: '#F8FAFC', fontSize: 22, fontWeight: '900', marginBottom: 2 },
+  sumCardSub: { color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' },
 
   content: { padding: 24 },
 
-  goalCard: { padding: 20, marginBottom: 32, borderWidth: 1 },
-  goalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  goalTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  goalTitle: { color: '#F8FAFC', fontSize: 16, fontWeight: '800' },
-  goalPercent: { color: '#10B981', fontSize: 18, fontWeight: '900' },
-  goalBarBg: { height: 8, backgroundColor: '#0F172A', borderRadius: 4, overflow: 'hidden', marginBottom: 12 },
-  goalBarFill: { height: '100%', backgroundColor: '#10B981', borderRadius: 4 },
-  goalSub: { color: '#94A3B8', fontSize: 13, fontWeight: '600' },
-
-  toggleRow: { flexDirection: 'row', backgroundColor: '#1E293B', borderRadius: 100, padding: 4, marginBottom: 24 },
-  toggleBtn: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 100 },
-  toggleActive: { backgroundColor: '#38BDF8' },
-  toggleText: { color: '#94A3B8', fontSize: 14, fontWeight: '700' },
-  toggleTextActive: { color: '#0F172A', fontWeight: '900' },
+  aiCard: { overflow: 'hidden', marginBottom: 24, borderColor: '#10B98130' },
+  aiGrad: { padding: 20 },
+  aiHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
+  aiTitle: { color: '#10B981', fontSize: 15, fontWeight: '900', marginLeft: 8, letterSpacing: 0.5 },
+  warningRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245,158,11,0.1)', padding: 12, borderRadius: 12, marginBottom: 12 },
+  warningText: { color: '#F59E0B', fontSize: 13, fontWeight: '800', marginLeft: 8, flex: 1 },
+  aiText: { color: '#94A3B8', fontSize: 14, lineHeight: 22, marginBottom: 6, fontWeight: '600' },
 
   sectionTitle: { color: '#F8FAFC', fontSize: 20, fontWeight: '900', letterSpacing: -0.5, marginBottom: 16 },
-  
-  chartCard: { padding: 24, marginBottom: 32 },
-  chartStatsRow: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 32 },
-  chartLabel: { color: '#94A3B8', fontSize: 12, fontWeight: '700', marginBottom: 4 },
-  chartBigValue: { color: '#F8FAFC', fontSize: 24, fontWeight: '900' },
-  chartSmallValue: { color: '#64748B', fontSize: 14, fontWeight: '600' },
-  barsContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 120 },
-  barColumn: { alignItems: 'center', width: 32 },
-  barTrack: { width: 12, height: 100, backgroundColor: '#0F172A', borderRadius: 6, justifyContent: 'flex-end', marginBottom: 12 },
-  barFill: { width: '100%', borderRadius: 6 },
-  barLabel: { color: '#64748B', fontSize: 12, fontWeight: '700' },
 
-  headerRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
-  viewAllLink: { color: '#38BDF8', fontSize: 14, fontWeight: '700' },
+  compCard: { padding: 20, marginBottom: 16 },
+  compHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 8 },
+  compTitle: { color: '#F8FAFC', fontSize: 15, fontWeight: '800' },
+  compBarBg: { height: 8, backgroundColor: '#0F172A', borderRadius: 4, overflow: 'hidden', marginBottom: 8 },
+  compBarFill: { height: '100%', borderRadius: 4 },
+  compVal: { color: '#F8FAFC', fontSize: 20, fontWeight: '900' },
+  compSub: { color: '#64748B', fontSize: 12, fontWeight: '700' },
+
+  chartCard: { padding: 24, marginBottom: 32 },
+  chartStatsRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 24 },
+  chartLegend: { flexDirection: 'row', gap: 16 },
+  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  legendDot: { width: 8, height: 8, borderRadius: 4 },
+  legendText: { color: '#94A3B8', fontSize: 12, fontWeight: '700' },
+  
+  barsContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 140 },
+  barColumn: { alignItems: 'center', flex: 1, minWidth: 0 },
+  multiBarWrap: { flexDirection: 'row', height: 110, alignItems: 'flex-end', marginBottom: 8 },
+  barTrack: { width: 8, height: '100%', backgroundColor: '#0F172A', borderRadius: 4, justifyContent: 'flex-end' },
+  barFill: { width: '100%', borderRadius: 4 },
+  barLabel: { color: '#64748B', fontSize: 11, fontWeight: '800' },
 
   achieveScroll: { gap: 16, marginBottom: 32, paddingRight: 24 },
-  achieveCard: { width: 140, padding: 20, alignItems: 'center' },
-  achieveLocked: { opacity: 0.6 },
-  achieveIconBox: { width: 64, height: 64, borderRadius: 20, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
-  achieveTitle: { color: '#F8FAFC', fontSize: 14, fontWeight: '900', textAlign: 'center', marginBottom: 4 },
-  achieveDesc: { color: '#94A3B8', fontSize: 11, textAlign: 'center', lineHeight: 16 },
+  achieveCard: { width: 130, padding: 20, alignItems: 'center' },
+  achieveLocked: { opacity: 0.5 },
+  achieveIconBox: { width: 56, height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
+  achieveTitle: { color: '#F8FAFC', fontSize: 13, fontWeight: '900', textAlign: 'center', lineHeight: 18 },
   lockOverlay: { position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(15,23,42,0.8)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
   lockText: { color: '#CBD5E1', fontSize: 9, fontWeight: '900', letterSpacing: 0.5 },
-
-  prContainer: { gap: 12 },
-  prCard: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16 },
-  prLeft: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  prIconBg: { width: 44, height: 44, borderRadius: 14, backgroundColor: 'rgba(253,224,71,0.1)', justifyContent: 'center', alignItems: 'center' },
-  prEx: { color: '#F8FAFC', fontSize: 16, fontWeight: '800', marginBottom: 2 },
-  prDate: { color: '#94A3B8', fontSize: 12, fontWeight: '600' },
-  prRight: { alignItems: 'flex-end' },
-  prWeight: { color: '#FDE047', fontSize: 18, fontWeight: '900' },
-  prLab: { color: '#64748B', fontSize: 11, fontWeight: '700' },
 });

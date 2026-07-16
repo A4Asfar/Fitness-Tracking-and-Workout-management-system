@@ -14,7 +14,7 @@ import api from '@/services/api';
 const BENEFITS = [
   { icon: MessageCircle, text: 'Unlimited AI Chat', desc: 'Ask anything, anytime.' },
   { icon: Zap, text: 'Unlimited Workout Plans', desc: 'Generate infinite smart routines.' },
-  { icon: HeartPulse, text: 'Unlimited Meal Plans', desc: 'Custom macros and diet tracking.' },
+  { icon: HeartPulse, text: 'Unlimited Meal Plans', desc: 'Custom macros and nutrition tracking.' },
   { icon: TrendingUp, text: 'Advanced Analytics', desc: 'Deep progress visualization.' },
   { icon: Sparkles, text: 'Priority Support', desc: 'Skip the line, get help instantly.' },
 ];

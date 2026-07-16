@@ -301,7 +301,8 @@ export default function HomeDashboard() {
               { title: 'Log Workout', icon: Plus, color: '#10B981', route: '/create-workout' },
               { title: 'Find Coach', icon: Users, color: '#38BDF8', route: '/(tabs)/trainers' },
               { title: 'My Bookings', icon: HistoryIcon, color: '#A855F7', route: '/my-bookings' },
-              { title: 'Diet Plan', icon: Target, color: '#F59E0B', route: '/(tabs)/diet' },
+              { title: 'My Diet Plan', icon: Target, color: '#F59E0B', route: '/diet-plan' },
+              { title: 'Food Log', icon: Target, color: '#38BDF8', route: '/(tabs)/diet' },
             ].map((act, i) => (
               <TouchableOpacity key={i} style={[SharedStyles.card, s.quickActionCard]} onPress={() => router.push(act.route as any)}>
                 <View style={[s.qaIconBox, { backgroundColor: `${act.color}15` }]}>

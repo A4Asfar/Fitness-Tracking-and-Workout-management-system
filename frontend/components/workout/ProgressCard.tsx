@@ -38,7 +38,7 @@ export default function ProgressCard({
           <Trophy size={18} color="#FFD700" fill="#FFD700" />
         </View>
         <View style={styles.info}>
-          <Text style={styles.title}>Workout Progress</Text>
+          <Text style={styles.title}>Overall Fitness Progress</Text>
           <Text style={styles.counter}>{completedCount} of {totalCount} exercises completed</Text>
         </View>
         <Text style={[styles.percentage, { color: activeColor }]}>{percentage}%</Text>

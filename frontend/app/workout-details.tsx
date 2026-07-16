@@ -184,7 +184,7 @@ export default function WorkoutDetailsScreen() {
           {/* PROGRESS TRACKER */}
           <View style={s.progressSection}>
             <View style={s.progressHeader}>
-              <Text style={s.progressTitle}>Workout Progress</Text>
+              <Text style={s.progressTitle}>Overall Fitness Progress</Text>
               <Text style={s.progressText}>{completedCount} / {exercises.length} Exercises</Text>
             </View>
             <View style={s.progressBarBg}>
