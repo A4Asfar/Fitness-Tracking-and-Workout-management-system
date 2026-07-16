@@ -165,6 +165,14 @@ export default function AdminDashboard() {
     }
   };
 
+  const filteredUsers = useMemo(() => {
+    if (!userSearch) return usersList;
+    return usersList.filter(u => 
+      (u.fullName || u.name || '').toLowerCase().includes(userSearch.toLowerCase()) || 
+      (u.email || '').toLowerCase().includes(userSearch.toLowerCase())
+    );
+  }, [usersList, userSearch]);
+
   if (!user || (!isAdminUser(user) && !loading)) {
     return (
       <View style={[s.container, { justifyContent: 'center', alignItems: 'center' }]}>
@@ -173,13 +181,6 @@ export default function AdminDashboard() {
     );
   }
 
-  const filteredUsers = useMemo(() => {
-    if (!userSearch) return usersList;
-    return usersList.filter(u => 
-      (u.fullName || u.name || '').toLowerCase().includes(userSearch.toLowerCase()) || 
-      (u.email || '').toLowerCase().includes(userSearch.toLowerCase())
-    );
-  }, [usersList, userSearch]);
 
   const tabs = [
     { id: 'Home', icon: LayoutDashboard },
@@ -202,7 +203,7 @@ export default function AdminDashboard() {
             <Shield size={20} color="#38BDF8" />
             <Text style={s.headerTitle}>Admin Portal</Text>
           </View>
-          <TouchableOpacity onPress={async () => { await logout(); router.replace('/login'); }} style={[s.iconBtn, { backgroundColor: 'rgba(239,68,68,0.1)' }]}>
+          <TouchableOpacity onPress={async () => { await logout(); router.replace('/(auth)/login' as any); }} style={[s.iconBtn, { backgroundColor: 'rgba(239,68,68,0.1)' }]}>
             <LogOut size={20} color="#EF4444" />
           </TouchableOpacity>
         </View>
