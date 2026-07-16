@@ -48,18 +48,19 @@ function RoleBadge({ role }: { role: string }) {
   );
 }
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status }: { status?: string }) {
+  const stat = status || 'Unknown';
   let color = '#38BDF8';
   let bg = 'rgba(56,189,248,0.1)';
-  if (status === 'Confirmed' || status === 'Completed') {
+  if (stat === 'Confirmed' || stat === 'Completed') {
     color = '#10B981'; bg = 'rgba(16,185,129,0.1)';
-  } else if (status === 'Cancelled') {
+  } else if (stat === 'Cancelled') {
     color = '#EF4444'; bg = 'rgba(239,68,68,0.1)';
   }
 
   return (
     <View style={[s.badge, { backgroundColor: bg, borderColor: color + '30' }]}>
-      <Text style={[s.badgeTextRed, { color }]}>{status.toUpperCase()}</Text>
+      <Text style={[s.badgeTextRed, { color }]}>{stat.toUpperCase()}</Text>
     </View>
   );
 }
@@ -300,10 +301,10 @@ export default function AdminDashboard() {
                   <Text style={s.dataTitle}>Session with {b.trainerId?.fullName || 'Trainer'}</Text>
                   <Text style={s.dataSub}>{b.bookingDate} at {b.bookingTime}</Text>
                   <Text style={s.dataMeta}>Client: {b.userId?.fullName || b.userId?.email || 'Unknown'}</Text>
-                  <View style={{ marginTop: 8 }}><StatusBadge status={b.status} /></View>
+                  <View style={{ marginTop: 8 }}><StatusBadge status={b.bookingStatus} /></View>
                 </View>
                 <View style={s.dataActions}>
-                  {b.status === 'Pending' && (
+                  {b.bookingStatus === 'Pending' && (
                     <TouchableOpacity onPress={() => handleUpdateBooking(b._id)} style={[s.actionBtn, { backgroundColor: 'rgba(16,185,129,0.1)', borderColor: 'rgba(16,185,129,0.2)', width: 'auto', paddingHorizontal: 16 }]}>
                       <Text style={{ color: '#10B981', fontWeight: '800', fontSize: 13 }}>CONFIRM</Text>
                     </TouchableOpacity>
