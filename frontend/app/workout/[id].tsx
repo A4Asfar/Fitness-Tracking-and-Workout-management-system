@@ -618,7 +618,11 @@ export default function WorkoutDetailScreen() {
       </ScrollView>
 
       <Modal visible={showDelete} transparent animationType="fade" statusBarTranslucent>
-        <BlurView intensity={10} tint="dark" style={StyleSheet.absoluteFill} />
+        {Platform.OS !== 'web' ? (
+          <BlurView intensity={10} tint="dark" style={StyleSheet.absoluteFill} />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(15,23,42,0.85)' }]} />
+        )}
         <Pressable style={styles.modalBackdrop} onPress={() => !deleting && setShowDelete(false)}>
           <Pressable style={styles.modalCard} onPress={e => e.stopPropagation()}>
             <View style={styles.modalIconRing}>

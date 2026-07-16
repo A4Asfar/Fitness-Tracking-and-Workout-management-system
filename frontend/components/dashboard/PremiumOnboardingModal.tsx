@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import {
-  View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Animated, Easing
+  View, Text, StyleSheet, Modal, TouchableOpacity, ScrollView, Animated, Easing, Platform
 } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Sparkles, Check, ArrowRight, Star } from 'lucide-react-native';
@@ -63,7 +63,11 @@ export default function PremiumOnboardingModal({
   return (
     <Modal visible={visible} transparent animationType="none" statusBarTranslucent>
       <View style={styles.overlay}>
-        <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+        {Platform.OS !== 'web' ? (
+          <BlurView intensity={20} tint="dark" style={StyleSheet.absoluteFill} />
+        ) : (
+          <View style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(15,23,42,0.85)' }]} />
+        )}
         
         <Animated.View 
           style={[
