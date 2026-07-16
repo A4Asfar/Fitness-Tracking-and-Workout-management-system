@@ -120,7 +120,7 @@ export default function WorkoutsScreen() {
             key={prog.id} 
             activeOpacity={0.9} 
             style={s.programCard}
-            onPress={() => router.push(`/workout/${prog.id}?title=${prog.title}&focus=${prog.focus}&level=${prog.difficulty}&duration=${prog.duration}&calories=${prog.calories}&accent=${encodeURIComponent(prog.accent)}`)}
+            onPress={() => router.push(`/create-workout?type=${encodeURIComponent(prog.type === 'Core' ? 'Strength' : prog.type)}&exercise=${encodeURIComponent(prog.title)}`)}
           >
             <ImageBackground source={{ uri: prog.image }} style={s.progBg} imageStyle={{ borderRadius: 24 }}>
               <LinearGradient colors={['rgba(15,23,42,0.1)', 'rgba(15,23,42,0.95)']} style={s.progGradient}>

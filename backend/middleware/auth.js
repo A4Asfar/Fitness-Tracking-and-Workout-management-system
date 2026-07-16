@@ -40,4 +40,21 @@ const admin = (req, res, next) => {
   }
 };
 
-module.exports = { auth, admin };
+/**
+ * Premium middleware — must be used AFTER auth middleware.
+ * Allows access only to users with membershipType 'premium' or 'admin'.
+ * Returns HTTP 403 for free users.
+ */
+const premium = (req, res, next) => {
+  const membershipType = req.user && req.user.membershipType;
+  if (membershipType === 'premium' || membershipType === 'admin') {
+    next();
+  } else {
+    res.status(403).json({
+      message: 'This feature requires a Premium membership.',
+      code: 'PREMIUM_REQUIRED',
+    });
+  }
+};
+
+module.exports = { auth, admin, premium };
