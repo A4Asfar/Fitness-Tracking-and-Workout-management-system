@@ -6,18 +6,19 @@ import { MealService } from '@/services/mealService';
 import { generateIntelligence, IntelligenceResult } from '@/utils/intelligenceEngine';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  Activity, Flame, Dumbbell, Sparkles, Target, HeartPulse, Zap, AlertTriangle, TrendingUp, TrendingDown, Crown
+  Activity, Flame, Dumbbell, Sparkles, Target, HeartPulse, Zap, AlertTriangle, TrendingUp, TrendingDown, Crown, Calendar, CheckCircle2, AlertCircle, ArrowUpRight, ArrowDownRight, Scale
 } from 'lucide-react-native';
 import { Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import SkeletonCard from '@/components/SkeletonCard';
 import { SharedStyles } from '@/constants/Theme';
 import Svg, { Circle } from 'react-native-svg';
+import { DietPlanService } from '@/services/dietPlanService';
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-function FitnessGauge({ score, grade }: { score: number; grade: string }) {
-  const size = 160;
+function FitnessGauge({ score, grade, status }: { score: number; grade: string; status: string }) {
+  const size = 180;
   const strokeWidth = 14;
   const radius = (size - strokeWidth) / 2;
   const circumference = radius * 2 * Math.PI;
@@ -40,10 +41,10 @@ function FitnessGauge({ score, grade }: { score: number; grade: string }) {
   });
 
   const getColor = () => {
-    if (score >= 90) return '#10B981'; // Green
-    if (score >= 80) return '#38BDF8'; // Blue
-    if (score >= 65) return '#F59E0B'; // Orange
-    return '#EF4444'; // Red
+    if (score >= 90) return '#10B981'; 
+    if (score >= 80) return '#38BDF8'; 
+    if (score >= 65) return '#F59E0B'; 
+    return '#EF4444'; 
   };
 
   return (
@@ -58,8 +59,8 @@ function FitnessGauge({ score, grade }: { score: number; grade: string }) {
         />
       </Svg>
       <View style={{ position: 'absolute', alignItems: 'center' }}>
-        <Text style={{ color: '#F8FAFC', fontSize: 36, fontWeight: '900' }}>{score}</Text>
-        <Text style={{ color: getColor(), fontSize: 16, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 1 }}>{grade}</Text>
+        <Text style={{ color: '#F8FAFC', fontSize: 42, fontWeight: '900', letterSpacing: -1 }}>{score}</Text>
+        <Text style={{ color: getColor(), fontSize: 12, fontWeight: '900', textTransform: 'uppercase', letterSpacing: 0.5, marginTop: 4 }}>{status}</Text>
       </View>
     </View>
   );
@@ -73,8 +74,6 @@ function IconSelector({ name, color, size }: { name: string; color: string; size
   if (name === 'HeartPulse') return <HeartPulse color={color} size={size} />;
   return <Crown color={color} size={size} />;
 }
-
-import { DietPlanService } from '@/services/dietPlanService';
 
 export default function IntelligenceDashboardScreen() {
   const { width } = useWindowDimensions();
@@ -154,29 +153,24 @@ export default function IntelligenceDashboardScreen() {
       >
         {/* HERO SECTION */}
         <LinearGradient colors={['#1E293B', '#0F172A']} style={[s.heroSection, { paddingTop: insets.top + 16 }]}>
-          <Text style={s.headerSubtitle}>Fitness Intelligence</Text>
-          <Text style={s.headerTitle}>Engine</Text>
+          <Text style={s.headerSubtitle}>Complete Fitness</Text>
+          <Text style={s.headerTitle}>Intelligence</Text>
           
           <View style={[s.gaugeWrapper, isWide && { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }]}>
             <View style={{ alignItems: 'center', marginBottom: isWide ? 0 : 24 }}>
-              <FitnessGauge score={data.fitnessScore} grade={data.healthGrade} />
-              <View style={[s.scoreBadge, { backgroundColor: `${data.netCaloriesColor}20` }]}>
-                <Text style={[s.scoreLabel, { color: data.netCaloriesColor }]}>{data.scoreLabel} Overall</Text>
-              </View>
+              <FitnessGauge score={data.fitnessScore} grade={data.healthGrade} status={data.aiStatus} />
             </View>
 
             <View style={[s.summaryGrid, isWide && { flex: 1, marginLeft: 40 }]}>
               <View style={s.sumCard}>
-                <Text style={s.sumCardLab}>Net Calories</Text>
-                <Text style={[s.sumCardVal, { color: data.netCaloriesColor }]}>
-                  {data.netCalories > 0 ? '+' : ''}{data.netCalories}
-                </Text>
-                <Text style={[s.sumCardSub, { color: data.netCaloriesColor }]}>{data.netCaloriesLabel}</Text>
+                <Text style={s.sumCardLab}>Discipline</Text>
+                <Text style={s.sumCardVal}>{data.consistency.overallDiscipline}%</Text>
+                <Text style={s.sumCardSub}>Overall Score</Text>
               </View>
               <View style={s.sumCard}>
-                <Text style={s.sumCardLab}>Diet Adherence</Text>
-                <Text style={s.sumCardVal}>{data.dietAdherence}%</Text>
-                <Text style={s.sumCardSub}>Today</Text>
+                <Text style={s.sumCardLab}>Body Progress</Text>
+                <Text style={s.sumCardVal}>{data.bodyProgressScore}%</Text>
+                <Text style={s.sumCardSub}>On Track</Text>
               </View>
             </View>
           </View>
@@ -184,97 +178,127 @@ export default function IntelligenceDashboardScreen() {
 
         <View style={s.content}>
           {/* AI COACH INSIGHT */}
-          {(data.goalInsight || data.aiCoachMessages.length > 0) && (
-            <View style={[SharedStyles.card, s.aiCard]}>
-              <LinearGradient colors={['rgba(16,185,129,0.15)', 'rgba(15,23,42,0)']} style={s.aiGrad}>
-                <View style={s.aiHeader}>
-                  <Sparkles size={20} color="#10B981" fill="#10B981" />
-                  <Text style={s.aiTitle}>AI Coach Assessment</Text>
+          <View style={[SharedStyles.card, s.aiCard]}>
+            <LinearGradient colors={['rgba(56,189,248,0.15)', 'rgba(15,23,42,0)']} style={s.aiGrad}>
+              <View style={s.aiHeader}>
+                <Sparkles size={20} color="#38BDF8" fill="#38BDF8" />
+                <Text style={s.aiTitle}>AI Coach Assessment</Text>
+              </View>
+              {data.aiCoachMessages.map((msg, i) => (
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 8 }}>
+                   <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: '#38BDF8', marginTop: 8, marginRight: 8 }} />
+                   <Text style={s.aiText}>{msg}</Text>
                 </View>
-                {data.goalInsight ? (
-                  <View style={s.warningRow}>
-                    <AlertTriangle size={18} color="#F59E0B" />
-                    <Text style={s.warningText}>{data.goalInsight}</Text>
+              ))}
+            </LinearGradient>
+          </View>
+
+          {/* GOAL ACHIEVEMENT WIDGET */}
+          <Text style={s.sectionTitle}>Goal Achievement</Text>
+          <View style={[SharedStyles.card, { padding: 24, marginBottom: 24 }]}>
+             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                   <View style={{ backgroundColor: 'rgba(245,158,11,0.1)', padding: 10, borderRadius: 12 }}>
+                      <Target size={24} color="#F59E0B" />
+                   </View>
+                   <View>
+                      <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900' }}>{data.goalAchievement.currentGoal}</Text>
+                      <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '600' }}>Estimated: {data.goalAchievement.estimatedCompletion}</Text>
+                   </View>
+                </View>
+                <Text style={{ color: '#F59E0B', fontSize: 24, fontWeight: '900' }}>{data.goalAchievement.progressPct}%</Text>
+             </View>
+             
+             <View style={s.compBarBg}>
+               <View style={[s.compBarFill, { width: `${data.goalAchievement.progressPct}%`, backgroundColor: '#F59E0B' }]} />
+             </View>
+             
+             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>Remaining</Text>
+                   <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '900', marginTop: 4 }}>{data.goalAchievement.remaining}</Text>
+                </View>
+                <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.05)' }} />
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>Strength Trend</Text>
+                   <Text style={{ color: data.goalAchievement.strengthTrend === 'Upward' ? '#10B981' : '#38BDF8', fontSize: 16, fontWeight: '900', marginTop: 4 }}>{data.goalAchievement.strengthTrend}</Text>
+                </View>
+                <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.05)' }} />
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>Nutrition Trend</Text>
+                   <Text style={{ color: data.goalAchievement.nutritionTrend === 'Optimized' ? '#10B981' : '#F59E0B', fontSize: 16, fontWeight: '900', marginTop: 4 }}>{data.goalAchievement.nutritionTrend}</Text>
+                </View>
+             </View>
+          </View>
+
+          {/* WEEKLY HEALTH REPORT & MONTHLY SUMMARY */}
+          <View style={[isWide && { flexDirection: 'row', gap: 24 }]}>
+             <View style={[isWide && { flex: 1 }]}>
+               <Text style={s.sectionTitle}>Weekly Health Report</Text>
+               <View style={[SharedStyles.card, { padding: 24, marginBottom: 24 }]}>
+                  {data.weeklyReport.achievements.length > 0 && (
+                     <View style={{ marginBottom: 16 }}>
+                        <Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800', marginBottom: 8, textTransform: 'uppercase' }}>Achievements</Text>
+                        {data.weeklyReport.achievements.map((ach, i) => <Text key={i} style={{ color: '#F8FAFC', fontSize: 14, marginBottom: 4 }}>• {ach}</Text>)}
+                     </View>
+                  )}
+                  {data.weeklyReport.warnings.length > 0 && (
+                     <View style={{ marginBottom: 16 }}>
+                        <Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '800', marginBottom: 8, textTransform: 'uppercase' }}>Warnings</Text>
+                        {data.weeklyReport.warnings.map((warn, i) => <Text key={i} style={{ color: '#F8FAFC', fontSize: 14, marginBottom: 4 }}>• {warn}</Text>)}
+                     </View>
+                  )}
+                  <View style={{ flexDirection: 'row', gap: 16, marginTop: 8, paddingTop: 16, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                     <View style={{ flex: 1 }}>
+                        <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', marginBottom: 4 }}>Top Strength</Text>
+                        <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{data.weeklyReport.strengths[0] || 'Consistency'}</Text>
+                     </View>
+                     <View style={{ flex: 1 }}>
+                        <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', marginBottom: 4 }}>Weakness to Fix</Text>
+                        <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{data.weeklyReport.weaknesses[0] || 'None Detected'}</Text>
+                     </View>
                   </View>
-                ) : null}
-                {data.aiCoachMessages.map((msg, i) => (
-                  <Text key={i} style={s.aiText}>• {msg}</Text>
-                ))}
-              </LinearGradient>
-            </View>
-          )}
+               </View>
+             </View>
+             
+             <View style={[isWide && { flex: 1 }]}>
+               <Text style={s.sectionTitle}>Monthly Comparison</Text>
+               <View style={[SharedStyles.card, { padding: 24, marginBottom: 24, justifyContent: 'center' }]}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                     <View style={{ alignItems: 'center' }}>
+                        <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '700', marginBottom: 8 }}>Last Month</Text>
+                        <Text style={{ color: '#64748B', fontSize: 32, fontWeight: '900' }}>{data.monthlySummary.lastMonthScore}</Text>
+                     </View>
+                     <View style={{ alignItems: 'center', paddingHorizontal: 16 }}>
+                        {data.monthlySummary.improvement >= 0 ? (
+                           <ArrowUpRight size={32} color="#10B981" />
+                        ) : (
+                           <ArrowDownRight size={32} color="#EF4444" />
+                        )}
+                        <Text style={{ color: data.monthlySummary.improvement >= 0 ? '#10B981' : '#EF4444', fontSize: 16, fontWeight: '900', marginTop: 4 }}>
+                           {data.monthlySummary.improvement >= 0 ? '+' : ''}{data.monthlySummary.improvement} pts
+                        </Text>
+                     </View>
+                     <View style={{ alignItems: 'center' }}>
+                        <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '700', marginBottom: 8 }}>This Month</Text>
+                        <Text style={{ color: '#F8FAFC', fontSize: 32, fontWeight: '900' }}>{data.monthlySummary.thisMonthScore}</Text>
+                     </View>
+                  </View>
+                  <Text style={{ color: '#CBD5E1', fontSize: 14, textAlign: 'center', marginTop: 24, fontWeight: '600' }}>
+                     {data.monthlySummary.summaryText}
+                  </Text>
+               </View>
+             </View>
+          </View>
 
-          {/* NUTRITION ANALYSIS */}
-          {data.dietPlanComparison && (
-            <>
-              <Text style={s.sectionTitle}>Nutrition Analysis</Text>
-              
-              <View style={[SharedStyles.card, { padding: 20, marginBottom: 16 }]}>
-                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                    <View>
-                       <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '800' }}>Compliance Score</Text>
-                       <Text style={{ color: '#94A3B8', fontSize: 12 }}>{data.dietPlanComparison.adherenceLabel}</Text>
-                    </View>
-                    <View style={{ alignItems: 'flex-end' }}>
-                       <Text style={{ color: '#38BDF8', fontSize: 24, fontWeight: '900' }}>{data.dietPlanComparison.dailyCompliancePct}%</Text>
-                       <Text style={{ color: '#94A3B8', fontSize: 12 }}>Daily</Text>
-                    </View>
-                 </View>
-                 
-                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: 12 }}>
-                    <View style={{ alignItems: 'center', flex: 1 }}>
-                       <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '800' }}>{data.dietPlanComparison.weeklyCompliancePct}%</Text>
-                       <Text style={{ color: '#94A3B8', fontSize: 12 }}>Weekly</Text>
-                    </View>
-                    <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.05)' }} />
-                    <View style={{ alignItems: 'center', flex: 1 }}>
-                       <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '800' }}>{data.dietPlanComparison.monthlyCompliancePct}%</Text>
-                       <Text style={{ color: '#94A3B8', fontSize: 12 }}>Monthly</Text>
-                    </View>
-                 </View>
-              </View>
-
-              <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
-                <View style={{ gap: 16 }}>
-                  {[
-                    { label: 'Calories', planned: data.dietPlanComparison.caloriesPlanned, consumed: data.dietPlanComparison.caloriesConsumed, unit: 'kcal', color: '#F59E0B' },
-                    { label: 'Protein', planned: data.dietPlanComparison.proteinPlanned, consumed: data.dietPlanComparison.proteinConsumed, unit: 'g', color: '#10B981' },
-                    { label: 'Carbs', planned: data.dietPlanComparison.carbsPlanned, consumed: data.dietPlanComparison.carbsConsumed, unit: 'g', color: '#38BDF8' },
-                    { label: 'Fat', planned: data.dietPlanComparison.fatPlanned, consumed: data.dietPlanComparison.fatConsumed, unit: 'g', color: '#EF4444' },
-                    { label: 'Fiber', planned: data.dietPlanComparison.fiberPlanned, consumed: data.dietPlanComparison.fiberConsumed, unit: 'g', color: '#8B5CF6' },
-                    { label: 'Water', planned: data.dietPlanComparison.waterPlanned, consumed: data.dietPlanComparison.waterConsumed, unit: 'L', color: '#0EA5E9' },
-                  ].map((m, idx) => {
-                     const diff = m.consumed - m.planned;
-                     const diffText = diff > 0 ? `+${diff.toFixed(m.unit==='L'?1:0)}${m.unit}` : `${diff.toFixed(m.unit==='L'?1:0)}${m.unit}`;
-                     const diffColor = diff > 0 ? (m.label === 'Calories' || m.label === 'Carbs' || m.label === 'Fat' ? '#EF4444' : '#10B981') : (m.label === 'Water' || m.label === 'Protein' ? '#EF4444' : '#94A3B8');
-                     const pct = Math.min((m.consumed / (m.planned || 1)) * 100, 100);
-
-                     return (
-                       <View key={idx}>
-                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                           <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '700' }}>{m.label}</Text>
-                           <View style={{ flexDirection: 'row', gap: 12 }}>
-                              <Text style={{ color: '#F8FAFC', fontSize: 13, fontWeight: '800' }}>{m.consumed.toFixed(m.unit==='L'?1:0)} / {m.planned}{m.unit}</Text>
-                              <Text style={{ color: diffColor, fontSize: 13, fontWeight: '800', width: 45, textAlign: 'right' }}>{diffText}</Text>
-                           </View>
-                         </View>
-                         <View style={s.compBarBg}>
-                           <View style={[s.compBarFill, { width: `${pct}%`, backgroundColor: m.color }]} />
-                         </View>
-                       </View>
-                     );
-                  })}
-                </View>
-              </View>
-            </>
-          )}
-
-          <Text style={s.sectionTitle}>Intelligence Analysis</Text>
+          {/* THE 6 PILLARS OF INTELLIGENCE ANALYSIS */}
+          <Text style={s.sectionTitle}>The 6 Pillars of Intelligence</Text>
           <View style={[isWide && { flexDirection: 'row', gap: 16, flexWrap: 'wrap' }]}>
             <View style={[SharedStyles.card, s.compCard, isWide && { flex: 1, minWidth: '45%' }]}>
               <View style={s.compHeader}>
                 <Dumbbell size={20} color="#38BDF8" />
-                <Text style={s.compTitle}>Workout Score</Text>
+                <Text style={s.compTitle}>Workout Performance</Text>
+                <Text style={{ color: '#94A3B8', fontSize: 12, marginLeft: 'auto' }}>30% Weight</Text>
               </View>
               <View style={s.compBarBg}>
                 <View style={[s.compBarFill, { width: `${data.workoutScore}%`, backgroundColor: '#38BDF8' }]} />
@@ -285,7 +309,8 @@ export default function IntelligenceDashboardScreen() {
             <View style={[SharedStyles.card, s.compCard, isWide && { flex: 1, minWidth: '45%' }]}>
               <View style={s.compHeader}>
                 <Flame size={20} color="#F59E0B" />
-                <Text style={s.compTitle}>Nutrition Score</Text>
+                <Text style={s.compTitle}>Nutrition Quality</Text>
+                <Text style={{ color: '#94A3B8', fontSize: 12, marginLeft: 'auto' }}>20% Weight</Text>
               </View>
               <View style={s.compBarBg}>
                 <View style={[s.compBarFill, { width: `${data.nutritionScore}%`, backgroundColor: '#F59E0B' }]} />
@@ -297,6 +322,7 @@ export default function IntelligenceDashboardScreen() {
               <View style={s.compHeader}>
                 <Target size={20} color="#10B981" />
                 <Text style={s.compTitle}>Diet Adherence</Text>
+                <Text style={{ color: '#94A3B8', fontSize: 12, marginLeft: 'auto' }}>20% Weight</Text>
               </View>
               <View style={s.compBarBg}>
                 <View style={[s.compBarFill, { width: `${data.dietAdherence}%`, backgroundColor: '#10B981' }]} />
@@ -308,73 +334,56 @@ export default function IntelligenceDashboardScreen() {
               <View style={s.compHeader}>
                 <Zap size={20} color="#A855F7" />
                 <Text style={s.compTitle}>Recovery Score</Text>
+                <Text style={{ color: '#94A3B8', fontSize: 12, marginLeft: 'auto' }}>10% Weight</Text>
               </View>
               <View style={s.compBarBg}>
                 <View style={[s.compBarFill, { width: `${data.recoveryScore}%`, backgroundColor: '#A855F7' }]} />
               </View>
               <Text style={s.compVal}>{data.recoveryScore} <Text style={s.compSub}>/ 100</Text></Text>
             </View>
-          </View>
-
-          {/* TRENDS CHART */}
-          <Text style={s.sectionTitle}>Caloric Trend</Text>
-          <View style={[SharedStyles.card, s.chartCard]}>
-            <View style={s.chartStatsRow}>
-              <View style={s.chartLegend}>
-                <View style={s.legendItem}>
-                  <View style={[s.legendDot, { backgroundColor: '#EF4444' }]} />
-                  <Text style={s.legendText}>Consumed</Text>
-                </View>
-                <View style={s.legendItem}>
-                  <View style={[s.legendDot, { backgroundColor: '#38BDF8' }]} />
-                  <Text style={s.legendText}>Burned</Text>
-                </View>
+            
+            <View style={[SharedStyles.card, s.compCard, isWide && { flex: 1, minWidth: '45%' }]}>
+              <View style={s.compHeader}>
+                <Crown size={20} color="#F59E0B" />
+                <Text style={s.compTitle}>Goal Achievement</Text>
+                <Text style={{ color: '#94A3B8', fontSize: 12, marginLeft: 'auto' }}>10% Weight</Text>
               </View>
+              <View style={s.compBarBg}>
+                <View style={[s.compBarFill, { width: `${data.goalAchievementScore}%`, backgroundColor: '#F59E0B' }]} />
+              </View>
+              <Text style={s.compVal}>{data.goalAchievementScore} <Text style={s.compSub}>/ 100</Text></Text>
             </View>
-            <View style={s.barsContainer}>
-              {data.weeklyTrends.labels.map((label, idx) => {
-                const consumed = data.weeklyTrends.caloriesConsumed[idx] || 0;
-                const burned = data.weeklyTrends.caloriesBurned[idx] || 0;
-                
-                // For a dynamic look, we'll size everything relative to 3500 max cap
-                const cHeight = Math.min((consumed / 3500) * 100, 100);
-                const bHeight = Math.min((burned / 1000) * 100, 100);
-                
-                return (
-                  <View key={idx} style={s.barColumn}>
-                    <View style={s.multiBarWrap}>
-                      <View style={[s.barTrack, { marginRight: 4 }]}>
-                        <View style={[s.barFill, { height: `${Math.max(cHeight, 5)}%`, backgroundColor: '#EF4444' }]} />
-                      </View>
-                      <View style={s.barTrack}>
-                        <View style={[s.barFill, { height: `${Math.max(bHeight, 5)}%`, backgroundColor: '#38BDF8' }]} />
-                      </View>
-                    </View>
-                    <Text style={s.barLabel}>{label}</Text>
-                  </View>
-                );
-              })}
+            
+            <View style={[SharedStyles.card, s.compCard, isWide && { flex: 1, minWidth: '45%' }]}>
+              <View style={s.compHeader}>
+                <Scale size={20} color="#8B5CF6" />
+                <Text style={s.compTitle}>Body Progress</Text>
+                <Text style={{ color: '#94A3B8', fontSize: 12, marginLeft: 'auto' }}>10% Weight</Text>
+              </View>
+              <View style={s.compBarBg}>
+                <View style={[s.compBarFill, { width: `${data.bodyProgressScore}%`, backgroundColor: '#8B5CF6' }]} />
+              </View>
+              <Text style={s.compVal}>{data.bodyProgressScore} <Text style={s.compSub}>/ 100</Text></Text>
             </View>
           </View>
 
-          {/* ACHIEVEMENTS */}
-          <Text style={s.sectionTitle}>Smart Achievements</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.achieveScroll}>
-            {data.achievements.map((ach) => (
-              <View key={ach.id} style={[SharedStyles.card, s.achieveCard, !ach.unlocked && s.achieveLocked]}>
-                <View style={[s.achieveIconBox, { backgroundColor: ach.unlocked ? 'rgba(56,189,248,0.15)' : '#334155' }]}>
-                  <IconSelector name={ach.icon} color={ach.unlocked ? '#38BDF8' : '#64748B'} size={28} />
-                </View>
-                <Text style={s.achieveTitle}>{ach.title}</Text>
-                {!ach.unlocked && (
-                  <View style={s.lockOverlay}>
-                    <Text style={s.lockText}>LOCKED</Text>
-                  </View>
-                )}
-              </View>
-            ))}
-          </ScrollView>
-
+          {/* CONSISTENCY ANALYTICS */}
+          <Text style={s.sectionTitle}>Consistency Analytics</Text>
+          <View style={[SharedStyles.card, { padding: 24, marginBottom: 32 }]}>
+             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+                <Text style={{ color: '#F8FAFC', fontSize: 15, fontWeight: '800' }}>Workout Consistency</Text>
+                <Text style={{ color: '#38BDF8', fontSize: 15, fontWeight: '900' }}>{data.consistency.workoutConsistency}%</Text>
+             </View>
+             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20 }}>
+                <Text style={{ color: '#F8FAFC', fontSize: 15, fontWeight: '800' }}>Meal Consistency</Text>
+                <Text style={{ color: '#10B981', fontSize: 15, fontWeight: '900' }}>{data.consistency.mealConsistency}%</Text>
+             </View>
+             <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ color: '#F8FAFC', fontSize: 15, fontWeight: '800' }}>Recovery Consistency</Text>
+                <Text style={{ color: '#A855F7', fontSize: 15, fontWeight: '900' }}>{data.consistency.recoveryConsistency}%</Text>
+             </View>
+          </View>
+          
         </View>
       </ScrollView>
     </View>
@@ -399,15 +408,13 @@ const s = StyleSheet.create({
 
   content: { padding: 24 },
 
-  aiCard: { overflow: 'hidden', marginBottom: 24, borderColor: '#10B98130' },
+  aiCard: { overflow: 'hidden', marginBottom: 24, borderColor: '#38BDF830', borderWidth: 1 },
   aiGrad: { padding: 20 },
-  aiHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
-  aiTitle: { color: '#10B981', fontSize: 15, fontWeight: '900', marginLeft: 8, letterSpacing: 0.5 },
-  warningRow: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(245,158,11,0.1)', padding: 12, borderRadius: 12, marginBottom: 12 },
-  warningText: { color: '#F59E0B', fontSize: 13, fontWeight: '800', marginLeft: 8, flex: 1 },
-  aiText: { color: '#94A3B8', fontSize: 14, lineHeight: 22, marginBottom: 6, fontWeight: '600' },
+  aiHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
+  aiTitle: { color: '#38BDF8', fontSize: 16, fontWeight: '900', marginLeft: 8, letterSpacing: 0.5 },
+  aiText: { color: '#F8FAFC', fontSize: 15, lineHeight: 22, fontWeight: '600', flex: 1 },
 
-  sectionTitle: { color: '#F8FAFC', fontSize: 20, fontWeight: '900', letterSpacing: -0.5, marginBottom: 16 },
+  sectionTitle: { color: '#F8FAFC', fontSize: 20, fontWeight: '900', letterSpacing: -0.5, marginBottom: 16, marginTop: 8 },
 
   compCard: { padding: 20, marginBottom: 16 },
   compHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12, gap: 8 },
@@ -416,26 +423,4 @@ const s = StyleSheet.create({
   compBarFill: { height: '100%', borderRadius: 4 },
   compVal: { color: '#F8FAFC', fontSize: 20, fontWeight: '900' },
   compSub: { color: '#64748B', fontSize: 12, fontWeight: '700' },
-
-  chartCard: { padding: 24, marginBottom: 32 },
-  chartStatsRow: { flexDirection: 'row', justifyContent: 'flex-end', marginBottom: 24 },
-  chartLegend: { flexDirection: 'row', gap: 16 },
-  legendItem: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  legendDot: { width: 8, height: 8, borderRadius: 4 },
-  legendText: { color: '#94A3B8', fontSize: 12, fontWeight: '700' },
-  
-  barsContainer: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', height: 140 },
-  barColumn: { alignItems: 'center', flex: 1, minWidth: 0 },
-  multiBarWrap: { flexDirection: 'row', height: 110, alignItems: 'flex-end', marginBottom: 8 },
-  barTrack: { width: 8, height: '100%', backgroundColor: '#0F172A', borderRadius: 4, justifyContent: 'flex-end' },
-  barFill: { width: '100%', borderRadius: 4 },
-  barLabel: { color: '#64748B', fontSize: 11, fontWeight: '800' },
-
-  achieveScroll: { gap: 16, marginBottom: 32, paddingRight: 24 },
-  achieveCard: { width: 130, padding: 20, alignItems: 'center' },
-  achieveLocked: { opacity: 0.5 },
-  achieveIconBox: { width: 56, height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', marginBottom: 16 },
-  achieveTitle: { color: '#F8FAFC', fontSize: 13, fontWeight: '900', textAlign: 'center', lineHeight: 18 },
-  lockOverlay: { position: 'absolute', top: 12, right: 12, backgroundColor: 'rgba(15,23,42,0.8)', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4 },
-  lockText: { color: '#CBD5E1', fontSize: 9, fontWeight: '900', letterSpacing: 0.5 },
 });
