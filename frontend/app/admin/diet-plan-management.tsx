@@ -57,7 +57,7 @@ export default function AdminDietPlanManagement() {
     if (!selectedPlan) return;
     try {
       // Create a copy of the template exclusively for this user
-      const { _id, createdAt, updatedAt, ...rest } = selectedPlan;
+      const { _id, createdAt, updatedAt, ...rest } = selectedPlan as any;
       await DietPlanService.createDietPlan({
         ...rest,
         title: `${selectedPlan.title} (Assigned)`,

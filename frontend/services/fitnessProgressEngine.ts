@@ -169,7 +169,7 @@ class FitnessProgressEngine {
     const recommendations = RecommendationEngine.generate(user, analytics, meals, predictiveData);
     const { weeklyReport, monthlyReport } = this.generateReports(overallScore, workoutScore, nutritionScore, recoveryScore, weeklyPct, consistencyData, predictiveData, bodyData);
     const healthBalanceIndex = this.calculateHealthBalanceIndex(overallScore, consistencyData.overall, predictiveData.burnout.score, bodyScore);
-    const achievements = this.generateAchievements(workoutScore, nutritionScore, recoveryScore, adherence, consistencyData.streak);
+    const achievements = this.generateAchievements(workoutScore, nutritionScore, recoveryScore, dietAdherence, consistencyData.streak);
 
     return {
       healthBalanceIndex,
