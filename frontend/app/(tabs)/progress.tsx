@@ -154,16 +154,26 @@ export default function IntelligenceDashboardScreen() {
   useEffect(() => { fetchData(); }, [fetchData]);
   const onRefresh = useCallback(() => { setRefreshing(true); fetchData(); }, [fetchData]);
 
-  const data = useMemo(() => {
-    if (!rawData || !user) return null;
-    return FitnessProgressEngine.generate({
-      user, 
-      analytics: rawData.analytics, 
-      meals: rawData.meals, 
-      dietPlan: rawData.dietPlan, 
-      weightLogs: rawData.weightLogs, 
-      workouts: rawData.workouts
-    });
+  const [data, setData] = useState<any>(null);
+
+  useEffect(() => {
+    if (!rawData || !user) return;
+    const t = setTimeout(() => {
+      try {
+        const intelligence = FitnessProgressEngine.generate({
+          user, 
+          analytics: rawData.analytics, 
+          meals: rawData.meals, 
+          dietPlan: rawData.dietPlan, 
+          weightLogs: rawData.weightLogs, 
+          workouts: rawData.workouts
+        });
+        setData(intelligence);
+      } catch (e) {
+        console.error("Engine crash:", e);
+      }
+    }, 50);
+    return () => clearTimeout(t);
   }, [user, rawData]);
 
   useEffect(() => {
@@ -183,10 +193,15 @@ export default function IntelligenceDashboardScreen() {
 
   const simResult = useMemo(() => {
      if (renderStage < 3) return null;
-     return GoalSimulationEngine.simulate(
-        user?.weight || 70, (user as any)?.targetWeight || 75, user?.fitnessGoal || 'Gain Muscle',
-        simDays, simCal, simPro, (user?.weight || 70) * 24 * 1.2
-     );
+     try {
+       return GoalSimulationEngine.simulate(
+          user?.weight || 70, (user as any)?.targetWeight || 75, user?.fitnessGoal || 'Gain Muscle',
+          simDays, simCal, simPro, (user?.weight || 70) * 24 * 1.2
+       );
+     } catch (e) {
+       console.error("Simulation error", e);
+       return null;
+     }
   }, [user, simDays, simCal, simPro, renderStage]);
 
   return (
