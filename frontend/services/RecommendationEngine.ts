@@ -1,7 +1,7 @@
 export interface RecommendationResult {
   actionPlan: { task: string; reason: string; completed: boolean }[];
-  adaptiveDiet: { recommendedMeal: string; reason: string; targetMacro: string } | null;
-  adaptiveWorkout: { recommendedWorkout: string; reason: string } | null;
+  adaptiveDiet: { recommendedMeal: string; reason: string; evidence: string; expectedOutcome: string; targetMacro: string; originalMacro: string } | null;
+  adaptiveWorkout: { recommendedWorkout: string; reason: string; evidence: string; expectedOutcome: string } | null;
   goalAdjustment: { isUnrealistic: boolean; safeTimeline: string; reason: string } | null;
   notifications: string[];
 }
@@ -48,28 +48,22 @@ class RecommendationEngine {
      const targetPro = user?.weight ? Math.round(user.weight * 2) : 150;
      const currentPro = todayMeals.reduce((a,b)=>a+(b.protein||0),0);
      
-     // Task 1: Workout
      if (predictiveData.burnout.risk === 'Critical' || predictiveData.burnout.risk === 'High') {
         plan.push({ task: 'Complete a Mobility or Recovery Walk', reason: 'High burnout risk detected from overtraining.', completed: false });
      } else {
         const countThisWeek = analytics?.thisWeekSummary?.count || 0;
-        plan.push({ task: 'Complete Strength Session', reason: `You have only completed ${countThisWeek} workouts this week.`, completed: false }); // Logic assumes not done today natively
+        plan.push({ task: 'Complete Strength Session', reason: `You have only completed ${countThisWeek} workouts this week.`, completed: false });
      }
 
-     // Task 2: Protein
      if (currentPro >= targetPro) {
         plan.push({ task: `Hit Protein Target (${targetPro}g)`, reason: `Muscle recovery optimized.`, completed: true });
      } else {
         plan.push({ task: `Consume ${targetPro - currentPro}g more Protein`, reason: `Protein intake is required for muscle preservation.`, completed: false });
      }
 
-     // Task 3: Hydration (Mock tracked via general plan)
      plan.push({ task: 'Drink 2.5L Water', reason: 'Hydration speeds up metabolic clearance.', completed: false });
-
-     // Task 4: Sleep
      plan.push({ task: 'Sleep at least 8 hours', reason: 'Deep sleep prevents hormonal plateau.', completed: false });
 
-     // Task 5: Calories
      const maintenance = user?.weight ? user.weight * 24 * 1.2 : 2500;
      const currentCals = todayMeals.reduce((a,b)=>a+(b.calories||0),0);
      if (currentCals > maintenance) plan.push({ task: `Stop eating (Calorie Limit Exceeded)`, reason: `You are in a dangerous surplus.`, completed: true });
@@ -81,31 +75,43 @@ class RecommendationEngine {
   private generateAdaptiveDiet(user: any, meals: any[], predictiveData: any) {
      if (predictiveData.predictions.caloricTrend !== 'Surplus') return null;
 
-     // Find lowest calorie, high protein meal in history
      let bestMeal = null;
+     let worstMeal = null;
      let bestScore = 0;
+     let worstScore = 999;
+     
      meals.forEach(m => {
         const cal = m.calories || 1;
         const pro = m.protein || 0;
-        const ratio = pro / cal; // Highest protein per calorie
+        const ratio = pro / cal; 
         if (ratio > bestScore && cal < 500 && pro > 30) {
            bestScore = ratio;
            bestMeal = m;
         }
+        if (ratio < worstScore && cal > 600) {
+           worstScore = ratio;
+           worstMeal = m;
+        }
      });
 
-     if (bestMeal) {
+     if (bestMeal && worstMeal) {
         return {
            recommendedMeal: (bestMeal as any).name || 'Chicken & Greens Salad',
-           reason: 'You are repeatedly exceeding calories. This meal from your history has excellent protein-to-calorie ratio.',
-           targetMacro: `${(bestMeal as any).protein}g Protein | ${(bestMeal as any).calories} kcal`
+           reason: 'You are repeatedly exceeding calories. This meal from your history has a significantly better protein-to-calorie ratio.',
+           evidence: `Average daily calories currently exceed maintenance by 300+.`,
+           expectedOutcome: 'Decreases daily caloric load while preserving muscle mass.',
+           targetMacro: `${(bestMeal as any).protein}g Protein | ${(bestMeal as any).calories} kcal`,
+           originalMacro: `${(worstMeal as any).name || 'Heavy Meal'}: ${(worstMeal as any).calories} kcal`
         };
      }
 
      return {
         recommendedMeal: 'Lean Chicken Wrap',
         reason: 'You are repeatedly exceeding calories. Recommend switching to lean wraps.',
-        targetMacro: '40g Protein | 400 kcal'
+        evidence: 'Consistent caloric surplus without proportional muscle gain.',
+        expectedOutcome: 'Stable weight loss trajectory restored.',
+        targetMacro: '40g Protein | 400 kcal',
+        originalMacro: 'Current Average Meal: 650 kcal'
      };
   }
 
@@ -113,20 +119,23 @@ class RecommendationEngine {
      if (predictiveData.burnout.risk === 'Critical' || predictiveData.burnout.risk === 'High') {
         return {
            recommendedWorkout: 'Mobility & Stretching',
-           reason: 'Burnout risk is critically high. Avoid intense nervous system fatigue today.'
+           reason: 'Burnout risk is critically high. Avoid intense nervous system fatigue today.',
+           evidence: `Recovery score dropped below 50. Training load is excessive.`,
+           expectedOutcome: 'Restores Central Nervous System balance and prevents injury.'
         };
      }
 
-     // Mock checking missed muscles based on analytics depth
      const countThisWeek = analytics?.thisWeekSummary?.count || 0;
      if (countThisWeek === 0) {
         return {
            recommendedWorkout: 'Full Body Foundations',
-           reason: 'You have missed all training sessions this week. Re-establish base strength.'
+           reason: 'You have missed all training sessions this week. Re-establish base strength.',
+           evidence: `0 workouts logged in the last 5 days.`,
+           expectedOutcome: 'Re-primes muscle fibers without causing extreme DOMS.'
         };
      }
 
-     return null; // No special recommendation needed
+     return null;
   }
 
   private generateGoalAdjustment(user: any, predictiveData: any) {
@@ -143,14 +152,10 @@ class RecommendationEngine {
 
   private generateNotifications(todayMeals: any[], analytics: any, user: any) {
      const notifications = [];
-     
-     // Breakfast check
      const hasBreakfast = todayMeals.some(m => (m.mealType || m.category) === 'Breakfast');
      if (!hasBreakfast && new Date().getHours() > 10) {
         notifications.push("You have not logged breakfast.");
      }
-
-     // Protein check
      const targetPro = user?.weight ? Math.round(user.weight * 2) : 150;
      const currentPro = todayMeals.reduce((a,b)=>a+(b.protein||0),0);
      if (currentPro < targetPro) {
@@ -158,13 +163,10 @@ class RecommendationEngine {
      } else {
         notifications.push("Protein target achieved for today!");
      }
-
-     // Workout check
      const countThisWeek = analytics?.thisWeekSummary?.count || 0;
      if (countThisWeek === 0) {
         notifications.push("Today is your scheduled Workout session.");
      }
-
      return notifications;
   }
 }

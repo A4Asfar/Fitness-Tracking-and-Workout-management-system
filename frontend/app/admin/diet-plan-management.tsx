@@ -11,6 +11,8 @@ export default function AdminDietPlanManagement() {
   const insets = useSafeAreaInsets();
   const [plans, setPlans] = useState<DietPlan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedPlan, setSelectedPlan] = useState<DietPlan | null>(null);
+  const [showAssignModal, setShowAssignModal] = useState(false);
 
   const fetchPlans = async () => {
     try {
