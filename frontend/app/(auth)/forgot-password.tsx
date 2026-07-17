@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, Animated
+  View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, Animated
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Mail, ArrowLeft, KeyRound } from 'lucide-react-native';

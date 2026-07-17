@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity,
-  Animated, Dimensions, ImageBackground, Image, useWindowDimensions } from 'react-native';
+  Animated, ImageBackground, Image, useWindowDimensions } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
-  Plus, History as HistoryIcon, Users, Settings, Bell,
-  HeartPulse, Scale, Target, Flame, Droplet, Play, ChevronRight, Activity, Calendar, Zap, CheckCircle2, Dumbbell
+  Plus, History as HistoryIcon, Users, Bell, Scale, Target, Flame, Droplet, Play, Activity, Zap, Dumbbell
 } from 'lucide-react-native';
 import { useRouter, Stack } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -436,7 +435,7 @@ const s = StyleSheet.create({
   recentMeta: { color: '#94A3B8', fontSize: 13, fontWeight: '600' },
   recentDate: { color: '#64748B', fontSize: 12, fontWeight: '700' },
   
-  emptyStateBox: { alignItems: 'center', borderStyle: 'dashed' },
+  emptyStateBox: { alignItems: 'center', backgroundColor: 'rgba(56, 189, 248, 0.05)', padding: 32, borderRadius: 24, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.1)' },
   emptyStateTitle: { color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginBottom: 8 },
   emptyStateSub: { color: '#94A3B8', fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 24 },
   emptyStateBtn: { backgroundColor: '#38BDF8', paddingHorizontal: 24, paddingVertical: 12, borderRadius: 100 },

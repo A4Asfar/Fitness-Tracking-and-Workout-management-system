@@ -1,14 +1,14 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, 
-  RefreshControl, ActivityIndicator, Dimensions, TextInput, 
+  RefreshControl, ActivityIndicator, TextInput, 
   Animated, Easing, useWindowDimensions } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/context/AuthContext';
 import { 
-  Shield, ArrowLeft, Users, UserCheck, Activity, Search,
+  Shield, ArrowLeft, Users, Activity, Search,
   LayoutDashboard, CreditCard, Calendar, Settings as SettingsIcon, LogOut,
-  Trash2, Mail, Crown, ShieldAlert, CheckCircle2, ChevronRight, Edit3
+  Trash2, Mail, Crown, ShieldAlert, CheckCircle2, Edit3
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '@/services/api';
@@ -134,7 +134,7 @@ export default function AdminDashboard() {
       await api.patch(`/admin/users/${userId}/role`, { role: newRole });
       fetchData();
     } catch (e) {
-      console.log(e);
+      // ignore
     }
   };
 

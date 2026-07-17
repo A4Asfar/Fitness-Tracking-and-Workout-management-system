@@ -331,7 +331,7 @@ export default function AIChatScreen() {
               maxToRenderPerBatch={10}
               windowSize={5}
               keyExtractor={item => item._id}
-              contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 100 }}
+              contentContainerStyle={{ maxWidth: 800, width: '100%', alignSelf: 'center',  paddingHorizontal: 16, paddingTop: 12, paddingBottom: insets.bottom + 100 }}
               renderItem={({ item }) => (
                 <ConversationCard
                   title={item.title}
@@ -465,9 +465,7 @@ export default function AIChatScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
+  container: { flex: 1, backgroundColor: '#0F172A',
   },
   centerContainer: {
     flex: 1,
@@ -504,12 +502,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   renameCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F172A',
     borderRadius: 24,
     padding: 24,
     width: '85%',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.08,
@@ -517,21 +515,21 @@ const styles = StyleSheet.create({
     elevation: 8,
   },
   renameTitle: {
-    color: '#0F172A',
+    color: '#F8FAFC',
     fontSize: 18,
     fontWeight: '800',
     marginBottom: 16,
   },
   renameInput: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#1E293B',
     borderRadius: 14,
     paddingVertical: 12,
     paddingHorizontal: 16,
-    color: '#0F172A',
+    color: '#F8FAFC',
     fontSize: 15,
     fontWeight: '600',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
     marginBottom: 20,
   },
   renameButtons: {
@@ -544,10 +542,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     borderRadius: 12,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   renameCancelText: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 14,
     fontWeight: '700',
   },

@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Image, Dimensions, ImageBackground, useWindowDimensions } from 'react-native';
+  Image, ImageBackground, useWindowDimensions } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   User, ChevronRight, Bell, LogOut, Sparkles, Dumbbell, 
-  Target, ShieldCheck, Lock, Eye, HelpCircle, Activity, Medal, Flame, Zap
+  Target, ShieldCheck, Lock, HelpCircle, Activity, Medal, Flame, Zap
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import api from '@/services/api';

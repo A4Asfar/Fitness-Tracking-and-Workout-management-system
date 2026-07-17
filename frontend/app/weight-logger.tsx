@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, Alert, Animated, Dimensions, useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native';
-import { useRouter, Stack } from 'expo-router';
+  TextInput, ActivityIndicator, Alert, Animated, KeyboardAvoidingView, Platform } from 'react-native';
+import { Stack } from 'expo-router';
 import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { 
   ArrowLeft, Scale, History, Plus, 
@@ -22,8 +22,6 @@ interface WeightLog {
 }
 
 export default function WeightLoggerScreen() {
-  const { width } = useWindowDimensions();
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, updateUser } = useAuth();
   

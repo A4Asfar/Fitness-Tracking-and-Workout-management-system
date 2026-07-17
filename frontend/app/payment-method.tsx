@@ -115,10 +115,10 @@ export default function PaymentMethodScreen() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16, backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  backBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { color: '#0F172A', fontSize: 18, fontWeight: '800' },
+  container: { flex: 1, backgroundColor: '#0F172A', },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16, backgroundColor: '#0F172A', borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
+  backBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { color: '#F8FAFC', fontSize: 18, fontWeight: '800' },
   
   content: { padding: 24, paddingBottom: 120 },
   
@@ -127,32 +127,32 @@ const s = StyleSheet.create({
   summaryValue: { color: '#FFF', fontSize: 32, fontWeight: '900', marginBottom: 4 },
   summaryPlan: { color: '#D4AF37', fontSize: 14, fontWeight: '800' },
 
-  sectionTitle: { fontSize: 18, fontWeight: '900', color: '#0F172A', marginBottom: 16 },
+  sectionTitle: { fontSize: 18, fontWeight: '900', color: '#F8FAFC', marginBottom: 16 },
 
-  methodCard: { backgroundColor: '#FFF', borderRadius: 20, padding: 16, borderWidth: 2, borderColor: '#F1F5F9', marginBottom: 16 },
+  methodCard: { backgroundColor: '#0F172A', borderRadius: 20, padding: 16, borderWidth: 2, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 16 },
   methodCardActive: { borderColor: '#059669' },
   methodHeader: { flexDirection: 'row', alignItems: 'center' },
   iconBox: { width: 40, height: 40, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 12 },
-  methodName: { flex: 1, fontSize: 16, fontWeight: '800', color: '#0F172A' },
-  radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: '#CBD5E1', justifyContent: 'center', alignItems: 'center' },
+  methodName: { flex: 1, fontSize: 16, fontWeight: '800', color: '#F8FAFC' },
+  radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, borderColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center' },
   radioActive: { borderColor: '#059669' },
-  radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#059669' },
+  radioInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: '#38BDF8' },
 
   detailsBox: { marginTop: 16, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
   detailRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 16 },
   detailLabel: { fontSize: 11, color: '#94A3B8', fontWeight: '700', letterSpacing: 0.5, marginBottom: 4 },
-  detailValue: { fontSize: 16, color: '#0F172A', fontWeight: '800' },
-  copyBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F1F5F9', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, gap: 6 },
-  copyBtnText: { fontSize: 14, fontWeight: '700', color: '#0F172A' },
+  detailValue: { fontSize: 16, color: '#F8FAFC', fontWeight: '800' },
+  copyBtn: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.05)', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, gap: 6 },
+  copyBtnText: { fontSize: 14, fontWeight: '700', color: '#F8FAFC' },
 
-  qrBox: { height: 100, backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: '#CBD5E1', justifyContent: 'center', alignItems: 'center', marginTop: 8 },
-  qrText: { fontSize: 13, color: '#64748B', fontWeight: '600' },
+  qrBox: { height: 100, backgroundColor: '#1E293B', borderRadius: 12, borderWidth: 1, borderStyle: 'dashed', borderColor: 'rgba(255,255,255,0.15)', justifyContent: 'center', alignItems: 'center', marginTop: 8 },
+  qrText: { fontSize: 13, color: '#94A3B8', fontWeight: '600' },
 
-  instructionsBox: { backgroundColor: '#FFFBEB', padding: 20, borderRadius: 16, marginTop: 16, borderWidth: 1, borderColor: '#FDE68A' },
-  instTitle: { fontSize: 15, fontWeight: '800', color: '#92400E', marginBottom: 8 },
-  instText: { fontSize: 14, color: '#B45309', lineHeight: 24, fontWeight: '500' },
+  instructionsBox: { backgroundColor: 'rgba(56, 189, 248, 0.05)', padding: 20, borderRadius: 16, marginTop: 16, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.2)' },
+  instTitle: { fontSize: 15, fontWeight: '800', color: '#38BDF8', marginBottom: 8 },
+  instText: { fontSize: 14, color: '#94A3B8', lineHeight: 24, fontWeight: '500' },
 
-  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FFF', paddingHorizontal: 24, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
-  nextBtn: { backgroundColor: '#059669', height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
+  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#0F172A', paddingHorizontal: 24, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
+  nextBtn: { backgroundColor: '#38BDF8', height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
   nextBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' }
 });

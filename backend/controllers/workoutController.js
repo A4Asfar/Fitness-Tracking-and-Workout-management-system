@@ -4,12 +4,12 @@ const { asyncHandler } = require('../middleware/errorMiddleware');
 const { getLocalDateString, calculateBMI } = require('../utils/dateUtils');
 
 exports.getWorkouts = asyncHandler(async (req, res) => {
-  const workouts = await Workout.find({ userId: req.userId }).sort({ date: -1 });
+  const workouts = await Workout.find({ userId: req.userId }).sort({ date: -1 }).lean();
   res.json(workouts);
 });
 
 exports.getWorkout = asyncHandler(async (req, res) => {
-  const workout = await Workout.findOne({ _id: req.params.id, userId: req.userId });
+  const workout = await Workout.findOne({ _id: req.params.id, userId: req.userId }).lean();
   if (!workout) {
     res.status(404);
     throw new Error('Workout not found');

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Animated, Dimensions, RefreshControl, useWindowDimensions } from 'react-native';
+  ActivityIndicator, Animated, RefreshControl, useWindowDimensions } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { 

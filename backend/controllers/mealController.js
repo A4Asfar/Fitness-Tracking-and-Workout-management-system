@@ -4,7 +4,7 @@ const Notification = require('../models/Notification');
 const { asyncHandler } = require('../middleware/errorMiddleware');
 
 exports.getMeals = asyncHandler(async (req, res) => {
-  const meals = await MealSelection.find({ userId: req.userId }).sort({ selectedAt: -1 });
+  const meals = await MealSelection.find({ userId: req.userId }).sort({ selectedAt: -1 }).lean();
   res.json(meals);
 });
 
@@ -50,7 +50,7 @@ exports.getRecommendedMeals = asyncHandler(async (req, res) => {
     else if (goal.includes('Endurance')) query.recommendedFor = 'Endurance';
   }
 
-  const meals = await Meal.find(query);
+  const meals = await Meal.find(query).lean();
   res.json(meals);
 });
 
@@ -62,7 +62,7 @@ exports.getMealByName = asyncHandler(async (req, res) => {
   }
   // Escape special regex characters to prevent regex injection
   const escapedName = name.trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-  const meal = await Meal.findOne({ mealName: new RegExp(`^${escapedName}$`, 'i') });
+  const meal = await Meal.findOne({ mealName: new RegExp(`^${escapedName}$`, 'i') }).lean();
   if (!meal) {
     res.status(404);
     throw new Error('Meal not found');

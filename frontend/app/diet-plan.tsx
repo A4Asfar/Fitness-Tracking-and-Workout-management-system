@@ -3,7 +3,7 @@ import { View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity, u
 import { Stack, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { DietPlanService, DietPlan, DietPlanDay, DietPlanMeal } from '@/services/dietPlanService';
+import { DietPlanService, DietPlan, DietPlanMeal } from '@/services/dietPlanService';
 import SkeletonCard from '@/components/SkeletonCard';
 import { SharedStyles } from '@/constants/Theme';
 import { Flame, Droplet, ArrowLeft, HeartPulse, CheckCircle2, Circle, AlertCircle, PlusCircle } from 'lucide-react-native';
@@ -154,7 +154,7 @@ export default function UserDietPlanScreen() {
       </View>
 
       <View style={s.daysTabs}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20 }}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ maxWidth: 800, width: '100%', alignSelf: 'center',  paddingHorizontal: 20 }}>
            {DAYS_OF_WEEK.map(day => (
               <TouchableOpacity key={day} onPress={() => setSelectedDay(day)} style={[s.dayTab, selectedDay === day && s.dayTabActive]}>
                  <Text style={[s.dayTabText, selectedDay === day && s.dayTabTextActive]}>{day.substring(0, 3)}</Text>

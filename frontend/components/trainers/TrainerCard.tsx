@@ -91,6 +91,7 @@ const TrainerCard = memo(({ trainer, onPress }: TrainerCardProps) => {
   );
 });
 
+TrainerCard.displayName = 'TrainerCard';
 export default TrainerCard;
 
 const s = StyleSheet.create({

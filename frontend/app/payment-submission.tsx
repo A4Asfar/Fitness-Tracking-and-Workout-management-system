@@ -110,11 +110,11 @@ export default function PaymentSubmissionScreen() {
         ) : (
           <View style={s.uploadOptions}>
             <TouchableOpacity style={s.uploadOption} onPress={() => handlePickImage(false)}>
-              <Upload size={24} color="#059669" />
+              <Upload size={24} color="#38BDF8" />
               <Text style={s.uploadOptionText}>Gallery</Text>
             </TouchableOpacity>
             <TouchableOpacity style={s.uploadOption} onPress={() => handlePickImage(true)}>
-              <Camera size={24} color="#059669" />
+              <Camera size={24} color="#38BDF8" />
               <Text style={s.uploadOptionText}>Camera</Text>
             </TouchableOpacity>
           </View>
@@ -136,7 +136,7 @@ export default function PaymentSubmissionScreen() {
 
       <View style={[s.footer, { paddingBottom: insets.bottom + 16 }]}>
         <TouchableOpacity style={[s.submitBtn, (!transactionId || !screenshotUri) && s.submitBtnDisabled]} onPress={handleSubmit} disabled={isSubmitting || !transactionId || !screenshotUri}>
-          {isSubmitting ? <ActivityIndicator color="#FFF" /> : <Text style={s.submitBtnText}>Submit Verification</Text>}
+          {isSubmitting ? <ActivityIndicator color="#0F172A" /> : <Text style={s.submitBtnText}>Submit Verification</Text>}
         </TouchableOpacity>
       </View>
     </View>
@@ -145,34 +145,34 @@ export default function PaymentSubmissionScreen() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16, backgroundColor: '#FFF', borderBottomWidth: 1, borderBottomColor: '#F1F5F9' },
-  backBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: '#F1F5F9', justifyContent: 'center', alignItems: 'center' },
-  headerTitle: { color: '#0F172A', fontSize: 18, fontWeight: '800' },
-  content: { padding: 24, paddingBottom: 120 },
+  container: { flex: 1, backgroundColor: '#0F172A', },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 16, backgroundColor: '#0F172A', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
+  backBtn: { width: 40, height: 40, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' },
+  headerTitle: { color: '#F8FAFC', fontSize: 18, fontWeight: '800' },
+  content: { padding: 24, paddingBottom: 120, maxWidth: 600, width: '100%', alignSelf: 'center' },
 
-  infoCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ECFDF5', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#D1FAE5', marginBottom: 24 },
-  infoTitle: { fontSize: 15, fontWeight: '800', color: '#065F46' },
-  infoSub: { fontSize: 13, color: '#047857', fontWeight: '600' },
+  infoCard: { flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(56, 189, 248, 0.05)', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.2)', marginBottom: 24 },
+  infoTitle: { fontSize: 15, fontWeight: '800', color: '#38BDF8' },
+  infoSub: { fontSize: 13, color: '#94A3B8', fontWeight: '600' },
 
-  sectionTitle: { fontSize: 16, fontWeight: '800', color: '#0F172A', marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontWeight: '800', color: '#F8FAFC', marginBottom: 12 },
   
-  inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#FFF', borderWidth: 1.5, borderColor: '#E2E8F0', borderRadius: 16, paddingHorizontal: 16, height: 56, marginBottom: 24 },
-  input: { flex: 1, fontSize: 15, fontWeight: '600', color: '#0F172A' },
+  inputContainer: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#1E293B', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', borderRadius: 16, paddingHorizontal: 16, height: 56, marginBottom: 24 },
+  input: { flex: 1, fontSize: 15, fontWeight: '600', color: '#F8FAFC' },
   
   textAreaContainer: { height: 120, alignItems: 'flex-start', paddingTop: 12 },
-  textArea: { flex: 1, fontSize: 15, color: '#0F172A', textAlignVertical: 'top' },
+  textArea: { flex: 1, fontSize: 15, color: '#F8FAFC', textAlignVertical: 'top' },
 
   uploadOptions: { flexDirection: 'row', gap: 16, marginBottom: 24 },
-  uploadOption: { flex: 1, height: 100, backgroundColor: '#ECFDF5', borderRadius: 16, borderWidth: 1.5, borderColor: '#A7F3D0', borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center' },
-  uploadOptionText: { color: '#059669', fontSize: 14, fontWeight: '700', marginTop: 8 },
+  uploadOption: { flex: 1, height: 100, backgroundColor: 'rgba(56, 189, 248, 0.05)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.2)', justifyContent: 'center', alignItems: 'center' },
+  uploadOptionText: { color: '#38BDF8', fontSize: 14, fontWeight: '700', marginTop: 8 },
 
-  previewContainer: { width: '100%', height: 200, borderRadius: 16, overflow: 'hidden', marginBottom: 24, position: 'relative' },
+  previewContainer: { width: '100%', height: 200, borderRadius: 16, overflow: 'hidden', marginBottom: 24, position: 'relative', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
   previewImg: { width: '100%', height: '100%' },
   deleteBtn: { position: 'absolute', top: 12, right: 12, width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(239, 68, 68, 0.9)', justifyContent: 'center', alignItems: 'center' },
 
-  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: '#FFF', paddingHorizontal: 24, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#F1F5F9' },
-  submitBtn: { backgroundColor: '#059669', height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center' },
-  submitBtnDisabled: { backgroundColor: '#A7F3D0' },
-  submitBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' }
+  footer: { position: 'absolute', bottom: 0, left: 0, right: 0, paddingHorizontal: 24, paddingVertical: 16, backgroundColor: '#0F172A', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)' },
+  submitBtn: { backgroundColor: '#38BDF8', height: 56, borderRadius: 16, justifyContent: 'center', alignItems: 'center', shadowColor: '#38BDF8', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 8, elevation: 4 },
+  submitBtnDisabled: { backgroundColor: 'rgba(56, 189, 248, 0.3)', shadowOpacity: 0 },
+  submitBtnText: { color: '#F8FAFC', fontSize: 16, fontWeight: '900' }
 });

@@ -48,14 +48,14 @@ export default function PremiumOnboardingModal({
   const handleClose = async () => {
     try {
       await Storage.setItem(`hasSeenOnboarding_${userId}`, 'true');
-    } catch (e) {}
+    } catch {}
     onClose();
   };
 
   const handleExplore = async () => {
     try {
       await Storage.setItem(`hasSeenOnboarding_${userId}`, 'true');
-    } catch (e) {}
+    } catch {}
     onClose();
     router.push('/premium');
   };

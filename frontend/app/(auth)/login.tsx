@@ -1,12 +1,11 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, Animated
+  View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, Animated
 } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { isAdminUser } from '@/utils/isAdmin';
 import { useRouter } from 'expo-router';
-import { Mail, Lock, Eye, EyeOff, ShieldCheck } from 'lucide-react-native';
+import { Mail, Lock, ShieldCheck } from 'lucide-react-native';
 
 import WelcomeModal from '@/components/WelcomeModal';
 import { useToast } from '@/components/Toast';

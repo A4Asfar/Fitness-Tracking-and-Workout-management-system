@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, ActivityIndicator, Animated, Easing, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Animated, Easing, useWindowDimensions } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { 
   ArrowLeft, Flame, Utensils, MessageCircle, Dumbbell, Sparkles, RefreshCw
@@ -162,7 +162,7 @@ export default function AnalyticsDashboardScreen() {
 
   if (!user || loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: '#0F172A', justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" color="#10B981" />
       </View>
     );
@@ -170,9 +170,9 @@ export default function AnalyticsDashboardScreen() {
 
   if (error && !loading) {
     return (
-      <View style={{ flex: 1, backgroundColor: '#FFFFFF', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
+      <View style={{ flex: 1, backgroundColor: '#0F172A', justifyContent: 'center', alignItems: 'center', padding: 24 }}>
         <Text style={{ color: '#EF4444', fontSize: 16, fontWeight: '800', textAlign: 'center', marginBottom: 8 }}>SYNC ERROR</Text>
-        <Text style={{ color: '#64748B', fontSize: 14, fontWeight: '500', textAlign: 'center', marginBottom: 28, lineHeight: 22 }}>{error}</Text>
+        <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '500', textAlign: 'center', marginBottom: 28, lineHeight: 22 }}>{error}</Text>
         <TouchableOpacity 
           onPress={fetchData} 
           style={{ height: 50, width: 160, borderRadius: 16, backgroundColor: '#10B981', justifyContent: 'center', alignItems: 'center' }}
@@ -282,7 +282,7 @@ export default function AnalyticsDashboardScreen() {
                 <CircularGauge value={data?.bmi || 0} category={data?.bmiCategory || 'Normal'} />
                 <View style={styles.bmiTextWrap}>
                   <Text style={styles.bmiDesc}>
-                    Calculated using your logged profile height and weight of <Text style={{ color: '#0F172A', fontWeight: '800' }}>{data?.currentWeight || '--'} kg</Text>.
+                    Calculated using your logged profile height and weight of <Text style={{ color: '#F8FAFC', fontWeight: '800' }}>{data?.currentWeight || '--'} kg</Text>.
                   </Text>
                   <Text style={styles.bmiDesc}>
                     Target Range: Maintain a normal BMI (18.5 - 24.9) for optimal metabolic and heart health.
@@ -310,9 +310,7 @@ export default function AnalyticsDashboardScreen() {
 }
 
 const styles = StyleSheet.create<Record<string, any>>({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
+  container: { flex: 1, backgroundColor: '#0F172A',
   },
   header: {
     flexDirection: 'row',
@@ -321,74 +319,74 @@ const styles = StyleSheet.create<Record<string, any>>({
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1.5,
-    borderColor: '#F1F5F9',
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   headerCenter: { alignItems: 'center' },
   backButton: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#1E293B',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   refreshButton: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#1E293B',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  headerTitle: { color: '#0F172A', fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
-  subtitle: { flexShrink: 1,  color: '#64748B', fontSize: 12, textAlign: 'center', fontWeight: '700', marginBottom: 24, marginTop: 16 },
+  headerTitle: { color: '#F8FAFC', fontSize: 18, fontWeight: '900', letterSpacing: -0.5 },
+  subtitle: { flexShrink: 1,  color: '#94A3B8', fontSize: 12, textAlign: 'center', fontWeight: '700', marginBottom: 24, marginTop: 16 },
   content: { padding: 20 },
   
   // Grid
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 },
   card: {
     flex: 1, minWidth: 140,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F172A',
     borderRadius: 24,
     padding: 16,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   cardHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 12 },
   iconWrap: { width: 32, height: 32, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
-  cardTitle: { color: '#64748B', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, flex: 1 },
-  cardValue: { color: '#0F172A', fontSize: 20, fontWeight: '900', letterSpacing: -0.5 },
+  cardTitle: { color: '#94A3B8', fontSize: 11, fontWeight: '800', textTransform: 'uppercase', letterSpacing: 0.5, flex: 1 },
+  cardValue: { color: '#F8FAFC', fontSize: 20, fontWeight: '900', letterSpacing: -0.5 },
 
   // Large Cards
   largeCard: {
     borderRadius: 24,
     padding: 20,
     marginBottom: 20,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F172A',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
-  largeCardTitle: { color: '#0F172A', fontSize: 15, fontWeight: '800', marginBottom: 16 },
+  largeCardTitle: { color: '#F8FAFC', fontSize: 15, fontWeight: '800', marginBottom: 16 },
 
   // BMI
   bmiContent: { flexDirection: 'row', alignItems: 'center', gap: 16 },
   gaugeContainer: { position: 'relative', width: 120, height: 120, justifyContent: 'center', alignItems: 'center' },
   gaugeCenter: { position: 'absolute', alignItems: 'center' },
-  gaugeValue: { color: '#0F172A', fontSize: 24, fontWeight: '900' },
+  gaugeValue: { color: '#F8FAFC', fontSize: 24, fontWeight: '900' },
   gaugeCategory: { fontSize: 10, fontWeight: '800', textTransform: 'uppercase', marginTop: 2, letterSpacing: 0.5 },
   bmiTextWrap: { flex: 1, gap: 6 },
-  bmiDesc: { color: '#64748B', fontSize: 12, lineHeight: 18, fontWeight: '600' },
+  bmiDesc: { color: '#94A3B8', fontSize: 12, lineHeight: 18, fontWeight: '600' },
 
   // Activity Bar
   activityHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 },
   scoreText: { color: '#10B981', fontSize: 16, fontWeight: '800' },
-  activityBarTrack: { height: 10, backgroundColor: '#F1F5F9', borderRadius: 5, overflow: 'hidden', marginBottom: 16 },
+  activityBarTrack: { height: 10, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 5, overflow: 'hidden', marginBottom: 16 },
   activityBarFill: { height: '100%', borderRadius: 5 },
-  activityDesc: { color: '#64748B', fontSize: 12, lineHeight: 18, fontWeight: '600' },
+  activityDesc: { color: '#94A3B8', fontSize: 12, lineHeight: 18, fontWeight: '600' },
 
   // Insight Card (Highlighted AI section)
   insightCard: {

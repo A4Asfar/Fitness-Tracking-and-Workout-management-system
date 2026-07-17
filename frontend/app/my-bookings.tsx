@@ -175,43 +175,43 @@ export default function MyBookingsScreen() {
 }
 
 const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1, backgroundColor: '#0F172A' },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 24, paddingBottom: 16 },
-  backBtn: { width: 44, height: 44, backgroundColor: '#FFF', borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: '#E2E8F0' },
-  headerTitle: { fontSize: 20, fontWeight: '900', color: '#0F172A' },
+  backBtn: { width: 44, height: 44, backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: 14, justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)' },
+  headerTitle: { fontSize: 20, fontWeight: '900', color: '#F8FAFC' },
   
-  tabContainer: { flexDirection: 'row', paddingHorizontal: 24, marginBottom: 16, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' },
+  tabContainer: { flexDirection: 'row', paddingHorizontal: 24, marginBottom: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
   tab: { flex: 1, paddingVertical: 12, alignItems: 'center', borderBottomWidth: 2, borderBottomColor: 'transparent' },
   tabActive: { borderBottomColor: Colors.primary },
   tabText: { fontSize: 14, fontWeight: '600', color: '#64748B' },
   tabTextActive: { color: Colors.primary, fontWeight: '800' },
 
-  listContainer: { padding: 24, paddingTop: 8, paddingBottom: 100 },
+  listContainer: { padding: 24, paddingTop: 8, paddingBottom: 100, maxWidth: 800, width: '100%', alignSelf: 'center' },
   
-  card: { backgroundColor: '#FFF', borderRadius: 20, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: '#F1F5F9', shadowColor: '#0F172A', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.04, shadowRadius: 12, elevation: 2 },
+  card: { backgroundColor: '#1E293B', borderRadius: 20, padding: 16, marginBottom: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.2, shadowRadius: 12, elevation: 2 },
   cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 12 },
   trainerImage: { width: 48, height: 48, borderRadius: 24 },
   cardHeaderInfo: { flex: 1, marginLeft: 12 },
-  trainerName: { fontSize: 16, fontWeight: '800', color: '#0F172A' },
-  trainerSpec: { fontSize: 13, color: '#64748B', fontWeight: '500' },
+  trainerName: { fontSize: 16, fontWeight: '800', color: '#F8FAFC' },
+  trainerSpec: { fontSize: 13, color: '#94A3B8', fontWeight: '500' },
   
   badge: { paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8 },
   badgeText: { fontSize: 11, fontWeight: '800', letterSpacing: 0.5 },
 
-  cardDivider: { height: 1, backgroundColor: '#F1F5F9', marginBottom: 12 },
+  cardDivider: { height: 1, backgroundColor: 'rgba(255,255,255,0.05)', marginBottom: 12 },
   
   cardDetailsRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
   detailItem: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  detailText: { fontSize: 14, fontWeight: '600', color: '#475569' },
+  detailText: { fontSize: 14, fontWeight: '600', color: '#94A3B8' },
   priceText: { fontSize: 15, fontWeight: '800', color: Colors.primary },
 
-  emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 80 },
-  emptyTitle: { fontSize: 18, fontWeight: '800', color: '#0F172A', marginBottom: 8 },
-  emptySub: { fontSize: 14, color: '#64748B', textAlign: 'center', paddingHorizontal: 24, lineHeight: 22, marginBottom: 24 },
+  emptyContainer: { alignItems: 'center', justifyContent: 'center', paddingVertical: 80, backgroundColor: 'rgba(56, 189, 248, 0.05)', borderRadius: 24, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.1)', marginTop: 20 },
+  emptyTitle: { fontSize: 18, fontWeight: '800', color: '#F8FAFC', marginBottom: 8 },
+  emptySub: { fontSize: 14, color: '#94A3B8', textAlign: 'center', paddingHorizontal: 24, lineHeight: 22, marginBottom: 24 },
   exploreBtn: { backgroundColor: Colors.primary, paddingHorizontal: 24, paddingVertical: 12, borderRadius: 16 },
-  exploreBtnText: { color: '#FFF', fontWeight: '800', fontSize: 15 },
+  exploreBtnText: { color: '#0F172A', fontWeight: '800', fontSize: 15 },
 
-  errorBox: { backgroundColor: '#FEE2E2', margin: 24, padding: 16, borderRadius: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  errorBox: { backgroundColor: 'rgba(239, 68, 68, 0.1)', margin: 24, padding: 16, borderRadius: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.2)' },
   errorText: { color: '#EF4444', fontWeight: '600', flex: 1 },
   retryText: { color: '#EF4444', fontWeight: '800', textDecorationLine: 'underline', marginLeft: 12 },
 });

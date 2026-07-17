@@ -5,7 +5,7 @@ import {
   Platform, Modal, Animated, Pressable, UIManager, LayoutAnimation,
   Alert,
 } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { useLocalSearchParams, Stack } from 'expo-router';
 import api from '@/services/api';
 import {
   Dumbbell, Calendar, Save, Trash2, ChevronLeft,
@@ -75,7 +75,6 @@ const workoutTypeConfig: Record<string, { fields: FormFieldConfig[] }> = {
 
 export default function WorkoutDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
 
   const [loading,  setLoading]  = useState(true);
   const [saving,   setSaving]   = useState(false);
@@ -83,7 +82,6 @@ export default function WorkoutDetailScreen() {
   const [workout,  setWorkout]  = useState<any>(null);
   const [editMode, setEditMode] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [editType, setEditType] = useState('Strength');
@@ -439,10 +437,10 @@ export default function WorkoutDetailScreen() {
       <Stack.Screen
         options={{
           headerShown: true,
-          headerStyle: { backgroundColor: '#F8FAFC' },
+          headerStyle: { backgroundColor: '#1E293B' },
           headerShadowVisible: false,
           headerTitle: () => (
-            <Text style={{ color: '#0F172A', fontSize: 17, fontWeight: '800' }}>
+            <Text style={{ color: '#F8FAFC', fontSize: 17, fontWeight: '800' }}>
               {editMode ? 'Edit Workout' : 'Workout Details'}
             </Text>
           ),
@@ -471,7 +469,7 @@ export default function WorkoutDetailScreen() {
       </Animated.View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 60 }}
+        contentContainerStyle={{ maxWidth: 800, width: '100%', alignSelf: 'center',  padding: 20, paddingBottom: 60 }}
         showsVerticalScrollIndicator={false}
       >
         <Animated.View style={{ opacity: cardAnim, transform: [{ scale: cardAnim.interpolate({ inputRange: [0, 1], outputRange: [0.95, 1] }) }] }}>
@@ -632,7 +630,7 @@ export default function WorkoutDetailScreen() {
             <Text style={styles.modalTitle}>Delete Workout?</Text>
             <Text style={styles.modalBody}>
               This will permanently remove{' '}
-              <Text style={{ color: '#0F172A', fontWeight: '700' }}>{workout.exercise}</Text>
+              <Text style={{ color: '#F8FAFC', fontWeight: '700' }}>{workout.exercise}</Text>
               {' '}from your history. This action cannot be undone.
             </Text>
 
@@ -662,25 +660,23 @@ export default function WorkoutDetailScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
+  container: { flex: 1, backgroundColor: '#0F172A',
   },
   loader: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#1E293B',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 14,
   },
   loaderText: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 14,
     fontWeight: '600',
   },
   errorContainer: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#1E293B',
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
@@ -692,7 +688,7 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   errorText: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 14,
     fontWeight: '500',
     textAlign: 'center',
@@ -756,13 +752,13 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   heroCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F172A',
     borderRadius: 28,
     padding: 24,
     alignItems: 'center',
     overflow: 'hidden',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 6 },
     shadowOpacity: 0.03,
@@ -796,13 +792,13 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 28,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F172A',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
   },
   exerciseName: {
-    color: '#0F172A',
+    color: '#F8FAFC',
     fontSize: 24,
     fontWeight: '900',
     letterSpacing: -0.5,
@@ -817,7 +813,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   dateText: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 13,
     fontWeight: '600',
   },
@@ -828,12 +824,12 @@ const styles = StyleSheet.create({
   },
   statPill: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#1E293B',
     borderRadius: 20,
     paddingVertical: 14,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   statPillValue: {
     fontSize: 22,
@@ -845,7 +841,7 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   statPillLabel: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 9,
     fontWeight: '800',
     textTransform: 'uppercase',
@@ -863,16 +859,16 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   volumeText: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 14,
     fontWeight: '700',
   },
   editCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F172A',
     borderRadius: 28,
     padding: 24,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
     marginBottom: 20,
     shadowColor: '#0F172A',
     shadowOffset: { width: 0, height: 6 },
@@ -890,7 +886,7 @@ const styles = StyleSheet.create({
     borderBottomColor: '#F1F5F9',
   },
   editCardTitle: {
-    color: '#0F172A',
+    color: '#F8FAFC',
     fontSize: 16,
     fontWeight: '900',
   },
@@ -917,7 +913,7 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
   },
   resetBtnText: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 13,
     fontWeight: '600',
   },
@@ -965,7 +961,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalCard: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F172A',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     padding: 24,
@@ -973,7 +969,7 @@ const styles = StyleSheet.create({
     width: '100%',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   modalIconRing: {
     width: 68,
@@ -987,14 +983,14 @@ const styles = StyleSheet.create({
     borderColor: '#FCA5A5',
   },
   modalTitle: {
-    color: '#0F172A',
+    color: '#F8FAFC',
     fontSize: 20,
     fontWeight: '900',
     marginBottom: 10,
     letterSpacing: -0.5,
   },
   modalBody: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 14,
     textAlign: 'center',
     lineHeight: 20,
@@ -1018,17 +1014,17 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   modalCancelBtn: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#1E293B',
     borderRadius: 16,
     width: '100%',
     height: 52,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   modalCancelText: {
-    color: '#0F172A',
+    color: '#F8FAFC',
     fontSize: 14,
     fontWeight: '700',
   },
@@ -1039,15 +1035,15 @@ const styles = StyleSheet.create({
   },
   typeCard: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#1E293B',
     borderRadius: 14,
     paddingVertical: 10,
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   typeTextBtn: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 10,
     fontWeight: '600',
     marginTop: 4,
@@ -1066,16 +1062,16 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   inputWrapper: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#1E293B',
     borderRadius: 16,
     height: 50,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
     paddingHorizontal: 16,
     justifyContent: 'center',
   },
   input: {
-    color: '#0F172A',
+    color: '#F8FAFC',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -1093,7 +1089,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   label: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 11,
     fontWeight: '800',
     textTransform: 'uppercase',

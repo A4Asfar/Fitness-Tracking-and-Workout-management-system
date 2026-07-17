@@ -6,7 +6,7 @@ import {
 import { useRouter, Stack } from 'expo-router';
 import { Colors, SPACING } from '@/constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Search, SlidersHorizontal, UserX, AlertCircle, X, Check } from 'lucide-react-native';
+import { Search, SlidersHorizontal, AlertCircle, X, Check } from 'lucide-react-native';
 import api from '@/services/api';
 
 import TrainerCard from '@/components/trainers/TrainerCard';
@@ -191,7 +191,7 @@ export default function TrainersListScreen() {
                 onPress={() => handleTrainerPress(item.id || item._id)} 
               />
             )}
-            contentContainerStyle={{ paddingVertical: 8 }}
+            contentContainerStyle={{ maxWidth: 800, width: '100%', alignSelf: 'center',  paddingVertical: 8 }}
             snapToInterval={280 + 16} // CARD_WIDTH + marginRight
             decelerationRate="fast"
           />

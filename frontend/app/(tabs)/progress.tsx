@@ -4,11 +4,11 @@ import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 import { MealService } from '@/services/mealService';
 import { DietPlanService } from '@/services/dietPlanService';
+import { WorkoutService } from '@/services/workoutService';
 import FitnessProgressEngine, { EngineResult } from '@/services/fitnessProgressEngine';
 import GoalSimulationEngine from '@/services/GoalSimulationEngine';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import {
-  Activity, Flame, Dumbbell, Sparkles, Target, HeartPulse, Zap, AlertTriangle, Crown, History, Info, CheckCircle2, Circle as CircleIcon, ChevronDown, ChevronUp, Beaker, ShieldAlert, Check, ArrowRight
+import { Flame, Dumbbell, Target, HeartPulse, Zap, Crown, CheckCircle2, Circle as CircleIcon, Beaker, ShieldAlert, Check, ArrowRight
 } from 'lucide-react-native';
 import { Stack, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -126,15 +126,16 @@ export default function IntelligenceDashboardScreen() {
 
   const fetchData = async () => {
     try {
-      const [analyticsRes, mealsRes, dietPlan, weightRes] = await Promise.all([
+      const [analyticsRes, mealsRes, dietPlan, weightRes, workouts] = await Promise.all([
         api.get('/workouts/analytics'),
         MealService.getMeals(),
         DietPlanService.getMyDietPlan(),
-        api.get('/weight').catch(() => ({ data: [] }))
+        api.get('/weight').catch(() => ({ data: [] })),
+        WorkoutService.getWorkouts().catch(() => ([]))
       ]);
       
       const intelligence = FitnessProgressEngine.generate({
-        user, analytics: analyticsRes.data, meals: mealsRes, dietPlan, weightLogs: weightRes.data
+        user, analytics: analyticsRes.data, meals: mealsRes, dietPlan, weightLogs: weightRes.data, workouts
       });
       setData(intelligence);
     } catch (e: any) {
@@ -200,7 +201,7 @@ export default function IntelligenceDashboardScreen() {
           {data.achievements.length > 0 && (
              <View style={{ marginBottom: 24 }}>
                 <Text style={[s.sectionTitle, { fontSize: 16 }]}>AI Unlocked Achievements</Text>
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12 }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ maxWidth: 800, width: '100%', alignSelf: 'center',  gap: 12 }}>
                    {data.achievements.map((ach, i) => (
                       <View key={i} style={{ backgroundColor: 'rgba(56,189,248,0.1)', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 100, borderWidth: 1, borderColor: 'rgba(56,189,248,0.3)', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                          <Crown size={16} color="#38BDF8" />

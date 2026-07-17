@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useMemo } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  Animated, Dimensions, useWindowDimensions } from 'react-native';
+  Animated, useWindowDimensions, Platform } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { Colors, SharedStyles, SPACING } from '@/constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -224,7 +224,7 @@ export default function BodyHealthScreen() {
 
       <ScrollView
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
+        contentContainerStyle={{ maxWidth: 800, width: '100%', alignSelf: 'center',  paddingBottom: insets.bottom + 40 }}
       >
         {hasData ? (
           <>
@@ -238,22 +238,22 @@ export default function BodyHealthScreen() {
                  snapToInterval={width * 0.75 + 16}
                  decelerationRate="fast"
                >
-                 <View style={s.hStatCard}>
+                 <View style={[s.hStatCard, { width: Platform.OS === 'web' ? 320 : width * 0.75 }]}>
                    <Text style={s.hStatValue}>{weightLbs} lbs</Text>
                    <Text style={s.hStatLabel}>Weight</Text>
                    <Text style={s.hStatSub}>{weight} kg</Text>
                  </View>
-                 <View style={s.hStatCard}>
+                 <View style={[s.hStatCard, { width: Platform.OS === 'web' ? 320 : width * 0.75 }]}>
                    <Text style={s.hStatValue}>{heightStr}</Text>
                    <Text style={s.hStatLabel}>Height</Text>
                    <Text style={s.hStatSub}>{height} cm</Text>
                  </View>
-                 <View style={s.hStatCard}>
+                 <View style={[s.hStatCard, { width: Platform.OS === 'web' ? 320 : width * 0.75 }]}>
                    <Text style={s.hStatValue}>{bmi?.toFixed(1)}</Text>
                    <Text style={s.hStatLabel}>BMI Index</Text>
                    <Text style={s.hStatSub}>{category?.label}</Text>
                  </View>
-                 <View style={s.hStatCard}>
+                 <View style={[s.hStatCard, { width: Platform.OS === 'web' ? 320 : width * 0.75 }]}>
                    <Text style={s.hStatValue}>24 yrs</Text>
                    <Text style={s.hStatLabel}>Age Group</Text>
                    <Text style={s.hStatSub}>Focus: High</Text>
@@ -355,7 +355,7 @@ const s = StyleSheet.create({
   },
   hScrollContent: { paddingHorizontal: 24, alignItems: 'center', gap: 16 },
   hStatCard: {
-    width: Dimensions.get('window').width * 0.75, height: 130, backgroundColor: 'rgba(255,255,255,0.03)',
+    height: 130, backgroundColor: 'rgba(255,255,255,0.03)',
     borderRadius: 28, padding: 24, justifyContent: 'center',
     borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.08)',
   },

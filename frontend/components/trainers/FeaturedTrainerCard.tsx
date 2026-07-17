@@ -1,7 +1,6 @@
 import React, { memo } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, useWindowDimensions, Platform } from 'react-native';
 import { Star, ShieldCheck } from 'lucide-react-native';
-import { Colors } from '@/constants/Theme';
 import { LinearGradient } from 'expo-linear-gradient';
 
 interface FeaturedTrainerCardProps {
@@ -9,13 +8,13 @@ interface FeaturedTrainerCardProps {
   onPress: () => void;
 }
 
-const { width } = Dimensions.get('window');
-const CARD_WIDTH = width * 0.75;
-
 const FeaturedTrainerCard = memo(({ trainer, onPress }: FeaturedTrainerCardProps) => {
+  const { width } = useWindowDimensions();
+  const CARD_WIDTH = Platform.OS === 'web' ? 320 : width * 0.75;
+
   return (
     <TouchableOpacity 
-      style={s.card} 
+      style={[s.card, { width: CARD_WIDTH }]} 
       activeOpacity={0.9} 
       onPress={onPress}
       accessibilityRole="button"
@@ -58,11 +57,12 @@ const FeaturedTrainerCard = memo(({ trainer, onPress }: FeaturedTrainerCardProps
   );
 });
 
+FeaturedTrainerCard.displayName = 'FeaturedTrainerCard';
+
 export default FeaturedTrainerCard;
 
 const s = StyleSheet.create({
   card: {
-    width: CARD_WIDTH,
     height: 260, // taller for more dramatic hero effect
     borderRadius: 24,
     overflow: 'hidden',

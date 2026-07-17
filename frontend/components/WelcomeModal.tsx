@@ -1,10 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, Modal, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity } from 'react-native';
 import { Colors } from '@/constants/Theme';
 import { Trophy, ArrowRight, Zap } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-
-const { width } = Dimensions.get('window');
 
 interface WelcomeModalProps {
   visible: boolean;

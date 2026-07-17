@@ -6,11 +6,10 @@ import {
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
-  ArrowLeft, Bell, Calendar, Award, Info, Trash2, 
+  ArrowLeft, Bell, Calendar, Award, Trash2, 
   CheckCheck, HeartPulse
 } from 'lucide-react-native';
 import api from '@/services/api';
-import { LinearGradient } from 'expo-linear-gradient';
 
 export default function NotificationsScreen() {
   const router = useRouter();
@@ -200,7 +199,7 @@ export default function NotificationsScreen() {
         windowSize={5}
         keyExtractor={(item) => item._id}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 24, paddingBottom: insets.bottom + 20 }}
+        contentContainerStyle={{ maxWidth: 800, width: '100%', alignSelf: 'center',  paddingHorizontal: 24, paddingBottom: insets.bottom + 20 }}
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor="#38BDF8" />}
         renderSectionHeader={({ section: { title } }) => (
           <Text style={s.sectionHeader}>{title}</Text>

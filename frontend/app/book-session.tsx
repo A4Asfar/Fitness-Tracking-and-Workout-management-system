@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, 
-  TextInput, ActivityIndicator, Image, Dimensions, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
+  TextInput, ActivityIndicator, Image, KeyboardAvoidingView, Platform, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ArrowLeft, Star, Video, MapPin, CheckCircle2, Clock, Map, Target } from 'lucide-react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { ArrowLeft, Star, Video, MapPin, Clock, Target } from 'lucide-react-native';
 import api from '@/services/api';
 import { getMockTrainerById } from '@/constants/MockTrainers';
 

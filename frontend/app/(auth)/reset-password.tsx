@@ -1,10 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity,
-  TextInput, ActivityIndicator, Animated
+  View, Text, StyleSheet, KeyboardAvoidingView, Platform, ScrollView, TouchableOpacity, Animated
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { Lock, Eye, EyeOff, ArrowLeft, KeySquare } from 'lucide-react-native';
+import { Lock, ArrowLeft, KeySquare } from 'lucide-react-native';
 import { useToast } from '@/components/Toast';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

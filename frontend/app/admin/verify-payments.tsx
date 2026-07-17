@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity,
-  ActivityIndicator, Image, Modal, TextInput, Dimensions, FlatList, Share, Alert, useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native';
+  ActivityIndicator, Image, Modal, TextInput, FlatList, Share, Alert, useWindowDimensions, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useAuth } from '@/context/AuthContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -13,7 +13,6 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useToast } from '@/components/Toast';
 import api from '@/services/api';
 import { isAdminUser } from '@/utils/isAdmin';
-import { APP_NAME } from '@/constants/Brand';
 import { hapticSuccess, hapticError } from '@/utils/haptics';
 
 interface PaymentRecord {
@@ -54,7 +53,7 @@ interface AnalyticsData {
 }
 
 export default function PremiumManagementDashboard() {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
@@ -442,7 +441,7 @@ export default function PremiumManagementDashboard() {
               maxToRenderPerBatch={10}
               windowSize={5}
               keyExtractor={(item) => item._id}
-              contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 80 }}
+              contentContainerStyle={{ maxWidth: 800, width: '100%', alignSelf: 'center',  padding: 16, paddingBottom: insets.bottom + 80 }}
               renderItem={({ item }) => (
                 <TouchableOpacity 
                   onPress={() => setSelectedPayment(item)}
@@ -551,7 +550,7 @@ export default function PremiumManagementDashboard() {
               maxToRenderPerBatch={10}
               windowSize={5}
               keyExtractor={(item) => item._id}
-              contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 80 }}
+              contentContainerStyle={{ maxWidth: 800, width: '100%', alignSelf: 'center',  padding: 16, paddingBottom: insets.bottom + 80 }}
               renderItem={({ item }) => (
                 <View style={styles.userCard}>
                   <View style={styles.cardHeader}>
@@ -610,7 +609,7 @@ export default function PremiumManagementDashboard() {
       )}
 
       {activeTab === 'analytics' && (
-        <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 80 }}>
+        <ScrollView contentContainerStyle={{ maxWidth: 800, width: '100%', alignSelf: 'center',  padding: 16, paddingBottom: insets.bottom + 80 }}>
           {loadingAnalytics ? (
             <View style={styles.centerContainer}>
               <ActivityIndicator size="large" color="#10B981" />
@@ -735,7 +734,7 @@ export default function PremiumManagementDashboard() {
 
               <Text style={styles.modalHeading}>Payment Request</Text>
               
-              <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: Dimensions.get('window').height * 0.65 }}>
+              <ScrollView showsVerticalScrollIndicator={false} style={{ maxHeight: height * 0.65 }}>
                 <View style={styles.modalSection}>
                   <Text style={styles.modalSectionTitle}>USER INFORMATION</Text>
                   <View style={styles.modalUserRow}>
@@ -842,7 +841,7 @@ export default function PremiumManagementDashboard() {
             <X size={24} color="#FFFFFF" />
           </TouchableOpacity>
           {selectedPhoto && (
-            <Image source={{ uri: selectedPhoto }} style={styles.photoZoomImg} resizeMode="contain" />
+            <Image source={{ uri: selectedPhoto }} style={[styles.photoZoomImg, { height: height - 120 }]} resizeMode="contain" />
           )}
         </View>
       </Modal>
@@ -967,7 +966,7 @@ export default function PremiumManagementDashboard() {
 const styles = StyleSheet.create<Record<string, any>>({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#0F172A',
   },
   cardHeader: {
     flexDirection: 'row',
@@ -1661,7 +1660,6 @@ const styles = StyleSheet.create<Record<string, any>>({
   },
   photoZoomImg: {
     width: '100%',
-    height: Dimensions.get('window').height - 120,
   },
 
   // Modal: Rejection Form

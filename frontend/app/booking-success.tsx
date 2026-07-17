@@ -4,7 +4,6 @@ import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Check, Calendar, Clock, Video, MapPin, User, ChevronRight } from 'lucide-react-native';
 import api from '@/services/api';
-import { LinearGradient } from 'expo-linear-gradient';
 
 export default function BookingSuccessScreen() {
   const { bookingId } = useLocalSearchParams<{ bookingId: string }>();

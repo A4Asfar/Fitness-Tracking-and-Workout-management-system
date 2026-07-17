@@ -7,14 +7,12 @@ interface WorkoutCardProps {
   workout: any;
   onEditPress?: () => void;
   onDeletePress?: () => void;
-  accentColor?: string;
 }
 
 export default function WorkoutCard({
   workout,
   onEditPress,
-  onDeletePress,
-  accentColor = '#10B981'
+  onDeletePress
 }: WorkoutCardProps) {
   const getIcon = (typeStr: string) => {
     switch (typeStr) {

@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, Animated, ImageBackground, useWindowDimensions } from 'react-native';
-import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Animated, ImageBackground } from 'react-native';
+import { useLocalSearchParams, Stack } from 'expo-router';
 import { 
-  Clock, Flame, Play, ChevronLeft, CheckCircle2, Circle, TrendingUp, Activity, Info, Video
+  Clock, Flame, Play, ChevronLeft, CheckCircle2, Circle, TrendingUp, Activity, Info
 } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -94,9 +94,7 @@ const ExerciseRow = ({ item, index, accent, onToggle }: any) => {
 };
 
 export default function WorkoutDetailsScreen() {
-  const { width } = useWindowDimensions();
   const params = useLocalSearchParams();
-  const router = useRouter();
   const insets = useSafeAreaInsets();
   
   const id = (params.id as string) || 'strength';

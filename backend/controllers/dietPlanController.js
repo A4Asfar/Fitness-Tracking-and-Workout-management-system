@@ -34,14 +34,14 @@ exports.createDietPlan = asyncHandler(async (req, res) => {
 // @desc    Get all Diet Plans (Admin/Trainer)
 // @route   GET /api/diet-plans
 exports.getAllDietPlans = asyncHandler(async (req, res) => {
-  const plans = await DietPlan.find({}).sort({ createdAt: -1 });
+  const plans = await DietPlan.find({}).sort({ createdAt: -1 }).lean();
   res.json(plans);
 });
 
 // @desc    Get assigned Diet Plan for current user
 // @route   GET /api/diet-plans/my-plan
 exports.getMyDietPlan = asyncHandler(async (req, res) => {
-  const plan = await DietPlan.findOne({ assignedUserId: req.userId, status: 'Active' }).sort({ createdAt: -1 });
+  const plan = await DietPlan.findOne({ assignedUserId: req.userId, status: 'Active' }).sort({ createdAt: -1 }).lean();
   
   if (!plan) {
     return res.status(200).json(null); // No plan assigned

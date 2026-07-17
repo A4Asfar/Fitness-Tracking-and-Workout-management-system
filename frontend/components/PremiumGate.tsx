@@ -23,7 +23,7 @@ export function usePremiumStatus() {
       try {
         const res = await api.get('/premium/my');
         setPaymentLog(res.data.latestPurchase);
-      } catch (e) {
+      } catch {
         // No payment record exists
       } finally {
         setLoaded(true);

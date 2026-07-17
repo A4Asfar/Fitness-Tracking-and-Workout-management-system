@@ -23,7 +23,7 @@ export default function MessageActions({
       await Share.share({
         message: messageText,
       });
-    } catch (e) {
+    } catch {
       // no-op
     }
   };

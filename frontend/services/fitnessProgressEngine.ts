@@ -15,6 +15,7 @@ export interface EngineParams {
     goal: number;
     body: number;
   };
+  workouts?: any[];
 }
 
 export interface ReasonDetail {
@@ -127,7 +128,7 @@ class FitnessProgressEngine {
   public generate(params: EngineParams): EngineResult {
     this.clearCache();
     
-    const { user, analytics, meals, dietPlan, weightLogs = [], weights } = params;
+    const { user, analytics, meals, dietPlan, weightLogs = [], weights, workouts = [] } = params;
     
     const w = weights || { workout: 0.3, nutrition: 0.2, adherence: 0.2, recovery: 0.1, goal: 0.1, body: 0.1 };
     const goal = dietPlan?.goal || user?.fitnessGoal || 'Maintain Fitness';
@@ -165,8 +166,8 @@ class FitnessProgressEngine {
     const { primaryStatus, coachReport } = this.generateAIStatusAndReport(overallScore, workoutScore, nutritionScore, recoveryScore, dietAdherence, goal, netCalsLabel, bodyData);
     const consistencyData = this.calculateConsistency(workoutScore, nutritionScore, recoveryScore, weeklyPct, analytics);
     const chartsData = this.generateChartData(last30Meals, weightLogs, thirtyDaysAgo, workoutScore, nutritionScore, overallScore);
-    const predictiveData = PredictionEngine.generate(user, analytics, meals, weightLogs, dietPlan);
-    const recommendations = RecommendationEngine.generate(user, analytics, meals, predictiveData);
+    const predictiveData = PredictionEngine.generate(user, analytics, meals, weightLogs, dietPlan, workouts);
+    const recommendations = RecommendationEngine.generate(user, analytics, meals, predictiveData, workouts);
     const { weeklyReport, monthlyReport } = this.generateReports(overallScore, workoutScore, nutritionScore, recoveryScore, weeklyPct, consistencyData, predictiveData, bodyData);
     const healthBalanceIndex = this.calculateHealthBalanceIndex(overallScore, consistencyData.overall, predictiveData.burnout.score, bodyScore);
     const achievements = this.generateAchievements(workoutScore, nutritionScore, recoveryScore, dietAdherence, consistencyData.streak);

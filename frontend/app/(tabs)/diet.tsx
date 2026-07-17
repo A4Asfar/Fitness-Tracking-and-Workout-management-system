@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, StyleSheet, Alert, ScrollView, Dimensions, Text, TouchableOpacity, ImageBackground, Animated, useWindowDimensions } from 'react-native';
+import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { View, StyleSheet, Alert, ScrollView, Text, TouchableOpacity, ImageBackground, Animated, useWindowDimensions } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { MealService } from '@/services/mealService';
 import { 
-  Plus, Target, Sparkles, Flame, Droplet, Activity, CheckCircle2, Leaf, HeartPulse, ChevronRight, Utensils
+  Plus, Sparkles, Flame, Activity, Leaf, HeartPulse, ChevronRight
 } from 'lucide-react-native';
 import { Stack, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -127,20 +127,46 @@ export default function DietScreen() {
     );
   }
 
-  const totalCalories = meals.reduce((sum, m) => sum + (m.calories || 0), 0);
-  const totalProtein = meals.reduce((sum, m) => sum + (m.protein || 0), 0);
-  const totalCarbs = meals.reduce((sum, m) => sum + (m.carbs || 0), 0);
-  const totalFat = meals.reduce((sum, m) => sum + (m.fats || 0), 0);
-
-  const calPercent = Math.min(totalCalories / calorieTarget, 1);
-  const proPercent = Math.min(totalProtein / 150, 1); // Mock targets
-  const carbPercent = Math.min(totalCarbs / 250, 1);
-  const fatPercent = Math.min(totalFat / 70, 1);
+  const { totalCalories, totalProtein, totalCarbs, totalFat, calPercent, proPercent, carbPercent, fatPercent } = useMemo(() => {
+    let cals = 0, pro = 0, crb = 0, fat = 0;
+    meals.forEach(m => {
+      cals += m.calories || 0;
+      pro += m.protein || 0;
+      crb += m.carbs || 0;
+      fat += m.fats || 0;
+    });
+    return {
+      totalCalories: cals,
+      totalProtein: pro,
+      totalCarbs: crb,
+      totalFat: fat,
+      calPercent: Math.min(cals / calorieTarget, 1),
+      proPercent: Math.min(pro / 150, 1),
+      carbPercent: Math.min(crb / 250, 1),
+      fatPercent: Math.min(fat / 70, 1)
+    };
+  }, [meals, calorieTarget]);
 
   const calWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${calPercent * 100}%`] });
   const proWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${proPercent * 100}%`] });
   const carbWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${carbPercent * 100}%`] });
   const fatWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${fatPercent * 100}%`] });
+
+  const groupedMeals = useMemo(() => {
+    const groups: Record<string, { meals: Meal[], totalCal: number }> = {
+      Breakfast: { meals: [], totalCal: 0 },
+      Lunch: { meals: [], totalCal: 0 },
+      Dinner: { meals: [], totalCal: 0 },
+      Snack: { meals: [], totalCal: 0 },
+    };
+    meals.forEach(m => {
+      if (groups[m.mealType]) {
+        groups[m.mealType].meals.push(m);
+        groups[m.mealType].totalCal += m.calories || 0;
+      }
+    });
+    return groups;
+  }, [meals]);
 
   return (
     <View style={s.container}>
@@ -245,8 +271,7 @@ export default function DietScreen() {
           </View>
 
           {['Breakfast', 'Lunch', 'Dinner', 'Snack'].map(mealType => {
-            const typedMeals = meals.filter(m => m.mealType === mealType);
-            const totalCal = typedMeals.reduce((s, m) => s + (m.calories || 0), 0);
+            const { meals: typedMeals, totalCal } = groupedMeals[mealType];
             
             return (
               <View key={mealType} style={s.mealSection}>
@@ -374,8 +399,8 @@ const s = StyleSheet.create({
   mealSecTitle: { color: '#F8FAFC', fontSize: 16, fontWeight: '800' },
   mealSecCal: { color: '#94A3B8', fontSize: 14, fontWeight: '700' },
   
-  emptyMealAdd: { flexDirection: 'row', alignItems: 'center', padding: 16, borderStyle: 'dashed' },
-  emptyMealText: { color: '#94A3B8', fontSize: 14, fontWeight: '600', marginLeft: 8 },
+  emptyMealAdd: { flexDirection: 'row', alignItems: 'center', padding: 16, backgroundColor: 'rgba(56, 189, 248, 0.05)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.1)' },
+  emptyMealText: { color: '#38BDF8', fontSize: 14, fontWeight: '700', marginLeft: 8 },
 
   mealList: { gap: 12 },
   premiumMealCard: { flexDirection: 'row' },

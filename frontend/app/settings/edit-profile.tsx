@@ -138,7 +138,7 @@ export default function EditProfileScreen() {
 
       <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        style={{ flex: 1 }}
+        style={{ flex: 1, width: '100%', maxWidth: 600, alignSelf: 'center' }}
       >
         <ScrollView 
           style={{ flex: 1 }}
@@ -356,9 +356,7 @@ function InputLabel({ label, icon: Icon, required }: any) {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
+  container: { flex: 1, backgroundColor: '#0F172A',
   },
   header: {
     flexDirection: 'row',
@@ -366,22 +364,22 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 20,
     paddingBottom: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F172A',
     borderBottomWidth: 1.5,
-    borderColor: '#F1F5F9',
+    borderColor: 'rgba(255,255,255,0.05)',
   },
   backBtn: {
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#1E293B',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   headerTitle: {
-    color: '#0F172A',
+    color: '#F8FAFC',
     fontSize: 18,
     fontWeight: '900',
     letterSpacing: -0.5,
@@ -397,11 +395,11 @@ const styles = StyleSheet.create({
     width: 90,
     height: 90,
     borderRadius: 30,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F172A',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
     overflow: 'hidden',
     position: 'relative',
   },
@@ -423,13 +421,13 @@ const styles = StyleSheet.create({
     borderColor: '#FFFFFF',
   },
   avatarLabel: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 12,
     marginTop: 10,
     fontWeight: '600',
   },
   sectionTitle: {
-    color: '#0F172A',
+    color: '#F8FAFC',
     fontSize: 16,
     fontWeight: '900',
     marginTop: 12,
@@ -446,21 +444,21 @@ const styles = StyleSheet.create({
     marginLeft: 4,
   },
   labelText: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 11,
     fontWeight: '800',
     letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F172A',
     borderRadius: 16,
     height: 52,
     paddingHorizontal: 16,
-    color: '#0F172A',
+    color: '#F8FAFC',
     fontSize: 14,
     fontWeight: '600',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   textArea: {
     height: 100,
@@ -488,10 +486,10 @@ const styles = StyleSheet.create({
   disabledInput: {
     opacity: 0.6,
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: 'rgba(255,255,255,0.05)',
   },
   disabledText: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 14,
     fontWeight: '600',
   },
@@ -508,16 +506,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 12,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#0F172A',
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
   },
   chipActive: {
     backgroundColor: '#ECFDF5',
     borderColor: '#10B981',
   },
   chipText: {
-    color: '#64748B',
+    color: '#94A3B8',
     fontSize: 12,
     fontWeight: '700',
   },

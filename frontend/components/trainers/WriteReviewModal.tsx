@@ -1,12 +1,9 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, 
-  Modal, ActivityIndicator, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, StyleSheet, Modal, TouchableOpacity, TextInput, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { Colors } from '@/constants/Theme';
 import { Star, X } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import api from '@/services/api';
-
-const { height } = Dimensions.get('window');
 
 interface WriteReviewModalProps {
   visible: boolean;
@@ -23,6 +20,7 @@ export default function WriteReviewModal({
   bookingId,
   onReviewSubmitted
 }: WriteReviewModalProps) {
+  const { height } = useWindowDimensions();
   const insets = useSafeAreaInsets();
   const [rating, setRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
@@ -63,7 +61,7 @@ export default function WriteReviewModal({
       statusBarTranslucent
     >
       <View style={s.modalOverlay}>
-        <View style={[s.modalContent, { paddingBottom: Math.max(insets.bottom, 24) }]}>
+        <View style={[s.modalContent, { paddingBottom: Math.max(insets.bottom, 24), maxHeight: height * 0.85, width: '100%', maxWidth: 500, alignSelf: 'center' }]}>
           
           <View style={s.modalHeader}>
             <Text style={s.modalTitle}>Write a Review</Text>
@@ -130,7 +128,7 @@ export default function WriteReviewModal({
 
 const s = StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.8)', justifyContent: 'flex-end' },
-  modalContent: { backgroundColor: '#1E293B', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, maxHeight: height * 0.85, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
+  modalContent: { backgroundColor: '#1E293B', borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
   modalTitle: { fontSize: 20, fontWeight: '900', color: '#FFFFFF' },
   closeBtn: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(255,255,255,0.05)', justifyContent: 'center', alignItems: 'center' },

@@ -8,7 +8,7 @@ const { asyncHandler } = require('../middleware/errorMiddleware');
 const { getLocalDateString, calculateBMI } = require('../utils/dateUtils');
 
 exports.getProfile = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.userId).select('-password');
+  const user = await User.findById(req.userId).select('-password').lean();
   res.json(user);
 });
 
@@ -71,8 +71,8 @@ exports.submitPaymentProof = asyncHandler(async (req, res) => {
 exports.getUserPaymentStatus = asyncHandler(async (req, res) => {
   const PremiumPurchase = require('../models/PremiumPurchase');
   const [legacyPayment, latestPurchase] = await Promise.all([
-    PremiumPayment.findOne({ userId: req.userId }).sort({ submittedAt: -1 }),
-    PremiumPurchase.findOne({ userId: req.userId }).sort({ createdAt: -1 }),
+    PremiumPayment.findOne({ userId: req.userId }).sort({ submittedAt: -1 }).lean(),
+    PremiumPurchase.findOne({ userId: req.userId }).sort({ createdAt: -1 }).lean(),
   ]);
 
   if (latestPurchase) {
@@ -85,10 +85,10 @@ exports.getDashboardStats = asyncHandler(async (req, res) => {
   const userId = req.userId;
 
   const [user, workouts, meals, consults] = await Promise.all([
-    User.findById(userId),
-    Workout.find({ userId }),
-    MealSelection.find({ userId }),
-    TrainerConsult.find({ userId })
+    User.findById(userId).lean(),
+    Workout.find({ userId }).lean(),
+    MealSelection.find({ userId }).lean(),
+    TrainerConsult.find({ userId }).lean()
   ]);
 
   // 1. Calculate Workouts & Volume

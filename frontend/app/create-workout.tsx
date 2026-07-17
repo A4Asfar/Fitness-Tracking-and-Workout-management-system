@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TextInput, ScrollView, 
-  KeyboardAvoidingView, Platform, Alert, Dimensions, UIManager, LayoutAnimation, useWindowDimensions } from 'react-native';
+  KeyboardAvoidingView, Platform, Alert, UIManager, LayoutAnimation, useWindowDimensions } from 'react-native';
 import { useRouter, useLocalSearchParams, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
@@ -408,9 +408,7 @@ export default function CreateWorkoutScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
+  container: { flex: 1, backgroundColor: '#0F172A',
   },
   content: {
     paddingHorizontal: 20,
@@ -431,17 +429,17 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   inputLabel: {
-    color: '#475569',
+    color: '#94A3B8',
     fontSize: 13,
     fontWeight: '700',
     marginLeft: 4,
   },
   inputWrapper: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#1E293B',
     borderRadius: 16,
     height: 54,
     borderWidth: 1.5,
-    borderColor: '#E2E8F0',
+    borderColor: 'rgba(255,255,255,0.1)',
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
@@ -451,7 +449,7 @@ const styles = StyleSheet.create({
   },
   input: {
     flex: 1,
-    color: '#0F172A',
+    color: '#F8FAFC',
     fontSize: 15,
     fontWeight: '600',
   },

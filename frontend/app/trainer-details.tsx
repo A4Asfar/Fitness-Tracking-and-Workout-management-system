@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, 
-  Image, ActivityIndicator, RefreshControl, Dimensions, useWindowDimensions } from 'react-native';
+  Image, ActivityIndicator, RefreshControl, useWindowDimensions } from 'react-native';
 import { useLocalSearchParams, useRouter, Stack } from 'expo-router';
-import { Colors } from '@/constants/Theme';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { 
   ArrowLeft, Share, Heart, ShieldCheck, Star, MapPin, 
@@ -255,7 +254,7 @@ export default function TrainerDetailsScreen() {
           {trainer.transformations && trainer.transformations.length > 0 && (
             <View style={s.section}>
               <Text style={s.sectionTitle}>Client Transformations</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 16 }}>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ maxWidth: 800, width: '100%', alignSelf: 'center',  gap: 16 }}>
                 {trainer.transformations.map((t: any) => (
                   <View key={t.id} style={s.transformationCard}>
                     <View style={s.imagesRow}>
@@ -510,7 +509,7 @@ const s = StyleSheet.create({
   writeReviewBtn: { backgroundColor: '#1E293B', borderWidth: 1.5, borderColor: '#38BDF8', borderRadius: 16, height: 56, justifyContent: 'center', alignItems: 'center', marginBottom: 24 },
   writeReviewBtnText: { color: '#38BDF8', fontWeight: '900', fontSize: 16 },
 
-  reviewsEmpty: { backgroundColor: '#1E293B', borderRadius: 24, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: '#334155', borderStyle: 'dashed' },
+  reviewsEmpty: { backgroundColor: 'rgba(30,41,59,0.5)', borderRadius: 24, padding: 32, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
   reviewsEmptyTitle: { fontSize: 18, fontWeight: '900', color: '#F8FAFC', marginBottom: 8 },
   reviewsEmptySub: { fontSize: 14, color: '#94A3B8', textAlign: 'center', lineHeight: 22 },
 

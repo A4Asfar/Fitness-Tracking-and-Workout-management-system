@@ -1,10 +1,8 @@
 import React from 'react';
 import { View, StyleSheet, ScrollView, Text, useWindowDimensions, TouchableOpacity } from 'react-native';
-import { Stack, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { SharedStyles } from '@/constants/Theme';
-import { Users, TrendingUp, TrendingDown, Flame, AlertCircle, ShieldAlert, Award, Coffee, Activity } from 'lucide-react-native';
+import { Users, Flame, AlertCircle, ShieldAlert, Award, Activity } from 'lucide-react-native';
 
 const MOCK_USERS = [
   { id: 1, name: 'Alex Johnson', hbi: 94, trend: '+4', status: 'Highest Performing', risk: 'None', avatar: 'AJ', missing: null },

@@ -12,7 +12,7 @@ export default function WaterTracker() {
       try {
         const stored = await AsyncStorage.getItem(`water_intake_${new Date().toDateString()}`);
         if (stored) setCups(parseInt(stored));
-      } catch (e) {}
+      } catch {}
     };
     loadWater();
   }, []);
@@ -21,7 +21,7 @@ export default function WaterTracker() {
     try {
       setCups(newVal);
       await AsyncStorage.setItem(`water_intake_${new Date().toDateString()}`, newVal.toString());
-    } catch (e) {}
+    } catch {}
   };
 
   const increment = () => {
