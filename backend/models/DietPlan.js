@@ -1,28 +1,32 @@
 const mongoose = require('mongoose');
 
-const dietPlanMealSchema = new mongoose.Schema({
-  mealType: {
-    type: String,
-    enum: ['Breakfast', 'Lunch', 'Dinner', 'Snack'],
-    required: true
-  },
-  foodName: {
-    type: String,
-    required: true
-  },
-  servingSize: {
-    type: String,
-    required: true
-  },
-  quantity: {
-    type: Number,
-    default: 1
-  },
-  notes: String
+const foodSchema = new mongoose.Schema({
+  name: String,
+  serving: String,
+  quantity: Number
+});
+
+const mealSchema = new mongoose.Schema({
+  mealName: String,
+  foods: [foodSchema],
+  calories: { type: Number, default: 0 },
+  protein: { type: Number, default: 0 },
+  carbs: { type: Number, default: 0 },
+  fat: { type: Number, default: 0 },
+  time: String
+});
+
+const daySchema = new mongoose.Schema({
+  dayOfWeek: { type: String, enum: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'], required: true },
+  breakfast: mealSchema,
+  snack1: mealSchema,
+  lunch: mealSchema,
+  snack2: mealSchema,
+  dinner: mealSchema
 });
 
 const dietPlanSchema = new mongoose.Schema({
-  planName: {
+  title: {
     type: String,
     required: true,
     trim: true
@@ -32,27 +36,32 @@ const dietPlanSchema = new mongoose.Schema({
     enum: ['Weight Loss', 'Muscle Gain', 'Maintain', 'Bulking', 'Cutting', 'Endurance'],
     required: true
   },
-  targetCalories: {
+  durationWeeks: {
+    type: Number,
+    default: 4
+  },
+  dailyCalories: {
     type: Number,
     required: true
   },
-  targetProtein: {
+  protein: {
     type: Number,
     required: true
   },
-  targetCarbs: {
+  carbs: {
     type: Number,
     required: true
   },
-  targetFat: {
+  fat: {
     type: Number,
     required: true
   },
-  waterTargetLiters: {
+  waterTarget: {
     type: Number,
     default: 2.5
   },
-  meals: [dietPlanMealSchema],
+  notes: String,
+  days: [daySchema],
   trainerId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
@@ -63,10 +72,10 @@ const dietPlanSchema = new mongoose.Schema({
     enum: ['Active', 'Archived', 'Draft'],
     default: 'Active'
   },
-  assignedUsers: [{
+  assignedUserId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User'
-  }]
+  }
 }, {
   timestamps: true
 });

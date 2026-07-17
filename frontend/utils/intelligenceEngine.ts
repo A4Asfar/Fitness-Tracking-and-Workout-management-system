@@ -6,12 +6,16 @@ export interface IntelligenceParams {
 }
 
 export interface IntelligenceResult {
-  fitnessScore: number; // 0 - 100
-  scoreLabel: string; // Excellent, Very Good, Good, Average, Poor
-  healthGrade: string; // A+, A, B, C, D
+  fitnessScore: number;
+  scoreLabel: string;
+  workoutScore: number;
+  nutritionScore: number;
+  dietAdherence: number;
+  recoveryScore: number;
+  healthGrade: string;
   netCalories: number;
-  netCaloriesLabel: string; // Deficit, Surplus, Maintenance
-  netCaloriesColor: string; // Green, Blue, Orange, Red
+  netCaloriesLabel: string;
+  netCaloriesColor: string;
   goalInsight: string;
   aiCoachMessages: string[];
   achievements: { id: string; title: string; unlocked: boolean; icon: string }[];
@@ -20,11 +24,6 @@ export interface IntelligenceResult {
     caloriesConsumed: number[];
     workoutVolume: number[];
     labels: string[];
-  };
-  comparison: {
-    workoutEffort: number;
-    nutritionQuality: number;
-    recovery: number;
   };
   dietPlanComparison?: {
     caloriesPlanned: number;
@@ -35,248 +34,267 @@ export interface IntelligenceResult {
     carbsConsumed: number;
     fatPlanned: number;
     fatConsumed: number;
-    completionPct: number;
-    statusLabel: string;
+    waterPlanned: number;
+    waterConsumed: number;
+    fiberPlanned: number;
+    fiberConsumed: number;
+    dailyCompliancePct: number;
+    weeklyCompliancePct: number;
+    monthlyCompliancePct: number;
+    adherenceLabel: string;
+    mealStatuses: Record<string, 'Completed' | 'Partially Followed' | 'Skipped' | 'Extra'>;
   };
+}
+
+const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+
+function calculateDailyCompliance(plannedDay: any, loggedMealsForDay: any[]) {
+  if (!plannedDay) return { compliance: 0, statuses: {} };
+
+  let totalWeight = 0;
+  let earnedWeight = 0;
+  const statuses: Record<string, 'Completed' | 'Partially Followed' | 'Skipped' | 'Extra'> = {};
+
+  const loggedTypes = loggedMealsForDay.map((m: any) => m.mealType || m.category || 'Unknown');
+  const loggedSet = new Set(loggedTypes);
+
+  // Planned Meals Check
+  ['breakfast', 'snack1', 'lunch', 'snack2', 'dinner'].forEach(mealKey => {
+     const pMeal = plannedDay[mealKey];
+     if (pMeal && pMeal.foods && pMeal.foods.length > 0) {
+        totalWeight += 1;
+        const checkKey = mealKey.includes('snack') ? 'Snack' : mealKey.charAt(0).toUpperCase() + mealKey.slice(1);
+        
+        const matchingLog = loggedMealsForDay.find(m => (m.mealType || m.category) === checkKey);
+        
+        if (!matchingLog) {
+           statuses[mealKey] = 'Skipped';
+        } else {
+           // Compare macros within 15% threshold
+           const calsDiff = Math.abs((matchingLog.calories || 0) - (pMeal.calories || 0));
+           const isClose = calsDiff <= (pMeal.calories * 0.20) || calsDiff < 50; // 20% or small absolute diff
+
+           if (isClose) {
+              statuses[mealKey] = 'Completed';
+              earnedWeight += 1;
+           } else {
+              statuses[mealKey] = 'Partially Followed';
+              earnedWeight += 0.5;
+           }
+           loggedSet.delete(checkKey);
+        }
+     }
+  });
+
+  // Extra Meals Check
+  loggedSet.forEach(extra => {
+     statuses[`extra_${extra}`] = 'Extra';
+     totalWeight += 0.2; // Minor penalty for off-plan eating
+  });
+
+  const compliance = totalWeight > 0 ? Math.round((earnedWeight / totalWeight) * 100) : 0;
+  return { compliance: Math.min(100, Math.max(0, compliance)), statuses };
 }
 
 export function generateIntelligence({ user, analytics, meals, dietPlan }: IntelligenceParams): IntelligenceResult {
   const goal = dietPlan?.goal || user?.fitnessGoal || 'Maintain Fitness';
-  const targetCalories = dietPlan?.targetCalories || (user as any)?.dailyCalorieTarget || (goal.includes('Loss') ? 1800 : goal.includes('Gain') ? 2800 : 2200);
-  const targetProtein = dietPlan?.targetProtein || (user?.weight ? user.weight * 2 : 150);
+  const targetCalories = dietPlan?.dailyCalories || (user as any)?.dailyCalorieTarget || (goal.includes('Loss') ? 1800 : goal.includes('Gain') ? 2800 : 2200);
+  const targetProtein = dietPlan?.protein || (user?.weight ? user.weight * 2 : 150);
 
   // --- Date Math ---
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const sevenDaysAgo = new Date(today);
-  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+  
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
 
-  // --- Aggregate Weekly Meals ---
-  const weeklyMeals = meals.filter((m: any) => new Date(m.selectedAt || m.createdAt || m.date) >= sevenDaysAgo);
+  // --- Filter Meals ---
+  const last30Meals = meals.filter((m: any) => new Date(m.selectedAt || m.createdAt || m.date) >= thirtyDaysAgo);
   
   let todayConsumed = 0;
   let todayProtein = 0;
-  
-  const dailyMealsMap: Record<string, { cals: number, protein: number }> = {};
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(sevenDaysAgo);
-    d.setDate(d.getDate() + i);
-    // Local date string YYYY-MM-DD
-    const dateStr = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-    dailyMealsMap[dateStr] = { cals: 0, protein: 0 };
-  }
+  let todayCarbs = 0;
+  let todayFat = 0;
+  let todayFiber = 0;
+  let todayWater = 0;
 
-  weeklyMeals.forEach(m => {
-    const mDate = new Date(m.selectedAt || m.createdAt || m.date);
-    const dateStr = new Date(mDate.getTime() - (mDate.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-    
-    if (dailyMealsMap[dateStr]) {
-      dailyMealsMap[dateStr].cals += (m.calories || 0);
-      dailyMealsMap[dateStr].protein += (m.protein || 0);
-    }
-    
-    // Check if today
-    const mDateNoTime = new Date(mDate);
-    mDateNoTime.setHours(0, 0, 0, 0);
-    if (mDateNoTime.getTime() === today.getTime()) {
-      todayConsumed += (m.calories || 0);
-      todayProtein += (m.protein || 0);
-    }
+  const todayMeals = last30Meals.filter((m: any) => {
+    const md = new Date(m.selectedAt || m.createdAt || m.date);
+    md.setHours(0,0,0,0);
+    return md.getTime() === today.getTime();
   });
 
-  // --- Fallbacks from Analytics ---
-  const todayBurned = analytics?.caloriesSummary?.burned || 0;
-  
-  // Actually, we should get todayConsumed from meals, or fallback to analytics
-  const finalTodayConsumed = todayConsumed > 0 ? todayConsumed : (analytics?.caloriesSummary?.consumed || 0);
-  const netCalories = finalTodayConsumed - todayBurned;
-
-  // --- 1. Net Daily Calories ---
-  let netCaloriesLabel = 'Maintenance';
-  let netCaloriesColor = '#3B82F6'; // Blue
-
-  const maintenance = targetCalories;
-  
-  if (netCalories > maintenance + 300) {
-    netCaloriesLabel = 'Dangerous Surplus';
-    netCaloriesColor = '#EF4444'; // Red
-  } else if (netCalories > maintenance) {
-    netCaloriesLabel = 'Small Surplus';
-    netCaloriesColor = '#F59E0B'; // Orange
-  } else if (netCalories < maintenance - 200) {
-    netCaloriesLabel = 'Healthy Deficit';
-    netCaloriesColor = '#10B981'; // Green
-  }
-
-  // --- 2. Goal Intelligence ---
-  let goalInsight = '';
-  if (goal.includes('Loss') && netCalories > maintenance) {
-    goalInsight = '⚠ Your eating habits are slowing your fat loss. Try to maintain a calorie deficit.';
-  } else if (goal.includes('Gain') && todayProtein < targetProtein * 0.7) {
-    goalInsight = `⚠ Increase protein intake to maximize muscle growth. (Target: ${Math.round(targetProtein)}g)`;
-  } else if (goal.includes('Maintain')) {
-    goalInsight = 'You are doing great maintaining your current balance.';
-  } else {
-    goalInsight = 'You are on track with your fitness goals.';
-  }
-
-  // --- 3. Fitness Score ---
-  let score = 0;
-  
-  // Consistency (Streak) max 30
-  const streak = analytics?.streak || 0;
-  score += Math.min(streak * 5, 30);
-  
-  // Volume/Frequency max 25
-  const countThisWeek = analytics?.thisWeekSummary?.count || 0;
-  score += Math.min(countThisWeek * 6, 25);
-  
-  // Diet Quality max 25
-  if (goal.includes('Loss')) {
-     if (netCalories < maintenance) score += 25;
-     else if (netCalories < maintenance + 200) score += 15;
-     else score += 5;
-  } else if (goal.includes('Gain')) {
-     if (todayProtein >= targetProtein * 0.8) score += 25;
-     else if (todayProtein >= targetProtein * 0.5) score += 15;
-     else score += 5;
-  } else {
-     if (Math.abs(netCalories - maintenance) < 300) score += 25;
-     else score += 15;
-  }
-  
-  // Goal Progress max 20
-  score += 20; // Base points for participating
-  if (netCaloriesLabel === 'Dangerous Surplus' && goal.includes('Loss')) score -= 15;
-  if (countThisWeek === 0) score -= 10;
-
-  score = Math.max(0, Math.min(score, 100));
-
-  let scoreLabel = 'Poor';
-  if (score >= 90) scoreLabel = 'Excellent';
-  else if (score >= 80) scoreLabel = 'Very Good';
-  else if (score >= 65) scoreLabel = 'Good';
-  else if (score >= 50) scoreLabel = 'Average';
-
-  // --- 4. Weekly Health Grade ---
-  let healthGrade = 'D';
-  if (score >= 95) healthGrade = 'A+';
-  else if (score >= 85) healthGrade = 'A';
-  else if (score >= 75) healthGrade = 'B';
-  else if (score >= 60) healthGrade = 'C';
-
-  // --- 5. AI Coach Insights ---
-  const aiCoachMessages: string[] = [];
-  if (countThisWeek >= 3 && netCalories > maintenance + 500 && goal.includes('Loss')) {
-    aiCoachMessages.push("You trained consistently this week but your calorie intake is preventing fat loss.");
-  } else if (countThisWeek >= 3 && Math.abs(netCalories - maintenance) < 300) {
-    aiCoachMessages.push("Excellent balance between nutrition and exercise.");
-  } else if (countThisWeek === 0) {
-    aiCoachMessages.push("You missed workouts for several days. Time to get back to it!");
-  }
-  
-  if (todayProtein < targetProtein * 0.6) {
-    aiCoachMessages.push(`Protein intake is below target. Aim for ${Math.round(targetProtein)}g to support recovery.`);
-  }
-
-  if (aiCoachMessages.length === 0) {
-    aiCoachMessages.push("You are doing well. Keep up the solid routine!");
-  }
-
-  // --- 6. Achievements ---
-  const achievements = [
-    { id: '1', title: '7-Day Streak', unlocked: streak >= 7, icon: 'Flame' },
-    { id: '2', title: 'Perfect Protein', unlocked: todayProtein >= targetProtein * 0.9, icon: 'Dumbbell' },
-    { id: '3', title: 'Calorie Goal', unlocked: (goal.includes('Loss') && netCalories < maintenance) || (!goal.includes('Loss') && Math.abs(netCalories - maintenance) < 300), icon: 'Target' },
-    { id: '4', title: 'Consistent', unlocked: countThisWeek >= 4, icon: 'Activity' },
-    { id: '5', title: 'Balanced Life', unlocked: score >= 85, icon: 'HeartPulse' }
-  ];
-
-  // --- 7. Trends ---
-  const labels: string[] = [];
-  const cBurned: number[] = [];
-  const cConsumed: number[] = [];
-  const wVolume: number[] = [];
-
-  const chartData = analytics?.chartData || [];
-  
-  for (let i = 0; i < 7; i++) {
-    const d = new Date(sevenDaysAgo);
-    d.setDate(d.getDate() + i);
-    const dateStrLocal = new Date(d.getTime() - (d.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
-    
-    const chartDay = chartData.find((cd: any) => cd.date === dateStrLocal);
-    
-    labels.push(d.toLocaleDateString(undefined, { weekday: 'narrow' }));
-    cBurned.push(chartDay?.calories || 0);
-    wVolume.push(chartDay?.volume || 0);
-    cConsumed.push(dailyMealsMap[dateStrLocal]?.cals || 0);
-  }
-
-  // --- 8. Comparison ---
-  const lastWeekVol = analytics?.lastWeekStats?.volume || 1;
-  const thisWeekVol = analytics?.thisWeekSummary?.volume || 0;
-  const weeklyTrends = {
-    labels,
-    caloriesBurned: cBurned,
-    caloriesConsumed: cConsumed,
-    workoutVolume: wVolume
-  };
+  todayMeals.forEach(m => {
+    todayConsumed += m.calories || 0;
+    todayProtein += m.protein || 0;
+    todayCarbs += m.carbs || 0;
+    todayFat += m.fats || 0;
+    todayFiber += m.fiber || 0;
+    // Assume water might be logged somewhere, if not it's 0
+  });
 
   let dietPlanComparison;
+  let dietAdherence = 0;
+  let aiCoachMessages: string[] = [];
+
+  // --- Deep AI Compliance Engine ---
   if (dietPlan) {
-     let todayCarbs = 0;
-     let todayFat = 0;
-     const todayMeals = meals.filter((m: any) => {
-       const md = new Date(m.selectedAt || m.createdAt || m.date);
-       md.setHours(0,0,0,0);
-       return md.getTime() === today.getTime();
-     });
-     todayMeals.forEach(m => {
-       todayCarbs += m.carbs || 0;
-       todayFat += m.fats || 0;
-     });
+     const complianceHistory: { date: string, pct: number, statuses: any }[] = [];
+     let consecutiveSkips = 0;
+     let consistentlyExceedingCarbs = 0;
+     let consistentlyBelowProtein = 0;
 
-     const plannedTypes = new Set(dietPlan.meals.map((m: any) => m.mealType));
-     const loggedTypes = new Set(todayMeals.map((m: any) => m.mealType));
-     let matched = 0;
-     plannedTypes.forEach(pt => { if (loggedTypes.has(pt)) matched++; });
-     const completionPct = plannedTypes.size > 0 ? Math.round((matched / plannedTypes.size) * 100) : 0;
+     // Calculate last 30 days compliance
+     for (let i = 0; i < 30; i++) {
+        const d = new Date(thirtyDaysAgo);
+        d.setDate(d.getDate() + i);
+        const dayName = DAYS_OF_WEEK[d.getDay()];
+        
+        const dayMeals = last30Meals.filter(m => {
+           const md = new Date(m.selectedAt || m.createdAt || m.date);
+           md.setHours(0,0,0,0);
+           return md.getTime() === d.getTime();
+        });
 
-     let statusLabel = 'On Track';
-     if (todayConsumed > dietPlan.targetCalories + 200) statusLabel = 'Surplus';
-     else if (todayConsumed < dietPlan.targetCalories - 200) statusLabel = 'Deficit';
+        const plannedDay = dietPlan.days.find((pd: any) => pd.dayOfWeek === dayName);
+        if (!plannedDay) continue;
+
+        const { compliance, statuses } = calculateDailyCompliance(plannedDay, dayMeals);
+        complianceHistory.push({ date: d.toISOString(), pct: compliance, statuses });
+
+        // Insights Logic
+        if (statuses['breakfast'] === 'Skipped') consecutiveSkips++;
+        else consecutiveSkips = 0;
+
+        const dayCarbs = dayMeals.reduce((acc, m) => acc + (m.carbs || 0), 0);
+        const dayProtein = dayMeals.reduce((acc, m) => acc + (m.protein || 0), 0);
+        
+        if (dayCarbs > dietPlan.carbs * 1.2) consistentlyExceedingCarbs++;
+        if (dayProtein < dietPlan.protein * 0.8) consistentlyBelowProtein++;
+     }
+
+     const todayData = complianceHistory[complianceHistory.length - 1] || { pct: 0, statuses: {} };
+     const last7 = complianceHistory.slice(-7);
+     
+     const dailyCompliancePct = todayData.pct;
+     const weeklyCompliancePct = last7.length ? Math.round(last7.reduce((a, b) => a + b.pct, 0) / last7.length) : 0;
+     const monthlyCompliancePct = complianceHistory.length ? Math.round(complianceHistory.reduce((a, b) => a + b.pct, 0) / complianceHistory.length) : 0;
+
+     dietAdherence = dailyCompliancePct; // We use daily for the main score impact
+
+     let adherenceLabel = 'Excellent';
+     if (weeklyCompliancePct < 50) adherenceLabel = 'Poor';
+     else if (weeklyCompliancePct < 75) adherenceLabel = 'Needs Improvement';
+     else if (weeklyCompliancePct < 90) adherenceLabel = 'Good';
 
      dietPlanComparison = {
-       caloriesPlanned: dietPlan.targetCalories,
+       caloriesPlanned: dietPlan.dailyCalories,
        caloriesConsumed: todayConsumed,
-       proteinPlanned: dietPlan.targetProtein,
+       proteinPlanned: dietPlan.protein,
        proteinConsumed: todayProtein,
-       carbsPlanned: dietPlan.targetCarbs,
+       carbsPlanned: dietPlan.carbs,
        carbsConsumed: todayCarbs,
-       fatPlanned: dietPlan.targetFat,
+       fatPlanned: dietPlan.fat,
        fatConsumed: todayFat,
-       completionPct,
-       statusLabel
+       waterPlanned: dietPlan.waterTarget || 2.5,
+       waterConsumed: todayWater || 0,
+       fiberPlanned: 25, // Standard baseline if not in plan
+       fiberConsumed: todayFiber,
+       dailyCompliancePct,
+       weeklyCompliancePct,
+       monthlyCompliancePct,
+       adherenceLabel,
+       mealStatuses: todayData.statuses
      };
+
+     // Generate AI Messages
+     if (consecutiveSkips >= 3) aiCoachMessages.push("You skipped breakfast for 3 consecutive days. This impacts metabolism.");
+     if (consistentlyExceedingCarbs >= 5) aiCoachMessages.push("You consistently exceed carbohydrate intake targets.");
+     if (consistentlyBelowProtein >= 5) aiCoachMessages.push("Protein intake is frequently below target. Consider protein shakes.");
+     if (weeklyCompliancePct > 90) aiCoachMessages.push("Excellent consistency this week. You're perfectly on track!");
+     else if (dailyCompliancePct > 90) aiCoachMessages.push(`You followed today's diet by ${dailyCompliancePct}%. Great job!`);
+  }
+
+  // --- 1. Workout Score (Max 100) ---
+  let workoutScore = 0;
+  const streak = analytics?.streak || 0;
+  const countThisWeek = analytics?.thisWeekSummary?.count || 0;
+  workoutScore += Math.min(streak * 10, 40); 
+  workoutScore += Math.min(countThisWeek * 20, 60); 
+  workoutScore = Math.max(0, Math.min(100, workoutScore));
+
+  // --- 2. Nutrition Score (Max 100) ---
+  let nutritionScore = 100;
+  let maintenance = user?.weight ? user.weight * 24 * 1.2 : 2500;
+  if (user?.gender === 'female') maintenance = user?.weight ? user.weight * 22 * 1.2 : 2000;
+  
+  let cBurnedToday = 0;
+  if (analytics?.recentWorkouts) {
+    const rw = analytics.recentWorkouts.find((w:any) => new Date(w.date).getTime() >= today.getTime());
+    if (rw) cBurnedToday = rw.caloriesBurned || 0;
+  }
+  
+  const netCalories = todayConsumed - cBurnedToday;
+  let netCaloriesLabel = 'Maintenance';
+  let netCaloriesColor = '#38BDF8'; 
+
+  if (netCalories < maintenance - 500) {
+    netCaloriesLabel = 'Deficit';
+    netCaloriesColor = '#10B981'; 
+    if (!goal.includes('Loss')) nutritionScore -= 20;
+  } else if (netCalories > maintenance + 500) {
+    netCaloriesLabel = 'Dangerous Surplus';
+    netCaloriesColor = '#EF4444'; 
+    if (goal.includes('Loss')) nutritionScore -= 40;
+    else if (!goal.includes('Gain') && !goal.includes('Bulking')) nutritionScore -= 20;
+  }
+
+  if (todayProtein < targetProtein * 0.7) nutritionScore -= 20;
+  nutritionScore = Math.max(0, Math.min(100, nutritionScore));
+
+  if (!dietPlan) dietAdherence = nutritionScore; // Fallback
+
+  // --- 4. Recovery Score (Max 100) ---
+  let recoveryScore = 100;
+  if (countThisWeek >= 6) recoveryScore = 60; 
+  if (countThisWeek === 0) recoveryScore = 80; 
+  if (nutritionScore < 50) recoveryScore -= 20; 
+  recoveryScore = Math.max(0, Math.min(100, recoveryScore));
+
+  // --- 5. Final Fitness Score ---
+  const finalScore = Math.round(
+    (workoutScore * 0.35) + 
+    (nutritionScore * 0.25) + 
+    (dietAdherence * 0.25) + 
+    (recoveryScore * 0.15)
+  );
+
+  let scoreLabel = 'Excellent';
+  let healthGrade = 'A+';
+  if (finalScore < 50) { scoreLabel = 'Poor'; healthGrade = 'D'; }
+  else if (finalScore < 70) { scoreLabel = 'Average'; healthGrade = 'C'; }
+  else if (finalScore < 85) { scoreLabel = 'Good'; healthGrade = 'B'; }
+  else if (finalScore < 95) { scoreLabel = 'Very Good'; healthGrade = 'A'; }
+
+  if (aiCoachMessages.length === 0) {
+     aiCoachMessages.push("Keep pushing towards your goals.");
   }
 
   return {
-    fitnessScore: score,
+    fitnessScore: finalScore,
     scoreLabel,
+    workoutScore,
+    nutritionScore,
+    dietAdherence,
+    recoveryScore,
     healthGrade,
     netCalories,
     netCaloriesLabel,
     netCaloriesColor,
-    goalInsight,
+    goalInsight: dietPlan ? `Active Plan: ${dietPlan.title}` : 'No plan assigned.',
     aiCoachMessages,
-    achievements,
-    weeklyTrends,
-    comparison: {
-      workoutEffort: Math.min(Math.round(((analytics?.thisWeekSummary?.count || 0) / 3) * 100), 100),
-      nutritionQuality: scoreLabel === 'Excellent' ? 95 : scoreLabel === 'Very Good' ? 85 : 70,
-      recovery: 80
-    },
+    achievements: [],
+    weeklyTrends: { labels: [], caloriesBurned: [], caloriesConsumed: [], workoutVolume: [] },
     dietPlanComparison
   };
 }

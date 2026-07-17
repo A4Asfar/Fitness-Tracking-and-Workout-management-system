@@ -4,24 +4,27 @@ const { asyncHandler } = require('../middleware/errorMiddleware');
 // @desc    Create a new Diet Plan (Admin/Trainer)
 // @route   POST /api/diet-plans
 exports.createDietPlan = asyncHandler(async (req, res) => {
-  const { planName, goal, targetCalories, targetProtein, targetCarbs, targetFat, waterTargetLiters, meals, status } = req.body;
+  const { title, goal, durationWeeks, dailyCalories, protein, carbs, fat, waterTarget, notes, days, status, assignedUserId } = req.body;
 
-  if (!planName || !goal || !targetCalories) {
+  if (!title || !goal || !dailyCalories) {
     res.status(400);
-    throw new Error('Please provide all required fields (planName, goal, targetCalories)');
+    throw new Error('Please provide all required fields (title, goal, dailyCalories)');
   }
 
   const dietPlan = new DietPlan({
-    planName,
+    title,
     goal,
-    targetCalories,
-    targetProtein: targetProtein || 150,
-    targetCarbs: targetCarbs || 200,
-    targetFat: targetFat || 70,
-    waterTargetLiters,
-    meals: meals || [],
+    durationWeeks,
+    dailyCalories,
+    protein: protein || 150,
+    carbs: carbs || 200,
+    fat: fat || 70,
+    waterTarget,
+    notes,
+    days: days || [],
     trainerId: req.userId,
-    status: status || 'Active'
+    status: status || 'Active',
+    assignedUserId
   });
 
   await dietPlan.save();
@@ -31,7 +34,6 @@ exports.createDietPlan = asyncHandler(async (req, res) => {
 // @desc    Get all Diet Plans (Admin/Trainer)
 // @route   GET /api/diet-plans
 exports.getAllDietPlans = asyncHandler(async (req, res) => {
-  // Can filter by trainerId if needed, but returning all for now
   const plans = await DietPlan.find({}).sort({ createdAt: -1 });
   res.json(plans);
 });
@@ -39,8 +41,7 @@ exports.getAllDietPlans = asyncHandler(async (req, res) => {
 // @desc    Get assigned Diet Plan for current user
 // @route   GET /api/diet-plans/my-plan
 exports.getMyDietPlan = asyncHandler(async (req, res) => {
-  // Find a plan where the current user is in the assignedUsers array and status is Active
-  const plan = await DietPlan.findOne({ assignedUsers: req.userId, status: 'Active' }).sort({ createdAt: -1 });
+  const plan = await DietPlan.findOne({ assignedUserId: req.userId, status: 'Active' }).sort({ createdAt: -1 });
   
   if (!plan) {
     return res.status(200).json(null); // No plan assigned
@@ -90,10 +91,8 @@ exports.assignDietPlan = asyncHandler(async (req, res) => {
     throw new Error('Diet Plan not found');
   }
   
-  if (!plan.assignedUsers.includes(userId)) {
-    plan.assignedUsers.push(userId);
-    await plan.save();
-  }
+  plan.assignedUserId = userId;
+  await plan.save();
 
   res.json({ message: 'Plan assigned successfully', plan });
 });

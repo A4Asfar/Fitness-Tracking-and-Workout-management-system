@@ -1,28 +1,49 @@
 import api from './api';
 
+export interface FoodItem {
+  name: string;
+  serving: string;
+  quantity: number;
+  _id?: string;
+}
+
 export interface DietPlanMeal {
   _id?: string;
-  mealType: 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack';
-  foodName: string;
-  servingSize: string;
-  quantity: number;
-  notes?: string;
+  mealName: string;
+  foods: FoodItem[];
+  calories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  time?: string;
+}
+
+export interface DietPlanDay {
+  _id?: string;
+  dayOfWeek: 'Monday' | 'Tuesday' | 'Wednesday' | 'Thursday' | 'Friday' | 'Saturday' | 'Sunday';
+  breakfast?: DietPlanMeal;
+  snack1?: DietPlanMeal;
+  lunch?: DietPlanMeal;
+  snack2?: DietPlanMeal;
+  dinner?: DietPlanMeal;
 }
 
 export interface DietPlan {
   _id?: string;
-  planName: string;
+  title: string;
   goal: string;
-  targetCalories: number;
-  targetProtein: number;
-  targetCarbs: number;
-  targetFat: number;
-  waterTargetLiters: number;
-  meals: DietPlanMeal[];
+  durationWeeks: number;
+  dailyCalories: number;
+  protein: number;
+  carbs: number;
+  fat: number;
+  waterTarget: number;
+  notes?: string;
+  days: DietPlanDay[];
   status: 'Active' | 'Archived' | 'Draft';
   createdAt?: string;
   trainerId?: string;
-  assignedUsers?: string[];
+  assignedUserId?: string;
 }
 
 export const DietPlanService = {

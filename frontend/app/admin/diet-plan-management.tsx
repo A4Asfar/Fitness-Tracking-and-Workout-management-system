@@ -42,12 +42,32 @@ export default function AdminDietPlanManagement() {
       const { _id, ...rest } = plan;
       await DietPlanService.createDietPlan({
         ...rest,
-        planName: `${plan.planName} (Copy)`,
-        assignedUsers: []
-      });
+        title: `${plan.title} (Copy)`,
+        assignedUserId: undefined
+      } as unknown as DietPlan);
       fetchPlans();
     } catch (e) {
       Alert.alert("Error", "Could not duplicate plan");
+    }
+  };
+
+  const assignToUser = async (userId: string) => {
+    if (!selectedPlan) return;
+    try {
+      // Create a copy of the template exclusively for this user
+      const { _id, createdAt, updatedAt, ...rest } = selectedPlan;
+      await DietPlanService.createDietPlan({
+        ...rest,
+        title: `${selectedPlan.title} (Assigned)`,
+        assignedUserId: userId
+      } as unknown as DietPlan);
+      
+      Alert.alert("Success", "Template duplicated and assigned to user");
+      setShowAssignModal(false);
+      setSelectedPlan(null);
+      fetchPlans();
+    } catch (e) {
+      Alert.alert("Error", "Could not assign plan");
     }
   };
 
@@ -77,18 +97,18 @@ export default function AdminDietPlanManagement() {
           plans.map(plan => (
             <View key={plan._id} style={[SharedStyles.card, s.planCard]}>
                <View style={s.pcHeader}>
-                 <Text style={s.planName}>{plan.planName}</Text>
+                 <Text style={s.planName}>{plan.title}</Text>
                  <View style={[s.statusBadge, plan.status === 'Active' ? s.activeBadge : s.draftBadge]}>
                     <Text style={s.statusText}>{plan.status}</Text>
                  </View>
                </View>
                
-               <Text style={s.goalText}>Goal: {plan.goal}</Text>
+               <Text style={s.goalText}>Goal: {plan.goal} • {plan.durationWeeks} Weeks</Text>
                <View style={s.statsRow}>
-                  <Text style={s.statText}>Calories: {plan.targetCalories}</Text>
-                  <Text style={s.statText}>P: {plan.targetProtein}g</Text>
-                  <Text style={s.statText}>C: {plan.targetCarbs}g</Text>
-                  <Text style={s.statText}>F: {plan.targetFat}g</Text>
+                  <Text style={s.statText}>Cal: {plan.dailyCalories}</Text>
+                  <Text style={s.statText}>P: {plan.protein}g</Text>
+                  <Text style={s.statText}>C: {plan.carbs}g</Text>
+                  <Text style={s.statText}>F: {plan.fat}g</Text>
                </View>
                
                <View style={s.actionsRow}>

@@ -174,9 +174,9 @@ export default function IntelligenceDashboardScreen() {
                 <Text style={[s.sumCardSub, { color: data.netCaloriesColor }]}>{data.netCaloriesLabel}</Text>
               </View>
               <View style={s.sumCard}>
-                <Text style={s.sumCardLab}>Weekly Effort</Text>
-                <Text style={s.sumCardVal}>{data.comparison.workoutEffort}%</Text>
-                <Text style={s.sumCardSub}>vs Last Week</Text>
+                <Text style={s.sumCardLab}>Diet Adherence</Text>
+                <Text style={s.sumCardVal}>{data.dietAdherence}%</Text>
+                <Text style={s.sumCardSub}>Today</Text>
               </View>
             </View>
           </View>
@@ -204,63 +204,115 @@ export default function IntelligenceDashboardScreen() {
             </View>
           )}
 
-          {/* NUTRITION VS WORKOUT COMPARISON */}
+          {/* NUTRITION ANALYSIS */}
           {data.dietPlanComparison && (
             <>
-              <Text style={s.sectionTitle}>Diet Plan Adherence</Text>
-              <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
-                  <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '800' }}>Completion: {data.dietPlanComparison.completionPct}%</Text>
-                  <Text style={{ color: data.dietPlanComparison.statusLabel === 'On Track' ? '#10B981' : '#F59E0B', fontWeight: '800' }}>{data.dietPlanComparison.statusLabel}</Text>
-                </View>
-                
-                <View style={{ gap: 12 }}>
-                  <View>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>Calories</Text>
-                      <Text style={{ color: '#F8FAFC', fontSize: 12, fontWeight: '800' }}>{data.dietPlanComparison.caloriesConsumed} / {data.dietPlanComparison.caloriesPlanned}</Text>
+              <Text style={s.sectionTitle}>Nutrition Analysis</Text>
+              
+              <View style={[SharedStyles.card, { padding: 20, marginBottom: 16 }]}>
+                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+                    <View>
+                       <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '800' }}>Compliance Score</Text>
+                       <Text style={{ color: '#94A3B8', fontSize: 12 }}>{data.dietPlanComparison.adherenceLabel}</Text>
                     </View>
-                    <View style={s.compBarBg}>
-                      <View style={[s.compBarFill, { width: `${Math.min((data.dietPlanComparison.caloriesConsumed / (data.dietPlanComparison.caloriesPlanned || 1)) * 100, 100)}%`, backgroundColor: '#F59E0B' }]} />
+                    <View style={{ alignItems: 'flex-end' }}>
+                       <Text style={{ color: '#38BDF8', fontSize: 24, fontWeight: '900' }}>{data.dietPlanComparison.dailyCompliancePct}%</Text>
+                       <Text style={{ color: '#94A3B8', fontSize: 12 }}>Daily</Text>
                     </View>
-                  </View>
+                 </View>
+                 
+                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.05)', paddingTop: 12 }}>
+                    <View style={{ alignItems: 'center', flex: 1 }}>
+                       <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '800' }}>{data.dietPlanComparison.weeklyCompliancePct}%</Text>
+                       <Text style={{ color: '#94A3B8', fontSize: 12 }}>Weekly</Text>
+                    </View>
+                    <View style={{ width: 1, backgroundColor: 'rgba(255,255,255,0.05)' }} />
+                    <View style={{ alignItems: 'center', flex: 1 }}>
+                       <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '800' }}>{data.dietPlanComparison.monthlyCompliancePct}%</Text>
+                       <Text style={{ color: '#94A3B8', fontSize: 12 }}>Monthly</Text>
+                    </View>
+                 </View>
+              </View>
 
-                  <View>
-                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
-                      <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>Protein</Text>
-                      <Text style={{ color: '#F8FAFC', fontSize: 12, fontWeight: '800' }}>{data.dietPlanComparison.proteinConsumed}g / {data.dietPlanComparison.proteinPlanned}g</Text>
-                    </View>
-                    <View style={s.compBarBg}>
-                      <View style={[s.compBarFill, { width: `${Math.min((data.dietPlanComparison.proteinConsumed / (data.dietPlanComparison.proteinPlanned || 1)) * 100, 100)}%`, backgroundColor: '#10B981' }]} />
-                    </View>
-                  </View>
+              <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+                <View style={{ gap: 16 }}>
+                  {[
+                    { label: 'Calories', planned: data.dietPlanComparison.caloriesPlanned, consumed: data.dietPlanComparison.caloriesConsumed, unit: 'kcal', color: '#F59E0B' },
+                    { label: 'Protein', planned: data.dietPlanComparison.proteinPlanned, consumed: data.dietPlanComparison.proteinConsumed, unit: 'g', color: '#10B981' },
+                    { label: 'Carbs', planned: data.dietPlanComparison.carbsPlanned, consumed: data.dietPlanComparison.carbsConsumed, unit: 'g', color: '#38BDF8' },
+                    { label: 'Fat', planned: data.dietPlanComparison.fatPlanned, consumed: data.dietPlanComparison.fatConsumed, unit: 'g', color: '#EF4444' },
+                    { label: 'Fiber', planned: data.dietPlanComparison.fiberPlanned, consumed: data.dietPlanComparison.fiberConsumed, unit: 'g', color: '#8B5CF6' },
+                    { label: 'Water', planned: data.dietPlanComparison.waterPlanned, consumed: data.dietPlanComparison.waterConsumed, unit: 'L', color: '#0EA5E9' },
+                  ].map((m, idx) => {
+                     const diff = m.consumed - m.planned;
+                     const diffText = diff > 0 ? `+${diff.toFixed(m.unit==='L'?1:0)}${m.unit}` : `${diff.toFixed(m.unit==='L'?1:0)}${m.unit}`;
+                     const diffColor = diff > 0 ? (m.label === 'Calories' || m.label === 'Carbs' || m.label === 'Fat' ? '#EF4444' : '#10B981') : (m.label === 'Water' || m.label === 'Protein' ? '#EF4444' : '#94A3B8');
+                     const pct = Math.min((m.consumed / (m.planned || 1)) * 100, 100);
+
+                     return (
+                       <View key={idx}>
+                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 4 }}>
+                           <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '700' }}>{m.label}</Text>
+                           <View style={{ flexDirection: 'row', gap: 12 }}>
+                              <Text style={{ color: '#F8FAFC', fontSize: 13, fontWeight: '800' }}>{m.consumed.toFixed(m.unit==='L'?1:0)} / {m.planned}{m.unit}</Text>
+                              <Text style={{ color: diffColor, fontSize: 13, fontWeight: '800', width: 45, textAlign: 'right' }}>{diffText}</Text>
+                           </View>
+                         </View>
+                         <View style={s.compBarBg}>
+                           <View style={[s.compBarFill, { width: `${pct}%`, backgroundColor: m.color }]} />
+                         </View>
+                       </View>
+                     );
+                  })}
                 </View>
               </View>
             </>
           )}
 
           <Text style={s.sectionTitle}>Intelligence Analysis</Text>
-          <View style={[isWide && { flexDirection: 'row', gap: 16 }]}>
-            <View style={[SharedStyles.card, s.compCard, isWide && { flex: 1 }]}>
+          <View style={[isWide && { flexDirection: 'row', gap: 16, flexWrap: 'wrap' }]}>
+            <View style={[SharedStyles.card, s.compCard, isWide && { flex: 1, minWidth: '45%' }]}>
               <View style={s.compHeader}>
                 <Dumbbell size={20} color="#38BDF8" />
-                <Text style={s.compTitle}>Workout Effort</Text>
+                <Text style={s.compTitle}>Workout Score</Text>
               </View>
               <View style={s.compBarBg}>
-                <View style={[s.compBarFill, { width: `${data.comparison.workoutEffort}%`, backgroundColor: '#38BDF8' }]} />
+                <View style={[s.compBarFill, { width: `${data.workoutScore}%`, backgroundColor: '#38BDF8' }]} />
               </View>
-              <Text style={s.compVal}>{data.comparison.workoutEffort}% <Text style={s.compSub}>Capacity</Text></Text>
+              <Text style={s.compVal}>{data.workoutScore} <Text style={s.compSub}>/ 100</Text></Text>
             </View>
             
-            <View style={[SharedStyles.card, s.compCard, isWide && { flex: 1 }]}>
+            <View style={[SharedStyles.card, s.compCard, isWide && { flex: 1, minWidth: '45%' }]}>
               <View style={s.compHeader}>
                 <Flame size={20} color="#F59E0B" />
-                <Text style={s.compTitle}>Nutrition Quality</Text>
+                <Text style={s.compTitle}>Nutrition Score</Text>
               </View>
               <View style={s.compBarBg}>
-                <View style={[s.compBarFill, { width: `${data.comparison.nutritionQuality}%`, backgroundColor: '#F59E0B' }]} />
+                <View style={[s.compBarFill, { width: `${data.nutritionScore}%`, backgroundColor: '#F59E0B' }]} />
               </View>
-              <Text style={s.compVal}>{data.comparison.nutritionQuality}% <Text style={s.compSub}>Optimization</Text></Text>
+              <Text style={s.compVal}>{data.nutritionScore} <Text style={s.compSub}>/ 100</Text></Text>
+            </View>
+
+            <View style={[SharedStyles.card, s.compCard, isWide && { flex: 1, minWidth: '45%' }]}>
+              <View style={s.compHeader}>
+                <Target size={20} color="#10B981" />
+                <Text style={s.compTitle}>Diet Adherence</Text>
+              </View>
+              <View style={s.compBarBg}>
+                <View style={[s.compBarFill, { width: `${data.dietAdherence}%`, backgroundColor: '#10B981' }]} />
+              </View>
+              <Text style={s.compVal}>{data.dietAdherence}% <Text style={s.compSub}>Compliance</Text></Text>
+            </View>
+
+            <View style={[SharedStyles.card, s.compCard, isWide && { flex: 1, minWidth: '45%' }]}>
+              <View style={s.compHeader}>
+                <Zap size={20} color="#A855F7" />
+                <Text style={s.compTitle}>Recovery Score</Text>
+              </View>
+              <View style={s.compBarBg}>
+                <View style={[s.compBarFill, { width: `${data.recoveryScore}%`, backgroundColor: '#A855F7' }]} />
+              </View>
+              <Text style={s.compVal}>{data.recoveryScore} <Text style={s.compSub}>/ 100</Text></Text>
             </View>
           </View>
 
