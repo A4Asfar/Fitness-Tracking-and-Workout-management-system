@@ -92,6 +92,23 @@ function PillarCard({ icon: Icon, title, data, color }: any) {
   );
 }
 
+function MiniBarChart({ title, data, color }: { title: string, data: number[], color: string }) {
+  const max = Math.max(...data, 100);
+  return (
+    <View style={[SharedStyles.card, { padding: 16, flex: 1, minWidth: 200, marginBottom: 16 }]}>
+       <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '900', marginBottom: 16 }}>{title}</Text>
+       <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 80, gap: 8 }}>
+          {data.map((val, i) => (
+             <View key={i} style={{ flex: 1, alignItems: 'center' }}>
+                <View style={{ width: '100%', height: `${(val / max) * 100}%`, backgroundColor: color, borderRadius: 4, minHeight: 4 }} />
+                <Text style={{ color: '#94A3B8', fontSize: 10, fontWeight: '700', marginTop: 8 }}>W{i+1}</Text>
+             </View>
+          ))}
+       </View>
+    </View>
+  );
+}
+
 export default function IntelligenceDashboardScreen() {
   const { width } = useWindowDimensions();
   const [loading, setLoading] = useState(true);
@@ -321,6 +338,15 @@ export default function IntelligenceDashboardScreen() {
             <PillarCard icon={Zap} title="Recovery Score" data={data.scores.recovery} color="#A855F7" />
             <PillarCard icon={Crown} title="Goal Achievement" data={data.scores.goal} color="#F59E0B" />
             <PillarCard icon={HeartPulse} title="Body Progress" data={data.scores.body} color="#8B5CF6" />
+          </View>
+
+          {/* VISUAL ANALYTICS */}
+          <Text style={s.sectionTitle}>Visual Analytics Trends</Text>
+          <View style={[isWide && { flexDirection: 'row', gap: 16, flexWrap: 'wrap' }]}>
+             <MiniBarChart title="Overall Fitness Trend" data={data.charts.overall} color="#10B981" />
+             <MiniBarChart title="Workout Consistency" data={data.charts.workout} color="#38BDF8" />
+             <MiniBarChart title="Nutrition Quality" data={data.charts.nutrition} color="#F59E0B" />
+             <MiniBarChart title="Recovery Index" data={data.charts.recovery} color="#A855F7" />
           </View>
 
           {/* EXECUTIVE REVIEWS */}

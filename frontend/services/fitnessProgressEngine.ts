@@ -7,6 +7,14 @@ export interface EngineParams {
   meals: any[];
   dietPlan?: any;
   weightLogs?: any[];
+  weights?: {
+    workout: number;
+    nutrition: number;
+    adherence: number;
+    recovery: number;
+    goal: number;
+    body: number;
+  };
 }
 
 export interface ReasonDetail {
@@ -119,7 +127,9 @@ class FitnessProgressEngine {
   public generate(params: EngineParams): EngineResult {
     this.clearCache();
     
-    const { user, analytics, meals, dietPlan, weightLogs = [] } = params;
+    const { user, analytics, meals, dietPlan, weightLogs = [], weights } = params;
+    
+    const w = weights || { workout: 0.3, nutrition: 0.2, adherence: 0.2, recovery: 0.1, goal: 0.1, body: 0.1 };
     const goal = dietPlan?.goal || user?.fitnessGoal || 'Maintain Fitness';
     const targetWeight = user?.targetWeight || (goal.includes('Loss') ? (user?.weight || 80) - 5 : (user?.weight || 70) + 5);
 
@@ -138,12 +148,12 @@ class FitnessProgressEngine {
     const { goalScore, goalData, goalReasons } = this.calculateGoalAchievement(goal, targetWeight, user, bodyData, workoutScore, nutritionScore);
 
     const overallScore = Math.round(
-      (workoutScore * 0.3) +
-      (nutritionScore * 0.2) +
-      (dietAdherence * 0.2) +
-      (recoveryScore * 0.1) +
-      (goalScore * 0.1) +
-      (bodyScore * 0.1)
+      (workoutScore * w.workout) +
+      (nutritionScore * w.nutrition) +
+      (dietAdherence * w.adherence) +
+      (recoveryScore * w.recovery) +
+      (goalScore * w.goal) +
+      (bodyScore * w.body)
     );
 
     const overallReasons: ReasonDetail[] = [
