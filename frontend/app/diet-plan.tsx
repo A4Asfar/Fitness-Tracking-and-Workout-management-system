@@ -8,7 +8,7 @@ import SkeletonCard from '@/components/SkeletonCard';
 import { SharedStyles } from '@/constants/Theme';
 import { Flame, Droplet, ArrowLeft, HeartPulse, CheckCircle2, Circle, AlertCircle, PlusCircle } from 'lucide-react-native';
 import { MealService } from '@/services/mealService';
-import { generateIntelligence } from '@/utils/intelligenceEngine';
+import FitnessProgressEngine from '@/services/fitnessProgressEngine';
 
 const DAYS_OF_WEEK = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'] as const;
 type DayName = typeof DAYS_OF_WEEK[number];
@@ -38,7 +38,7 @@ export default function UserDietPlanScreen() {
       setAllRecords(records);
       
       if (plan) {
-         const intel = generateIntelligence({ user: {}, analytics: {}, meals: records, dietPlan: plan });
+         const intel = FitnessProgressEngine.generate({ user: {}, analytics: {}, meals: records, dietPlan: plan, weightLogs: [] });
          setIntelligence(intel);
       }
     } catch (error) {
