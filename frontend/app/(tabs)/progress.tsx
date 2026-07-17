@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity, Animated, Easing, useWindowDimensions, LayoutAnimation, UIManager, Platform } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
@@ -124,7 +124,7 @@ export default function IntelligenceDashboardScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [analyticsRes, mealsRes, dietPlan, weightRes, workouts] = await Promise.all([
         api.get('/workouts/analytics'),
@@ -144,20 +144,20 @@ export default function IntelligenceDashboardScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  };
+  }, [user]);
 
-  useEffect(() => { fetchData(); }, [user]);
-  const onRefresh = () => { setRefreshing(true); fetchData(); };
+  useEffect(() => { fetchData(); }, [fetchData]);
+  const onRefresh = useCallback(() => { setRefreshing(true); fetchData(); }, [fetchData]);
 
   if (loading && !refreshing) return <View style={[s.container, { paddingTop: insets.top }]}><View style={{ padding: 24 }}><SkeletonCard /><SkeletonCard /><SkeletonCard /></View></View>;
   if (!data) return <View style={s.container} />;
 
   const isWide = width > 768;
 
-  const simResult = GoalSimulationEngine.simulate(
+  const simResult = useMemo(() => GoalSimulationEngine.simulate(
      user?.weight || 70, (user as any)?.targetWeight || 75, user?.fitnessGoal || 'Gain Muscle',
      simDays, simCal, simPro, (user?.weight || 70) * 24 * 1.2
-  );
+  ), [user, simDays, simCal, simPro]);
 
   return (
     <View style={s.container}>

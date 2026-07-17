@@ -1,3 +1,5 @@
+import { getStartOfDay, filterByDate } from './EngineUtils';
+
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export interface PredictionResult {
@@ -55,13 +57,10 @@ class PredictionEngine {
   public generate(user: any, analytics: any, meals: any[], weightLogs: any[], dietPlan: any, workouts: any[] = []): PredictionResult {
     this.clearCache();
 
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(today.getDate() - 29);
-
-    const recentMeals = meals.filter(m => new Date(m.selectedAt || m.createdAt || m.date) >= thirtyDaysAgo);
-    const recentWeights = weightLogs.filter(w => new Date(w.date) >= thirtyDaysAgo).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const today = getStartOfDay();
+    
+    const recentMeals = filterByDate(meals, 29);
+    const recentWeights = filterByDate(weightLogs, 29).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
     const plateau = this.detectPlateau(recentWeights, today);
     const predictions = this.predictFuture(user, recentWeights, recentMeals, analytics);

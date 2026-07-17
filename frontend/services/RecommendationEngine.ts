@@ -1,3 +1,5 @@
+import { getStartOfDay, filterByDate, sumMacros } from './EngineUtils';
+
 export interface RecommendationResult {
   actionPlan: { task: string; reason: string; completed: boolean }[];
   adaptiveDiet: { recommendedMeal: string; reason: string; evidence: string; expectedOutcome: string; targetMacro: string; originalMacro: string } | null;
@@ -26,13 +28,7 @@ class RecommendationEngine {
   public generate(user: any, analytics: any, meals: any[], predictiveData: any, workouts: any[] = []): RecommendationResult {
     this.clearCache();
 
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const todayMeals = meals.filter(m => {
-       const md = new Date(m.selectedAt || m.createdAt || m.date);
-       md.setHours(0,0,0,0);
-       return md.getTime() === today.getTime();
-    });
+    const todayMeals = filterByDate(meals, 0);
 
     const actionPlan = this.generateActionPlan(user, analytics, todayMeals, predictiveData);
     const adaptiveDiet = this.generateAdaptiveDiet(user, meals, predictiveData);
@@ -74,14 +70,12 @@ class RecommendationEngine {
 
   private generateAdaptiveDiet(user: any, meals: any[], predictiveData: any) {
      const maintenance = user?.weight ? user.weight * 24 * 1.2 : 2500;
-     let totalCals = 0;
-     let totalPro = 0;
-     const past14DaysMeals = meals.filter(m => (new Date().getTime() - new Date(m.selectedAt || m.createdAt || m.date).getTime()) <= 14 * 24 * 3600 * 1000);
-     past14DaysMeals.forEach(m => { totalCals += (m.calories || 0); totalPro += (m.protein || 0); });
+     const past14DaysMeals = filterByDate(meals, 14);
+     const macros = sumMacros(past14DaysMeals);
      
      const daysTracked = new Set(past14DaysMeals.map(m => new Date(m.selectedAt || m.createdAt || m.date).toISOString().split('T')[0])).size || 1;
-     const avgCals = totalCals / daysTracked;
-     const avgPro = totalPro / daysTracked;
+     const avgCals = macros.calories / daysTracked;
+     const avgPro = macros.protein / daysTracked;
      const targetPro = user?.weight ? Math.round(user.weight * 2) : 150;
 
      let bestMeal = null;
@@ -129,7 +123,7 @@ class RecommendationEngine {
         };
      }
 
-     const recentWorkouts = workouts.filter(w => (new Date().getTime() - new Date(w.date).getTime()) <= 7 * 24 * 3600 * 1000);
+     const recentWorkouts = filterByDate(workouts, 7);
      const countThisWeek = recentWorkouts.length;
      if (countThisWeek === 0) {
         return {

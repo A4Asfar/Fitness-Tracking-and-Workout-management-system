@@ -1,5 +1,6 @@
 import PredictionEngine, { PredictionResult } from './PredictionEngine';
 import RecommendationEngine, { RecommendationResult } from './RecommendationEngine';
+import { getStartOfDay, filterByDate, sumMacros } from './EngineUtils';
 
 export interface EngineParams {
   user: any;
@@ -134,18 +135,19 @@ class FitnessProgressEngine {
     const goal = dietPlan?.goal || user?.fitnessGoal || 'Maintain Fitness';
     const targetWeight = user?.targetWeight || (goal.includes('Loss') ? (user?.weight || 80) - 5 : (user?.weight || 70) + 5);
 
-    const today = new Date();
-    today.setHours(0,0,0,0);
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 29);
+    const today = getStartOfDay();
     
-    const last30Meals = meals.filter(m => new Date(m.selectedAt || m.createdAt || m.date) >= thirtyDaysAgo);
+    const last30Meals = filterByDate(meals, 30);
+    const last30Weights = filterByDate(weightLogs, 30).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 29);
     
     const { dietAdherence, dailyPct, weeklyPct, monthlyPct, planComparison, statuses, adherenceReasons } = this.calculateDietAdherence(last30Meals, dietPlan, today, thirtyDaysAgo);
     const { workoutScore, workoutReasons } = this.calculateWorkoutScore(analytics);
     const { nutritionScore, netCalsLabel, nutritionReasons } = this.calculateNutritionQuality(user, goal, last30Meals, analytics, today);
     const { recoveryScore, recoveryReasons } = this.calculateRecoveryScore(analytics, nutritionScore);
-    const { bodyScore, bodyData, bodyReasons } = this.calculateBodyProgress(user, targetWeight, weightLogs, thirtyDaysAgo);
+    const { bodyScore, bodyData, bodyReasons } = this.calculateBodyProgress(user, targetWeight, last30Weights, thirtyDaysAgo);
     const { goalScore, goalData, goalReasons } = this.calculateGoalAchievement(goal, targetWeight, user, bodyData, workoutScore, nutritionScore);
 
     const overallScore = Math.round(
@@ -165,7 +167,7 @@ class FitnessProgressEngine {
 
     const { primaryStatus, coachReport } = this.generateAIStatusAndReport(overallScore, workoutScore, nutritionScore, recoveryScore, dietAdherence, goal, netCalsLabel, bodyData);
     const consistencyData = this.calculateConsistency(workoutScore, nutritionScore, recoveryScore, weeklyPct, analytics);
-    const chartsData = this.generateChartData(last30Meals, weightLogs, thirtyDaysAgo, workoutScore, nutritionScore, overallScore);
+    const chartsData = this.generateChartData(last30Meals, last30Weights, today, workoutScore, nutritionScore, overallScore);
     const predictiveData = PredictionEngine.generate(user, analytics, meals, weightLogs, dietPlan, workouts);
     const recommendations = RecommendationEngine.generate(user, analytics, meals, predictiveData, workouts);
     const { weeklyReport, monthlyReport } = this.generateReports(overallScore, workoutScore, nutritionScore, recoveryScore, weeklyPct, consistencyData, predictiveData, bodyData);
@@ -305,13 +307,10 @@ class FitnessProgressEngine {
     let maintenance = user?.weight ? user.weight * 24 * 1.2 : 2500;
     if (user?.gender === 'female') maintenance = user?.weight ? user.weight * 22 * 1.2 : 2000;
 
-    const todayMeals = meals.filter(m => {
-       const md = new Date(m.selectedAt || m.createdAt || m.date);
-       md.setHours(0,0,0,0);
-       return md.getTime() === today.getTime();
-    });
-    const cals = todayMeals.reduce((a,b)=>a+(b.calories||0),0);
-    const pro = todayMeals.reduce((a,b)=>a+(b.protein||0),0);
+    const todayMeals = filterByDate(meals, 0);
+    const macros = sumMacros(todayMeals);
+    const cals = macros.calories;
+    const pro = macros.protein;
     const targetPro = user?.weight ? user.weight * 2 : 150;
 
     let burned = 0;
