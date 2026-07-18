@@ -12,20 +12,24 @@ export function SkeletonItem({ width = '100%', height = 20, borderRadius = 6, st
   const pulseAnim = useRef(new Animated.Value(0.3)).current;
 
   useEffect(() => {
-    Animated.loop(
+    const anim = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnim, {
           toValue: 0.7,
           duration: 800,
           useNativeDriver: true,
+          isInteraction: false,
         }),
         Animated.timing(pulseAnim, {
           toValue: 0.3,
           duration: 800,
           useNativeDriver: true,
+          isInteraction: false,
         }),
       ])
-    ).start();
+    );
+    anim.start();
+    return () => anim.stop();
   }, [pulseAnim]);
 
   return (

@@ -75,8 +75,6 @@ api.interceptors.response.use(
     
     // Check if the request configuration allows retries
     if (config) {
-      config.__retryCount = config.__retryCount || 0;
-      
       const status = error.response?.status;
       const code = error.code;
       const message = error.message || '';
@@ -95,12 +93,18 @@ api.interceptors.response.use(
       // Explicitly prevent retrying 400, 401, 403, 404, 422, 503
       const isExplicitNonRetryable = status && [400, 401, 403, 404, 422, 503].includes(Number(status));
 
-      if (!skipRetry && isRetryableError && !isExplicitNonRetryable && config.__retryCount < maxRetries) {
-        config.__retryCount += 1;
-        console.log(`🔄 Retrying request (${config.__retryCount}/${maxRetries}): ${config.url}`);
+      // FIX: Use headers to track retry count since Axios mergeConfig strips custom properties like __retryCount
+      const currentRetryCount = Number(config.headers?.['X-Retry-Count'] || 0);
+
+      if (!skipRetry && isRetryableError && !isExplicitNonRetryable && currentRetryCount < maxRetries) {
+        const nextRetryCount = currentRetryCount + 1;
+        if (!config.headers) config.headers = {} as any;
+        config.headers['X-Retry-Count'] = nextRetryCount.toString();
+        
+        console.log(`🔄 Retrying request (${nextRetryCount}/${maxRetries}): ${config.url}`);
         
         // Exponential backoff delay (1s, 2s, 4s)
-        const delay = Math.pow(2, config.__retryCount - 1) * 1000;
+        const delay = Math.pow(2, currentRetryCount) * 1000;
         await new Promise((resolve) => setTimeout(resolve, delay));
         return api(config);
       }
