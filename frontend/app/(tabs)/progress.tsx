@@ -186,8 +186,7 @@ export default function IntelligenceDashboardScreen() {
     }
   }, [data]);
 
-  if (loading && !refreshing) return <View style={[s.container, { paddingTop: insets.top }]}><View style={{ padding: 24 }}><SkeletonCard /><SkeletonCard /><SkeletonCard /></View></View>;
-  if (!data) return <View style={s.container} />;
+  if (!data || (loading && !refreshing)) return <View style={[s.container, { paddingTop: insets.top }]}><View style={{ padding: 24 }}><SkeletonCard /><SkeletonCard /><SkeletonCard /></View></View>;
 
   const isWide = width > 768;
 
