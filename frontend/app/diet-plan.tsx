@@ -38,7 +38,8 @@ export default function UserDietPlanScreen() {
       setAllRecords(records);
       
       if (plan) {
-         const intel = FitnessProgressEngine.generate({ user: {}, analytics: {}, meals: records, dietPlan: plan, weightLogs: [] });
+         const adherence = FitnessProgressEngine.generateAdherence({ user: {}, analytics: {}, meals: records, dietPlan: plan, weightLogs: [] } as any);
+         const intel = { dietPlanComparison: { mealStatuses: adherence.statuses || {} } };
          setIntelligence(intel);
       }
     } catch (error) {

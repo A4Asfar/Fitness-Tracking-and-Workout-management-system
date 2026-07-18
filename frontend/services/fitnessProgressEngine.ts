@@ -126,95 +126,121 @@ class FitnessProgressEngine {
     this.memoCache.clear();
   }
 
-  public generateCore(params: EngineParams) {
-    this.clearCache();
-    const { user, analytics, meals, dietPlan, weightLogs = [], weights, workouts = [] } = params;
-    
-    const w = weights || { workout: 0.3, nutrition: 0.2, adherence: 0.2, recovery: 0.1, goal: 0.1, body: 0.1 };
-    const goal = dietPlan?.goal || user?.fitnessGoal || 'Maintain Fitness';
-    const targetWeight = user?.targetWeight || (goal.includes('Loss') ? (user?.weight || 80) - 5 : (user?.weight || 70) + 5);
+  public generateWorkout(params: EngineParams) {
+    const { workoutScore, workoutReasons } = this.calculateWorkoutScore(params.analytics);
+    return { value: workoutScore, reasons: workoutReasons, historicalTrend: 'Increasing Volume', howToImprove: 'Train 1 more day this week.', expectedImprovement: '+15 pts to Workout Score.' };
+  }
 
+  public generateNutrition(params: EngineParams) {
+    const goal = params.dietPlan?.goal || params.user?.fitnessGoal || 'Maintain Fitness';
     const today = getStartOfDay();
-    
-    const last30Meals = filterByDate(meals, 30);
-    const last30Weights = filterByDate(weightLogs, 30).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    
+    const last30Meals = filterByDate(params.meals, 30);
+    const { nutritionScore, netCalsLabel, nutritionReasons } = this.calculateNutritionQuality(params.user, goal, last30Meals, params.analytics, today);
+    return { value: nutritionScore, reasons: nutritionReasons, historicalTrend: netCalsLabel, howToImprove: 'Hit protein target daily.', expectedImprovement: 'Optimizes muscle retention.', netCalsLabel };
+  }
+
+  public generateAdherence(params: EngineParams) {
+    const today = getStartOfDay();
     const thirtyDaysAgo = new Date(today);
     thirtyDaysAgo.setDate(today.getDate() - 29);
-    
-    const { dietAdherence, dailyPct, weeklyPct, monthlyPct, planComparison, statuses, adherenceReasons } = this.calculateDietAdherence(last30Meals, dietPlan, today, thirtyDaysAgo);
-    const { workoutScore, workoutReasons } = this.calculateWorkoutScore(analytics);
-    const { nutritionScore, netCalsLabel, nutritionReasons } = this.calculateNutritionQuality(user, goal, last30Meals, analytics, today);
-    const { recoveryScore, recoveryReasons } = this.calculateRecoveryScore(analytics, nutritionScore);
-    const { bodyScore, bodyData, bodyReasons } = this.calculateBodyProgress(user, targetWeight, last30Weights, thirtyDaysAgo);
-    const { goalScore, goalData, goalReasons } = this.calculateGoalAchievement(goal, targetWeight, user, bodyData, workoutScore, nutritionScore);
+    const last30Meals = filterByDate(params.meals, 30);
+    const { dietAdherence, dailyPct, weeklyPct, monthlyPct, planComparison, statuses, adherenceReasons } = this.calculateDietAdherence(last30Meals, params.dietPlan, today, thirtyDaysAgo);
+    return { value: dietAdherence, reasons: adherenceReasons, historicalTrend: `${weeklyPct}% Average`, howToImprove: 'Stop skipping meals.', expectedImprovement: 'Ensures predictable progress.', weeklyPct, planComparison, statuses };
+  }
 
+  public generateBody(params: EngineParams) {
+    const goal = params.dietPlan?.goal || params.user?.fitnessGoal || 'Maintain Fitness';
+    const targetWeight = params.user?.targetWeight || (goal.includes('Loss') ? (params.user?.weight || 80) - 5 : (params.user?.weight || 70) + 5);
+    const today = getStartOfDay();
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 29);
+    const last30Weights = filterByDate(params.weightLogs || [], 30).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    const { bodyScore, bodyData, bodyReasons } = this.calculateBodyProgress(params.user, targetWeight, last30Weights, thirtyDaysAgo);
+    return { value: bodyScore, reasons: bodyReasons, historicalTrend: bodyData.monthlyTrend, howToImprove: 'Continue progressive overload.', expectedImprovement: 'Improves body composition.', bodyData };
+  }
+
+  public generateRecovery(params: EngineParams, nutritionScore: number) {
+    const { recoveryScore, recoveryReasons } = this.calculateRecoveryScore(params.analytics, nutritionScore);
+    return { value: recoveryScore, reasons: recoveryReasons, historicalTrend: 'Sufficient Spacing', howToImprove: 'Drink 2.5L water daily.', expectedImprovement: 'Lowers injury risk significantly.' };
+  }
+
+  public generateGoal(params: EngineParams, bodyData: any, workoutScore: number, nutritionScore: number) {
+    const goal = params.dietPlan?.goal || params.user?.fitnessGoal || 'Maintain Fitness';
+    const targetWeight = params.user?.targetWeight || (goal.includes('Loss') ? (params.user?.weight || 80) - 5 : (params.user?.weight || 70) + 5);
+    const { goalScore, goalData, goalReasons } = this.calculateGoalAchievement(goal, targetWeight, params.user, bodyData, workoutScore, nutritionScore);
+    return { value: goalScore, reasons: goalReasons, historicalTrend: 'On Track', howToImprove: 'Maintain current velocity.', expectedImprovement: `Reach goal in ${goalData.estimatedCompletion}.`, goalData };
+  }
+
+  public generateOverallScore(
+    params: EngineParams, workoutScore: number, nutritionScore: number, recoveryScore: number, 
+    dietAdherence: number, goalScore: number, bodyScore: number, netCalsLabel: string, bodyData: any, weeklyPct: number
+  ) {
+    const w = params.weights || { workout: 0.3, nutrition: 0.2, adherence: 0.2, recovery: 0.1, goal: 0.1, body: 0.1 };
+    const goal = params.dietPlan?.goal || params.user?.fitnessGoal || 'Maintain Fitness';
     const overallScore = Math.round(
-      (workoutScore * w.workout) +
-      (nutritionScore * w.nutrition) +
-      (dietAdherence * w.adherence) +
-      (recoveryScore * w.recovery) +
-      (goalScore * w.goal) +
-      (bodyScore * w.body)
+      (workoutScore * w.workout) + (nutritionScore * w.nutrition) + (dietAdherence * w.adherence) + 
+      (recoveryScore * w.recovery) + (goalScore * w.goal) + (bodyScore * w.body)
     );
-
     const overallReasons: ReasonDetail[] = [
       { reason: 'Weighted intelligently from 6 tracking pillars', weight: 'High', type: 'positive' },
       { reason: 'Workout Performance accounts for 30%', weight: 'High', type: 'positive' },
       { reason: 'Nutrition & Adherence account for 40%', weight: 'High', type: 'positive' }
     ];
-
     const { primaryStatus, coachReport } = this.generateAIStatusAndReport(overallScore, workoutScore, nutritionScore, recoveryScore, dietAdherence, goal, netCalsLabel, bodyData);
-    const consistencyData = this.calculateConsistency(workoutScore, nutritionScore, recoveryScore, weeklyPct, analytics);
+    const consistencyData = this.calculateConsistency(workoutScore, nutritionScore, recoveryScore, weeklyPct, params.analytics);
     const healthBalanceIndex = this.calculateHealthBalanceIndex(overallScore, consistencyData.overall, 0, bodyScore);
-
+    
     return {
-      healthBalanceIndex,
-      scores: {
-        overall: { value: overallScore, reasons: overallReasons, historicalTrend: 'Stable (+2 pts)', howToImprove: 'Focus on your weakest pillar.', expectedImprovement: 'Increases holistic trajectory.' },
-        workout: { value: workoutScore, reasons: workoutReasons, historicalTrend: 'Increasing Volume', howToImprove: 'Train 1 more day this week.', expectedImprovement: '+15 pts to Workout Score.' },
-        nutrition: { value: nutritionScore, reasons: nutritionReasons, historicalTrend: netCalsLabel, howToImprove: 'Hit protein target daily.', expectedImprovement: 'Optimizes muscle retention.' },
-        adherence: { value: dietAdherence, reasons: adherenceReasons, historicalTrend: `${weeklyPct}% Average`, howToImprove: 'Stop skipping meals.', expectedImprovement: 'Ensures predictable progress.' },
-        recovery: { value: recoveryScore, reasons: recoveryReasons, historicalTrend: 'Sufficient Spacing', howToImprove: 'Drink 2.5L water daily.', expectedImprovement: 'Lowers injury risk significantly.' },
-        goal: { value: goalScore, reasons: goalReasons, historicalTrend: 'On Track', howToImprove: 'Maintain current velocity.', expectedImprovement: `Reach goal in ${goalData.estimatedCompletion}.` },
-        body: { value: bodyScore, reasons: bodyReasons, historicalTrend: bodyData.monthlyTrend, howToImprove: 'Continue progressive overload.', expectedImprovement: 'Improves body composition.' }
-      },
-      status: { primary: primaryStatus, coachReport },
-      consistency: consistencyData,
-      goalAchievement: goalData,
-      bodyProgress: bodyData,
-      dietPlanComparison: planComparison
+      value: overallScore, reasons: overallReasons, historicalTrend: 'Stable (+2 pts)', howToImprove: 'Focus on your weakest pillar.', expectedImprovement: 'Increases holistic trajectory.',
+      healthBalanceIndex, status: { primary: primaryStatus, coachReport }, consistency: consistencyData
     };
   }
 
-  public generateCharts(params: EngineParams, coreData: any) {
+  public generateCharts(params: EngineParams, workoutScore: number, nutritionScore: number, overallScore: number) {
     const today = getStartOfDay();
     const last30Meals = filterByDate(params.meals, 30);
     const last30Weights = filterByDate(params.weightLogs || [], 30).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-    return this.generateChartData(last30Meals, last30Weights, today, coreData.scores.workout.value, coreData.scores.nutrition.value, coreData.scores.overall.value);
+    return this.generateChartData(last30Meals, last30Weights, today, workoutScore, nutritionScore, overallScore);
   }
 
-  public generateReports(coreData: any, predictiveData: any) {
-    return this.generateReportsInternal(
-       coreData.scores.overall.value, 
-       coreData.scores.workout.value, 
-       coreData.scores.nutrition.value, 
-       coreData.scores.recovery.value, 
-       coreData.scores.adherence.value, 
-       coreData.consistency, 
-       predictiveData, 
-       coreData.bodyProgress
-    );
+  public generateWeeklyReport(overall: number, workout: number, nutrition: number, recovery: number, adherence: number, consistency: any, predictive: any) {
+    let overallGrade = 'C';
+    if (overall >= 95) overallGrade = 'A+';
+    else if (overall >= 85) overallGrade = 'A';
+    else if (overall >= 75) overallGrade = 'B';
+    else if (overall >= 50) overallGrade = 'D';
+    else if (overall < 50) overallGrade = 'F';
+
+    return {
+       biggestAchievement: workout > 80 ? "Perfect workout consistency" : "Completed health logging",
+       biggestMistake: predictive.burnout?.risk !== 'Low' ? "Risking burnout" : "None detected",
+       strongestHabit: "Routine data logging",
+       weakestHabit: predictive.habits?.[0] || "None detected",
+       nextWeekFocus: recovery < 60 ? "Prioritize sleep and recovery" : "Focus on progressive overload",
+       overallGrade
+    };
   }
 
-  public generateAchievements(coreData: any) {
-    return this.generateAchievementsInternal(
-       coreData.scores.workout.value, 
-       coreData.scores.nutrition.value, 
-       coreData.scores.recovery.value, 
-       coreData.scores.adherence.value, 
-       coreData.consistency.streak
-    );
+  public generateMonthlyReport(overall: number, workout: number, nutrition: number, recovery: number, adherence: number, consistency: any, predictive: any, bodyData: any) {
+    return {
+       overallImprovement: "Positive trajectory (+ pts)",
+       weightChange: `${bodyData.monthlyTrend} (${bodyData.weeklyChange} / wk)`,
+       workoutConsistency: `${consistency.workout}% Average`,
+       nutritionConsistency: `${consistency.meal}% Average`,
+       goalPrediction: `${predictive.goalSuccess?.probabilityPct || 0}% Success Probability`,
+       riskAnalysis: predictive.risks?.length > 0 ? predictive.risks.join(', ') : "No major risks",
+       coachConclusion: "An incredibly productive month."
+    };
+  }
+
+  public generateAchievements(workoutScore: number, nutritionScore: number, recoveryScore: number, adherenceScore: number, streak: number) {
+     const ach = [];
+     if (workoutScore >= 90) ach.push('Workout Warrior');
+     if (nutritionScore >= 90) ach.push('Protein Master');
+     if (streak >= 7) ach.push('Consistency Champion');
+     if (recoveryScore >= 90) ach.push('Recovery Expert');
+     if (adherenceScore >= 95) ach.push('Elite Discipline');
+     return ach;
   }
 
   private calculateHealthBalanceIndex(overall: number, discipline: number, burnoutScore: number, bodyProgress: number) {
@@ -476,44 +502,7 @@ class FitnessProgressEngine {
      return { workout: wScore, meal: nScore, recovery: rScore, diet: adherence, overall: Math.round((wScore + nScore + rScore + adherence) / 4), streak, longestStreak, brokenReason: streak === 0 ? 'Missed scheduled workout' : null };
   }
 
-  private generateReportsInternal(overall: number, wScore: number, nScore: number, rScore: number, adherence: number, consistency: any, predictive: any, bodyData: any) {
-    let overallGrade = 'C';
-    if (overall >= 95) overallGrade = 'A+';
-    else if (overall >= 85) overallGrade = 'A';
-    else if (overall >= 75) overallGrade = 'B';
-    else if (overall >= 50) overallGrade = 'D';
-    else if (overall < 50) overallGrade = 'F';
-
-    return {
-      weeklyReport: {
-         biggestAchievement: wScore > 80 ? "Perfect workout consistency" : "Completed health logging",
-         biggestMistake: predictive.burnout.risk !== 'Low' ? "Risking burnout" : "None detected",
-         strongestHabit: "Routine data logging",
-         weakestHabit: predictive.habits[0] || "None detected",
-         nextWeekFocus: rScore < 60 ? "Prioritize sleep and recovery" : "Focus on progressive overload",
-         overallGrade
-      },
-      monthlyReport: {
-         overallImprovement: "Positive trajectory (+ pts)",
-         weightChange: `${bodyData.monthlyTrend} (${bodyData.weeklyChange} / wk)`,
-         workoutConsistency: `${consistency.workout}% Average`,
-         nutritionConsistency: `${consistency.meal}% Average`,
-         goalPrediction: `${predictive.goalSuccess.probabilityPct}% Success Probability`,
-         riskAnalysis: predictive.risks.length > 0 ? predictive.risks.join(', ') : "No major risks",
-         coachConclusion: "An incredibly productive month."
-      }
-    };
-  }
-
-  private generateAchievementsInternal(wScore: number, nScore: number, rScore: number, dietAdherence: number, streak: number) {
-     const ach = [];
-     if (wScore >= 90) ach.push('Workout Warrior');
-     if (nScore >= 90) ach.push('Protein Master');
-     if (streak >= 7) ach.push('Consistency Champion');
-     if (rScore >= 90) ach.push('Recovery Expert');
-     if (dietAdherence >= 95) ach.push('Elite Discipline');
-     return ach;
-  }
+  // internal generators decoupled
 
   private generateChartData(last30Meals: any[], weightLogs: any[], thirtyDaysAgo: Date, wScore: number, nScore: number, overall: number) {
      return { labels: ['W1', 'W2', 'W3', 'W4'], overall: [overall-10, overall-5, overall-2, overall], workout: [wScore-15, wScore-10, wScore-5, wScore], nutrition: [nScore-12, nScore-8, nScore-4, nScore], goal: [50, 60, 70, 80], body: [70, 72, 75, 80], recovery: [80, 85, 90, 95], discipline: [overall, overall, overall, overall] };

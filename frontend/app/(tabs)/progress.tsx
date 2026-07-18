@@ -128,7 +128,6 @@ export default function IntelligenceDashboardScreen() {
 
   const fetchData = useCallback(async () => {
     try {
-      setRenderStage(0);
       const [analyticsRes, mealsRes, dietPlan, weightRes, workouts] = await Promise.all([
         api.get('/workouts/analytics'),
         MealService.getMeals(),
@@ -155,18 +154,24 @@ export default function IntelligenceDashboardScreen() {
   useEffect(() => { fetchData(); }, [fetchData]);
   const onRefresh = useCallback(() => { setRefreshing(true); fetchData(); }, [fetchData]);
 
-  const [coreState, setCoreState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
+  const [overallState, setOverallState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
+  const [workoutState, setWorkoutState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
+  const [nutritionState, setNutritionState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
+  const [recoveryState, setRecoveryState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
+  const [goalState, setGoalState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
+  const [bodyState, setBodyState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
+  const [adherenceState, setAdherenceState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
   const [predState, setPredState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
   const [recState, setRecState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
   const [chartState, setChartState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
-  const [reportState, setReportState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
+  const [weeklyReportState, setWeeklyReportState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
+  const [monthlyReportState, setMonthlyReportState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
   const [achState, setAchState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
 
-  const coreData = coreState.data;
+  const overallData = overallState.data;
   const predictionData = predState.data;
   const recommendationData = recState.data;
   const chartData = chartState.data;
-  const reportData = reportState.data;
   const achievementData = achState.data;
 
   useEffect(() => {
@@ -179,103 +184,117 @@ export default function IntelligenceDashboardScreen() {
       });
     });
 
-    const runCore = async () => {
+    const params = { user, analytics: rawData.analytics, meals: rawData.meals, dietPlan: rawData.dietPlan, weightLogs: rawData.weightLogs, workouts: rawData.workouts };
+
+    const runWorkout = async () => {
       await yieldToUI();
       if (isCancelled) return null;
-      try {
-        const core = FitnessProgressEngine.generateCore({ user, analytics: rawData.analytics, meals: rawData.meals, dietPlan: rawData.dietPlan, weightLogs: rawData.weightLogs, workouts: rawData.workouts });
-        if (!isCancelled) setCoreState({ data: core, loading: false, error: null });
-        return core;
-      } catch (e) {
-        if (!isCancelled) setCoreState({ data: null, loading: false, error: e });
-        throw e;
-      }
+      try { const res = FitnessProgressEngine.generateWorkout(params); if (!isCancelled) setWorkoutState({ data: res, loading: false, error: null }); return res; }
+      catch (e) { if (!isCancelled) setWorkoutState({ data: null, loading: false, error: e }); throw e; }
     };
-
+    const runNutrition = async () => {
+      await yieldToUI();
+      if (isCancelled) return null;
+      try { const res = FitnessProgressEngine.generateNutrition(params); if (!isCancelled) setNutritionState({ data: res, loading: false, error: null }); return res; }
+      catch (e) { if (!isCancelled) setNutritionState({ data: null, loading: false, error: e }); throw e; }
+    };
+    const runAdherence = async () => {
+      await yieldToUI();
+      if (isCancelled) return null;
+      try { const res = FitnessProgressEngine.generateAdherence(params); if (!isCancelled) setAdherenceState({ data: res, loading: false, error: null }); return res; }
+      catch (e) { if (!isCancelled) setAdherenceState({ data: null, loading: false, error: e }); throw e; }
+    };
+    const runBody = async () => {
+      await yieldToUI();
+      if (isCancelled) return null;
+      try { const res = FitnessProgressEngine.generateBody(params); if (!isCancelled) setBodyState({ data: res, loading: false, error: null }); return res; }
+      catch (e) { if (!isCancelled) setBodyState({ data: null, loading: false, error: e }); throw e; }
+    };
+    const runRecovery = async (nutPromise: Promise<any>) => {
+      let nut; try { nut = await nutPromise; } catch(e) { throw e; }
+      await yieldToUI();
+      if (isCancelled) return null;
+      try { const res = FitnessProgressEngine.generateRecovery(params, nut.value); if (!isCancelled) setRecoveryState({ data: res, loading: false, error: null }); return res; }
+      catch (e) { if (!isCancelled) setRecoveryState({ data: null, loading: false, error: e }); throw e; }
+    };
+    const runGoal = async (bodyPromise: Promise<any>, workPromise: Promise<any>, nutPromise: Promise<any>) => {
+      let body, work, nut; try { body = await bodyPromise; work = await workPromise; nut = await nutPromise; } catch(e) { throw e; }
+      await yieldToUI();
+      if (isCancelled) return null;
+      try { const res = FitnessProgressEngine.generateGoal(params, body.bodyData, work.value, nut.value); if (!isCancelled) setGoalState({ data: res, loading: false, error: null }); return res; }
+      catch (e) { if (!isCancelled) setGoalState({ data: null, loading: false, error: e }); throw e; }
+    };
+    const runOverall = async (workPromise: Promise<any>, nutPromise: Promise<any>, recPromise: Promise<any>, adhPromise: Promise<any>, goalPromise: Promise<any>, bodyPromise: Promise<any>) => {
+      let work, nut, rec, adh, goal, body; try { work=await workPromise; nut=await nutPromise; rec=await recPromise; adh=await adhPromise; goal=await goalPromise; body=await bodyPromise; } catch(e) { throw e; }
+      await yieldToUI();
+      if (isCancelled) return null;
+      try { const res = FitnessProgressEngine.generateOverallScore(params, work.value, nut.value, rec.value, adh.value, goal.value, body.value, nut.netCalsLabel, body.bodyData, adh.weeklyPct); if (!isCancelled) setOverallState({ data: res, loading: false, error: null }); return res; }
+      catch (e) { if (!isCancelled) setOverallState({ data: null, loading: false, error: e }); throw e; }
+    };
     const runPred = async () => {
       await yieldToUI();
       if (isCancelled) return null;
-      try {
-        const pred = PredictionEngine.generate(user, rawData.analytics, rawData.meals, rawData.weightLogs, rawData.dietPlan, rawData.workouts);
-        if (!isCancelled) setPredState({ data: pred, loading: false, error: null });
-        return pred;
-      } catch (e) {
-        if (!isCancelled) setPredState({ data: null, loading: false, error: e });
-        throw e;
-      }
+      try { const res = PredictionEngine.generate(user, rawData.analytics, rawData.meals, rawData.weightLogs, rawData.dietPlan, rawData.workouts); if (!isCancelled) setPredState({ data: res, loading: false, error: null }); return res; }
+      catch (e) { if (!isCancelled) setPredState({ data: null, loading: false, error: e }); throw e; }
     };
-
     const runRec = async (predPromise: Promise<any>) => {
-      let pred;
-      try { pred = await predPromise; } catch (e) {}
+      let pred; try { pred = await predPromise; } catch (e) {}
       await yieldToUI();
       if (isCancelled) return null;
-      try {
-        const recs = RecommendationEngine.generate(user, rawData.analytics, rawData.meals, pred || {}, rawData.workouts);
-        if (!isCancelled) setRecState({ data: recs, loading: false, error: null });
-        return recs;
-      } catch (e) {
-        if (!isCancelled) setRecState({ data: null, loading: false, error: e });
-        throw e;
-      }
+      try { const res = RecommendationEngine.generate(user, rawData.analytics, rawData.meals, pred || {}, rawData.workouts); if (!isCancelled) setRecState({ data: res, loading: false, error: null }); return res; }
+      catch (e) { if (!isCancelled) setRecState({ data: null, loading: false, error: e }); throw e; }
     };
-
-    const runChart = async (corePromise: Promise<any>) => {
-      let core;
-      try { core = await corePromise; } catch(e) { throw new Error('Charts require core data'); }
+    const runChart = async (workPromise: Promise<any>, nutPromise: Promise<any>, overPromise: Promise<any>) => {
+      let work, nut, over; try { work=await workPromise; nut=await nutPromise; over=await overPromise; } catch(e) { throw e; }
       await yieldToUI();
       if (isCancelled) return null;
-      try {
-        const charts = FitnessProgressEngine.generateCharts({ meals: rawData.meals, weightLogs: rawData.weightLogs } as any, core);
-        if (!isCancelled) setChartState({ data: charts, loading: false, error: null });
-        return charts;
-      } catch (e) {
-        if (!isCancelled) setChartState({ data: null, loading: false, error: e });
-        throw e;
-      }
+      try { const res = FitnessProgressEngine.generateCharts(params, work.value, nut.value, over.value); if (!isCancelled) setChartState({ data: res, loading: false, error: null }); return res; }
+      catch (e) { if (!isCancelled) setChartState({ data: null, loading: false, error: e }); throw e; }
     };
-
-    const runReport = async (corePromise: Promise<any>, predPromise: Promise<any>) => {
-      let core, pred;
-      try { core = await corePromise; } catch(e) { throw new Error('Reports require core data'); }
-      try { pred = await predPromise; } catch(e) {}
+    const runWeekly = async (overPromise: Promise<any>, workPromise: Promise<any>, nutPromise: Promise<any>, recPromise: Promise<any>, adhPromise: Promise<any>, predPromise: Promise<any>) => {
+      let over, work, nut, rec, adh, pred; try { over=await overPromise; work=await workPromise; nut=await nutPromise; rec=await recPromise; adh=await adhPromise; pred=await predPromise; } catch(e) {}
+      if (!over || !work || !nut || !rec || !adh || !pred) return null;
       await yieldToUI();
       if (isCancelled) return null;
-      try {
-        const reports = FitnessProgressEngine.generateReports(core, pred || {});
-        if (!isCancelled) setReportState({ data: reports, loading: false, error: null });
-        return reports;
-      } catch (e) {
-        if (!isCancelled) setReportState({ data: null, loading: false, error: e });
-        throw e;
-      }
+      try { const res = FitnessProgressEngine.generateWeeklyReport(over.value, work.value, nut.value, rec.value, adh.value, over.consistency, pred); if (!isCancelled) setWeeklyReportState({ data: res, loading: false, error: null }); return res; }
+      catch (e) { if (!isCancelled) setWeeklyReportState({ data: null, loading: false, error: e }); throw e; }
     };
-
-    const runAch = async (corePromise: Promise<any>) => {
-      let core;
-      try { core = await corePromise; } catch(e) { throw new Error('Achievements require core data'); }
+    const runMonthly = async (overPromise: Promise<any>, workPromise: Promise<any>, nutPromise: Promise<any>, recPromise: Promise<any>, adhPromise: Promise<any>, bodyPromise: Promise<any>, predPromise: Promise<any>) => {
+      let over, work, nut, rec, adh, body, pred; try { over=await overPromise; work=await workPromise; nut=await nutPromise; rec=await recPromise; adh=await adhPromise; body=await bodyPromise; pred=await predPromise; } catch(e) {}
+      if (!over || !work || !nut || !rec || !adh || !body || !pred) return null;
       await yieldToUI();
       if (isCancelled) return null;
-      try {
-        const ach = FitnessProgressEngine.generateAchievements(core);
-        if (!isCancelled) setAchState({ data: ach, loading: false, error: null });
-        return ach;
-      } catch (e) {
-        if (!isCancelled) setAchState({ data: null, loading: false, error: e });
-        throw e;
-      }
+      try { const res = FitnessProgressEngine.generateMonthlyReport(over.value, work.value, nut.value, rec.value, adh.value, over.consistency, pred, body.bodyData); if (!isCancelled) setMonthlyReportState({ data: res, loading: false, error: null }); return res; }
+      catch (e) { if (!isCancelled) setMonthlyReportState({ data: null, loading: false, error: e }); throw e; }
+    };
+    const runAch = async (workPromise: Promise<any>, nutPromise: Promise<any>, recPromise: Promise<any>, adhPromise: Promise<any>, overPromise: Promise<any>) => {
+      let work, nut, rec, adh, over; try { work=await workPromise; nut=await nutPromise; rec=await recPromise; adh=await adhPromise; over=await overPromise; } catch(e) { throw e; }
+      await yieldToUI();
+      if (isCancelled) return null;
+      try { const res = FitnessProgressEngine.generateAchievements(work.value, nut.value, rec.value, adh.value, over.consistency.streak); if (!isCancelled) setAchState({ data: res, loading: false, error: null }); return res; }
+      catch (e) { if (!isCancelled) setAchState({ data: null, loading: false, error: e }); throw e; }
     };
 
     const startTime = performance.now();
 
-    const coreP = runCore();
+    const workP = runWorkout();
+    const nutP = runNutrition();
+    const adhP = runAdherence();
+    const bodyP = runBody();
     const predP = runPred();
-    const chartP = runChart(coreP);
-    const reportP = runReport(coreP, predP);
-    const achP = runAch(coreP);
-    const recP = runRec(predP);
 
-    Promise.allSettled([coreP, predP, chartP, reportP, achP, recP]).then(() => {
+    const recovP = runRecovery(nutP);
+    const goalP = runGoal(bodyP, workP, nutP);
+    const recP = runRec(predP);
+    
+    const overP = runOverall(workP, nutP, recovP, adhP, goalP, bodyP);
+    
+    const chartP = runChart(workP, nutP, overP);
+    const weeklyP = runWeekly(overP, workP, nutP, recovP, adhP, predP);
+    const monthlyP = runMonthly(overP, workP, nutP, recovP, adhP, bodyP, predP);
+    const achP = runAch(workP, nutP, recovP, adhP, overP);
+
+    Promise.allSettled([workP, nutP, adhP, bodyP, predP, recovP, goalP, recP, overP, chartP, weeklyP, monthlyP, achP]).then(() => {
       const totalTime = performance.now() - startTime;
       console.log(`[Performance] Fully streaming dashboard hydrated in ${Math.round(totalTime)}ms.`);
     });
@@ -288,7 +307,7 @@ export default function IntelligenceDashboardScreen() {
   const isWide = width > 768;
 
   const simResult = useMemo(() => {
-     if (!coreData) return null;
+     if (!overallData) return null;
      try {
        return GoalSimulationEngine.simulate(
           user?.weight || 70, (user as any)?.targetWeight || 75, user?.fitnessGoal || 'Gain Muscle',
@@ -298,7 +317,7 @@ export default function IntelligenceDashboardScreen() {
        console.error("Simulation error", e);
        return null;
      }
-  }, [user, simDays, simCal, simPro, coreData]);
+  }, [user, simDays, simCal, simPro, overallData]);
 
   return (
     <View style={s.container}>
@@ -306,9 +325,9 @@ export default function IntelligenceDashboardScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 100, maxWidth: 1000, width: '100%', alignSelf: 'center' }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#38BDF8" />}>
         
         {/* HERO SECTION */}
-        {coreState.loading ? (
+        {overallState.loading ? (
           <View style={{ paddingTop: insets.top + 16, paddingHorizontal: 24, paddingBottom: 24 }}><SkeletonCard /></View>
-        ) : coreData ? (
+        ) : overallData ? (
         <LinearGradient colors={['#1E293B', '#0F172A']} style={[s.heroSection, { paddingTop: insets.top + 16 }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
              <View>
@@ -322,17 +341,17 @@ export default function IntelligenceDashboardScreen() {
           
           <View style={[s.gaugeWrapper, isWide && { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }]}>
             <View style={{ alignItems: 'center', marginBottom: isWide ? 0 : 24 }}>
-              <MainGauge score={coreData.healthBalanceIndex} label="Health Balance Index" />
+              <MainGauge score={overallData.healthBalanceIndex} label="Health Balance Index" />
             </View>
             <View style={[s.summaryGrid, isWide && { flex: 1, marginLeft: 40 }]}>
               <View style={s.sumCard}>
                 <Text style={s.sumCardLab}>Fitness Score</Text>
-                <Text style={s.sumCardVal}>{coreData.scores.overall.value}</Text>
+                <Text style={s.sumCardVal}>{overallData.value}</Text>
                 <Text style={s.sumCardSub}>Overall Trajectory</Text>
               </View>
               <View style={s.sumCard}>
                 <Text style={s.sumCardLab}>AI Status</Text>
-                <Text style={[s.sumCardVal, { color: '#38BDF8', fontSize: 15 }]}>{coreData.status.primary}</Text>
+                <Text style={[s.sumCardVal, { color: '#38BDF8', fontSize: 15 }]}>{overallData.status.primary}</Text>
                 <Text style={s.sumCardSub}>System Assessment</Text>
               </View>
             </View>
@@ -432,7 +451,7 @@ export default function IntelligenceDashboardScreen() {
           ) : null}
 
           {/* GOAL SIMULATION ENGINE (SANDBOX) */}
-          {coreState.loading ? <SkeletonCard /> : coreData ? (
+          {overallState.loading ? <SkeletonCard /> : overallData ? (
           <>
           <Text style={s.sectionTitle}>Goal Simulation Engine</Text>
           <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '600', marginBottom: 16 }}>Simulate changes to your routine to predict future physiological outcomes. This does not alter your actual data.</Text>
@@ -490,18 +509,18 @@ export default function IntelligenceDashboardScreen() {
           ) : null}
 
           {/* EXPLAINABLE PILLAR SCORECARDS */}
-          {coreState.loading ? <SkeletonCard /> : coreData ? (
+          {overallState.loading || workoutState.loading || nutritionState.loading || adherenceState.loading || recoveryState.loading || goalState.loading || bodyState.loading ? <SkeletonCard /> : overallData ? (
              <>
              <Text style={s.sectionTitle}>XAI Diagnostic Core</Text>
              <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '600', marginBottom: 16 }}>Tap any pillar to reveal transparent AI reasoning, impact weights, and expected outcomes.</Text>
              
              <View style={[isWide && { flexDirection: 'row', gap: 16, flexWrap: 'wrap' }]}>
-               <PillarCard icon={Dumbbell} title="Workout Performance" data={coreData.scores.workout} color="#38BDF8" />
-               <PillarCard icon={Flame} title="Nutrition Quality" data={coreData.scores.nutrition} color="#F59E0B" />
-               <PillarCard icon={Target} title="Diet Adherence" data={coreData.scores.adherence} color="#10B981" />
-               <PillarCard icon={Zap} title="Recovery Score" data={coreData.scores.recovery} color="#A855F7" />
-               <PillarCard icon={Crown} title="Goal Achievement" data={coreData.scores.goal} color="#F59E0B" />
-               <PillarCard icon={HeartPulse} title="Body Progress" data={coreData.scores.body} color="#8B5CF6" />
+               <PillarCard icon={Dumbbell} title="Workout Performance" data={workoutState.data} color="#38BDF8" />
+               <PillarCard icon={Flame} title="Nutrition Quality" data={nutritionState.data} color="#F59E0B" />
+               <PillarCard icon={Target} title="Diet Adherence" data={adherenceState.data} color="#10B981" />
+               <PillarCard icon={Zap} title="Recovery Score" data={recoveryState.data} color="#A855F7" />
+               <PillarCard icon={Crown} title="Goal Achievement" data={goalState.data} color="#F59E0B" />
+               <PillarCard icon={HeartPulse} title="Body Progress" data={bodyState.data} color="#8B5CF6" />
              </View>
              </>
           ) : null}
@@ -520,32 +539,32 @@ export default function IntelligenceDashboardScreen() {
           ) : null}
 
           {/* EXECUTIVE REVIEWS */}
-          {reportState.loading ? <SkeletonCard /> : reportData ? (
+          {weeklyReportState.loading || monthlyReportState.loading ? <SkeletonCard /> : (weeklyReportState.data && monthlyReportState.data) ? (
              <>
              <Text style={s.sectionTitle}>Executive AI Reviews</Text>
              <View style={[isWide && { flexDirection: 'row', gap: 16 }]}>
                 <View style={[SharedStyles.card, { padding: 20, marginBottom: 16, flex: 1 }]}>
                    <Text style={{ color: '#38BDF8', fontSize: 14, fontWeight: '900', textTransform: 'uppercase', marginBottom: 16 }}>Weekly Coach Summary</Text>
                    <View style={{ gap: 12 }}>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Biggest Achievement</Text><Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800' }}>{reportData.weekly.biggestAchievement}</Text></View>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Critical Mistake</Text><Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '800' }}>{reportData.weekly.biggestMistake}</Text></View>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Strongest Habit</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{reportData.weekly.strongestHabit}</Text></View>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Weakest Habit</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{reportData.weekly.weakestHabit}</Text></View>
-                      <View style={{ marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Next Week Focus</Text><Text style={{ color: '#38BDF8', fontSize: 14, fontWeight: '800' }}>{reportData.weekly.nextWeekFocus}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Biggest Achievement</Text><Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data.biggestAchievement}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Critical Mistake</Text><Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data.biggestMistake}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Strongest Habit</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data.strongestHabit}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Weakest Habit</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data.weakestHabit}</Text></View>
+                      <View style={{ marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Next Week Focus</Text><Text style={{ color: '#38BDF8', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data.nextWeekFocus}</Text></View>
                    </View>
                 </View>
                 
                 <View style={[SharedStyles.card, { padding: 20, marginBottom: 24, flex: 1 }]}>
                    <Text style={{ color: '#A855F7', fontSize: 14, fontWeight: '900', textTransform: 'uppercase', marginBottom: 16 }}>Monthly Analytics Report</Text>
                    <View style={{ gap: 12 }}>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Overall Trajectory</Text><Text style={{ color: reportData.monthly.overallImprovement.includes('+') ? '#10B981' : '#EF4444', fontSize: 14, fontWeight: '800' }}>{reportData.monthly.overallImprovement}</Text></View>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Weight Change</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{reportData.monthly.weightChange}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Overall Trajectory</Text><Text style={{ color: monthlyReportState.data.overallImprovement.includes('+') ? '#10B981' : '#EF4444', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data.overallImprovement}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Weight Change</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data.weightChange}</Text></View>
                       <View style={{ flexDirection: 'row', gap: 16 }}>
-                         <View style={{ flex: 1 }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Workout Consistency</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{reportData.monthly.workoutConsistency}</Text></View>
-                         <View style={{ flex: 1 }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Nutrition Consistency</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{reportData.monthly.nutritionConsistency}</Text></View>
+                         <View style={{ flex: 1 }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Workout Consistency</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data.workoutConsistency}</Text></View>
+                         <View style={{ flex: 1 }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Nutrition Consistency</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data.nutritionConsistency}</Text></View>
                       </View>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Goal Prediction</Text><Text style={{ color: '#F59E0B', fontSize: 14, fontWeight: '800' }}>{reportData.monthly.goalPrediction}</Text></View>
-                      <View style={{ marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Conclusion</Text><Text style={{ color: '#A855F7', fontSize: 13, fontWeight: '800', lineHeight: 20 }}>{reportData.monthly.coachConclusion}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Goal Prediction</Text><Text style={{ color: '#F59E0B', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data.goalPrediction}</Text></View>
+                      <View style={{ marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Conclusion</Text><Text style={{ color: '#A855F7', fontSize: 13, fontWeight: '800', lineHeight: 20 }}>{monthlyReportState.data.coachConclusion}</Text></View>
                    </View>
                 </View>
              </View>
