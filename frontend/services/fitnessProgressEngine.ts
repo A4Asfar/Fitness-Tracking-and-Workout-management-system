@@ -1,6 +1,6 @@
 import PredictionEngine, { PredictionResult } from './PredictionEngine';
 import RecommendationEngine, { RecommendationResult } from './RecommendationEngine';
-import { getStartOfDay, filterByDate, sumMacros } from './EngineUtils';
+import { getStartOfDay, filterByDate, sumMacros, getCached } from './EngineUtils';
 
 export interface EngineParams {
   user: any;
@@ -126,9 +126,8 @@ class FitnessProgressEngine {
     this.memoCache.clear();
   }
 
-  public generate(params: EngineParams): EngineResult {
+  public generateCore(params: EngineParams) {
     this.clearCache();
-    
     const { user, analytics, meals, dietPlan, weightLogs = [], weights, workouts = [] } = params;
     
     const w = weights || { workout: 0.3, nutrition: 0.2, adherence: 0.2, recovery: 0.1, goal: 0.1, body: 0.1 };
@@ -167,12 +166,7 @@ class FitnessProgressEngine {
 
     const { primaryStatus, coachReport } = this.generateAIStatusAndReport(overallScore, workoutScore, nutritionScore, recoveryScore, dietAdherence, goal, netCalsLabel, bodyData);
     const consistencyData = this.calculateConsistency(workoutScore, nutritionScore, recoveryScore, weeklyPct, analytics);
-    const chartsData = this.generateChartData(last30Meals, last30Weights, today, workoutScore, nutritionScore, overallScore);
-    const predictiveData = PredictionEngine.generate(user, analytics, meals, weightLogs, dietPlan, workouts);
-    const recommendations = RecommendationEngine.generate(user, analytics, meals, predictiveData, workouts);
-    const { weeklyReport, monthlyReport } = this.generateReports(overallScore, workoutScore, nutritionScore, recoveryScore, weeklyPct, consistencyData, predictiveData, bodyData);
-    const healthBalanceIndex = this.calculateHealthBalanceIndex(overallScore, consistencyData.overall, predictiveData.burnout.score, bodyScore);
-    const achievements = this.generateAchievements(workoutScore, nutritionScore, recoveryScore, dietAdherence, consistencyData.streak);
+    const healthBalanceIndex = this.calculateHealthBalanceIndex(overallScore, consistencyData.overall, 0, bodyScore);
 
     return {
       healthBalanceIndex,
@@ -189,13 +183,38 @@ class FitnessProgressEngine {
       consistency: consistencyData,
       goalAchievement: goalData,
       bodyProgress: bodyData,
-      reports: { weekly: weeklyReport, monthly: monthlyReport },
-      charts: chartsData,
-      achievements,
-      dietPlanComparison: planComparison,
-      predictive: predictiveData,
-      recommendations: recommendations
+      dietPlanComparison: planComparison
     };
+  }
+
+  public generateCharts(params: EngineParams, coreData: any) {
+    const today = getStartOfDay();
+    const last30Meals = filterByDate(params.meals, 30);
+    const last30Weights = filterByDate(params.weightLogs || [], 30).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+    return this.generateChartData(last30Meals, last30Weights, today, coreData.scores.workout.value, coreData.scores.nutrition.value, coreData.scores.overall.value);
+  }
+
+  public generateReports(coreData: any, predictiveData: any) {
+    return this.generateReportsInternal(
+       coreData.scores.overall.value, 
+       coreData.scores.workout.value, 
+       coreData.scores.nutrition.value, 
+       coreData.scores.recovery.value, 
+       coreData.scores.adherence.value, 
+       coreData.consistency, 
+       predictiveData, 
+       coreData.bodyProgress
+    );
+  }
+
+  public generateAchievements(coreData: any) {
+    return this.generateAchievementsInternal(
+       coreData.scores.workout.value, 
+       coreData.scores.nutrition.value, 
+       coreData.scores.recovery.value, 
+       coreData.scores.adherence.value, 
+       coreData.consistency.streak
+    );
   }
 
   private calculateHealthBalanceIndex(overall: number, discipline: number, burnoutScore: number, bodyProgress: number) {
@@ -206,145 +225,151 @@ class FitnessProgressEngine {
   }
 
   private calculateDietAdherence(last30Meals: any[], dietPlan: any, today: Date, thirtyDaysAgo: Date) {
-     const adherenceReasons: ReasonDetail[] = [];
-     if (!dietPlan) {
-        adherenceReasons.push({ reason: 'No Diet Plan currently assigned', weight: 'Critical', type: 'negative' });
-        return { dietAdherence: 0, dailyPct: 0, weeklyPct: 0, monthlyPct: 0, planComparison: null, statuses: {}, adherenceReasons };
-     }
+    return getCached(last30Meals, 'calculateDietAdherence', () => {
+       const adherenceReasons: ReasonDetail[] = [];
+       if (!dietPlan) {
+          adherenceReasons.push({ reason: 'No Diet Plan currently assigned', weight: 'Critical', type: 'negative' });
+          return { dietAdherence: 0, dailyPct: 0, weeklyPct: 0, monthlyPct: 0, planComparison: null, statuses: {}, adherenceReasons };
+       }
 
-     const complianceHistory: { pct: number, statuses: any }[] = [];
-     for (let i = 0; i < 30; i++) {
-        const d = new Date(thirtyDaysAgo);
-        d.setDate(d.getDate() + i);
-        const dayName = DAYS_OF_WEEK[d.getDay()];
-        
-        const dayMeals = last30Meals.filter(m => {
-           const md = new Date(m.selectedAt || m.createdAt || m.date);
-           md.setHours(0,0,0,0);
-           return md.getTime() === d.getTime();
-        });
+       const complianceHistory: { pct: number, statuses: any }[] = [];
+       for (let i = 0; i < 30; i++) {
+          const d = new Date(thirtyDaysAgo);
+          d.setDate(d.getDate() + i);
+          const dayName = DAYS_OF_WEEK[d.getDay()];
+          
+          const dayMeals = last30Meals.filter(m => {
+             const md = new Date(m.selectedAt || m.createdAt || m.date);
+             md.setHours(0,0,0,0);
+             return md.getTime() === d.getTime();
+          });
 
-        const plannedDay = dietPlan.days.find((pd: any) => pd.dayOfWeek === dayName);
-        if (plannedDay) {
-           let totalWeight = 0;
-           let earnedWeight = 0;
-           const statuses: any = {};
-           const loggedTypes = dayMeals.map((m: any) => m.mealType || m.category || 'Unknown');
-           const loggedSet = new Set(loggedTypes);
+          const plannedDay = dietPlan.days.find((pd: any) => pd.dayOfWeek === dayName);
+          if (plannedDay) {
+             let totalWeight = 0;
+             let earnedWeight = 0;
+             const statuses: any = {};
+             const loggedTypes = dayMeals.map((m: any) => m.mealType || m.category || 'Unknown');
+             const loggedSet = new Set(loggedTypes);
 
-           ['breakfast', 'snack1', 'lunch', 'snack2', 'dinner'].forEach(mealKey => {
-              const pMeal = plannedDay[mealKey];
-              if (pMeal && pMeal.foods && pMeal.foods.length > 0) {
-                 totalWeight += 1;
-                 const checkKey = mealKey.includes('snack') ? 'Snack' : mealKey.charAt(0).toUpperCase() + mealKey.slice(1);
-                 const matchingLog = dayMeals.find(m => (m.mealType || m.category) === checkKey);
-                 if (!matchingLog) { statuses[mealKey] = 'Skipped'; }
-                 else {
-                    const calsDiff = Math.abs((matchingLog.calories || 0) - (pMeal.calories || 0));
-                    if (calsDiff <= (pMeal.calories * 0.20) || calsDiff < 50) { statuses[mealKey] = 'Completed'; earnedWeight += 1; }
-                    else { statuses[mealKey] = 'Partially Followed'; earnedWeight += 0.5; }
-                    loggedSet.delete(checkKey);
-                 }
-              }
-           });
-           loggedSet.forEach(extra => { statuses[`extra_${extra}`] = 'Extra'; totalWeight += 0.2; });
-           const compliance = totalWeight > 0 ? Math.round((earnedWeight / totalWeight) * 100) : 0;
-           complianceHistory.push({ pct: Math.min(100, Math.max(0, compliance)), statuses });
-        }
-     }
+             ['breakfast', 'snack1', 'lunch', 'snack2', 'dinner'].forEach(mealKey => {
+                const pMeal = plannedDay[mealKey];
+                if (pMeal && pMeal.foods && pMeal.foods.length > 0) {
+                   totalWeight += 1;
+                   const checkKey = mealKey.includes('snack') ? 'Snack' : mealKey.charAt(0).toUpperCase() + mealKey.slice(1);
+                   const matchingLog = dayMeals.find(m => (m.mealType || m.category) === checkKey);
+                   if (!matchingLog) { statuses[mealKey] = 'Skipped'; }
+                   else {
+                      const calsDiff = Math.abs((matchingLog.calories || 0) - (pMeal.calories || 0));
+                      if (calsDiff <= (pMeal.calories * 0.20) || calsDiff < 50) { statuses[mealKey] = 'Completed'; earnedWeight += 1; }
+                      else { statuses[mealKey] = 'Partially Followed'; earnedWeight += 0.5; }
+                      loggedSet.delete(checkKey);
+                   }
+                }
+             });
+             loggedSet.forEach(extra => { statuses[`extra_${extra}`] = 'Extra'; totalWeight += 0.2; });
+             const compliance = totalWeight > 0 ? Math.round((earnedWeight / totalWeight) * 100) : 0;
+             complianceHistory.push({ pct: Math.min(100, Math.max(0, compliance)), statuses });
+          }
+       }
 
-     const todayData = complianceHistory[complianceHistory.length - 1] || { pct: 0, statuses: {} };
-     const last7 = complianceHistory.slice(-7);
-     
-     const dailyPct = todayData.pct;
-     const weeklyPct = last7.length ? Math.round(last7.reduce((a, b) => a + b.pct, 0) / last7.length) : 0;
-     const monthlyPct = complianceHistory.length ? Math.round(complianceHistory.reduce((a, b) => a + b.pct, 0) / complianceHistory.length) : 0;
+       const todayData = complianceHistory[complianceHistory.length - 1] || { pct: 0, statuses: {} };
+       const last7 = complianceHistory.slice(-7);
+       
+       const dailyPct = todayData.pct;
+       const weeklyPct = last7.length ? Math.round(last7.reduce((a, b) => a + b.pct, 0) / last7.length) : 0;
+       const monthlyPct = complianceHistory.length ? Math.round(complianceHistory.reduce((a, b) => a + b.pct, 0) / complianceHistory.length) : 0;
 
-     if (dailyPct >= 80) adherenceReasons.push({ reason: `Excellent daily adherence (${dailyPct}%)`, weight: 'High', type: 'positive' });
-     else if (dailyPct > 0) adherenceReasons.push({ reason: `Partial daily adherence (${dailyPct}%)`, weight: 'Medium', type: 'negative' });
-     else adherenceReasons.push({ reason: `No meals tracked today matching plan`, weight: 'High', type: 'negative' });
-     
-     if (weeklyPct >= 80) adherenceReasons.push({ reason: `Maintained strong weekly discipline`, weight: 'High', type: 'positive' });
-     else adherenceReasons.push({ reason: `Weekly adherence is lacking (${weeklyPct}%)`, weight: 'High', type: 'negative' });
+       if (dailyPct >= 80) adherenceReasons.push({ reason: `Excellent daily adherence (${dailyPct}%)`, weight: 'High', type: 'positive' });
+       else if (dailyPct > 0) adherenceReasons.push({ reason: `Partial daily adherence (${dailyPct}%)`, weight: 'Medium', type: 'negative' });
+       else adherenceReasons.push({ reason: `No meals tracked today matching plan`, weight: 'High', type: 'negative' });
+       
+       if (weeklyPct >= 80) adherenceReasons.push({ reason: `Maintained strong weekly discipline`, weight: 'High', type: 'positive' });
+       else adherenceReasons.push({ reason: `Weekly adherence is lacking (${weeklyPct}%)`, weight: 'High', type: 'negative' });
 
-     let adherenceLabel = 'Excellent';
-     if (weeklyPct < 50) adherenceLabel = 'Poor';
-     else if (weeklyPct < 75) adherenceLabel = 'Needs Improvement';
-     else if (weeklyPct < 90) adherenceLabel = 'Good';
+       let adherenceLabel = 'Excellent';
+       if (weeklyPct < 50) adherenceLabel = 'Poor';
+       else if (weeklyPct < 75) adherenceLabel = 'Needs Improvement';
+       else if (weeklyPct < 90) adherenceLabel = 'Good';
 
-     return {
-       dietAdherence: dailyPct, dailyPct, weeklyPct, monthlyPct, statuses: todayData.statuses, adherenceReasons,
-       planComparison: { adherenceLabel }
-     };
+       return {
+         dietAdherence: dailyPct, dailyPct, weeklyPct, monthlyPct, statuses: todayData.statuses, adherenceReasons,
+         planComparison: { adherenceLabel }
+       };
+    });
   }
 
   private calculateWorkoutScore(analytics: any) {
-    let score = 0;
-    const streak = analytics?.streak || 0;
-    const countThisWeek = analytics?.thisWeekSummary?.count || 0;
-    const volumeThisWeek = analytics?.thisWeekSummary?.volume || 0;
-    
-    score += Math.min(streak * 10, 30); 
-    score += Math.min(countThisWeek * 15, 45); 
-    score += Math.min(volumeThisWeek / 1000 * 5, 25); 
+    return getCached(analytics, 'calculateWorkoutScore', () => {
+       let score = 0;
+       const streak = analytics?.streak || 0;
+       const countThisWeek = analytics?.thisWeekSummary?.count || 0;
+       const volumeThisWeek = analytics?.thisWeekSummary?.volume || 0;
+       
+       score += Math.min(streak * 10, 30); 
+       score += Math.min(countThisWeek * 15, 45); 
+       score += Math.min(volumeThisWeek / 1000 * 5, 25); 
 
-    const finalScore = Math.max(0, Math.min(100, Math.round(score)));
-    const workoutReasons: ReasonDetail[] = [];
-    if (countThisWeek >= 3) workoutReasons.push({ reason: `Completed ${countThisWeek} workouts this week`, weight: 'High', type: 'positive' });
-    else workoutReasons.push({ reason: `Only completed ${countThisWeek} workouts this week`, weight: 'High', type: 'negative' });
+       const finalScore = Math.max(0, Math.min(100, Math.round(score)));
+       const workoutReasons: ReasonDetail[] = [];
+       if (countThisWeek >= 3) workoutReasons.push({ reason: `Completed ${countThisWeek} workouts this week`, weight: 'High', type: 'positive' });
+       else workoutReasons.push({ reason: `Only completed ${countThisWeek} workouts this week`, weight: 'High', type: 'negative' });
 
-    if (streak >= 3) workoutReasons.push({ reason: `Strong consistency (${streak} day streak)`, weight: 'Medium', type: 'positive' });
-    else workoutReasons.push({ reason: `Consistency broke (streak is ${streak})`, weight: 'Medium', type: 'negative' });
+       if (streak >= 3) workoutReasons.push({ reason: `Strong consistency (${streak} day streak)`, weight: 'Medium', type: 'positive' });
+       else workoutReasons.push({ reason: `Consistency broke (streak is ${streak})`, weight: 'Medium', type: 'negative' });
 
-    if (volumeThisWeek > 3000) workoutReasons.push({ reason: `High training volume (${volumeThisWeek} kg lifted)`, weight: 'Medium', type: 'positive' });
-    else workoutReasons.push({ reason: `Training volume below target (${volumeThisWeek} kg)`, weight: 'Low', type: 'negative' });
+       if (volumeThisWeek > 3000) workoutReasons.push({ reason: `High training volume (${volumeThisWeek} kg lifted)`, weight: 'Medium', type: 'positive' });
+       else workoutReasons.push({ reason: `Training volume below target (${volumeThisWeek} kg)`, weight: 'Low', type: 'negative' });
 
-    return { workoutScore: finalScore, workoutReasons };
+       return { workoutScore: finalScore, workoutReasons };
+    });
   }
 
   private calculateNutritionQuality(user: any, goal: string, meals: any[], analytics: any, today: Date) {
-    let nutritionScore = 100;
-    let maintenance = user?.weight ? user.weight * 24 * 1.2 : 2500;
-    if (user?.gender === 'female') maintenance = user?.weight ? user.weight * 22 * 1.2 : 2000;
+    return getCached(meals, 'calculateNutritionQuality', () => {
+       let nutritionScore = 100;
+       let maintenance = user?.weight ? user.weight * 24 * 1.2 : 2500;
+       if (user?.gender === 'female') maintenance = user?.weight ? user.weight * 22 * 1.2 : 2000;
 
-    const todayMeals = filterByDate(meals, 0);
-    const macros = sumMacros(todayMeals);
-    const cals = macros.calories;
-    const pro = macros.protein;
-    const targetPro = user?.weight ? user.weight * 2 : 150;
+       const todayMeals = filterByDate(meals, 0);
+       const macros = sumMacros(todayMeals);
+       const cals = macros.calories;
+       const pro = macros.protein;
+       const targetPro = user?.weight ? user.weight * 2 : 150;
 
-    let burned = 0;
-    if (analytics?.recentWorkouts) {
-       const rw = analytics.recentWorkouts.find((w:any) => new Date(w.date).getTime() >= today.getTime());
-       if (rw) burned = rw.caloriesBurned || 0;
-    }
+       let burned = 0;
+       if (analytics?.recentWorkouts) {
+          const rw = analytics.recentWorkouts.find((w:any) => new Date(w.date).getTime() >= today.getTime());
+          if (rw) burned = rw.caloriesBurned || 0;
+       }
 
-    const netCalories = cals - burned;
-    let netCalsLabel = 'Balanced';
-    const nutritionReasons: ReasonDetail[] = [];
+       const netCalories = cals - burned;
+       let netCalsLabel = 'Balanced';
+       const nutritionReasons: ReasonDetail[] = [];
 
-    if (netCalories < maintenance - 500) {
-      netCalsLabel = 'Deficit';
-      if (!goal.includes('Loss')) { nutritionScore -= 20; nutritionReasons.push({ reason: `Too few calories for ${goal} goal`, weight: 'High', type: 'negative' }); }
-      else nutritionReasons.push({ reason: `Perfect caloric deficit achieved`, weight: 'High', type: 'positive' });
-    } else if (netCalories > maintenance + 500) {
-      netCalsLabel = 'Dangerous Surplus';
-      if (goal.includes('Loss')) { nutritionScore -= 40; nutritionReasons.push({ reason: `Dangerous surplus for weight loss goal`, weight: 'Critical', type: 'negative' }); }
-      else if (!goal.includes('Gain')) { nutritionScore -= 20; nutritionReasons.push({ reason: `Eating significantly above maintenance`, weight: 'High', type: 'negative' }); }
-      else nutritionReasons.push({ reason: `Heavy surplus achieved for muscle gain`, weight: 'High', type: 'positive' });
-    } else if (netCalories > maintenance + 200) {
-      netCalsLabel = 'Small Surplus';
-      if (goal.includes('Loss')) { nutritionScore -= 15; nutritionReasons.push({ reason: `Small surplus stalling weight loss`, weight: 'Medium', type: 'negative' }); }
-      else nutritionReasons.push({ reason: `Small surplus optimized for slow gain`, weight: 'Medium', type: 'positive' });
-    } else {
-       nutritionReasons.push({ reason: `Calories balanced at maintenance`, weight: 'High', type: 'positive' });
-    }
+       if (netCalories < maintenance - 500) {
+         netCalsLabel = 'Deficit';
+         if (!goal.includes('Loss')) { nutritionScore -= 20; nutritionReasons.push({ reason: `Too few calories for ${goal} goal`, weight: 'High', type: 'negative' }); }
+         else nutritionReasons.push({ reason: `Perfect caloric deficit achieved`, weight: 'High', type: 'positive' });
+       } else if (netCalories > maintenance + 500) {
+         netCalsLabel = 'Dangerous Surplus';
+         if (goal.includes('Loss')) { nutritionScore -= 40; nutritionReasons.push({ reason: `Dangerous surplus for weight loss goal`, weight: 'Critical', type: 'negative' }); }
+         else if (!goal.includes('Gain')) { nutritionScore -= 20; nutritionReasons.push({ reason: `Eating significantly above maintenance`, weight: 'High', type: 'negative' }); }
+         else nutritionReasons.push({ reason: `Heavy surplus achieved for muscle gain`, weight: 'High', type: 'positive' });
+       } else if (netCalories > maintenance + 200) {
+         netCalsLabel = 'Small Surplus';
+         if (goal.includes('Loss')) { nutritionScore -= 15; nutritionReasons.push({ reason: `Small surplus stalling weight loss`, weight: 'Medium', type: 'negative' }); }
+         else nutritionReasons.push({ reason: `Small surplus optimized for slow gain`, weight: 'Medium', type: 'positive' });
+       } else {
+          nutritionReasons.push({ reason: `Calories balanced at maintenance`, weight: 'High', type: 'positive' });
+       }
 
-    if (pro > 0 && pro < targetPro * 0.7) { nutritionScore -= 20; nutritionReasons.push({ reason: `Protein heavily below target (${pro}g / ${targetPro}g)`, weight: 'High', type: 'negative' }); }
-    else if (pro > 0) nutritionReasons.push({ reason: `Protein on target (${pro}g)`, weight: 'High', type: 'positive' });
-    else nutritionReasons.push({ reason: `No protein logged today`, weight: 'High', type: 'negative' });
-    
-    return { nutritionScore: Math.max(0, Math.min(100, nutritionScore)), netCalsLabel, nutritionReasons };
+       if (pro > 0 && pro < targetPro * 0.7) { nutritionScore -= 20; nutritionReasons.push({ reason: `Protein heavily below target (${pro}g / ${targetPro}g)`, weight: 'High', type: 'negative' }); }
+       else if (pro > 0) nutritionReasons.push({ reason: `Protein on target (${pro}g)`, weight: 'High', type: 'positive' });
+       else nutritionReasons.push({ reason: `No protein logged today`, weight: 'High', type: 'negative' });
+       
+       return { nutritionScore: Math.max(0, Math.min(100, nutritionScore)), netCalsLabel, nutritionReasons };
+    });
   }
 
   private calculateRecoveryScore(analytics: any, nutritionScore: number) {
@@ -364,48 +389,50 @@ class FitnessProgressEngine {
   }
 
   private calculateBodyProgress(user: any, targetWeight: number, weightLogs: any[], thirtyDaysAgo: Date) {
-     const currentWeight = user?.weight || 0;
-     let bodyScore = 80;
-     const bodyReasons: ReasonDetail[] = [];
-     let weeklyChange = '0 kg';
-     let monthlyTrend = 'Stable';
-     let detection = 'Healthy change';
-     let bmi = 'N/A';
+    return getCached(weightLogs, 'calculateBodyProgress', () => {
+       const currentWeight = user?.weight || 0;
+       let bodyScore = 80;
+       const bodyReasons: ReasonDetail[] = [];
+       let weeklyChange = '0 kg';
+       let monthlyTrend = 'Stable';
+       let detection = 'Healthy change';
+       let bmi = 'N/A';
 
-     if (user?.height && currentWeight) {
-        const heightM = user.height / 100;
-        bmi = (currentWeight / (heightM * heightM)).toFixed(1);
-     }
+       if (user?.height && currentWeight) {
+          const heightM = user.height / 100;
+          bmi = (currentWeight / (heightM * heightM)).toFixed(1);
+       }
 
-     if (weightLogs && weightLogs.length > 0) {
-        const recent = weightLogs.filter(w => new Date(w.date) >= thirtyDaysAgo).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
-        if (recent.length >= 2) {
-           const oldest = recent[0].weight;
-           const newest = recent[recent.length - 1].weight;
-           const diff = newest - oldest;
-           weeklyChange = `${(diff/4).toFixed(1)} kg`;
-           
-           if (diff > 2) { monthlyTrend = 'Gaining'; detection = diff > 4 ? 'Too fast' : 'Healthy change'; }
-           else if (diff < -2) { monthlyTrend = 'Losing'; detection = diff < -4 ? 'Too fast' : 'Healthy change'; }
-           else { monthlyTrend = 'Stable'; detection = 'Plateau'; }
+       if (weightLogs && weightLogs.length > 0) {
+          const recent = weightLogs.filter(w => new Date(w.date) >= thirtyDaysAgo).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+          if (recent.length >= 2) {
+             const oldest = recent[0].weight;
+             const newest = recent[recent.length - 1].weight;
+             const diff = newest - oldest;
+             weeklyChange = `${(diff/4).toFixed(1)} kg`;
+             
+             if (diff > 2) { monthlyTrend = 'Gaining'; detection = diff > 4 ? 'Too fast' : 'Healthy change'; }
+             else if (diff < -2) { monthlyTrend = 'Losing'; detection = diff < -4 ? 'Too fast' : 'Healthy change'; }
+             else { monthlyTrend = 'Stable'; detection = 'Plateau'; }
 
-           const targetDiff = targetWeight - newest;
-           if (targetDiff < 0 && diff < 0) { bodyScore = 95; bodyReasons.push({ reason: `Losing weight successfully towards goal`, weight: 'High', type: 'positive' }); }
-           else if (targetDiff > 0 && diff > 0) { bodyScore = 95; bodyReasons.push({ reason: `Gaining weight successfully towards goal`, weight: 'High', type: 'positive' }); }
-           else if (targetDiff !== 0 && Math.abs(diff) < 0.5) { bodyScore = 70; detection = 'Plateau'; bodyReasons.push({ reason: `Body progress stalled (Plateau)`, weight: 'Medium', type: 'negative' }); }
-           else if (Math.abs(targetDiff) < 1) { bodyScore = 100; detection = 'Goal Reached'; bodyReasons.push({ reason: `Ultimate weight goal reached!`, weight: 'High', type: 'positive' }); }
-           else { bodyScore = 60; bodyReasons.push({ reason: `Body is trending away from goal`, weight: 'High', type: 'negative' }); }
-        } else {
-           bodyReasons.push({ reason: `Not enough log history to detect trends`, weight: 'Medium', type: 'negative' });
-        }
-     } else {
-        const weightDiff = Math.abs(currentWeight - targetWeight);
-        if (weightDiff < 2) { bodyScore = 95; bodyReasons.push({ reason: `Weight is very close to target`, weight: 'Medium', type: 'positive' }); }
-        else if (weightDiff > 10) { bodyScore = 60; bodyReasons.push({ reason: `Weight is significantly far from target`, weight: 'High', type: 'negative' }); }
-        bodyReasons.push({ reason: `No chronological logs found to track momentum`, weight: 'Medium', type: 'negative' });
-     }
+             const targetDiff = targetWeight - newest;
+             if (targetDiff < 0 && diff < 0) { bodyScore = 95; bodyReasons.push({ reason: `Losing weight successfully towards goal`, weight: 'High', type: 'positive' }); }
+             else if (targetDiff > 0 && diff > 0) { bodyScore = 95; bodyReasons.push({ reason: `Gaining weight successfully towards goal`, weight: 'High', type: 'positive' }); }
+             else if (targetDiff !== 0 && Math.abs(diff) < 0.5) { bodyScore = 70; detection = 'Plateau'; bodyReasons.push({ reason: `Body progress stalled (Plateau)`, weight: 'Medium', type: 'negative' }); }
+             else if (Math.abs(targetDiff) < 1) { bodyScore = 100; detection = 'Goal Reached'; bodyReasons.push({ reason: `Ultimate weight goal reached!`, weight: 'High', type: 'positive' }); }
+             else { bodyScore = 60; bodyReasons.push({ reason: `Body is trending away from goal`, weight: 'High', type: 'negative' }); }
+          } else {
+             bodyReasons.push({ reason: `Not enough log history to detect trends`, weight: 'Medium', type: 'negative' });
+          }
+       } else {
+          const weightDiff = Math.abs(currentWeight - targetWeight);
+          if (weightDiff < 2) { bodyScore = 95; bodyReasons.push({ reason: `Weight is very close to target`, weight: 'Medium', type: 'positive' }); }
+          else if (weightDiff > 10) { bodyScore = 60; bodyReasons.push({ reason: `Weight is significantly far from target`, weight: 'High', type: 'negative' }); }
+          bodyReasons.push({ reason: `No chronological logs found to track momentum`, weight: 'Medium', type: 'negative' });
+       }
 
-     return { bodyScore, bodyData: { weeklyChange, monthlyTrend, detection, bmi }, bodyReasons };
+       return { bodyScore, bodyData: { weeklyChange, monthlyTrend, detection, bmi }, bodyReasons };
+    });
   }
 
   private calculateGoalAchievement(goal: string, targetWeight: number, user: any, bodyData: any, workoutScore: number, nutritionScore: number) {
@@ -449,7 +476,7 @@ class FitnessProgressEngine {
      return { workout: wScore, meal: nScore, recovery: rScore, diet: adherence, overall: Math.round((wScore + nScore + rScore + adherence) / 4), streak, longestStreak, brokenReason: streak === 0 ? 'Missed scheduled workout' : null };
   }
 
-  private generateReports(overall: number, wScore: number, nScore: number, rScore: number, adherence: number, consistency: any, predictive: any, bodyData: any) {
+  private generateReportsInternal(overall: number, wScore: number, nScore: number, rScore: number, adherence: number, consistency: any, predictive: any, bodyData: any) {
     let overallGrade = 'C';
     if (overall >= 95) overallGrade = 'A+';
     else if (overall >= 85) overallGrade = 'A';
@@ -478,7 +505,7 @@ class FitnessProgressEngine {
     };
   }
 
-  private generateAchievements(wScore: number, nScore: number, rScore: number, dietAdherence: number, streak: number) {
+  private generateAchievementsInternal(wScore: number, nScore: number, rScore: number, dietAdherence: number, streak: number) {
      const ach = [];
      if (wScore >= 90) ach.push('Workout Warrior');
      if (nScore >= 90) ach.push('Protein Master');

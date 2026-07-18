@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity, Animated, Easing, useWindowDimensions, LayoutAnimation, UIManager, Platform } from 'react-native';
+import { View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity, Animated, Easing, useWindowDimensions, LayoutAnimation, UIManager, Platform, InteractionManager } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import api from '@/services/api';
 import { MealService } from '@/services/mealService';
 import { DietPlanService } from '@/services/dietPlanService';
 import { WorkoutService } from '@/services/workoutService';
 import FitnessProgressEngine, { EngineResult } from '@/services/fitnessProgressEngine';
+import PredictionEngine from '@/services/PredictionEngine';
+import RecommendationEngine from '@/services/RecommendationEngine';
 import GoalSimulationEngine from '@/services/GoalSimulationEngine';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Flame, Dumbbell, Target, HeartPulse, Zap, Crown, CheckCircle2, Circle as CircleIcon, Beaker, ShieldAlert, Check, ArrowRight
@@ -114,7 +116,6 @@ export default function IntelligenceDashboardScreen() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [rawData, setRawData] = useState<any>(null);
-  const [renderStage, setRenderStage] = useState(0);
   
   // Sandbox State
   const [simDays, setSimDays] = useState(3);
@@ -154,44 +155,140 @@ export default function IntelligenceDashboardScreen() {
   useEffect(() => { fetchData(); }, [fetchData]);
   const onRefresh = useCallback(() => { setRefreshing(true); fetchData(); }, [fetchData]);
 
-  const [data, setData] = useState<any>(null);
+  const [coreState, setCoreState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
+  const [predState, setPredState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
+  const [recState, setRecState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
+  const [chartState, setChartState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
+  const [reportState, setReportState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
+  const [achState, setAchState] = useState<{ data: any; loading: boolean; error: any }>({ data: null, loading: true, error: null });
+
+  const coreData = coreState.data;
+  const predictionData = predState.data;
+  const recommendationData = recState.data;
+  const chartData = chartState.data;
+  const reportData = reportState.data;
+  const achievementData = achState.data;
 
   useEffect(() => {
     if (!rawData || !user) return;
-    const t = setTimeout(() => {
+    let isCancelled = false;
+
+    const yieldToUI = () => new Promise<void>(resolve => {
+      InteractionManager.runAfterInteractions(() => {
+        requestAnimationFrame(() => resolve());
+      });
+    });
+
+    const runCore = async () => {
+      await yieldToUI();
+      if (isCancelled) return null;
       try {
-        const intelligence = FitnessProgressEngine.generate({
-          user, 
-          analytics: rawData.analytics, 
-          meals: rawData.meals, 
-          dietPlan: rawData.dietPlan, 
-          weightLogs: rawData.weightLogs, 
-          workouts: rawData.workouts
-        });
-        setData(intelligence);
+        const core = FitnessProgressEngine.generateCore({ user, analytics: rawData.analytics, meals: rawData.meals, dietPlan: rawData.dietPlan, weightLogs: rawData.weightLogs, workouts: rawData.workouts });
+        if (!isCancelled) setCoreState({ data: core, loading: false, error: null });
+        return core;
       } catch (e) {
-        console.error("Engine crash:", e);
+        if (!isCancelled) setCoreState({ data: null, loading: false, error: e });
+        throw e;
       }
-    }, 50);
-    return () => clearTimeout(t);
+    };
+
+    const runPred = async () => {
+      await yieldToUI();
+      if (isCancelled) return null;
+      try {
+        const pred = PredictionEngine.generate(user, rawData.analytics, rawData.meals, rawData.weightLogs, rawData.dietPlan, rawData.workouts);
+        if (!isCancelled) setPredState({ data: pred, loading: false, error: null });
+        return pred;
+      } catch (e) {
+        if (!isCancelled) setPredState({ data: null, loading: false, error: e });
+        throw e;
+      }
+    };
+
+    const runRec = async (predPromise: Promise<any>) => {
+      let pred;
+      try { pred = await predPromise; } catch (e) {}
+      await yieldToUI();
+      if (isCancelled) return null;
+      try {
+        const recs = RecommendationEngine.generate(user, rawData.analytics, rawData.meals, pred || {}, rawData.workouts);
+        if (!isCancelled) setRecState({ data: recs, loading: false, error: null });
+        return recs;
+      } catch (e) {
+        if (!isCancelled) setRecState({ data: null, loading: false, error: e });
+        throw e;
+      }
+    };
+
+    const runChart = async (corePromise: Promise<any>) => {
+      let core;
+      try { core = await corePromise; } catch(e) { throw new Error('Charts require core data'); }
+      await yieldToUI();
+      if (isCancelled) return null;
+      try {
+        const charts = FitnessProgressEngine.generateCharts({ meals: rawData.meals, weightLogs: rawData.weightLogs } as any, core);
+        if (!isCancelled) setChartState({ data: charts, loading: false, error: null });
+        return charts;
+      } catch (e) {
+        if (!isCancelled) setChartState({ data: null, loading: false, error: e });
+        throw e;
+      }
+    };
+
+    const runReport = async (corePromise: Promise<any>, predPromise: Promise<any>) => {
+      let core, pred;
+      try { core = await corePromise; } catch(e) { throw new Error('Reports require core data'); }
+      try { pred = await predPromise; } catch(e) {}
+      await yieldToUI();
+      if (isCancelled) return null;
+      try {
+        const reports = FitnessProgressEngine.generateReports(core, pred || {});
+        if (!isCancelled) setReportState({ data: reports, loading: false, error: null });
+        return reports;
+      } catch (e) {
+        if (!isCancelled) setReportState({ data: null, loading: false, error: e });
+        throw e;
+      }
+    };
+
+    const runAch = async (corePromise: Promise<any>) => {
+      let core;
+      try { core = await corePromise; } catch(e) { throw new Error('Achievements require core data'); }
+      await yieldToUI();
+      if (isCancelled) return null;
+      try {
+        const ach = FitnessProgressEngine.generateAchievements(core);
+        if (!isCancelled) setAchState({ data: ach, loading: false, error: null });
+        return ach;
+      } catch (e) {
+        if (!isCancelled) setAchState({ data: null, loading: false, error: e });
+        throw e;
+      }
+    };
+
+    const startTime = performance.now();
+
+    const coreP = runCore();
+    const predP = runPred();
+    const chartP = runChart(coreP);
+    const reportP = runReport(coreP, predP);
+    const achP = runAch(coreP);
+    const recP = runRec(predP);
+
+    Promise.allSettled([coreP, predP, chartP, reportP, achP, recP]).then(() => {
+      const totalTime = performance.now() - startTime;
+      console.log(`[Performance] Fully streaming dashboard hydrated in ${Math.round(totalTime)}ms.`);
+    });
+
+    return () => { isCancelled = true; };
   }, [user, rawData]);
 
-  useEffect(() => {
-    if (data) {
-      const s1 = setTimeout(() => setRenderStage(1), 50);
-      const s2 = setTimeout(() => setRenderStage(2), 150);
-      const s3 = setTimeout(() => setRenderStage(3), 250);
-      const s4 = setTimeout(() => setRenderStage(4), 350);
-      return () => { clearTimeout(s1); clearTimeout(s2); clearTimeout(s3); clearTimeout(s4); };
-    }
-  }, [data]);
-
-  if (!data || (loading && !refreshing)) return <View style={[s.container, { paddingTop: insets.top }]}><View style={{ padding: 24 }}><SkeletonCard /><SkeletonCard /><SkeletonCard /></View></View>;
+  if (loading && !refreshing) return <View style={[s.container, { paddingTop: insets.top }]}><View style={{ padding: 24 }}><SkeletonCard /><SkeletonCard /><SkeletonCard /></View></View>;
 
   const isWide = width > 768;
 
   const simResult = useMemo(() => {
-     if (renderStage < 3) return null;
+     if (!coreData) return null;
      try {
        return GoalSimulationEngine.simulate(
           user?.weight || 70, (user as any)?.targetWeight || 75, user?.fitnessGoal || 'Gain Muscle',
@@ -201,7 +298,7 @@ export default function IntelligenceDashboardScreen() {
        console.error("Simulation error", e);
        return null;
      }
-  }, [user, simDays, simCal, simPro, renderStage]);
+  }, [user, simDays, simCal, simPro, coreData]);
 
   return (
     <View style={s.container}>
@@ -209,6 +306,9 @@ export default function IntelligenceDashboardScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 100, maxWidth: 1000, width: '100%', alignSelf: 'center' }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#38BDF8" />}>
         
         {/* HERO SECTION */}
+        {coreState.loading ? (
+          <View style={{ paddingTop: insets.top + 16, paddingHorizontal: 24, paddingBottom: 24 }}><SkeletonCard /></View>
+        ) : coreData ? (
         <LinearGradient colors={['#1E293B', '#0F172A']} style={[s.heroSection, { paddingTop: insets.top + 16 }]}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
              <View>
@@ -222,31 +322,32 @@ export default function IntelligenceDashboardScreen() {
           
           <View style={[s.gaugeWrapper, isWide && { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }]}>
             <View style={{ alignItems: 'center', marginBottom: isWide ? 0 : 24 }}>
-              <MainGauge score={data.healthBalanceIndex} label="Health Balance Index" />
+              <MainGauge score={coreData.healthBalanceIndex} label="Health Balance Index" />
             </View>
             <View style={[s.summaryGrid, isWide && { flex: 1, marginLeft: 40 }]}>
               <View style={s.sumCard}>
                 <Text style={s.sumCardLab}>Fitness Score</Text>
-                <Text style={s.sumCardVal}>{data.scores.overall.value}</Text>
+                <Text style={s.sumCardVal}>{coreData.scores.overall.value}</Text>
                 <Text style={s.sumCardSub}>Overall Trajectory</Text>
               </View>
               <View style={s.sumCard}>
                 <Text style={s.sumCardLab}>AI Status</Text>
-                <Text style={[s.sumCardVal, { color: '#38BDF8', fontSize: 15 }]}>{data.status.primary}</Text>
+                <Text style={[s.sumCardVal, { color: '#38BDF8', fontSize: 15 }]}>{coreData.status.primary}</Text>
                 <Text style={s.sumCardSub}>System Assessment</Text>
               </View>
             </View>
           </View>
         </LinearGradient>
+        ) : null}
 
         <View style={s.content}>
 
           {/* AI ACHIEVEMENTS */}
-          {renderStage >= 1 && data.achievements.length > 0 && (
+          {achState.loading ? <SkeletonCard /> : achievementData && achievementData.length > 0 ? (
              <View style={{ marginBottom: 24 }}>
                 <Text style={[s.sectionTitle, { fontSize: 16 }]}>AI Unlocked Achievements</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ maxWidth: 800, width: '100%', alignSelf: 'center',  gap: 12 }}>
-                   {data.achievements.map((ach, i) => (
+                   {achievementData.map((ach: any, i: number) => (
                       <View key={i} style={{ backgroundColor: 'rgba(56,189,248,0.1)', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 100, borderWidth: 1, borderColor: 'rgba(56,189,248,0.3)', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                          <Crown size={16} color="#38BDF8" />
                          <Text style={{ color: '#38BDF8', fontSize: 13, fontWeight: '800' }}>{ach}</Text>
@@ -254,15 +355,15 @@ export default function IntelligenceDashboardScreen() {
                    ))}
                 </ScrollView>
              </View>
-          )}
+          ) : null}
 
           {/* SMART DAILY ACTION PLAN */}
-          {renderStage >= 1 ? (
+          {recState.loading ? <SkeletonCard /> : recommendationData ? (
           <>
           <Text style={s.sectionTitle}>Today's Action Plan</Text>
           <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
              <View style={{ gap: 16 }}>
-                {data.recommendations.actionPlan.map((action, i) => (
+                {recommendationData.actionPlan.map((action: any, i: number) => (
                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                       {action.completed ? <CheckCircle2 size={24} color="#10B981" /> : <CircleIcon size={24} color="#64748B" />}
                       <View style={{ flex: 1 }}>
@@ -274,54 +375,54 @@ export default function IntelligenceDashboardScreen() {
              </View>
           </View>
           </>
-          ) : <SkeletonCard />}
+          ) : null}
 
           {/* XAI ADAPTIVE RECOMMENDATIONS */}
-          {renderStage >= 4 ? (
-             (data.recommendations.adaptiveDiet || data.recommendations.adaptiveWorkout) && (
+          {recommendationData ? (
+             (recommendationData.adaptiveDiet || recommendationData.adaptiveWorkout) && (
              <View style={{ marginBottom: 24 }}>
                 <Text style={s.sectionTitle}>AI Decision Support</Text>
                 <View style={{ gap: 12 }}>
-                   {data.recommendations.adaptiveDiet && (
+                   {recommendationData.adaptiveDiet && (
                       <View style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(245, 158, 11, 0.3)' }}>
                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                             <Flame size={18} color="#F59E0B" />
                             <Text style={{ color: '#F59E0B', fontSize: 14, fontWeight: '900', textTransform: 'uppercase' }}>Adaptive Diet Recommendation</Text>
                          </View>
-                         <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '800', marginBottom: 16 }}>Try: {data.recommendations.adaptiveDiet.recommendedMeal}</Text>
+                         <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '800', marginBottom: 16 }}>Try: {recommendationData.adaptiveDiet.recommendedMeal}</Text>
                          
                          <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 12, borderRadius: 8, gap: 8, marginBottom: 16 }}>
-                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Reason</Text><Text style={{ color: '#F8FAFC', fontSize: 13, fontWeight: '600' }}>{data.recommendations.adaptiveDiet.reason}</Text></View>
-                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Evidence</Text><Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '600' }}>{data.recommendations.adaptiveDiet.evidence}</Text></View>
-                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Expected Outcome</Text><Text style={{ color: '#10B981', fontSize: 13, fontWeight: '600' }}>{data.recommendations.adaptiveDiet.expectedOutcome}</Text></View>
+                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Reason</Text><Text style={{ color: '#F8FAFC', fontSize: 13, fontWeight: '600' }}>{recommendationData.adaptiveDiet.reason}</Text></View>
+                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Evidence</Text><Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '600' }}>{recommendationData.adaptiveDiet.evidence}</Text></View>
+                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Expected Outcome</Text><Text style={{ color: '#10B981', fontSize: 13, fontWeight: '600' }}>{recommendationData.adaptiveDiet.expectedOutcome}</Text></View>
                          </View>
 
                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                             <View style={{ flex: 1, alignItems: 'center' }}>
                                <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Current Diet</Text>
-                               <Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '800', marginTop: 4, textAlign: 'center' }}>{data.recommendations.adaptiveDiet.originalMacro}</Text>
+                               <Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '800', marginTop: 4, textAlign: 'center' }}>{recommendationData.adaptiveDiet.originalMacro}</Text>
                             </View>
                             <ArrowRight size={20} color="#F8FAFC" />
                             <View style={{ flex: 1, alignItems: 'center' }}>
                                <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Recommended</Text>
-                               <Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800', marginTop: 4, textAlign: 'center' }}>{data.recommendations.adaptiveDiet.targetMacro}</Text>
+                               <Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800', marginTop: 4, textAlign: 'center' }}>{recommendationData.adaptiveDiet.targetMacro}</Text>
                             </View>
                          </View>
                       </View>
                    )}
 
-                   {data.recommendations.adaptiveWorkout && (
+                   {recommendationData.adaptiveWorkout && (
                       <View style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.3)' }}>
                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                             <Dumbbell size={18} color="#38BDF8" />
                             <Text style={{ color: '#38BDF8', fontSize: 14, fontWeight: '900', textTransform: 'uppercase' }}>Adaptive Workout Override</Text>
                          </View>
-                         <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '800', marginBottom: 16 }}>Switch to: {data.recommendations.adaptiveWorkout.recommendedWorkout}</Text>
+                         <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '800', marginBottom: 16 }}>Switch to: {recommendationData.adaptiveWorkout.recommendedWorkout}</Text>
                          
                          <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 12, borderRadius: 8, gap: 8 }}>
-                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Reason</Text><Text style={{ color: '#F8FAFC', fontSize: 13, fontWeight: '600' }}>{data.recommendations.adaptiveWorkout.reason}</Text></View>
-                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Evidence</Text><Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '600' }}>{data.recommendations.adaptiveWorkout.evidence}</Text></View>
-                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Expected Outcome</Text><Text style={{ color: '#10B981', fontSize: 13, fontWeight: '600' }}>{data.recommendations.adaptiveWorkout.expectedOutcome}</Text></View>
+                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Reason</Text><Text style={{ color: '#F8FAFC', fontSize: 13, fontWeight: '600' }}>{recommendationData.adaptiveWorkout.reason}</Text></View>
+                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Evidence</Text><Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '600' }}>{recommendationData.adaptiveWorkout.evidence}</Text></View>
+                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Expected Outcome</Text><Text style={{ color: '#10B981', fontSize: 13, fontWeight: '600' }}>{recommendationData.adaptiveWorkout.expectedOutcome}</Text></View>
                          </View>
                       </View>
                    )}
@@ -331,6 +432,8 @@ export default function IntelligenceDashboardScreen() {
           ) : null}
 
           {/* GOAL SIMULATION ENGINE (SANDBOX) */}
+          {coreState.loading ? <SkeletonCard /> : coreData ? (
+          <>
           <Text style={s.sectionTitle}>Goal Simulation Engine</Text>
           <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '600', marginBottom: 16 }}>Simulate changes to your routine to predict future physiological outcomes. This does not alter your actual data.</Text>
           <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
@@ -383,69 +486,71 @@ export default function IntelligenceDashboardScreen() {
                 )}
              </View>
           </View>
+          </>
+          ) : null}
 
           {/* EXPLAINABLE PILLAR SCORECARDS */}
-          {renderStage >= 3 ? (
+          {coreState.loading ? <SkeletonCard /> : coreData ? (
              <>
              <Text style={s.sectionTitle}>XAI Diagnostic Core</Text>
              <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '600', marginBottom: 16 }}>Tap any pillar to reveal transparent AI reasoning, impact weights, and expected outcomes.</Text>
              
              <View style={[isWide && { flexDirection: 'row', gap: 16, flexWrap: 'wrap' }]}>
-               <PillarCard icon={Dumbbell} title="Workout Performance" data={data.scores.workout} color="#38BDF8" />
-               <PillarCard icon={Flame} title="Nutrition Quality" data={data.scores.nutrition} color="#F59E0B" />
-               <PillarCard icon={Target} title="Diet Adherence" data={data.scores.adherence} color="#10B981" />
-               <PillarCard icon={Zap} title="Recovery Score" data={data.scores.recovery} color="#A855F7" />
-               <PillarCard icon={Crown} title="Goal Achievement" data={data.scores.goal} color="#F59E0B" />
-               <PillarCard icon={HeartPulse} title="Body Progress" data={data.scores.body} color="#8B5CF6" />
+               <PillarCard icon={Dumbbell} title="Workout Performance" data={coreData.scores.workout} color="#38BDF8" />
+               <PillarCard icon={Flame} title="Nutrition Quality" data={coreData.scores.nutrition} color="#F59E0B" />
+               <PillarCard icon={Target} title="Diet Adherence" data={coreData.scores.adherence} color="#10B981" />
+               <PillarCard icon={Zap} title="Recovery Score" data={coreData.scores.recovery} color="#A855F7" />
+               <PillarCard icon={Crown} title="Goal Achievement" data={coreData.scores.goal} color="#F59E0B" />
+               <PillarCard icon={HeartPulse} title="Body Progress" data={coreData.scores.body} color="#8B5CF6" />
              </View>
              </>
-          ) : <SkeletonCard />}
+          ) : null}
 
           {/* VISUAL ANALYTICS */}
-          {renderStage >= 2 ? (
+          {chartState.loading ? <SkeletonCard /> : chartData ? (
              <>
              <Text style={s.sectionTitle}>Visual Analytics Trends</Text>
              <View style={[isWide && { flexDirection: 'row', gap: 16, flexWrap: 'wrap' }]}>
-                <MiniBarChart title="Overall Fitness Trend" data={data.charts.overall} color="#10B981" />
-                <MiniBarChart title="Workout Consistency" data={data.charts.workout} color="#38BDF8" />
-                <MiniBarChart title="Nutrition Quality" data={data.charts.nutrition} color="#F59E0B" />
-                <MiniBarChart title="Recovery Index" data={data.charts.recovery} color="#A855F7" />
+                <MiniBarChart title="Overall Fitness Trend" data={chartData.overall} color="#10B981" />
+                <MiniBarChart title="Workout Consistency" data={chartData.workout} color="#38BDF8" />
+                <MiniBarChart title="Nutrition Quality" data={chartData.nutrition} color="#F59E0B" />
+                <MiniBarChart title="Recovery Index" data={chartData.recovery} color="#A855F7" />
              </View>
              </>
-          ) : <SkeletonCard />}
+          ) : null}
 
           {/* EXECUTIVE REVIEWS */}
-          {renderStage >= 4 ? (
+          {reportState.loading ? <SkeletonCard /> : reportData ? (
              <>
              <Text style={s.sectionTitle}>Executive AI Reviews</Text>
              <View style={[isWide && { flexDirection: 'row', gap: 16 }]}>
                 <View style={[SharedStyles.card, { padding: 20, marginBottom: 16, flex: 1 }]}>
                    <Text style={{ color: '#38BDF8', fontSize: 14, fontWeight: '900', textTransform: 'uppercase', marginBottom: 16 }}>Weekly Coach Summary</Text>
                    <View style={{ gap: 12 }}>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Biggest Achievement</Text><Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800' }}>{data.reports.weekly.biggestAchievement}</Text></View>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Critical Mistake</Text><Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '800' }}>{data.reports.weekly.biggestMistake}</Text></View>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Strongest Habit</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{data.reports.weekly.strongestHabit}</Text></View>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Weakest Habit</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{data.reports.weekly.weakestHabit}</Text></View>
-                      <View style={{ marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Next Week Focus</Text><Text style={{ color: '#38BDF8', fontSize: 14, fontWeight: '800' }}>{data.reports.weekly.nextWeekFocus}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Biggest Achievement</Text><Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800' }}>{reportData.weekly.biggestAchievement}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Critical Mistake</Text><Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '800' }}>{reportData.weekly.biggestMistake}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Strongest Habit</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{reportData.weekly.strongestHabit}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Weakest Habit</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{reportData.weekly.weakestHabit}</Text></View>
+                      <View style={{ marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Next Week Focus</Text><Text style={{ color: '#38BDF8', fontSize: 14, fontWeight: '800' }}>{reportData.weekly.nextWeekFocus}</Text></View>
                    </View>
                 </View>
                 
                 <View style={[SharedStyles.card, { padding: 20, marginBottom: 24, flex: 1 }]}>
                    <Text style={{ color: '#A855F7', fontSize: 14, fontWeight: '900', textTransform: 'uppercase', marginBottom: 16 }}>Monthly Analytics Report</Text>
                    <View style={{ gap: 12 }}>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Overall Trajectory</Text><Text style={{ color: data.reports.monthly.overallImprovement.includes('+') ? '#10B981' : '#EF4444', fontSize: 14, fontWeight: '800' }}>{data.reports.monthly.overallImprovement}</Text></View>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Weight Change</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{data.reports.monthly.weightChange}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Overall Trajectory</Text><Text style={{ color: reportData.monthly.overallImprovement.includes('+') ? '#10B981' : '#EF4444', fontSize: 14, fontWeight: '800' }}>{reportData.monthly.overallImprovement}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Weight Change</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{reportData.monthly.weightChange}</Text></View>
                       <View style={{ flexDirection: 'row', gap: 16 }}>
-                         <View style={{ flex: 1 }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Workout Consistency</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{data.reports.monthly.workoutConsistency}</Text></View>
-                         <View style={{ flex: 1 }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Nutrition Consistency</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{data.reports.monthly.nutritionConsistency}</Text></View>
+                         <View style={{ flex: 1 }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Workout Consistency</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{reportData.monthly.workoutConsistency}</Text></View>
+                         <View style={{ flex: 1 }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Nutrition Consistency</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{reportData.monthly.nutritionConsistency}</Text></View>
                       </View>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Goal Prediction</Text><Text style={{ color: '#F59E0B', fontSize: 14, fontWeight: '800' }}>{data.reports.monthly.goalPrediction}</Text></View>
-                      <View style={{ marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Conclusion</Text><Text style={{ color: '#A855F7', fontSize: 13, fontWeight: '800', lineHeight: 20 }}>{data.reports.monthly.coachConclusion}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Goal Prediction</Text><Text style={{ color: '#F59E0B', fontSize: 14, fontWeight: '800' }}>{reportData.monthly.goalPrediction}</Text></View>
+                      <View style={{ marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Conclusion</Text><Text style={{ color: '#A855F7', fontSize: 13, fontWeight: '800', lineHeight: 20 }}>{reportData.monthly.coachConclusion}</Text></View>
                    </View>
                 </View>
              </View>
              </>
-          ) : <SkeletonCard />}
+          ) : null}
           
         </View>
       </ScrollView>
