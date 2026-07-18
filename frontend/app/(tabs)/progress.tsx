@@ -548,22 +548,33 @@ export default function IntelligenceDashboardScreen() {
                 <Text style={{ color: '#A855F7', fontSize: 16, fontWeight: '900' }}>Predictive Sandbox</Text>
              </View>
 
-             <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
-                <TouchableOpacity onPress={() => setSimDays(Math.max(0, simDays-1))} style={s.simBtn}><Text style={s.simBtnTxt}>- Days</Text></TouchableOpacity>
-                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#F8FAFC', fontSize: 15, fontWeight: '800' }}>{simDays} Days/Wk</Text></View>
-                <TouchableOpacity onPress={() => setSimDays(Math.min(7, simDays+1))} style={s.simBtn}><Text style={s.simBtnTxt}>+ Days</Text></TouchableOpacity>
-             </View>
+             <View style={[isWide && { flexDirection: 'row', gap: 16 }, { marginBottom: 24 }]}>
+                <View style={[{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(30,41,59,0.5)', padding: 8, borderRadius: 12, marginBottom: isWide ? 0 : 12 }, isWide && { flex: 1 }]}>
+                   <TouchableOpacity activeOpacity={0.7} onPress={() => setSimDays(Math.max(0, simDays-1))} style={[s.simBtn, { paddingHorizontal: 16 }]}><Text style={s.simBtnTxt}>-</Text></TouchableOpacity>
+                   <View style={{ flex: 1, alignItems: 'center' }}>
+                      <Text style={{ color: '#94A3B8', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', marginBottom: 2 }}>Workouts</Text>
+                      <Text style={{ color: '#F8FAFC', fontSize: 15, fontWeight: '900' }}>{simDays} / Wk</Text>
+                   </View>
+                   <TouchableOpacity activeOpacity={0.7} onPress={() => setSimDays(Math.min(7, simDays+1))} style={[s.simBtn, { paddingHorizontal: 16 }]}><Text style={s.simBtnTxt}>+</Text></TouchableOpacity>
+                </View>
 
-             <View style={{ flexDirection: 'row', gap: 12, marginBottom: 16 }}>
-                <TouchableOpacity onPress={() => setSimCal(Math.max(1000, simCal-250))} style={s.simBtn}><Text style={s.simBtnTxt}>- 250 kcal</Text></TouchableOpacity>
-                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#F8FAFC', fontSize: 15, fontWeight: '800' }}>{simCal} kcal/d</Text></View>
-                <TouchableOpacity onPress={() => setSimCal(Math.min(5000, simCal+250))} style={s.simBtn}><Text style={s.simBtnTxt}>+ 250 kcal</Text></TouchableOpacity>
-             </View>
+                <View style={[{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(30,41,59,0.5)', padding: 8, borderRadius: 12, marginBottom: isWide ? 0 : 12 }, isWide && { flex: 1 }]}>
+                   <TouchableOpacity activeOpacity={0.7} onPress={() => setSimCal(Math.max(1000, simCal-250))} style={[s.simBtn, { paddingHorizontal: 16 }]}><Text style={s.simBtnTxt}>-</Text></TouchableOpacity>
+                   <View style={{ flex: 1, alignItems: 'center' }}>
+                      <Text style={{ color: '#94A3B8', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', marginBottom: 2 }}>Calories</Text>
+                      <Text style={{ color: '#F8FAFC', fontSize: 15, fontWeight: '900' }}>{simCal} kcal</Text>
+                   </View>
+                   <TouchableOpacity activeOpacity={0.7} onPress={() => setSimCal(Math.min(5000, simCal+250))} style={[s.simBtn, { paddingHorizontal: 16 }]}><Text style={s.simBtnTxt}>+</Text></TouchableOpacity>
+                </View>
 
-             <View style={{ flexDirection: 'row', gap: 12, marginBottom: 24 }}>
-                <TouchableOpacity onPress={() => setSimPro(Math.max(50, simPro-25))} style={s.simBtn}><Text style={s.simBtnTxt}>- 25g Pro</Text></TouchableOpacity>
-                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}><Text style={{ color: '#F8FAFC', fontSize: 15, fontWeight: '800' }}>{simPro}g Pro/d</Text></View>
-                <TouchableOpacity onPress={() => setSimPro(Math.min(300, simPro+25))} style={s.simBtn}><Text style={s.simBtnTxt}>+ 25g Pro</Text></TouchableOpacity>
+                <View style={[{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(30,41,59,0.5)', padding: 8, borderRadius: 12, marginBottom: isWide ? 0 : 12 }, isWide && { flex: 1 }]}>
+                   <TouchableOpacity activeOpacity={0.7} onPress={() => setSimPro(Math.max(50, simPro-25))} style={[s.simBtn, { paddingHorizontal: 16 }]}><Text style={s.simBtnTxt}>-</Text></TouchableOpacity>
+                   <View style={{ flex: 1, alignItems: 'center' }}>
+                      <Text style={{ color: '#94A3B8', fontSize: 10, fontWeight: '700', textTransform: 'uppercase', marginBottom: 2 }}>Protein</Text>
+                      <Text style={{ color: '#F8FAFC', fontSize: 15, fontWeight: '900' }}>{simPro} g</Text>
+                   </View>
+                   <TouchableOpacity activeOpacity={0.7} onPress={() => setSimPro(Math.min(300, simPro+25))} style={[s.simBtn, { paddingHorizontal: 16 }]}><Text style={s.simBtnTxt}>+</Text></TouchableOpacity>
+                </View>
              </View>
 
              <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, gap: 12, borderWidth: 1, borderColor: '#334155' }}>
