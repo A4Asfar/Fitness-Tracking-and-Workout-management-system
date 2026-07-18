@@ -394,12 +394,6 @@ export default function IntelligenceDashboardScreen() {
      }
   }, [user, simDays, simCal, simPro, overallData]);
 
-  if (loading && !refreshing) return <View style={[s.container, { paddingTop: insets.top }]}><View style={{ padding: 24 }}><SkeletonCard /><SkeletonCard /><SkeletonCard /></View></View>;
-
-  const isWide = width > 768;
-
-  console.log('[Lifecycle] Final Render');
-
   const toggleActionPlanItem = useCallback((index: number) => {
     setRecState(prev => {
       if (!prev.data || !prev.data.actionPlan) return prev;
@@ -408,6 +402,12 @@ export default function IntelligenceDashboardScreen() {
       return { ...prev, data: { ...prev.data, actionPlan: newPlan } };
     });
   }, []);
+
+  if (loading && !refreshing) return <View style={[s.container, { paddingTop: insets.top }]}><View style={{ padding: 24 }}><SkeletonCard /><SkeletonCard /><SkeletonCard /></View></View>;
+
+  const isWide = width > 768;
+
+  console.log('[Lifecycle] Final Render');
 
   return (
     <View style={s.container}>
