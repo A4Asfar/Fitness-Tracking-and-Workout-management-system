@@ -397,6 +397,15 @@ export default function IntelligenceDashboardScreen() {
 
   console.log('[Lifecycle] Final Render');
 
+  const toggleActionPlanItem = useCallback((index: number) => {
+    setRecState(prev => {
+      if (!prev.data || !prev.data.actionPlan) return prev;
+      const newPlan = [...prev.data.actionPlan];
+      newPlan[index] = { ...newPlan[index], completed: !newPlan[index].completed };
+      return { ...prev, data: { ...prev.data, actionPlan: newPlan } };
+    });
+  }, []);
+
   return (
     <View style={s.container}>
       <Tabs.Screen options={{ headerShown: false }} />
@@ -461,13 +470,13 @@ export default function IntelligenceDashboardScreen() {
           <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
              <View style={{ gap: 16 }}>
                 {recommendationData?.actionPlan?.map((action: any, i: number) => (
-                   <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                   <TouchableOpacity key={i} activeOpacity={0.7} onPress={() => toggleActionPlanItem(i)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                       {action.completed ? <CheckCircle2 size={24} color="#10B981" /> : <CircleIcon size={24} color="#64748B" />}
                       <View style={{ flex: 1 }}>
                          <Text style={{ color: action.completed ? '#10B981' : '#F8FAFC', fontSize: 15, fontWeight: '800', textDecorationLine: action.completed ? 'line-through' : 'none' }}>{action.task}</Text>
                          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '600', marginTop: 2 }}>{action.reason}</Text>
                       </View>
-                   </View>
+                   </TouchableOpacity>
                 ))}
              </View>
           </View>
