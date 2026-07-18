@@ -1,3 +1,5 @@
+const IS_DEV = process.env.NODE_ENV !== 'production';
+
 class EngineDiagnosticsManager {
   private static instance: EngineDiagnosticsManager;
   
@@ -19,32 +21,32 @@ class EngineDiagnosticsManager {
   }
 
   public recordExecutionTime(engineName: string, timeMs: number) {
-    if (__DEV__) {
+    if (IS_DEV) {
       this.diagnostics.executionTimes[engineName] = timeMs;
       console.log(`[Diagnostics] ${engineName} generated in ${timeMs.toFixed(2)}ms`);
     }
   }
 
   public recordCacheHit(key: string) {
-    if (__DEV__) {
+    if (IS_DEV) {
       this.diagnostics.cacheHits[key] = (this.diagnostics.cacheHits[key] || 0) + 1;
     }
   }
 
   public recordCacheMiss(key: string) {
-    if (__DEV__) {
+    if (IS_DEV) {
       this.diagnostics.cacheMisses[key] = (this.diagnostics.cacheMisses[key] || 0) + 1;
     }
   }
 
   public recordTraversal(datasetName: string, count: number) {
-    if (__DEV__) {
+    if (IS_DEV) {
       this.diagnostics.arrayTraversals[datasetName] = (this.diagnostics.arrayTraversals[datasetName] || 0) + count;
     }
   }
 
   public recordWarning(warning: string) {
-    if (__DEV__) {
+    if (IS_DEV) {
       this.diagnostics.warnings.push(warning);
       console.warn(`[Diagnostics Warning] ${warning}`);
     }
