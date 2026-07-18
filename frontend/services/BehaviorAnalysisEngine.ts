@@ -70,9 +70,9 @@ export default class BehaviorAnalysisEngine {
       const weeklyMacros = sumMacros(recent7Meals);
       const monthlyMacros = sumMacros(recent30Meals);
       
-      const daysTracked7 = new Set(recent7Meals.map((m: any) => new Date(m.selectedAt || m.createdAt || m.date).toISOString().split('T')[0])).size || 1;
-      const daysTracked14 = new Set(recent14Meals.map((m: any) => new Date(m.selectedAt || m.createdAt || m.date).toISOString().split('T')[0])).size || 1;
-      const daysTracked30 = new Set(recent30Meals.map((m: any) => new Date(m.selectedAt || m.createdAt || m.date).toISOString().split('T')[0])).size || 1;
+      const daysTracked7 = new Set(recent7Meals.map((m: any) => new Date(m.selectedAt || m.createdAt || m.date || Date.now()).toISOString().split('T')[0])).size || 1;
+      const daysTracked14 = new Set(recent14Meals.map((m: any) => new Date(m.selectedAt || m.createdAt || m.date || Date.now()).toISOString().split('T')[0])).size || 1;
+      const daysTracked30 = new Set(recent30Meals.map((m: any) => new Date(m.selectedAt || m.createdAt || m.date || Date.now()).toISOString().split('T')[0])).size || 1;
 
       const weeklyAvgCals = weeklyMacros.calories / daysTracked7;
       const monthlyAvgCals = monthlyMacros.calories / daysTracked30;
@@ -152,7 +152,7 @@ export default class BehaviorAnalysisEngine {
       let weekdayCount = 0;
 
       meals.forEach(m => {
-         const md = new Date(m.selectedAt || m.createdAt || m.date);
+         const md = new Date(m.selectedAt || m.createdAt || m.date || Date.now());
          const hour = md.getHours();
          const day = md.getDay();
          if ((m.mealType || m.category) === 'Breakfast' || hour < 10) breakfastCount++;
@@ -161,7 +161,7 @@ export default class BehaviorAnalysisEngine {
          else { weekdayCals += (m.calories || 0); weekdayCount++; }
       });
 
-      const activeDays = new Set(meals.map(m => new Date(m.selectedAt || m.createdAt || m.date).toISOString().split('T')[0])).size || 1;
+      const activeDays = new Set(meals.map(m => new Date(m.selectedAt || m.createdAt || m.date || Date.now()).toISOString().split('T')[0])).size || 1;
       
       if (meals.length > 0 && breakfastCount < (activeDays * 0.4)) habits.push("Frequently skipping breakfast");
       if (monthlyMacros.calories > 0 && (lateNightCals / monthlyMacros.calories) > 0.25) habits.push("Late night snacking pattern detected");

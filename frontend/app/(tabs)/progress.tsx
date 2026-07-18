@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { View, StyleSheet, ScrollView, RefreshControl, Text, TouchableOpacity, Animated, Easing, useWindowDimensions, LayoutAnimation, UIManager, Platform, InteractionManager } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
+import { useRouter, Tabs } from 'expo-router';
 import api from '@/services/api';
 import { MealService } from '@/services/mealService';
 import { DietPlanService } from '@/services/dietPlanService';
@@ -32,7 +33,7 @@ const MainGauge = React.memo(function MainGauge({ score, label }: { score: numbe
   const animatedValue = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.timing(animatedValue, { toValue: score / 100, duration: 1500, easing: Easing.out(Easing.cubic), useNativeDriver: true, delay: 300 }).start();
+    Animated.timing(animatedValue, { toValue: score / 100, duration: 1500, easing: Easing.out(Easing.cubic), useNativeDriver: false, delay: 300 }).start();
   }, [score]);
 
   const strokeDashoffset = animatedValue.interpolate({ inputRange: [0, 1], outputRange: [circumference, 0] });
@@ -398,7 +399,7 @@ export default function IntelligenceDashboardScreen() {
 
   return (
     <View style={s.container}>
-      <Stack.Screen options={{ headerShown: false }} />
+      <Tabs.Screen options={{ headerShown: false }} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 100, maxWidth: 1000, width: '100%', alignSelf: 'center' }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#38BDF8" />}>
         <ErrorBoundary fallbackMessage="The dashboard core engine encountered an error.">
         {/* HERO SECTION */}

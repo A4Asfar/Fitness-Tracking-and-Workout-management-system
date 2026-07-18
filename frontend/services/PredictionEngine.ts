@@ -198,7 +198,7 @@ class PredictionEngine {
           const dayName = DAYS[d.getDay()];
           
           const dayMeals = meals.filter(m => {
-             const md = new Date(m.selectedAt || m.createdAt || m.date);
+             const md = new Date(m.selectedAt || m.createdAt || m.date || Date.now());
              md.setHours(0,0,0,0);
              return md.getTime() === d.getTime();
           });
@@ -269,7 +269,7 @@ class PredictionEngine {
        weekMap.forEach(count => { if (count > bestWeekCount) bestWeekCount = count; });
 
        // Diet Adherence (days with meals / total days active)
-       const uniqueMealDays = new Set(meals.map(m => new Date(m.selectedAt || m.createdAt || m.date).toISOString().split('T')[0])).size;
+       const uniqueMealDays = new Set(meals.map(m => new Date(m.selectedAt || m.createdAt || m.date || Date.now()).toISOString().split('T')[0])).size;
        const totalDaysActive = Math.max(1, Math.floor((today.getTime() - new Date(workouts[workouts.length-1]?.date || today).getTime()) / (1000 * 3600 * 24)));
        const adherence = Math.min(100, Math.round((uniqueMealDays / Math.max(1, Math.min(totalDaysActive, 30))) * 100));
 
