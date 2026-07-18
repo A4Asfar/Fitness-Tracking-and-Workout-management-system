@@ -49,6 +49,7 @@ export const getDaysAgo = (days: number): Date => {
 };
 
 export const filterByDate = <T extends { date?: string; selectedAt?: string; createdAt?: string }>(items: T[], daysAgo: number): T[] => {
+  if (!Array.isArray(items)) return [];
   return getCached(items, `filterByDate_${daysAgo}`, () => {
     EngineDiagnostics.recordTraversal('items_filterByDate', items.length);
     const cutoff = getDaysAgo(daysAgo).getTime();
@@ -60,6 +61,7 @@ export const filterByDate = <T extends { date?: string; selectedAt?: string; cre
 };
 
 export const sumMacros = (meals: any[]) => {
+  if (!Array.isArray(meals)) return { calories: 0, protein: 0, carbs: 0, fats: 0 };
   return getCached(meals, `sumMacros`, () => {
     EngineDiagnostics.recordTraversal('meals_sumMacros', meals.length);
     let calories = 0;
@@ -77,6 +79,7 @@ export const sumMacros = (meals: any[]) => {
 };
 
 export const sumWorkoutVolume = (workouts: any[]) => {
+  if (!Array.isArray(workouts)) return { volume: 0, sets: 0, reps: 0, cals: 0 };
   return getCached(workouts, `sumWorkoutVolume`, () => {
     EngineDiagnostics.recordTraversal('workouts_sumWorkoutVolume', workouts.length);
     let volume = 0;

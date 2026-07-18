@@ -61,7 +61,7 @@ class PredictionEngine {
 
   public generate(user: any, analytics: any, meals: any[], weightLogs: any[], dietPlan: any, workouts: any[] = []): PredictionResult {
     this.clearCache();
-    const startTime = performance.now();
+    const startTime = Date.now();
 
     const today = getStartOfDay();
     const b = BehaviorAnalysisEngine.generate(user, analytics, meals, weightLogs, workouts);
@@ -108,7 +108,7 @@ class PredictionEngine {
     const milestones = this.calculateMilestones(analytics, recentMeals, user, recentWeights, workouts);
 
     const diagnostics = EngineDiagnostics.getSnapshot();
-    EngineDiagnostics.recordExecutionTime('PredictionEngine', performance.now() - startTime);
+    EngineDiagnostics.recordExecutionTime('PredictionEngine', Date.now() - startTime);
 
     return { predictions, plateau, burnout, habits, behavioralArchetype, goalSuccess, timeline, risks, personalBests, milestones, diagnostics, confidenceReasons: goalSuccess.reasons };
   }

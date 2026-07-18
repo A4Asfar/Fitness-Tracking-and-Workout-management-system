@@ -47,7 +47,7 @@ export interface BehaviorAnalysis {
 export default class BehaviorAnalysisEngine {
   public static generate(user: any, analytics: any, rawMeals: any[], rawWeightLogs: any[], rawWorkouts: any[]): BehaviorAnalysis {
     return getCached(rawMeals, 'BehaviorAnalysis', () => {
-      const startTime = performance.now();
+      const startTime = Date.now();
       const today = getStartOfDay();
 
       const safeUser = EngineValidator.sanitizeUser(user);
@@ -220,7 +220,7 @@ export default class BehaviorAnalysisEngine {
         }
       };
       
-      EngineDiagnostics.recordExecutionTime('BehaviorAnalysisEngine', performance.now() - startTime);
+      EngineDiagnostics.recordExecutionTime('BehaviorAnalysisEngine', Date.now() - startTime);
       return result;
     });
   }

@@ -30,7 +30,7 @@ class RecommendationEngine {
 
   public generate(user: any, analytics: any, meals: any[], predictiveData: any, workouts: any[] = []): RecommendationResult {
     this.clearCache();
-    const startTime = performance.now();
+    const startTime = Date.now();
     const now = new Date();
     const b = BehaviorAnalysisEngine.generate(user, analytics, meals, [], workouts);
     const todayMeals = filterByDate(meals, 0);
@@ -42,7 +42,7 @@ class RecommendationEngine {
     const notifications = this.generateNotifications(todayMeals, analytics, user, predictiveData, meals, b, now);
 
     const diagnostics = EngineDiagnostics.getSnapshot();
-    EngineDiagnostics.recordExecutionTime('RecommendationEngine', performance.now() - startTime);
+    EngineDiagnostics.recordExecutionTime('RecommendationEngine', Date.now() - startTime);
 
     return { actionPlan, adaptiveDiet, adaptiveWorkout, goalAdjustment, notifications, diagnostics };
   }

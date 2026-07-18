@@ -247,7 +247,7 @@ class FitnessProgressEngine {
     params: EngineParams, workoutScore: number, nutritionScore: number, recoveryScore: number, 
     dietAdherence: number, goalScore: number, bodyScore: number, netCalsLabel: string, bodyData: any, weeklyPct: number
   ) {
-    const startTime = performance.now();
+    const startTime = Date.now();
     const w = params.weights || { workout: 0.3, nutrition: 0.2, adherence: 0.2, recovery: 0.1, goal: 0.1, body: 0.1 };
     const goal = params.dietPlan?.goal || params.user?.fitnessGoal || 'Maintain Fitness';
     const overallScore = Math.round(
@@ -261,7 +261,7 @@ class FitnessProgressEngine {
     const consistencyData = this.calculateConsistency(workoutScore, nutritionScore, recoveryScore, dietAdherence, params.analytics);
     const healthBalanceIndex = this.calculateHealthBalanceIndex(overallScore, consistencyData.overall, 100 - recoveryScore, bodyScore);
     
-    EngineDiagnostics.recordExecutionTime('FitnessProgressEngine:OverallScore', performance.now() - startTime);
+    EngineDiagnostics.recordExecutionTime('FitnessProgressEngine:OverallScore', Date.now() - startTime);
 
     return {
       value: overallScore, reasons: overallReasons, historicalTrend: 'Stable (+2 pts)', howToImprove: 'Focus on your weakest pillar.', expectedImprovement: 'Increases holistic trajectory.',
