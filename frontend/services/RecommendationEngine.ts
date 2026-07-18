@@ -1,9 +1,10 @@
-import { getStartOfDay, filterByDate, sumMacros, getCached } from './EngineUtils';
+import { getStartOfDay, filterByDate, sumMacros, getCached, calculateMaintenance, calculateTargetProtein } from './EngineUtils';
+import BehaviorAnalysisEngine from './BehaviorAnalysisEngine';
 
 export interface RecommendationResult {
   actionPlan: { task: string; reason: string; completed: boolean }[];
-  adaptiveDiet: { recommendedMeal: string; reason: string; evidence: string; expectedOutcome: string; targetMacro: string; originalMacro: string } | null;
-  adaptiveWorkout: { recommendedWorkout: string; reason: string; evidence: string; expectedOutcome: string } | null;
+  adaptiveDiet: { recommendedMeal: string; reason: string; evidence: string; expectedOutcome: string; targetMacro: string; originalMacro: string; confidenceScore: number } | null;
+  adaptiveWorkout: { recommendedWorkout: string; reason: string; evidence: string; expectedOutcome: string; confidenceScore: number } | null;
   goalAdjustment: { isUnrealistic: boolean; safeTimeline: string; reason: string } | null;
   notifications: string[];
 }
@@ -27,42 +28,42 @@ class RecommendationEngine {
 
   public generate(user: any, analytics: any, meals: any[], predictiveData: any, workouts: any[] = []): RecommendationResult {
     this.clearCache();
-
+    const b = BehaviorAnalysisEngine.generate(user, analytics, meals, [], workouts);
     const todayMeals = filterByDate(meals, 0);
 
-    const actionPlan = this.generateActionPlan(user, analytics, todayMeals, predictiveData);
-    const adaptiveDiet = this.generateAdaptiveDiet(user, meals, predictiveData);
-    const adaptiveWorkout = this.generateAdaptiveWorkout(analytics, predictiveData, workouts);
+    const actionPlan = this.generateActionPlan(user, analytics, todayMeals, predictiveData, b);
+    const adaptiveDiet = this.generateAdaptiveDiet(user, meals, predictiveData, b);
+    const adaptiveWorkout = this.generateAdaptiveWorkout(analytics, predictiveData, workouts, b);
     const goalAdjustment = this.generateGoalAdjustment(user, predictiveData);
-    const notifications = this.generateNotifications(todayMeals, analytics, user, predictiveData, meals);
+    const notifications = this.generateNotifications(todayMeals, analytics, user, predictiveData, meals, b);
 
     return { actionPlan, adaptiveDiet, adaptiveWorkout, goalAdjustment, notifications };
   }
 
-  private generateActionPlan(user: any, analytics: any, todayMeals: any[], predictiveData: any) {
+  private generateActionPlan(user: any, analytics: any, todayMeals: any[], predictiveData: any, b: any) {
     return getCached(todayMeals, 'generateActionPlan', () => {
        const plan = [];
-       const targetPro = user?.weight ? Math.round(user.weight * 2) : 150;
-       const currentPro = todayMeals.reduce((a,b)=>a+(b.protein||0),0);
+       const targetPro = b.nutrition.proteinTarget;
+       const currentPro = sumMacros(todayMeals).protein;
        
        if (predictiveData.burnout.risk === 'Critical' || predictiveData.burnout.risk === 'High') {
           plan.push({ task: 'Complete a Mobility or Recovery Walk', reason: 'High burnout risk detected from overtraining.', completed: false });
        } else {
-          const countThisWeek = analytics?.thisWeekSummary?.count || 0;
+          const countThisWeek = b.workout.weeklyWorkoutCount;
           plan.push({ task: 'Complete Strength Session', reason: `You have only completed ${countThisWeek} workouts this week.`, completed: false });
        }
 
        if (currentPro >= targetPro) {
           plan.push({ task: `Hit Protein Target (${targetPro}g)`, reason: `Muscle recovery optimized.`, completed: true });
        } else {
-          plan.push({ task: `Consume ${targetPro - currentPro}g more Protein`, reason: `Protein intake is required for muscle preservation.`, completed: false });
+          plan.push({ task: `Consume ${Math.round(targetPro - currentPro)}g more Protein`, reason: `Protein intake is required for muscle preservation.`, completed: false });
        }
 
        plan.push({ task: 'Drink 2.5L Water', reason: 'Hydration speeds up metabolic clearance.', completed: false });
        plan.push({ task: 'Sleep at least 8 hours', reason: 'Deep sleep prevents hormonal plateau.', completed: false });
 
-       const maintenance = user?.weight ? user.weight * 24 * 1.2 : 2500;
-       const currentCals = todayMeals.reduce((a,b)=>a+(b.calories||0),0);
+       const maintenance = b.nutrition.maintenanceCalories;
+       const currentCals = b.nutrition.dailyCalories;
        if (currentCals > maintenance) plan.push({ task: `Stop eating (Calorie Limit Exceeded)`, reason: `You are in a dangerous surplus.`, completed: true });
        else plan.push({ task: `Stay below ${maintenance} kcal`, reason: `Keep your caloric balance stabilized.`, completed: false });
 
@@ -70,46 +71,52 @@ class RecommendationEngine {
     });
   }
 
-  private generateAdaptiveDiet(user: any, meals: any[], predictiveData: any) {
+  private generateAdaptiveDiet(user: any, meals: any[], predictiveData: any, b: any) {
     return getCached(meals, 'generateAdaptiveDiet', () => {
-       const maintenance = user?.weight ? user.weight * 24 * 1.2 : 2500;
-       const past14DaysMeals = filterByDate(meals, 14);
-       const macros = sumMacros(past14DaysMeals);
-       
-       const daysTracked = new Set(past14DaysMeals.map(m => new Date(m.selectedAt || m.createdAt || m.date).toISOString().split('T')[0])).size || 1;
-       const avgCals = macros.calories / daysTracked;
-       const avgPro = macros.protein / daysTracked;
-       const targetPro = user?.weight ? Math.round(user.weight * 2) : 150;
+       const maintenance = b.nutrition.maintenanceCalories;
+       const avgCals = b.nutrition.weeklyAverageCalories;
+       const avgPro = b.nutrition.proteinAverage;
+       const targetPro = b.nutrition.proteinTarget;
 
        let bestMeal = null;
        let bestScore = 0;
+       
+       const recentlyEaten = b.nutrition.recentMealsEaten;
+
        meals.forEach(m => {
           const cal = m.calories || 1;
           const pro = m.protein || 0;
-          const ratio = pro / cal; 
+          let ratio = pro / cal; 
+          
+          if (recentlyEaten.has(m.name)) ratio *= 0.5; 
+          
           if (ratio > bestScore && cal > 100) {
              bestScore = ratio;
              bestMeal = m;
           }
        });
 
+       const confidenceScore = b.consistency.mealConsistency / 100;
+
        if (avgCals > maintenance + 200) {
           return {
              recommendedMeal: bestMeal ? (bestMeal as any).name : 'Diet Plan Default Meal',
              reason: `Decrease daily calorie load while preserving muscle.`,
-             evidence: `You averaged ${Math.round(avgCals)} kcal over the last 14 days while your maintenance is ${Math.round(maintenance)} kcal.`,
+             evidence: `You averaged ${Math.round(avgCals)} kcal over the last 7 days while your maintenance is ${Math.round(maintenance)} kcal.`,
              expectedOutcome: 'Decreases daily caloric load and restores deficit.',
              targetMacro: bestMeal ? `${(bestMeal as any).protein}g Protein | ${(bestMeal as any).calories} kcal` : '30g Protein | 400 kcal',
-             originalMacro: `Avg Daily Intake: ${Math.round(avgCals)} kcal`
+             originalMacro: `Avg Daily Intake: ${Math.round(avgCals)} kcal`,
+             confidenceScore
           };
        } else if (avgPro < targetPro - 20) {
           return {
              recommendedMeal: bestMeal ? (bestMeal as any).name : 'High Protein Snack',
              reason: `Increase daily protein intake for muscle recovery.`,
-             evidence: `You averaged ${Math.round(avgPro)}g protein over the last 14 days while your target is ${targetPro}g. Increase daily protein by ${Math.round(targetPro - avgPro)}g.`,
+             evidence: `You averaged ${Math.round(avgPro)}g protein over the last 7 days while your target is ${targetPro}g. Increase daily protein by ${Math.round(targetPro - avgPro)}g.`,
              expectedOutcome: 'Enhances muscle protein synthesis.',
              targetMacro: bestMeal ? `${(bestMeal as any).protein}g Protein` : `${targetPro}g Target Protein`,
-             originalMacro: `Avg Daily Protein: ${Math.round(avgPro)}g`
+             originalMacro: `Avg Daily Protein: ${Math.round(avgPro)}g`,
+             confidenceScore
           };
        }
 
@@ -117,41 +124,42 @@ class RecommendationEngine {
     });
   }
 
-  private generateAdaptiveWorkout(analytics: any, predictiveData: any, workouts: any[]) {
+  private generateAdaptiveWorkout(analytics: any, predictiveData: any, workouts: any[], b: any) {
     return getCached(workouts, 'generateAdaptiveWorkout', () => {
+       const confidenceScore = b.consistency.workoutConsistency / 100;
+       
        if (predictiveData.burnout.risk === 'Critical' || predictiveData.burnout.risk === 'High') {
+          const hasYoga = b.workout.hasYoga;
           return {
-             recommendedWorkout: 'Mobility & Stretching',
+             recommendedWorkout: hasYoga ? 'Active Recovery Yoga' : 'Mobility & Stretching',
              reason: 'Burnout risk is critically high. Avoid intense nervous system fatigue today.',
              evidence: `Burnout score is ${predictiveData.burnout.score}. Training load is excessive relative to recovery.`,
-             expectedOutcome: 'Restores Central Nervous System balance and prevents injury.'
+             expectedOutcome: 'Restores Central Nervous System balance and prevents injury.',
+             confidenceScore: 0.95 
           };
        }
 
-       const recentWorkouts = filterByDate(workouts, 7);
-       const countThisWeek = recentWorkouts.length;
+       const countThisWeek = b.workout.weeklyWorkoutCount;
        if (countThisWeek === 0) {
           return {
              recommendedWorkout: 'Full Body Foundations',
              reason: 'You have missed training recently. Re-establish base strength.',
              evidence: `0 workouts logged in the last 7 days.`,
-             expectedOutcome: 'Re-primes muscle fibers without causing extreme DOMS.'
+             expectedOutcome: 'Re-primes muscle fibers without causing extreme DOMS.',
+             confidenceScore
           };
        }
 
-       let strengthCount = 0;
-       let cardioCount = 0;
-       recentWorkouts.forEach(w => {
-          if (w.type === 'Strength') strengthCount++;
-          if (w.type === 'Cardio' || w.type === 'HIIT') cardioCount++;
-       });
+       const strengthCount = b.workout.strengthCount;
+       const cardioCount = b.workout.cardioCount;
 
        if (strengthCount >= 3 && cardioCount === 0) {
           return {
              recommendedWorkout: 'Zone 2 Cardio',
              reason: 'You have high strength volume but low cardiovascular conditioning.',
              evidence: `You completed ${strengthCount} strength sessions this week but 0 cardio sessions.`,
-             expectedOutcome: 'Improves aerobic base and recovery capacity.'
+             expectedOutcome: 'Improves aerobic base and recovery capacity.',
+             confidenceScore
           };
        }
 
@@ -160,7 +168,8 @@ class RecommendationEngine {
              recommendedWorkout: 'Resistance Training',
              reason: 'You have high cardio volume but no resistance training.',
              evidence: `You completed ${cardioCount} cardio sessions this week but 0 strength sessions.`,
-             expectedOutcome: 'Preserves muscle mass and improves metabolic rate.'
+             expectedOutcome: 'Preserves muscle mass and improves metabolic rate.',
+             confidenceScore
           };
        }
 
@@ -180,7 +189,7 @@ class RecommendationEngine {
      return null;
   }
 
-  private generateNotifications(todayMeals: any[], analytics: any, user: any, predictiveData: any, meals: any[]) {
+  private generateNotifications(todayMeals: any[], analytics: any, user: any, predictiveData: any, meals: any[], b: any) {
     return getCached(meals, 'generateNotifications', () => {
        const notifications = [];
        const hasBreakfast = todayMeals.some(m => (m.mealType || m.category) === 'Breakfast');
@@ -188,15 +197,15 @@ class RecommendationEngine {
           notifications.push("Breakfast Missing: Fuel your morning to prevent energy crashes.");
        }
        
-       const targetPro = user?.weight ? Math.round(user.weight * 2) : 150;
-       const currentPro = todayMeals.reduce((a,b)=>a+(b.protein||0),0);
+       const targetPro = b.nutrition.proteinTarget;
+       const currentPro = sumMacros(todayMeals).protein;
        if (currentPro < targetPro) {
-          notifications.push(`Protein Target Remaining: You need ${targetPro - currentPro}g more today.`);
+          notifications.push(`Protein Target Remaining: You need ${Math.round(targetPro - currentPro)}g more today.`);
        } else {
           notifications.push("Protein Target Achieved: Excellent muscle recovery support.");
        }
        
-       const countThisWeek = analytics?.thisWeekSummary?.count || 0;
+       const countThisWeek = b.workout.weeklyWorkoutCount;
        if (countThisWeek === 0) {
           notifications.push("Workout Reminder: No sessions logged this week. Start today!");
        }
@@ -205,8 +214,8 @@ class RecommendationEngine {
           notifications.push("Recovery Warning: Critical fatigue detected. Take a rest day.");
        }
 
-       const maintenance = user?.weight ? user.weight * 24 * 1.2 : 2500;
-       const avgCals = meals.slice(-7).reduce((a,b)=>a+(b.calories||0),0) / 7;
+       const maintenance = b.nutrition.maintenanceCalories;
+       const avgCals = b.nutrition.weeklyAverageCalories;
        if (avgCals > maintenance + 300) {
           notifications.push(`Calorie Surplus Warning: You are averaging ${Math.round(avgCals - maintenance)} kcal over maintenance.`);
        } else if (avgCals > 0 && avgCals < maintenance - 800) {

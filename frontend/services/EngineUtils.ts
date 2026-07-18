@@ -24,6 +24,19 @@ export const getStartOfDay = (date: Date | string = new Date()): Date => {
   return d;
 };
 
+export const calculateMaintenance = (user: any): number => {
+  if (!user || !user.weight) return 2500;
+  // BMR * 1.2 for sedentary maintenance approximation
+  if (user.gender === 'female') return user.weight * 22 * 1.2;
+  return user.weight * 24 * 1.2;
+};
+
+export const calculateTargetProtein = (user: any): number => {
+  if (!user || !user.weight) return 150;
+  // Target 2g / kg for muscle preservation
+  return Math.round(user.weight * 2);
+};
+
 export const getDaysAgo = (days: number): Date => {
   const d = getStartOfDay();
   d.setDate(d.getDate() - days);

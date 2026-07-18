@@ -1,4 +1,5 @@
-import { getStartOfDay, filterByDate, getCached } from './EngineUtils';
+import { getStartOfDay, filterByDate, getCached, calculateMaintenance, calculateTargetProtein, sumWorkoutVolume } from './EngineUtils';
+import BehaviorAnalysisEngine from './BehaviorAnalysisEngine';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -21,6 +22,7 @@ export interface PredictionResult {
     score: number;
   };
   habits: string[];
+  behavioralArchetype: string;
   goalSuccess: {
     probabilityPct: number;
     confidence: 'High' | 'Medium' | 'Low';
@@ -58,169 +60,53 @@ class PredictionEngine {
     this.clearCache();
 
     const today = getStartOfDay();
+    const b = BehaviorAnalysisEngine.generate(user, analytics, meals, weightLogs, workouts);
     
     const recentMeals = filterByDate(meals, 29);
     const recentWeights = filterByDate(weightLogs, 29).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    const plateau = this.detectPlateau(recentWeights, today);
-    const predictions = this.predictFuture(user, recentWeights, recentMeals, analytics);
-    const burnout = this.detectBurnout(analytics, recentMeals, workouts);
-    const habits = this.analyzeHabits(recentMeals, analytics);
+    const plateau = {
+       isPlateaued: b.body.plateauDetected,
+       duration: b.body.plateauDuration,
+       message: b.body.plateauDetected ? `Weight is plateauing based on a ${b.body.plateauDuration}-day moving average.` : '',
+       recommendation: b.body.plateauDuration >= 14 ? 'Recalculate your caloric needs and add a 200 kcal deficit.' : 'Stay consistent, temporary stalls are normal.'
+    };
+
+    const currentWeight = user?.weight || 70;
+    const predictions = {
+       weight7Days: +(currentWeight + b.body.weightDelta7Days).toFixed(1),
+       weight30Days: +(currentWeight + (b.body.weightDelta7Days / 7 * 30)).toFixed(1),
+       caloricTrend: b.nutrition.calorieTrend,
+       bodyCompositionTrend: b.nutrition.calorieTrend === 'Deficit' ? 'Losing Weight' : (b.nutrition.calorieTrend === 'Surplus' ? 'Gaining Weight' : 'Maintaining')
+    };
+
+    let risk: 'Low'|'Medium'|'High'|'Critical' = 'Low';
+    let rec = null;
+    if (b.workout.recoveryIndex <= 30) {
+       risk = 'Critical';
+       rec = `Critical Risk: Training load spiked (ACWR ${b.workout.ACWR.toFixed(2)}). Mandatory rest day required.`;
+    } else if (b.workout.recoveryIndex <= 60 || b.workout.ACWR >= 1.5) {
+       risk = 'High';
+       rec = `High Risk: ACWR is ${b.workout.ACWR.toFixed(2)} (Danger Zone). Recommend a deload or recovery day soon.`;
+    } else if (b.workout.ACWR >= 1.3) {
+       risk = 'Medium';
+       rec = `Moderate training load detected. Ensure adequate sleep.`;
+    }
+    const burnout = { risk, score: 100 - b.workout.recoveryIndex, recommendation: rec };
+
+    const habits = b.behavior.habits;
+    const behavioralArchetype = b.behavior.archetype;
+
     const goalSuccess = this.predictGoalSuccess(user, plateau, predictions, analytics, workouts);
     const timeline = this.generateTimeline(recentMeals, analytics, today, workouts);
     const risks = this.detectRisks(plateau, burnout, recentMeals, user);
     const personalBests = this.calculatePersonalBests(analytics, recentMeals, workouts);
     const milestones = this.calculateMilestones(analytics, recentMeals, user, recentWeights, workouts);
 
-    return { predictions, plateau, burnout, habits, goalSuccess, timeline, risks, personalBests, milestones };
+    return { predictions, plateau, burnout, habits, behavioralArchetype, goalSuccess, timeline, risks, personalBests, milestones };
   }
 
-  private detectPlateau(weights: any[], today: Date) {
-    return getCached(weights, 'detectPlateau', () => {
-      if (weights.length < 3) return { isPlateaued: false, duration: 0, message: '', recommendation: null };
-      
-      let sum7 = 0, count7 = 0;
-      let sum14 = 0, count14 = 0;
-      let sum30 = 0, count30 = 0;
-
-      const newest = weights[weights.length - 1];
-      
-      weights.forEach(w => {
-         const daysDiff = (new Date(today).getTime() - new Date(w.date).getTime()) / (1000 * 3600 * 24);
-         if (daysDiff <= 7) { sum7 += w.weight; count7++; }
-         if (daysDiff <= 14) { sum14 += w.weight; count14++; }
-         if (daysDiff <= 30) { sum30 += w.weight; count30++; }
-      });
-
-      const avg7 = count7 > 0 ? sum7 / count7 : newest.weight;
-      const avg14 = count14 > 0 ? sum14 / count14 : avg7;
-      const avg30 = count30 > 0 ? sum30 / count30 : avg14;
-
-      const diff7_14 = Math.abs(avg7 - avg14);
-      const diff14_30 = Math.abs(avg14 - avg30);
-
-      let plateauDuration = 0;
-      if (diff14_30 < 0.5 && count30 >= 10) plateauDuration = 30;
-      else if (diff7_14 < 0.3 && count14 >= 5) plateauDuration = 14;
-      else if (Math.abs(newest.weight - avg7) < 0.2 && count7 >= 3) plateauDuration = 7;
-
-      if (plateauDuration >= 7) {
-         return {
-            isPlateaued: true,
-            duration: plateauDuration,
-            message: `Weight is plateauing based on a ${plateauDuration}-day moving average.`,
-            recommendation: plateauDuration >= 14 ? 'Recalculate your caloric needs and add a 200 kcal deficit.' : 'Stay consistent, temporary stalls are normal.'
-         };
-      }
-      return { isPlateaued: false, duration: 0, message: '', recommendation: null };
-    });
-  }
-
-  private predictFuture(user: any, weights: any[], meals: any[], analytics: any) {
-    return getCached(meals, 'predictFuture', () => {
-       const currentWeight = user?.weight || 70;
-       let dailyDelta = 0;
-       if (weights.length >= 2) {
-          const oldest = weights[0];
-          const newest = weights[weights.length - 1];
-          const days = Math.max(1, (new Date(newest.date).getTime() - new Date(oldest.date).getTime()) / (1000*3600*24));
-          dailyDelta = (newest.weight - oldest.weight) / days;
-       }
-
-       const weight7Days = +(currentWeight + (dailyDelta * 7)).toFixed(1);
-       const weight30Days = +(currentWeight + (dailyDelta * 30)).toFixed(1);
-
-       // Avg caloric state
-       let totalCals = 0;
-       meals.forEach(m => totalCals += (m.calories || 0));
-       const avgCals = meals.length ? (totalCals / 30) : 2000;
-       const maintenance = user?.weight ? user.weight * 24 * 1.2 : 2500;
-       
-       let caloricTrend = 'Maintenance';
-       if (avgCals < maintenance - 300) caloricTrend = 'Deficit';
-       else if (avgCals > maintenance + 300) caloricTrend = 'Surplus';
-
-       let bodyCompositionTrend = 'Maintaining';
-       const avgProtein = meals.reduce((a,b)=>a+(b.protein||0),0) / 30;
-       const targetPro = currentWeight * 1.8;
-       const trainingVolume = analytics?.thisMonthSummary?.count || 0;
-
-       if (trainingVolume > 12 && avgProtein >= targetPro) bodyCompositionTrend = caloricTrend === 'Deficit' ? 'Losing Fat, Retaining Muscle' : 'Gaining Muscle';
-       else if (caloricTrend === 'Deficit') bodyCompositionTrend = 'Losing Weight (Fat & Muscle)';
-       else if (caloricTrend === 'Surplus') bodyCompositionTrend = 'Gaining Fat';
-
-       return { weight7Days, weight30Days, caloricTrend, bodyCompositionTrend };
-    });
-  }
-
-  private detectBurnout(analytics: any, meals: any[], workouts: any[]) {
-    return getCached(workouts, 'detectBurnout', () => {
-       const today = new Date();
-       today.setHours(0,0,0,0);
-       
-       let consecutiveDays = 0;
-       for (let i = 0; i < 14; i++) {
-          const check = new Date(today);
-          check.setDate(check.getDate() - i);
-          const hasWorkout = workouts.some(w => {
-             const wd = new Date(w.date);
-             wd.setHours(0,0,0,0);
-             return wd.getTime() === check.getTime();
-          });
-          if (hasWorkout) consecutiveDays++;
-          else break;
-       }
-
-       const recentWorkouts = workouts.filter(w => (today.getTime() - new Date(w.date).getTime()) <= 7 * 24 * 3600 * 1000);
-       const workoutCount7d = recentWorkouts.length;
-       const restDays = 7 - workoutCount7d;
-
-       let score = 0;
-       if (consecutiveDays >= 5) score += 30;
-       if (consecutiveDays >= 7) score += 20;
-       if (restDays === 0) score += 25;
-
-       const avgCals = meals.reduce((a,b)=>a+(b.calories||0),0) / 30;
-       if (avgCals > 0 && avgCals < 1500) score += 25;
-
-       let risk: 'Low'|'Medium'|'High'|'Critical' = 'Low';
-       let rec = null;
-       if (score >= 70) { 
-          risk = 'Critical'; 
-          rec = `Critical Risk: ${consecutiveDays} consecutive training days with ${restDays} rest days. Mandatory rest day required.`; 
-       } else if (score >= 40) { 
-          risk = 'High'; 
-          rec = `High Risk: ${workoutCount7d} workouts this week. Recommend a deload or recovery day soon.`; 
-       } else if (score >= 20) { 
-          risk = 'Medium'; 
-          rec = `Moderate training load detected. Ensure adequate sleep.`; 
-       }
-
-       return { risk, score, recommendation: rec };
-    });
-  }
-
-  private analyzeHabits(meals: any[], analytics: any) {
-    return getCached(meals, 'analyzeHabits', () => {
-       const habits = [];
-       
-       // Detect skipped breakfasts
-       let breakfastCount = 0;
-       meals.forEach(m => {
-          if ((m.mealType || m.category) === 'Breakfast') breakfastCount++;
-       });
-       if (meals.length > 0 && breakfastCount < 10) habits.push("Frequently skipping breakfast");
-
-       // Detect weekend behavior (Mocks for algorithm depth)
-       // Normally we would parse dates to see if weekends have high calories
-       const streak = analytics?.streak || 0;
-       if (streak === 0 && (analytics?.thisMonthSummary?.count || 0) > 4) habits.push("Inconsistent training schedule (breaking streaks)");
-
-       if (habits.length === 0) habits.push("Consistent daily tracking routine");
-
-       return habits;
-    });
-  }
+  // internal helpers that still rely on specific outputs
 
   private predictGoalSuccess(user: any, plateau: any, predictions: any, analytics: any, workouts: any[]) {
      const goal = user?.fitnessGoal || 'Weight Loss';
@@ -288,7 +174,7 @@ class PredictionEngine {
           const cals = dayMeals.reduce((a,b)=>a+(b.calories||0),0);
           
           if (dayWorkouts.length > 0) {
-             const wCals = dayWorkouts.reduce((a, b) => a + Math.round((b.duration || 30) * 8.5), 0);
+             const wCals = sumWorkoutVolume(dayWorkouts).cals;
              insight += `Workout completed (${wCals} kcal burned). `;
           } else {
              insight += `Rest day. `;
@@ -307,25 +193,28 @@ class PredictionEngine {
   }
 
   private detectRisks(plateau: any, burnout: any, meals: any[], user: any) {
-     const risks = [];
-     if (burnout.risk === 'Critical' || burnout.risk === 'High') risks.push('Overtraining Risk');
-     
-     let totalCals = 0;
-     meals.slice(-7).forEach(m => totalCals += (m.calories || 0));
-     const avgCals = meals.slice(-7).length ? totalCals / 7 : 0;
-     if (avgCals > 0 && avgCals < 1200) risks.push('Severe Undereating Detected');
-     if (avgCals > 3500) risks.push('Severe Overeating Detected');
+    return getCached(meals, 'detectRisks', () => {
+       const risks = [];
+       if (burnout.risk === 'Critical' || burnout.risk === 'High') risks.push('Overtraining Risk');
+       
+       const recentMeals = filterByDate(meals, 7);
+       let totalCals = 0;
+       recentMeals.forEach((m: any) => totalCals += (m.calories || 0));
+       const avgCals = recentMeals.length ? totalCals / 7 : 0;
+       if (avgCals > 0 && avgCals < 1200) risks.push('Severe Undereating Detected');
+       if (avgCals > 3500) risks.push('Severe Overeating Detected');
 
-     if (plateau.duration >= 30) risks.push('Metabolic Adaptation Plateau');
+       if (plateau.duration >= 30) risks.push('Metabolic Adaptation Plateau');
 
-     return risks;
+       return risks;
+    });
   }
 
   private calculatePersonalBests(analytics: any, meals: any[], workouts: any[]) {
     return getCached(workouts, 'calculatePersonalBests', () => {
        let mostCals = 0;
        workouts.forEach(w => {
-          const cals = Math.round((w.duration || 30) * 8.5);
+          const cals = sumWorkoutVolume([w]).cals;
           if (cals > mostCals) mostCals = cals;
        });
 
