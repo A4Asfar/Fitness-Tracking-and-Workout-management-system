@@ -275,7 +275,7 @@ export default function IntelligenceDashboardScreen() {
       catch (e) { if (!isCancelled) setAchState({ data: null, loading: false, error: e }); throw e; }
     };
 
-    const startTime = performance.now();
+    const startTime = Date.now();
 
     const workP = runWorkout();
     const nutP = runNutrition();
@@ -295,7 +295,7 @@ export default function IntelligenceDashboardScreen() {
     const achP = runAch(workP, nutP, recovP, adhP, overP);
 
     Promise.allSettled([workP, nutP, adhP, bodyP, predP, recovP, goalP, recP, overP, chartP, weeklyP, monthlyP, achP]).then(() => {
-      const totalTime = performance.now() - startTime;
+      const totalTime = Date.now() - startTime;
       console.log(`[Performance] Fully streaming dashboard hydrated in ${Math.round(totalTime)}ms.`);
     });
 
