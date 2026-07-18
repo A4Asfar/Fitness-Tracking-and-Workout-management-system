@@ -39,8 +39,11 @@ const MainGauge = React.memo(function MainGauge({ score, label }: { score: numbe
   const strokeDashoffset = animatedValue.interpolate({ inputRange: [0, 1], outputRange: [circumference, 0] });
   const getColor = () => { if (score >= 90) return '#10B981'; if (score >= 80) return '#38BDF8'; if (score >= 65) return '#F59E0B'; return '#EF4444'; };
 
+  const innerSize = size - strokeWidth * 2;
+
   return (
     <View style={{ position: 'relative', width: size, height: size, justifyContent: 'center', alignItems: 'center' }}>
+      <View style={{ position: 'absolute', width: innerSize, height: innerSize, borderRadius: innerSize / 2, backgroundColor: getColor(), opacity: 0.15, transform: [{ scale: 1.3 }] }} />
       <Svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
         <Circle cx={size/2} cy={size/2} r={radius} stroke="#1E293B" strokeWidth={strokeWidth} fill="none" />
         <AnimatedCircle cx={size/2} cy={size/2} r={radius} stroke={getColor()} strokeWidth={strokeWidth} fill="none" strokeDasharray={circumference} strokeDashoffset={strokeDashoffset} strokeLinecap="round" transform={`rotate(-90 ${size/2} ${size/2})`} />
@@ -641,7 +644,7 @@ export default function IntelligenceDashboardScreen() {
              <>
              <Text style={s.sectionTitle}>Executive AI Reviews</Text>
              <View style={[isWide && { flexDirection: 'row', gap: 16 }]}>
-                <View style={[SharedStyles.card, { padding: 20, marginBottom: 16, flex: 1 }]}>
+                <LinearGradient colors={['rgba(56, 189, 248, 0.15)', 'rgba(15,23,42,0.8)']} style={[SharedStyles.card, { backgroundColor: 'transparent', padding: 20, marginBottom: 16, flex: 1, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.2)' }]}>
                    <Text style={{ color: '#38BDF8', fontSize: 14, fontWeight: '900', textTransform: 'uppercase', marginBottom: 16 }}>Weekly Coach Summary</Text>
                    <View style={{ gap: 12 }}>
                       <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Biggest Achievement</Text><Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data?.biggestAchievement ?? 'N/A'}</Text></View>
@@ -650,9 +653,9 @@ export default function IntelligenceDashboardScreen() {
                       <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Weakest Habit</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data?.weakestHabit ?? 'N/A'}</Text></View>
                       <View style={{ marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Next Week Focus</Text><Text style={{ color: '#38BDF8', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data?.nextWeekFocus ?? 'N/A'}</Text></View>
                    </View>
-                </View>
+                </LinearGradient>
                 
-                <View style={[SharedStyles.card, { padding: 20, marginBottom: 24, flex: 1 }]}>
+                <LinearGradient colors={['rgba(168, 85, 247, 0.15)', 'rgba(15,23,42,0.8)']} style={[SharedStyles.card, { backgroundColor: 'transparent', padding: 20, marginBottom: 24, flex: 1, borderWidth: 1, borderColor: 'rgba(168, 85, 247, 0.2)' }]}>
                    <Text style={{ color: '#A855F7', fontSize: 14, fontWeight: '900', textTransform: 'uppercase', marginBottom: 16 }}>Monthly Analytics Report</Text>
                    <View style={{ gap: 12 }}>
                       <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Overall Trajectory</Text><Text style={{ color: monthlyReportState.data?.overallImprovement?.includes('+') ? '#10B981' : '#EF4444', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data?.overallImprovement ?? 'N/A'}</Text></View>
@@ -664,7 +667,7 @@ export default function IntelligenceDashboardScreen() {
                       <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Goal Prediction</Text><Text style={{ color: '#F59E0B', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data?.goalPrediction ?? 'N/A'}</Text></View>
                       <View style={{ marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Conclusion</Text><Text style={{ color: '#A855F7', fontSize: 13, fontWeight: '800', lineHeight: 20 }}>{monthlyReportState.data?.coachConclusion ?? 'N/A'}</Text></View>
                    </View>
-                </View>
+                </LinearGradient>
              </View>
              </>
           ) : null}
@@ -692,7 +695,7 @@ const s = StyleSheet.create({
 
   content: { padding: 24 },
 
-  sectionTitle: { color: '#F8FAFC', fontSize: 20, fontWeight: '900', letterSpacing: -0.5, marginBottom: 16, marginTop: 8 },
+  sectionTitle: { color: '#F8FAFC', fontSize: 16, fontWeight: '900', letterSpacing: 1.5, textTransform: 'uppercase', marginBottom: 20, marginTop: 12 },
 
   simBtn: { backgroundColor: '#1E293B', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 8, borderWidth: 1, borderColor: '#334155' },
   simBtnTxt: { color: '#F8FAFC', fontSize: 14, fontWeight: '800' },
