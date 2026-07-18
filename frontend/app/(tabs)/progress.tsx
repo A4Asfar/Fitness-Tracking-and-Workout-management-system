@@ -211,25 +211,50 @@ export default function IntelligenceDashboardScreen() {
       catch (e) { if (!isCancelled) setBodyState({ data: null, loading: false, error: e }); throw e; }
     };
     const runRecovery = async (nutPromise: Promise<any>) => {
-      let nut; try { nut = await nutPromise; } catch(e) { throw e; }
-      await yieldToUI();
-      if (isCancelled) return null;
-      try { const res = FitnessProgressEngine.generateRecovery(params, nut.value); if (!isCancelled) setRecoveryState({ data: res, loading: false, error: null }); return res; }
-      catch (e) { if (!isCancelled) setRecoveryState({ data: null, loading: false, error: e }); throw e; }
+      try {
+        let nut = await nutPromise;
+        await yieldToUI();
+        if (isCancelled) return null;
+        const res = FitnessProgressEngine.generateRecovery(params, nut.value);
+        if (!isCancelled) setRecoveryState({ data: res, loading: false, error: null });
+        return res;
+      } catch (e) {
+        if (!isCancelled) setRecoveryState({ data: null, loading: false, error: e });
+        throw e;
+      }
     };
     const runGoal = async (bodyPromise: Promise<any>, workPromise: Promise<any>, nutPromise: Promise<any>) => {
-      let body, work, nut; try { body = await bodyPromise; work = await workPromise; nut = await nutPromise; } catch(e) { throw e; }
-      await yieldToUI();
-      if (isCancelled) return null;
-      try { const res = FitnessProgressEngine.generateGoal(params, body.bodyData, work.value, nut.value); if (!isCancelled) setGoalState({ data: res, loading: false, error: null }); return res; }
-      catch (e) { if (!isCancelled) setGoalState({ data: null, loading: false, error: e }); throw e; }
+      try {
+        let body = await bodyPromise;
+        let work = await workPromise;
+        let nut = await nutPromise;
+        await yieldToUI();
+        if (isCancelled) return null;
+        const res = FitnessProgressEngine.generateGoal(params, body.bodyData, work.value, nut.value);
+        if (!isCancelled) setGoalState({ data: res, loading: false, error: null });
+        return res;
+      } catch (e) {
+        if (!isCancelled) setGoalState({ data: null, loading: false, error: e });
+        throw e;
+      }
     };
     const runOverall = async (workPromise: Promise<any>, nutPromise: Promise<any>, recPromise: Promise<any>, adhPromise: Promise<any>, goalPromise: Promise<any>, bodyPromise: Promise<any>) => {
-      let work, nut, rec, adh, goal, body; try { work=await workPromise; nut=await nutPromise; rec=await recPromise; adh=await adhPromise; goal=await goalPromise; body=await bodyPromise; } catch(e) { throw e; }
-      await yieldToUI();
-      if (isCancelled) return null;
-      try { const res = FitnessProgressEngine.generateOverallScore(params, work.value, nut.value, rec.value, adh.value, goal.value, body.value, nut.netCalsLabel, body.bodyData, adh.weeklyPct); if (!isCancelled) setOverallState({ data: res, loading: false, error: null }); return res; }
-      catch (e) { if (!isCancelled) setOverallState({ data: null, loading: false, error: e }); throw e; }
+      try {
+        let work = await workPromise;
+        let nut = await nutPromise;
+        let rec = await recPromise;
+        let adh = await adhPromise;
+        let goal = await goalPromise;
+        let body = await bodyPromise;
+        await yieldToUI();
+        if (isCancelled) return null;
+        const res = FitnessProgressEngine.generateOverallScore(params, work.value, nut.value, rec.value, adh.value, goal.value, body.value, nut.netCalsLabel, body.bodyData, adh.weeklyPct);
+        if (!isCancelled) setOverallState({ data: res, loading: false, error: null });
+        return res;
+      } catch (e) {
+        if (!isCancelled) setOverallState({ data: null, loading: false, error: e });
+        throw e;
+      }
     };
     const runPred = async () => {
       await yieldToUI();
@@ -245,34 +270,81 @@ export default function IntelligenceDashboardScreen() {
       catch (e) { if (!isCancelled) setRecState({ data: null, loading: false, error: e }); throw e; }
     };
     const runChart = async (workPromise: Promise<any>, nutPromise: Promise<any>, overPromise: Promise<any>) => {
-      let work, nut, over; try { work=await workPromise; nut=await nutPromise; over=await overPromise; } catch(e) { throw e; }
-      await yieldToUI();
-      if (isCancelled) return null;
-      try { const res = FitnessProgressEngine.generateCharts(params, work.value, nut.value, over.value); if (!isCancelled) setChartState({ data: res, loading: false, error: null }); return res; }
-      catch (e) { if (!isCancelled) setChartState({ data: null, loading: false, error: e }); throw e; }
+      try {
+        let work = await workPromise;
+        let nut = await nutPromise;
+        let over = await overPromise;
+        await yieldToUI();
+        if (isCancelled) return null;
+        const res = FitnessProgressEngine.generateCharts(params, work.value, nut.value, over.value);
+        if (!isCancelled) setChartState({ data: res, loading: false, error: null });
+        return res;
+      } catch (e) {
+        if (!isCancelled) setChartState({ data: null, loading: false, error: e });
+        throw e;
+      }
     };
     const runWeekly = async (overPromise: Promise<any>, workPromise: Promise<any>, nutPromise: Promise<any>, recPromise: Promise<any>, adhPromise: Promise<any>, predPromise: Promise<any>) => {
-      let over, work, nut, rec, adh, pred; try { over=await overPromise; work=await workPromise; nut=await nutPromise; rec=await recPromise; adh=await adhPromise; pred=await predPromise; } catch(e) {}
-      if (!over || !work || !nut || !rec || !adh || !pred) return null;
-      await yieldToUI();
-      if (isCancelled) return null;
-      try { const res = FitnessProgressEngine.generateWeeklyReport(over.value, work.value, nut.value, rec.value, adh.value, over.consistency, pred); if (!isCancelled) setWeeklyReportState({ data: res, loading: false, error: null }); return res; }
-      catch (e) { if (!isCancelled) setWeeklyReportState({ data: null, loading: false, error: e }); throw e; }
+      try {
+        let over = await overPromise;
+        let work = await workPromise;
+        let nut = await nutPromise;
+        let rec = await recPromise;
+        let adh = await adhPromise;
+        let pred = await predPromise;
+        if (!over || !work || !nut || !rec || !adh || !pred) {
+          if (!isCancelled) setWeeklyReportState({ data: null, loading: false, error: new Error('Missing dependencies') });
+          return null;
+        }
+        await yieldToUI();
+        if (isCancelled) return null;
+        const res = FitnessProgressEngine.generateWeeklyReport(over.value, work.value, nut.value, rec.value, adh.value, over.consistency, pred);
+        if (!isCancelled) setWeeklyReportState({ data: res, loading: false, error: null });
+        return res;
+      } catch (e) {
+        if (!isCancelled) setWeeklyReportState({ data: null, loading: false, error: e });
+        throw e;
+      }
     };
     const runMonthly = async (overPromise: Promise<any>, workPromise: Promise<any>, nutPromise: Promise<any>, recPromise: Promise<any>, adhPromise: Promise<any>, bodyPromise: Promise<any>, predPromise: Promise<any>) => {
-      let over, work, nut, rec, adh, body, pred; try { over=await overPromise; work=await workPromise; nut=await nutPromise; rec=await recPromise; adh=await adhPromise; body=await bodyPromise; pred=await predPromise; } catch(e) {}
-      if (!over || !work || !nut || !rec || !adh || !body || !pred) return null;
-      await yieldToUI();
-      if (isCancelled) return null;
-      try { const res = FitnessProgressEngine.generateMonthlyReport(over.value, work.value, nut.value, rec.value, adh.value, over.consistency, pred, body.bodyData); if (!isCancelled) setMonthlyReportState({ data: res, loading: false, error: null }); return res; }
-      catch (e) { if (!isCancelled) setMonthlyReportState({ data: null, loading: false, error: e }); throw e; }
+      try {
+        let over = await overPromise;
+        let work = await workPromise;
+        let nut = await nutPromise;
+        let rec = await recPromise;
+        let adh = await adhPromise;
+        let body = await bodyPromise;
+        let pred = await predPromise;
+        if (!over || !work || !nut || !rec || !adh || !body || !pred) {
+          if (!isCancelled) setMonthlyReportState({ data: null, loading: false, error: new Error('Missing dependencies') });
+          return null;
+        }
+        await yieldToUI();
+        if (isCancelled) return null;
+        const res = FitnessProgressEngine.generateMonthlyReport(over.value, work.value, nut.value, rec.value, adh.value, over.consistency, pred, body.bodyData);
+        if (!isCancelled) setMonthlyReportState({ data: res, loading: false, error: null });
+        return res;
+      } catch (e) {
+        if (!isCancelled) setMonthlyReportState({ data: null, loading: false, error: e });
+        throw e;
+      }
     };
     const runAch = async (workPromise: Promise<any>, nutPromise: Promise<any>, recPromise: Promise<any>, adhPromise: Promise<any>, overPromise: Promise<any>) => {
-      let work, nut, rec, adh, over; try { work=await workPromise; nut=await nutPromise; rec=await recPromise; adh=await adhPromise; over=await overPromise; } catch(e) { throw e; }
-      await yieldToUI();
-      if (isCancelled) return null;
-      try { const res = FitnessProgressEngine.generateAchievements(work.value, nut.value, rec.value, adh.value, over.consistency.streak); if (!isCancelled) setAchState({ data: res, loading: false, error: null }); return res; }
-      catch (e) { if (!isCancelled) setAchState({ data: null, loading: false, error: e }); throw e; }
+      try {
+        let work = await workPromise;
+        let nut = await nutPromise;
+        let rec = await recPromise;
+        let adh = await adhPromise;
+        let over = await overPromise;
+        await yieldToUI();
+        if (isCancelled) return null;
+        const res = FitnessProgressEngine.generateAchievements(work.value, nut.value, rec.value, adh.value, over.consistency.streak);
+        if (!isCancelled) setAchState({ data: res, loading: false, error: null });
+        return res;
+      } catch (e) {
+        if (!isCancelled) setAchState({ data: null, loading: false, error: e });
+        throw e;
+      }
     };
 
     const startTime = Date.now();
@@ -302,10 +374,6 @@ export default function IntelligenceDashboardScreen() {
     return () => { isCancelled = true; };
   }, [user, rawData]);
 
-  if (loading && !refreshing) return <View style={[s.container, { paddingTop: insets.top }]}><View style={{ padding: 24 }}><SkeletonCard /><SkeletonCard /><SkeletonCard /></View></View>;
-
-  const isWide = width > 768;
-
   const simResult = useMemo(() => {
      if (!overallData) return null;
      try {
@@ -318,6 +386,10 @@ export default function IntelligenceDashboardScreen() {
        return null;
      }
   }, [user, simDays, simCal, simPro, overallData]);
+
+  if (loading && !refreshing) return <View style={[s.container, { paddingTop: insets.top }]}><View style={{ padding: 24 }}><SkeletonCard /><SkeletonCard /><SkeletonCard /></View></View>;
+
+  const isWide = width > 768;
 
   return (
     <View style={s.container}>
