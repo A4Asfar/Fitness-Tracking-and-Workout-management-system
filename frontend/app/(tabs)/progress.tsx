@@ -12,9 +12,9 @@ import GoalSimulationEngine from '@/services/GoalSimulationEngine';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Flame, Dumbbell, Target, HeartPulse, Zap, Crown, CheckCircle2, Circle as CircleIcon, Beaker, ShieldAlert, Check, ArrowRight
 } from 'lucide-react-native';
-import { Stack, useRouter } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
 import SkeletonCard from '@/components/SkeletonCard';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { SharedStyles } from '@/constants/Theme';
 import Svg, { Circle } from 'react-native-svg';
 
@@ -128,23 +128,26 @@ export default function IntelligenceDashboardScreen() {
 
   const fetchData = useCallback(async () => {
     try {
+      console.log('[Lifecycle] Core Started');
       const [analyticsRes, mealsRes, dietPlan, weightRes, workouts] = await Promise.all([
-        api.get('/workouts/analytics'),
-        MealService.getMeals(),
-        DietPlanService.getMyDietPlan(),
-        api.get('/weight').catch(() => ({ data: [] })),
-        WorkoutService.getWorkouts().catch(() => ([]))
+        api.get('/workouts/analytics').catch(e => { console.error('Analytics failed', e); return { data: null }; }),
+        MealService.getMeals().catch(e => { console.error('Meals failed', e); return []; }),
+        DietPlanService.getMyDietPlan().catch(e => { console.error('DietPlan failed', e); return null; }),
+        api.get('/weight').catch(e => { console.error('Weight failed', e); return { data: [] }; }),
+        WorkoutService.getWorkouts().catch(e => { console.error('Workouts failed', e); return []; })
       ]);
       
       setRawData({
-        analytics: analyticsRes.data,
-        meals: mealsRes,
-        dietPlan,
-        weightLogs: weightRes.data,
-        workouts
+        analytics: analyticsRes?.data ?? null,
+        meals: mealsRes ?? [],
+        dietPlan: dietPlan ?? null,
+        weightLogs: weightRes?.data ?? [],
+        workouts: workouts ?? []
       });
+      console.log('[Lifecycle] Core Finished');
     } catch (e: any) {
-      console.log(e);
+      console.error('[Lifecycle] Core Critical Failure', e);
+      setRawData({ analytics: null, meals: [], dietPlan: null, weightLogs: [], workouts: [] });
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -391,11 +394,13 @@ export default function IntelligenceDashboardScreen() {
 
   const isWide = width > 768;
 
+  console.log('[Lifecycle] Final Render');
+
   return (
     <View style={s.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 100, maxWidth: 1000, width: '100%', alignSelf: 'center' }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#38BDF8" />}>
-        
+        <ErrorBoundary fallbackMessage="The dashboard core engine encountered an error.">
         {/* HERO SECTION */}
         {overallState.loading ? (
           <View style={{ paddingTop: insets.top + 16, paddingHorizontal: 24, paddingBottom: 24 }}><SkeletonCard /></View>
@@ -413,17 +418,17 @@ export default function IntelligenceDashboardScreen() {
           
           <View style={[s.gaugeWrapper, isWide && { flexDirection: 'row', justifyContent: 'space-around', alignItems: 'center' }]}>
             <View style={{ alignItems: 'center', marginBottom: isWide ? 0 : 24 }}>
-              <MainGauge score={overallData.healthBalanceIndex} label="Health Balance Index" />
+              <MainGauge score={overallData?.healthBalanceIndex ?? 0} label="Health Balance Index" />
             </View>
             <View style={[s.summaryGrid, isWide && { flex: 1, marginLeft: 40 }]}>
               <View style={s.sumCard}>
                 <Text style={s.sumCardLab}>Fitness Score</Text>
-                <Text style={s.sumCardVal}>{overallData.value}</Text>
+                <Text style={s.sumCardVal}>{overallData?.value ?? 0}</Text>
                 <Text style={s.sumCardSub}>Overall Trajectory</Text>
               </View>
               <View style={s.sumCard}>
                 <Text style={s.sumCardLab}>AI Status</Text>
-                <Text style={[s.sumCardVal, { color: '#38BDF8', fontSize: 15 }]}>{overallData.status.primary}</Text>
+                <Text style={[s.sumCardVal, { color: '#38BDF8', fontSize: 15 }]}>{overallData?.status?.primary ?? 'N/A'}</Text>
                 <Text style={s.sumCardSub}>System Assessment</Text>
               </View>
             </View>
@@ -438,7 +443,7 @@ export default function IntelligenceDashboardScreen() {
              <View style={{ marginBottom: 24 }}>
                 <Text style={[s.sectionTitle, { fontSize: 16 }]}>AI Unlocked Achievements</Text>
                 <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ maxWidth: 800, width: '100%', alignSelf: 'center',  gap: 12 }}>
-                   {achievementData.map((ach: any, i: number) => (
+                   {achievementData?.map((ach: any, i: number) => (
                       <View key={i} style={{ backgroundColor: 'rgba(56,189,248,0.1)', paddingHorizontal: 16, paddingVertical: 12, borderRadius: 100, borderWidth: 1, borderColor: 'rgba(56,189,248,0.3)', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                          <Crown size={16} color="#38BDF8" />
                          <Text style={{ color: '#38BDF8', fontSize: 13, fontWeight: '800' }}>{ach}</Text>
@@ -454,7 +459,7 @@ export default function IntelligenceDashboardScreen() {
           <Text style={s.sectionTitle}>Today's Action Plan</Text>
           <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
              <View style={{ gap: 16 }}>
-                {recommendationData.actionPlan.map((action: any, i: number) => (
+                {recommendationData?.actionPlan?.map((action: any, i: number) => (
                    <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                       {action.completed ? <CheckCircle2 size={24} color="#10B981" /> : <CircleIcon size={24} color="#64748B" />}
                       <View style={{ flex: 1 }}>
@@ -470,50 +475,50 @@ export default function IntelligenceDashboardScreen() {
 
           {/* XAI ADAPTIVE RECOMMENDATIONS */}
           {recommendationData ? (
-             (recommendationData.adaptiveDiet || recommendationData.adaptiveWorkout) && (
+             (recommendationData?.adaptiveDiet || recommendationData?.adaptiveWorkout) && (
              <View style={{ marginBottom: 24 }}>
                 <Text style={s.sectionTitle}>AI Decision Support</Text>
                 <View style={{ gap: 12 }}>
-                   {recommendationData.adaptiveDiet && (
+                   {recommendationData?.adaptiveDiet && (
                       <View style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(245, 158, 11, 0.3)' }}>
                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                             <Flame size={18} color="#F59E0B" />
                             <Text style={{ color: '#F59E0B', fontSize: 14, fontWeight: '900', textTransform: 'uppercase' }}>Adaptive Diet Recommendation</Text>
                          </View>
-                         <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '800', marginBottom: 16 }}>Try: {recommendationData.adaptiveDiet.recommendedMeal}</Text>
+                         <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '800', marginBottom: 16 }}>Try: {recommendationData?.adaptiveDiet?.recommendedMeal ?? 'N/A'}</Text>
                          
                          <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 12, borderRadius: 8, gap: 8, marginBottom: 16 }}>
-                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Reason</Text><Text style={{ color: '#F8FAFC', fontSize: 13, fontWeight: '600' }}>{recommendationData.adaptiveDiet.reason}</Text></View>
-                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Evidence</Text><Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '600' }}>{recommendationData.adaptiveDiet.evidence}</Text></View>
-                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Expected Outcome</Text><Text style={{ color: '#10B981', fontSize: 13, fontWeight: '600' }}>{recommendationData.adaptiveDiet.expectedOutcome}</Text></View>
+                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Reason</Text><Text style={{ color: '#F8FAFC', fontSize: 13, fontWeight: '600' }}>{recommendationData?.adaptiveDiet?.reason}</Text></View>
+                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Evidence</Text><Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '600' }}>{recommendationData?.adaptiveDiet?.evidence}</Text></View>
+                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Expected Outcome</Text><Text style={{ color: '#10B981', fontSize: 13, fontWeight: '600' }}>{recommendationData?.adaptiveDiet?.expectedOutcome}</Text></View>
                          </View>
 
                          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
                             <View style={{ flex: 1, alignItems: 'center' }}>
                                <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Current Diet</Text>
-                               <Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '800', marginTop: 4, textAlign: 'center' }}>{recommendationData.adaptiveDiet.originalMacro}</Text>
+                               <Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '800', marginTop: 4, textAlign: 'center' }}>{recommendationData?.adaptiveDiet?.originalMacro}</Text>
                             </View>
                             <ArrowRight size={20} color="#F8FAFC" />
                             <View style={{ flex: 1, alignItems: 'center' }}>
                                <Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Recommended</Text>
-                               <Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800', marginTop: 4, textAlign: 'center' }}>{recommendationData.adaptiveDiet.targetMacro}</Text>
+                               <Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800', marginTop: 4, textAlign: 'center' }}>{recommendationData?.adaptiveDiet?.targetMacro}</Text>
                             </View>
                          </View>
                       </View>
                    )}
 
-                   {recommendationData.adaptiveWorkout && (
+                   {recommendationData?.adaptiveWorkout && (
                       <View style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.3)' }}>
                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
                             <Dumbbell size={18} color="#38BDF8" />
                             <Text style={{ color: '#38BDF8', fontSize: 14, fontWeight: '900', textTransform: 'uppercase' }}>Adaptive Workout Override</Text>
                          </View>
-                         <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '800', marginBottom: 16 }}>Switch to: {recommendationData.adaptiveWorkout.recommendedWorkout}</Text>
+                         <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '800', marginBottom: 16 }}>Switch to: {recommendationData?.adaptiveWorkout?.recommendedWorkout ?? 'N/A'}</Text>
                          
                          <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 12, borderRadius: 8, gap: 8 }}>
-                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Reason</Text><Text style={{ color: '#F8FAFC', fontSize: 13, fontWeight: '600' }}>{recommendationData.adaptiveWorkout.reason}</Text></View>
-                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Evidence</Text><Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '600' }}>{recommendationData.adaptiveWorkout.evidence}</Text></View>
-                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Expected Outcome</Text><Text style={{ color: '#10B981', fontSize: 13, fontWeight: '600' }}>{recommendationData.adaptiveWorkout.expectedOutcome}</Text></View>
+                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Reason</Text><Text style={{ color: '#F8FAFC', fontSize: 13, fontWeight: '600' }}>{recommendationData?.adaptiveWorkout?.reason}</Text></View>
+                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Evidence</Text><Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '600' }}>{recommendationData?.adaptiveWorkout?.evidence}</Text></View>
+                            <View><Text style={{ color: '#94A3B8', fontSize: 11, fontWeight: '700' }}>Expected Outcome</Text><Text style={{ color: '#10B981', fontSize: 13, fontWeight: '600' }}>{recommendationData?.adaptiveWorkout?.expectedOutcome}</Text></View>
                          </View>
                       </View>
                    )}
@@ -569,7 +574,7 @@ export default function IntelligenceDashboardScreen() {
                    </View>
                    <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                       <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '700' }}>Metabolic Risk</Text>
-                      <Text style={{ color: simResult.metabolicRisk.includes('High') || simResult.metabolicRisk.includes('Critical') ? '#EF4444' : '#10B981', fontSize: 13, fontWeight: '900' }}>{simResult.metabolicRisk}</Text>
+                      <Text style={{ color: simResult?.metabolicRisk?.includes('High') || simResult?.metabolicRisk?.includes('Critical') ? '#EF4444' : '#10B981', fontSize: 13, fontWeight: '900' }}>{simResult.metabolicRisk}</Text>
                    </View>
                    </>
                 ) : (
@@ -602,10 +607,10 @@ export default function IntelligenceDashboardScreen() {
              <>
              <Text style={s.sectionTitle}>Visual Analytics Trends</Text>
              <View style={[isWide && { flexDirection: 'row', gap: 16, flexWrap: 'wrap' }]}>
-                <MiniBarChart title="Overall Fitness Trend" data={chartData.overall} color="#10B981" />
-                <MiniBarChart title="Workout Consistency" data={chartData.workout} color="#38BDF8" />
-                <MiniBarChart title="Nutrition Quality" data={chartData.nutrition} color="#F59E0B" />
-                <MiniBarChart title="Recovery Index" data={chartData.recovery} color="#A855F7" />
+                <MiniBarChart title="Overall Fitness Trend" data={chartData?.overall ?? []} color="#10B981" />
+                <MiniBarChart title="Workout Consistency" data={chartData?.workout ?? []} color="#38BDF8" />
+                <MiniBarChart title="Nutrition Quality" data={chartData?.nutrition ?? []} color="#F59E0B" />
+                <MiniBarChart title="Recovery Index" data={chartData?.recovery ?? []} color="#A855F7" />
              </View>
              </>
           ) : null}
@@ -618,25 +623,25 @@ export default function IntelligenceDashboardScreen() {
                 <View style={[SharedStyles.card, { padding: 20, marginBottom: 16, flex: 1 }]}>
                    <Text style={{ color: '#38BDF8', fontSize: 14, fontWeight: '900', textTransform: 'uppercase', marginBottom: 16 }}>Weekly Coach Summary</Text>
                    <View style={{ gap: 12 }}>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Biggest Achievement</Text><Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data.biggestAchievement}</Text></View>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Critical Mistake</Text><Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data.biggestMistake}</Text></View>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Strongest Habit</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data.strongestHabit}</Text></View>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Weakest Habit</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data.weakestHabit}</Text></View>
-                      <View style={{ marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Next Week Focus</Text><Text style={{ color: '#38BDF8', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data.nextWeekFocus}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Biggest Achievement</Text><Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data?.biggestAchievement ?? 'N/A'}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Critical Mistake</Text><Text style={{ color: '#EF4444', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data?.biggestMistake ?? 'N/A'}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Strongest Habit</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data?.strongestHabit ?? 'N/A'}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Weakest Habit</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data?.weakestHabit ?? 'N/A'}</Text></View>
+                      <View style={{ marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Next Week Focus</Text><Text style={{ color: '#38BDF8', fontSize: 14, fontWeight: '800' }}>{weeklyReportState.data?.nextWeekFocus ?? 'N/A'}</Text></View>
                    </View>
                 </View>
                 
                 <View style={[SharedStyles.card, { padding: 20, marginBottom: 24, flex: 1 }]}>
                    <Text style={{ color: '#A855F7', fontSize: 14, fontWeight: '900', textTransform: 'uppercase', marginBottom: 16 }}>Monthly Analytics Report</Text>
                    <View style={{ gap: 12 }}>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Overall Trajectory</Text><Text style={{ color: monthlyReportState.data.overallImprovement.includes('+') ? '#10B981' : '#EF4444', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data.overallImprovement}</Text></View>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Weight Change</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data.weightChange}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Overall Trajectory</Text><Text style={{ color: monthlyReportState.data?.overallImprovement?.includes('+') ? '#10B981' : '#EF4444', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data?.overallImprovement ?? 'N/A'}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Weight Change</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data?.weightChange ?? 'N/A'}</Text></View>
                       <View style={{ flexDirection: 'row', gap: 16 }}>
-                         <View style={{ flex: 1 }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Workout Consistency</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data.workoutConsistency}</Text></View>
-                         <View style={{ flex: 1 }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Nutrition Consistency</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data.nutritionConsistency}</Text></View>
+                         <View style={{ flex: 1 }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Workout Consistency</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data?.workoutConsistency ?? 'N/A'}</Text></View>
+                         <View style={{ flex: 1 }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Nutrition Consistency</Text><Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data?.nutritionConsistency ?? 'N/A'}</Text></View>
                       </View>
-                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Goal Prediction</Text><Text style={{ color: '#F59E0B', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data.goalPrediction}</Text></View>
-                      <View style={{ marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Conclusion</Text><Text style={{ color: '#A855F7', fontSize: 13, fontWeight: '800', lineHeight: 20 }}>{monthlyReportState.data.coachConclusion}</Text></View>
+                      <View><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Goal Prediction</Text><Text style={{ color: '#F59E0B', fontSize: 14, fontWeight: '800' }}>{monthlyReportState.data?.goalPrediction ?? 'N/A'}</Text></View>
+                      <View style={{ marginTop: 8, paddingTop: 12, borderTopWidth: 1, borderColor: 'rgba(255,255,255,0.1)' }}><Text style={{ color: '#64748B', fontSize: 11, fontWeight: '700', textTransform: 'uppercase' }}>Conclusion</Text><Text style={{ color: '#A855F7', fontSize: 13, fontWeight: '800', lineHeight: 20 }}>{monthlyReportState.data?.coachConclusion ?? 'N/A'}</Text></View>
                    </View>
                 </View>
              </View>
@@ -644,6 +649,7 @@ export default function IntelligenceDashboardScreen() {
           ) : null}
           
         </View>
+        </ErrorBoundary>
       </ScrollView>
     </View>
   );

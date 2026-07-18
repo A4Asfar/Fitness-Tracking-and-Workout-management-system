@@ -47,8 +47,9 @@ export interface BehaviorAnalysis {
 export default class BehaviorAnalysisEngine {
   public static generate(user: any, analytics: any, rawMeals: any[], rawWeightLogs: any[], rawWorkouts: any[]): BehaviorAnalysis {
     return getCached(rawMeals, 'BehaviorAnalysis', () => {
-      const startTime = Date.now();
-      const today = getStartOfDay();
+      try {
+        const startTime = Date.now();
+        const today = getStartOfDay();
 
       const safeUser = EngineValidator.sanitizeUser(user);
       const meals = EngineValidator.sanitizeMeals(rawMeals);
@@ -222,6 +223,16 @@ export default class BehaviorAnalysisEngine {
       
       EngineDiagnostics.recordExecutionTime('BehaviorAnalysisEngine', Date.now() - startTime);
       return result;
+      } catch (e) {
+        console.error('BehaviorAnalysisEngine Critical Failure', e);
+        return {
+          nutrition: { dailyCalories: 0, weeklyAverageCalories: 0, monthlyAverageCalories: 0, maintenanceCalories: 2000, calorieTrend: 'Maintenance', proteinTarget: 150, proteinAverage: 0, proteinCompliance: false, recentMealsEaten: new Set() },
+          workout: { weeklyWorkoutCount: 0, monthlyWorkoutCount: 0, totalTrainingVolume: 0, acuteLoad: 0, chronicLoad: 0, ACWR: 1.0, recoveryIndex: 100, hasYoga: false, strengthCount: 0, cardioCount: 0 },
+          consistency: { workoutConsistency: 0, mealConsistency: 0, loggingConsistency: 0, streak: 0, missedDays: 0 },
+          body: { plateauDetected: false, plateauDuration: 0, weightDelta7Days: 0 },
+          behavior: { archetype: 'Unknown', habits: [] }
+        };
+      }
     });
   }
 }

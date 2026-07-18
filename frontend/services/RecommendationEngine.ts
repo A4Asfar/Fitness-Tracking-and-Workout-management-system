@@ -29,22 +29,33 @@ class RecommendationEngine {
   }
 
   public generate(user: any, analytics: any, meals: any[], predictiveData: any, workouts: any[] = []): RecommendationResult {
-    this.clearCache();
-    const startTime = Date.now();
-    const now = new Date();
-    const b = BehaviorAnalysisEngine.generate(user, analytics, meals, [], workouts);
-    const todayMeals = filterByDate(meals, 0);
+    try {
+      this.clearCache();
+      const startTime = Date.now();
+      const now = new Date();
+      const b = BehaviorAnalysisEngine.generate(user, analytics, meals, [], workouts);
+      const todayMeals = filterByDate(meals, 0);
 
-    const actionPlan = this.generateActionPlan(user, analytics, todayMeals, predictiveData, b);
-    const adaptiveDiet = this.generateAdaptiveDiet(user, meals, predictiveData, b);
-    const adaptiveWorkout = this.generateAdaptiveWorkout(analytics, predictiveData, workouts, b);
-    const goalAdjustment = this.generateGoalAdjustment(user, predictiveData);
-    const notifications = this.generateNotifications(todayMeals, analytics, user, predictiveData, meals, b, now);
+      const actionPlan = this.generateActionPlan(user, analytics, todayMeals, predictiveData, b);
+      const adaptiveDiet = this.generateAdaptiveDiet(user, meals, predictiveData, b);
+      const adaptiveWorkout = this.generateAdaptiveWorkout(analytics, predictiveData, workouts, b);
+      const goalAdjustment = this.generateGoalAdjustment(user, predictiveData);
+      const notifications = this.generateNotifications(todayMeals, analytics, user, predictiveData, meals, b, now);
 
-    const diagnostics = EngineDiagnostics.getSnapshot();
-    EngineDiagnostics.recordExecutionTime('RecommendationEngine', Date.now() - startTime);
+      const diagnostics = EngineDiagnostics.getSnapshot();
+      EngineDiagnostics.recordExecutionTime('RecommendationEngine', Date.now() - startTime);
 
-    return { actionPlan, adaptiveDiet, adaptiveWorkout, goalAdjustment, notifications, diagnostics };
+      return { actionPlan, adaptiveDiet, adaptiveWorkout, goalAdjustment, notifications, diagnostics };
+    } catch (e) {
+      console.error('RecommendationEngine Critical Failure', e);
+      return {
+        actionPlan: [],
+        adaptiveDiet: null,
+        adaptiveWorkout: null,
+        goalAdjustment: null,
+        notifications: ['Recommendations temporarily unavailable']
+      };
+    }
   }
 
   private generateActionPlan(user: any, analytics: any, todayMeals: any[], predictiveData: any, b: any) {

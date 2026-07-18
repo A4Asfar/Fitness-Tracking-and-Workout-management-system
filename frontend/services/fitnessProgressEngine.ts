@@ -133,140 +133,171 @@ class FitnessProgressEngine {
   }
 
   public generateWorkout(params: EngineParams) {
-    const b = BehaviorAnalysisEngine.generate(params.user, params.analytics, params.meals, params.weightLogs || [], params.workouts || []);
-    let workoutScore = 0;
-    let reasons: ReasonDetail[] = [];
-    const count = b.workout.monthlyWorkoutCount;
+    try {
+      const b = BehaviorAnalysisEngine.generate(params.user, params.analytics, params.meals, params.weightLogs || [], params.workouts || []);
+      let workoutScore = 0;
+      let reasons: ReasonDetail[] = [];
+      const count = b.workout.monthlyWorkoutCount;
 
-    if (count >= 12) { workoutScore = 100; reasons.push({ reason: 'Excellent training frequency (>3x/week).', weight: 'High', type: 'positive' }); }
-    else if (count >= 8) { workoutScore = 80; reasons.push({ reason: 'Good training frequency (2-3x/week).', weight: 'Medium', type: 'positive' }); }
-    else if (count >= 4) { workoutScore = 50; reasons.push({ reason: 'Inconsistent training frequency.', weight: 'Medium', type: 'negative' }); }
-    else { workoutScore = 20; reasons.push({ reason: 'Poor training frequency (<1x/week).', weight: 'High', type: 'negative' }); }
+      if (count >= 12) { workoutScore = 100; reasons.push({ reason: 'Excellent training frequency (>3x/week).', weight: 'High', type: 'positive' }); }
+      else if (count >= 8) { workoutScore = 80; reasons.push({ reason: 'Good training frequency (2-3x/week).', weight: 'Medium', type: 'positive' }); }
+      else if (count >= 4) { workoutScore = 50; reasons.push({ reason: 'Inconsistent training frequency.', weight: 'Medium', type: 'negative' }); }
+      else { workoutScore = 20; reasons.push({ reason: 'Poor training frequency (<1x/week).', weight: 'High', type: 'negative' }); }
 
-    if (b.consistency.streak > 3) {
-      workoutScore = Math.min(100, workoutScore + 10);
-      reasons.push({ reason: `Active streak of ${b.consistency.streak} adds bonus points.`, weight: 'Low', type: 'positive' });
+      if (b.consistency.streak > 3) {
+        workoutScore = Math.min(100, workoutScore + 10);
+        reasons.push({ reason: `Active streak of ${b.consistency.streak} adds bonus points.`, weight: 'Low', type: 'positive' });
+      }
+
+      return { value: workoutScore, reasons, historicalTrend: 'Increasing Volume', howToImprove: 'Train 1 more day this week.', expectedImprovement: '+15 pts to Workout Score.' };
+    } catch (e) {
+      return { value: 0, reasons: [], historicalTrend: 'Unknown', howToImprove: 'Log workouts', expectedImprovement: 'Improve consistency' };
     }
-
-    return { value: workoutScore, reasons, historicalTrend: 'Increasing Volume', howToImprove: 'Train 1 more day this week.', expectedImprovement: '+15 pts to Workout Score.' };
   }
 
   public generateNutrition(params: EngineParams) {
-    const b = BehaviorAnalysisEngine.generate(params.user, params.analytics, params.meals, params.weightLogs || [], params.workouts || []);
-    let nutritionScore = 100;
-    let reasons: ReasonDetail[] = [];
+    try {
+      const b = BehaviorAnalysisEngine.generate(params.user, params.analytics, params.meals, params.weightLogs || [], params.workouts || []);
+      let nutritionScore = 100;
+      let reasons: ReasonDetail[] = [];
 
-    if (b.nutrition.dailyCalories === 0) {
-      nutritionScore = 20;
-      reasons.push({ reason: 'No meals logged today.', weight: 'High', type: 'negative' });
-    } else {
-      reasons.push({ reason: 'Meals logged successfully.', weight: 'Medium', type: 'positive' });
+      if (b.nutrition.dailyCalories === 0) {
+        nutritionScore = 20;
+        reasons.push({ reason: 'No meals logged today.', weight: 'High', type: 'negative' });
+      } else {
+        reasons.push({ reason: 'Meals logged successfully.', weight: 'Medium', type: 'positive' });
+      }
+
+      let netCalsLabel = 'Maintenance';
+      if (b.nutrition.calorieTrend === 'Surplus') { netCalsLabel = 'Surplus'; nutritionScore -= 10; reasons.push({ reason: 'Caloric surplus detected.', weight: 'Low', type: 'negative' }); }
+      if (b.nutrition.calorieTrend === 'Deficit') { netCalsLabel = 'Deficit'; nutritionScore += 10; reasons.push({ reason: 'Healthy deficit maintained.', weight: 'Medium', type: 'positive' }); }
+
+      if (b.nutrition.proteinCompliance) {
+        reasons.push({ reason: 'Protein target reached.', weight: 'High', type: 'positive' });
+      } else if (b.nutrition.dailyCalories > 0) {
+        nutritionScore -= 15;
+        reasons.push({ reason: 'Protein target missed.', weight: 'Medium', type: 'negative' });
+      }
+
+      return { value: Math.max(0, nutritionScore), reasons, historicalTrend: netCalsLabel, howToImprove: 'Hit protein target daily.', expectedImprovement: 'Optimizes muscle retention.', netCalsLabel };
+    } catch (e) {
+      return { value: 0, reasons: [], historicalTrend: 'Unknown', howToImprove: 'Log meals', expectedImprovement: 'Improve nutrition', netCalsLabel: 'Unknown' };
     }
-
-    let netCalsLabel = 'Maintenance';
-    if (b.nutrition.calorieTrend === 'Surplus') { netCalsLabel = 'Surplus'; nutritionScore -= 10; reasons.push({ reason: 'Caloric surplus detected.', weight: 'Low', type: 'negative' }); }
-    if (b.nutrition.calorieTrend === 'Deficit') { netCalsLabel = 'Deficit'; nutritionScore += 10; reasons.push({ reason: 'Healthy deficit maintained.', weight: 'Medium', type: 'positive' }); }
-
-    if (b.nutrition.proteinCompliance) {
-      reasons.push({ reason: 'Protein target reached.', weight: 'High', type: 'positive' });
-    } else if (b.nutrition.dailyCalories > 0) {
-      nutritionScore -= 15;
-      reasons.push({ reason: 'Protein target missed.', weight: 'Medium', type: 'negative' });
-    }
-
-    return { value: Math.max(0, nutritionScore), reasons, historicalTrend: netCalsLabel, howToImprove: 'Hit protein target daily.', expectedImprovement: 'Optimizes muscle retention.', netCalsLabel };
   }
 
   public generateAdherence(params: EngineParams) {
-    const b = BehaviorAnalysisEngine.generate(params.user, params.analytics, params.meals, params.weightLogs || [], params.workouts || []);
-    const dietAdherence = b.consistency.mealConsistency;
-    const reasons: ReasonDetail[] = [];
-    if (dietAdherence >= 80) reasons.push({ reason: 'Excellent meal logging consistency.', weight: 'High', type: 'positive' });
-    else if (dietAdherence >= 50) reasons.push({ reason: 'Moderate meal logging consistency.', weight: 'Medium', type: 'positive' });
-    else reasons.push({ reason: 'Poor meal logging consistency.', weight: 'High', type: 'negative' });
+    try {
+      const b = BehaviorAnalysisEngine.generate(params.user, params.analytics, params.meals, params.weightLogs || [], params.workouts || []);
+      const dietAdherence = b.consistency.mealConsistency;
+      const reasons: ReasonDetail[] = [];
+      if (dietAdherence >= 80) reasons.push({ reason: 'Excellent meal logging consistency.', weight: 'High', type: 'positive' });
+      else if (dietAdherence >= 50) reasons.push({ reason: 'Moderate meal logging consistency.', weight: 'Medium', type: 'positive' });
+      else reasons.push({ reason: 'Poor meal logging consistency.', weight: 'High', type: 'negative' });
 
-    return { value: dietAdherence, reasons, historicalTrend: `${dietAdherence}% Average`, howToImprove: 'Stop skipping meals.', expectedImprovement: 'Ensures predictable progress.', weeklyPct: dietAdherence, planComparison: null, statuses: {} };
+      return { value: dietAdherence, reasons, historicalTrend: `${dietAdherence}% Average`, howToImprove: 'Stop skipping meals.', expectedImprovement: 'Ensures predictable progress.', weeklyPct: dietAdherence, planComparison: null, statuses: {} };
+    } catch (e) {
+      return { value: 0, reasons: [], historicalTrend: 'Unknown', howToImprove: 'Log regularly', expectedImprovement: 'Consistency', weeklyPct: 0, planComparison: null, statuses: {} };
+    }
   }
 
   public generateBody(params: EngineParams) {
-    const b = BehaviorAnalysisEngine.generate(params.user, params.analytics, params.meals, params.weightLogs || [], params.workouts || []);
-    const goal = params.dietPlan?.goal || params.user?.fitnessGoal || 'Maintain Fitness';
-    const targetWeight = params.user?.targetWeight || (goal.includes('Loss') ? (params.user?.weight || 80) - 5 : (params.user?.weight || 70) + 5);
-    const currentWeight = params.user?.weight || 70;
-    
-    let bodyScore = 80;
-    const reasons: ReasonDetail[] = [];
-    let monthlyTrend = 'Stable';
-    let detection = b.body.plateauDetected ? 'Plateau' : 'Healthy change';
-    
-    const diff = b.body.weightDelta7Days * 4;
-    if (diff > 2) monthlyTrend = 'Gaining';
-    else if (diff < -2) monthlyTrend = 'Losing';
+    try {
+      const b = BehaviorAnalysisEngine.generate(params.user, params.analytics, params.meals, params.weightLogs || [], params.workouts || []);
+      const goal = params.dietPlan?.goal || params.user?.fitnessGoal || 'Maintain Fitness';
+      const targetWeight = params.user?.targetWeight || (goal.includes('Loss') ? (params.user?.weight || 80) - 5 : (params.user?.weight || 70) + 5);
+      const currentWeight = params.user?.weight || 70;
+      
+      let bodyScore = 80;
+      const reasons: ReasonDetail[] = [];
+      let monthlyTrend = 'Stable';
+      let detection = b.body.plateauDetected ? 'Plateau' : 'Healthy change';
+      
+      const diff = b.body.weightDelta7Days * 4;
+      if (diff > 2) monthlyTrend = 'Gaining';
+      else if (diff < -2) monthlyTrend = 'Losing';
 
-    const targetDiff = targetWeight - currentWeight;
-    if (targetDiff < 0 && diff < 0) { bodyScore = 95; reasons.push({ reason: `Losing weight successfully towards goal`, weight: 'High', type: 'positive' }); }
-    else if (targetDiff > 0 && diff > 0) { bodyScore = 95; reasons.push({ reason: `Gaining weight successfully towards goal`, weight: 'High', type: 'positive' }); }
-    else if (b.body.plateauDetected) { bodyScore = 70; reasons.push({ reason: `Body progress stalled (Plateau)`, weight: 'Medium', type: 'negative' }); }
-    else { bodyScore = 80; reasons.push({ reason: `Body weight is relatively stable`, weight: 'Medium', type: 'positive' }); }
+      const targetDiff = targetWeight - currentWeight;
+      if (targetDiff < 0 && diff < 0) { bodyScore = 95; reasons.push({ reason: `Losing weight successfully towards goal`, weight: 'High', type: 'positive' }); }
+      else if (targetDiff > 0 && diff > 0) { bodyScore = 95; reasons.push({ reason: `Gaining weight successfully towards goal`, weight: 'High', type: 'positive' }); }
+      else if (b.body.plateauDetected) { bodyScore = 70; reasons.push({ reason: `Body progress stalled (Plateau)`, weight: 'Medium', type: 'negative' }); }
+      else { bodyScore = 80; reasons.push({ reason: `Body weight is relatively stable`, weight: 'Medium', type: 'positive' }); }
 
-    return { value: bodyScore, reasons, historicalTrend: monthlyTrend, howToImprove: 'Continue progressive overload.', expectedImprovement: 'Improves body composition.', bodyData: { weeklyChange: `${b.body.weightDelta7Days.toFixed(1)} kg`, monthlyTrend, detection, bmi: 'N/A' } };
+      return { value: bodyScore, reasons, historicalTrend: monthlyTrend, howToImprove: 'Continue progressive overload.', expectedImprovement: 'Improves body composition.', bodyData: { weeklyChange: `${b.body.weightDelta7Days.toFixed(1)} kg`, monthlyTrend, detection, bmi: 'N/A' } };
+    } catch (e) {
+      return { value: 0, reasons: [], historicalTrend: 'Unknown', howToImprove: 'Log bodyweight', expectedImprovement: 'Tracking progress', bodyData: { weeklyChange: '0 kg', monthlyTrend: 'Unknown', detection: 'Unknown', bmi: 'N/A' } };
+    }
   }
 
   public generateRecovery(params: EngineParams, nutritionScore: number) {
-    const b = BehaviorAnalysisEngine.generate(params.user, params.analytics, params.meals, params.weightLogs || [], params.workouts || []);
-    let recoveryScore = b.workout.recoveryIndex;
-    let reasons: ReasonDetail[] = [];
-    
-    if (recoveryScore >= 90) reasons.push({ reason: 'Excellent training load balance.', weight: 'High', type: 'positive' });
-    else if (recoveryScore >= 70) reasons.push({ reason: 'Moderate training fatigue.', weight: 'Medium', type: 'negative' });
-    else reasons.push({ reason: 'High fatigue / Burnout risk detected.', weight: 'High', type: 'negative' });
+    try {
+      const b = BehaviorAnalysisEngine.generate(params.user, params.analytics, params.meals, params.weightLogs || [], params.workouts || []);
+      let recoveryScore = b.workout.recoveryIndex;
+      let reasons: ReasonDetail[] = [];
+      
+      if (recoveryScore >= 90) reasons.push({ reason: 'Excellent training load balance.', weight: 'High', type: 'positive' });
+      else if (recoveryScore >= 70) reasons.push({ reason: 'Moderate training fatigue.', weight: 'Medium', type: 'negative' });
+      else reasons.push({ reason: 'High fatigue / Burnout risk detected.', weight: 'High', type: 'negative' });
 
-    if (b.workout.hasYoga) {
-      recoveryScore = Math.min(100, recoveryScore + 10);
-      reasons.push({ reason: 'Active recovery boosts score.', weight: 'Medium', type: 'positive' });
+      if (b.workout.hasYoga) {
+        recoveryScore = Math.min(100, recoveryScore + 10);
+        reasons.push({ reason: 'Active recovery boosts score.', weight: 'Medium', type: 'positive' });
+      }
+
+      if (nutritionScore < 50) {
+        recoveryScore -= 15;
+        reasons.push({ reason: 'Poor nutrition impairs recovery.', weight: 'Medium', type: 'negative' });
+      }
+
+      return { value: Math.max(0, recoveryScore), reasons, historicalTrend: 'Sufficient Spacing', howToImprove: 'Drink 2.5L water daily.', expectedImprovement: 'Lowers injury risk significantly.' };
+    } catch (e) {
+      return { value: 0, reasons: [], historicalTrend: 'Unknown', howToImprove: 'Rest more', expectedImprovement: 'Injury prevention' };
     }
-
-    if (nutritionScore < 50) {
-      recoveryScore -= 15;
-      reasons.push({ reason: 'Poor nutrition impairs recovery.', weight: 'Medium', type: 'negative' });
-    }
-
-    return { value: Math.max(0, recoveryScore), reasons, historicalTrend: 'Sufficient Spacing', howToImprove: 'Drink 2.5L water daily.', expectedImprovement: 'Lowers injury risk significantly.' };
   }
 
   public generateGoal(params: EngineParams, bodyData: any, workoutScore: number, nutritionScore: number) {
-    const goal = params.dietPlan?.goal || params.user?.fitnessGoal || 'Maintain Fitness';
-    const targetWeight = params.user?.targetWeight || (goal.includes('Loss') ? (params.user?.weight || 80) - 5 : (params.user?.weight || 70) + 5);
-    const weightDiff = Math.abs((params.user?.weight || 70) - targetWeight);
-    const progressPct = weightDiff === 0 ? 100 : Math.min(100, Math.max(0, 100 - (weightDiff * 10)));
-    const reasons: ReasonDetail[] = [{ reason: `Goal is nearly achieved (${progressPct}%)`, weight: 'High', type: 'positive' }];
-    return { value: progressPct, reasons, historicalTrend: 'On Track', howToImprove: 'Maintain current velocity.', expectedImprovement: `Reach goal soon.`, goalData: { goal, currentPct: progressPct, remainingPct: 100 - progressPct, estimatedCompletion: 'N/A', progressVelocity: bodyData.detection, expectedWeeklyProgress: '0.5 kg' } };
+    try {
+      const goal = params.dietPlan?.goal || params.user?.fitnessGoal || 'Maintain Fitness';
+      const targetWeight = params.user?.targetWeight || (goal.includes('Loss') ? (params.user?.weight || 80) - 5 : (params.user?.weight || 70) + 5);
+      const weightDiff = Math.abs((params.user?.weight || 70) - targetWeight);
+      const progressPct = weightDiff === 0 ? 100 : Math.min(100, Math.max(0, 100 - (weightDiff * 10)));
+      const reasons: ReasonDetail[] = [{ reason: `Goal is nearly achieved (${progressPct}%)`, weight: 'High', type: 'positive' }];
+      return { value: progressPct, reasons, historicalTrend: 'On Track', howToImprove: 'Maintain current velocity.', expectedImprovement: `Reach goal soon.`, goalData: { goal, currentPct: progressPct, remainingPct: 100 - progressPct, estimatedCompletion: 'N/A', progressVelocity: bodyData.detection, expectedWeeklyProgress: '0.5 kg' } };
+    } catch (e) {
+      return { value: 0, reasons: [], historicalTrend: 'Unknown', howToImprove: 'Re-evaluate goals', expectedImprovement: 'Progress', goalData: { goal: 'Unknown', currentPct: 0, remainingPct: 100, estimatedCompletion: 'N/A', progressVelocity: 'Unknown', expectedWeeklyProgress: 'Unknown' } };
+    }
   }
 
   public generateOverallScore(
     params: EngineParams, workoutScore: number, nutritionScore: number, recoveryScore: number, 
     dietAdherence: number, goalScore: number, bodyScore: number, netCalsLabel: string, bodyData: any, weeklyPct: number
   ) {
-    const startTime = Date.now();
-    const w = params.weights || { workout: 0.3, nutrition: 0.2, adherence: 0.2, recovery: 0.1, goal: 0.1, body: 0.1 };
-    const goal = params.dietPlan?.goal || params.user?.fitnessGoal || 'Maintain Fitness';
-    const overallScore = Math.round(
-      (workoutScore * w.workout) + (nutritionScore * w.nutrition) + (dietAdherence * w.adherence) + 
-      (recoveryScore * w.recovery) + (goalScore * w.goal) + (bodyScore * w.body)
-    );
-    const overallReasons: ReasonDetail[] = [
-      { reason: 'Weighted intelligently from 6 tracking pillars', weight: 'High', type: 'positive' }
-    ];
-    const { primaryStatus, coachReport, coachingTone, confidenceReasons } = this.generateAIStatusAndReport(overallScore, workoutScore, nutritionScore, recoveryScore, dietAdherence, goal, netCalsLabel, bodyData);
-    const consistencyData = this.calculateConsistency(workoutScore, nutritionScore, recoveryScore, dietAdherence, params.analytics);
-    const healthBalanceIndex = this.calculateHealthBalanceIndex(overallScore, consistencyData.overall, 100 - recoveryScore, bodyScore);
-    
-    EngineDiagnostics.recordExecutionTime('FitnessProgressEngine:OverallScore', Date.now() - startTime);
+    try {
+      const startTime = Date.now();
+      const w = params.weights || { workout: 0.3, nutrition: 0.2, adherence: 0.2, recovery: 0.1, goal: 0.1, body: 0.1 };
+      const goal = params.dietPlan?.goal || params.user?.fitnessGoal || 'Maintain Fitness';
+      const overallScore = Math.round(
+        (workoutScore * w.workout) + (nutritionScore * w.nutrition) + (dietAdherence * w.adherence) + 
+        (recoveryScore * w.recovery) + (goalScore * w.goal) + (bodyScore * w.body)
+      );
+      const overallReasons: ReasonDetail[] = [
+        { reason: 'Weighted intelligently from 6 tracking pillars', weight: 'High', type: 'positive' }
+      ];
+      const { primaryStatus, coachReport, coachingTone, confidenceReasons } = this.generateAIStatusAndReport(overallScore, workoutScore, nutritionScore, recoveryScore, dietAdherence, goal, netCalsLabel, bodyData);
+      const consistencyData = this.calculateConsistency(workoutScore, nutritionScore, recoveryScore, dietAdherence, params.analytics);
+      const healthBalanceIndex = this.calculateHealthBalanceIndex(overallScore, consistencyData.overall, 100 - recoveryScore, bodyScore);
+      
+      EngineDiagnostics.recordExecutionTime('FitnessProgressEngine:OverallScore', Date.now() - startTime);
 
-    return {
-      value: overallScore, reasons: overallReasons, historicalTrend: 'Stable (+2 pts)', howToImprove: 'Focus on your weakest pillar.', expectedImprovement: 'Increases holistic trajectory.',
-      healthBalanceIndex, status: { primary: primaryStatus, coachReport, coachingTone }, consistency: consistencyData, diagnostics: EngineDiagnostics.getSnapshot(), confidenceReasons
-    };
+      return {
+        value: overallScore, reasons: overallReasons, historicalTrend: 'Stable (+2 pts)', howToImprove: 'Focus on your weakest pillar.', expectedImprovement: 'Increases holistic trajectory.',
+        healthBalanceIndex, status: { primary: primaryStatus, coachReport, coachingTone }, consistency: consistencyData, diagnostics: EngineDiagnostics.getSnapshot(), confidenceReasons
+      };
+    } catch (e) {
+      return {
+        value: 0, reasons: [], historicalTrend: 'Unknown', howToImprove: 'Keep logging data', expectedImprovement: 'Accuracy',
+        healthBalanceIndex: 0, status: { primary: 'Unknown', coachReport: [], coachingTone: 'Encouraging' }, consistency: { workout: 0, meal: 0, recovery: 0, diet: 0, overall: 0, streak: 0, longestStreak: 0, brokenReason: null }, diagnostics: null, confidenceReasons: []
+      };
+    }
   }
 
   public generateCharts(params: EngineParams, workoutScore: number, nutritionScore: number, overallScore: number) {

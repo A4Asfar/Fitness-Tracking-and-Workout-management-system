@@ -60,57 +60,73 @@ class PredictionEngine {
   }
 
   public generate(user: any, analytics: any, meals: any[], weightLogs: any[], dietPlan: any, workouts: any[] = []): PredictionResult {
-    this.clearCache();
-    const startTime = Date.now();
+    try {
+      this.clearCache();
+      const startTime = Date.now();
 
-    const today = getStartOfDay();
-    const b = BehaviorAnalysisEngine.generate(user, analytics, meals, weightLogs, workouts);
-    
-    const recentMeals = filterByDate(meals, 29);
-    const recentWeights = filterByDate(weightLogs, 29).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+      const today = getStartOfDay();
+      const b = BehaviorAnalysisEngine.generate(user, analytics, meals, weightLogs, workouts);
+      
+      const recentMeals = filterByDate(meals, 29);
+      const recentWeights = filterByDate(weightLogs, 29).sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime());
 
-    const plateau = {
-       isPlateaued: b.body.plateauDetected,
-       duration: b.body.plateauDuration,
-       message: b.body.plateauDetected ? `Weight is plateauing based on a ${b.body.plateauDuration}-day moving average.` : '',
-       recommendation: b.body.plateauDuration >= 14 ? 'Recalculate your caloric needs and add a 200 kcal deficit.' : 'Stay consistent, temporary stalls are normal.'
-    };
+      const plateau = {
+         isPlateaued: b.body.plateauDetected,
+         duration: b.body.plateauDuration,
+         message: b.body.plateauDetected ? `Weight is plateauing based on a ${b.body.plateauDuration}-day moving average.` : '',
+         recommendation: b.body.plateauDuration >= 14 ? 'Recalculate your caloric needs and add a 200 kcal deficit.' : 'Stay consistent, temporary stalls are normal.'
+      };
 
-    const currentWeight = user?.weight || 70;
-    const predictions = {
-       weight7Days: +(currentWeight + b.body.weightDelta7Days).toFixed(1),
-       weight30Days: +(currentWeight + (b.body.weightDelta7Days / 7 * 30)).toFixed(1),
-       caloricTrend: b.nutrition.calorieTrend,
-       bodyCompositionTrend: b.nutrition.calorieTrend === 'Deficit' ? 'Losing Weight' : (b.nutrition.calorieTrend === 'Surplus' ? 'Gaining Weight' : 'Maintaining')
-    };
+      const currentWeight = user?.weight || 70;
+      const predictions = {
+         weight7Days: +(currentWeight + b.body.weightDelta7Days).toFixed(1),
+         weight30Days: +(currentWeight + (b.body.weightDelta7Days / 7 * 30)).toFixed(1),
+         caloricTrend: b.nutrition.calorieTrend,
+         bodyCompositionTrend: b.nutrition.calorieTrend === 'Deficit' ? 'Losing Weight' : (b.nutrition.calorieTrend === 'Surplus' ? 'Gaining Weight' : 'Maintaining')
+      };
 
-    let risk: 'Low'|'Medium'|'High'|'Critical' = 'Low';
-    let rec = null;
-    if (b.workout.recoveryIndex <= 30) {
-       risk = 'Critical';
-       rec = `Critical Risk: Training load spiked (ACWR ${b.workout.ACWR.toFixed(2)}). Mandatory rest day required.`;
-    } else if (b.workout.recoveryIndex <= 60 || b.workout.ACWR >= 1.5) {
-       risk = 'High';
-       rec = `High Risk: ACWR is ${b.workout.ACWR.toFixed(2)} (Danger Zone). Recommend a deload or recovery day soon.`;
-    } else if (b.workout.ACWR >= 1.3) {
-       risk = 'Medium';
-       rec = `Moderate training load detected. Ensure adequate sleep.`;
+      let risk: 'Low'|'Medium'|'High'|'Critical' = 'Low';
+      let rec = null;
+      if (b.workout.recoveryIndex <= 30) {
+         risk = 'Critical';
+         rec = `Critical Risk: Training load spiked (ACWR ${b.workout.ACWR.toFixed(2)}). Mandatory rest day required.`;
+      } else if (b.workout.recoveryIndex <= 60 || b.workout.ACWR >= 1.5) {
+         risk = 'High';
+         rec = `High Risk: ACWR is ${b.workout.ACWR.toFixed(2)} (Danger Zone). Recommend a deload or recovery day soon.`;
+      } else if (b.workout.ACWR >= 1.3) {
+         risk = 'Medium';
+         rec = `Moderate training load detected. Ensure adequate sleep.`;
+      }
+      const burnout = { risk, score: 100 - b.workout.recoveryIndex, recommendation: rec };
+
+      const habits = b.behavior.habits;
+      const behavioralArchetype = b.behavior.archetype;
+
+      const goalSuccess = this.predictGoalSuccess(user, plateau, predictions, analytics, workouts, today, b);
+      const timeline = this.generateTimeline(recentMeals, analytics, today, workouts);
+      const risks = this.detectRisks(plateau, burnout, recentMeals, user);
+      const personalBests = this.calculatePersonalBests(analytics, recentMeals, workouts, today);
+      const milestones = this.calculateMilestones(analytics, recentMeals, user, recentWeights, workouts);
+
+      const diagnostics = EngineDiagnostics.getSnapshot();
+      EngineDiagnostics.recordExecutionTime('PredictionEngine', Date.now() - startTime);
+
+      return { predictions, plateau, burnout, habits, behavioralArchetype, goalSuccess, timeline, risks, personalBests, milestones, diagnostics, confidenceReasons: goalSuccess.reasons };
+    } catch (e) {
+      console.error('PredictionEngine Critical Failure', e);
+      return {
+        predictions: { weight7Days: 0, weight30Days: 0, caloricTrend: 'Unknown', bodyCompositionTrend: 'Unknown' },
+        plateau: { isPlateaued: false, duration: 0, message: '', recommendation: null },
+        burnout: { risk: 'Low', recommendation: null, score: 100 },
+        habits: [],
+        behavioralArchetype: 'Unknown',
+        goalSuccess: { probabilityPct: 0, confidence: 'Low', estimatedFinish: 'Unknown' },
+        timeline: [],
+        risks: [],
+        personalBests: { longestStreak: 0, mostCaloriesBurned: 0, bestWorkoutWeek: 0, bestAdherence: 0 },
+        milestones: []
+      };
     }
-    const burnout = { risk, score: 100 - b.workout.recoveryIndex, recommendation: rec };
-
-    const habits = b.behavior.habits;
-    const behavioralArchetype = b.behavior.archetype;
-
-    const goalSuccess = this.predictGoalSuccess(user, plateau, predictions, analytics, workouts, today, b);
-    const timeline = this.generateTimeline(recentMeals, analytics, today, workouts);
-    const risks = this.detectRisks(plateau, burnout, recentMeals, user);
-    const personalBests = this.calculatePersonalBests(analytics, recentMeals, workouts, today);
-    const milestones = this.calculateMilestones(analytics, recentMeals, user, recentWeights, workouts);
-
-    const diagnostics = EngineDiagnostics.getSnapshot();
-    EngineDiagnostics.recordExecutionTime('PredictionEngine', Date.now() - startTime);
-
-    return { predictions, plateau, burnout, habits, behavioralArchetype, goalSuccess, timeline, risks, personalBests, milestones, diagnostics, confidenceReasons: goalSuccess.reasons };
   }
 
   // internal helpers that still rely on specific outputs
