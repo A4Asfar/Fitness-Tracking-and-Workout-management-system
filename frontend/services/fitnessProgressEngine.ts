@@ -2,6 +2,8 @@ import PredictionEngine, { PredictionResult } from './PredictionEngine';
 import RecommendationEngine, { RecommendationResult } from './RecommendationEngine';
 import BehaviorAnalysisEngine from './BehaviorAnalysisEngine';
 import { getStartOfDay, filterByDate, sumMacros, getCached, calculateMaintenance, calculateTargetProtein } from './EngineUtils';
+import EngineDiagnostics from './EngineDiagnostics';
+import { FitnessRules } from './FitnessRules';
 
 export interface EngineParams {
   user: any;
@@ -107,6 +109,8 @@ export interface EngineResult {
   dietPlanComparison?: any;
   predictive: PredictionResult;
   recommendations: RecommendationResult;
+  diagnostics?: any;
+  confidenceReasons?: string[];
 }
 
 const DAYS_OF_WEEK = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -243,6 +247,7 @@ class FitnessProgressEngine {
     params: EngineParams, workoutScore: number, nutritionScore: number, recoveryScore: number, 
     dietAdherence: number, goalScore: number, bodyScore: number, netCalsLabel: string, bodyData: any, weeklyPct: number
   ) {
+    const startTime = performance.now();
     const w = params.weights || { workout: 0.3, nutrition: 0.2, adherence: 0.2, recovery: 0.1, goal: 0.1, body: 0.1 };
     const goal = params.dietPlan?.goal || params.user?.fitnessGoal || 'Maintain Fitness';
     const overallScore = Math.round(
@@ -252,13 +257,15 @@ class FitnessProgressEngine {
     const overallReasons: ReasonDetail[] = [
       { reason: 'Weighted intelligently from 6 tracking pillars', weight: 'High', type: 'positive' }
     ];
-    const { primaryStatus, coachReport, coachingTone } = this.generateAIStatusAndReport(overallScore, workoutScore, nutritionScore, recoveryScore, dietAdherence, goal, netCalsLabel, bodyData);
+    const { primaryStatus, coachReport, coachingTone, confidenceReasons } = this.generateAIStatusAndReport(overallScore, workoutScore, nutritionScore, recoveryScore, dietAdherence, goal, netCalsLabel, bodyData);
     const consistencyData = this.calculateConsistency(workoutScore, nutritionScore, recoveryScore, dietAdherence, params.analytics);
     const healthBalanceIndex = this.calculateHealthBalanceIndex(overallScore, consistencyData.overall, 100 - recoveryScore, bodyScore);
     
+    EngineDiagnostics.recordExecutionTime('FitnessProgressEngine:OverallScore', performance.now() - startTime);
+
     return {
       value: overallScore, reasons: overallReasons, historicalTrend: 'Stable (+2 pts)', howToImprove: 'Focus on your weakest pillar.', expectedImprovement: 'Increases holistic trajectory.',
-      healthBalanceIndex, status: { primary: primaryStatus, coachReport, coachingTone }, consistency: consistencyData
+      healthBalanceIndex, status: { primary: primaryStatus, coachReport, coachingTone }, consistency: consistencyData, diagnostics: EngineDiagnostics.getSnapshot(), confidenceReasons
     };
   }
 
@@ -298,9 +305,9 @@ class FitnessProgressEngine {
   }
 
   private calculateHealthBalanceIndex(overall: number, discipline: number, burnoutScore: number, bodyProgress: number) {
-     let hbi = (overall * 0.4) + (discipline * 0.4) + (bodyProgress * 0.2);
-     if (burnoutScore >= 80) hbi -= 30;
-     else if (burnoutScore >= 60) hbi -= 15;
+     let hbi = (overall * FitnessRules.HBI_OVERALL_WEIGHT) + (discipline * FitnessRules.HBI_DISCIPLINE_WEIGHT) + (bodyProgress * FitnessRules.HBI_BODY_WEIGHT);
+     if (burnoutScore >= FitnessRules.BURNOUT_CRITICAL_THRESHOLD) hbi -= 30;
+     else if (burnoutScore >= FitnessRules.BURNOUT_WARNING_THRESHOLD) hbi -= 15;
      return Math.max(0, Math.min(100, Math.round(hbi)));
   }
 
@@ -319,10 +326,13 @@ class FitnessProgressEngine {
 
   private generateAIStatusAndReport(overall: number, wScore: number, nScore: number, rScore: number, adherence: number, goal: string, netCalsLabel: string, bodyData: any) {
     let primaryStatus = 'Good Progress';
-    if (overall >= 90) primaryStatus = 'Excellent Progress';
-    else if (overall < 50) primaryStatus = 'Poor Consistency';
+    const confidenceReasons: string[] = [];
+
+    if (overall >= 90) { primaryStatus = 'Excellent Progress'; confidenceReasons.push(`✓ Excellent overall score (${overall})`); }
+    else if (overall < 50) { primaryStatus = 'Poor Consistency'; confidenceReasons.push(`⚠ Poor overall score (${overall})`); }
+    else { confidenceReasons.push(`✓ Moderate overall score (${overall})`); }
     
-    if (wScore >= 80 && rScore < 60) primaryStatus = 'Overtraining Risk';
+    if (wScore >= 80 && rScore < 60) { primaryStatus = 'Overtraining Risk'; confidenceReasons.push(`⚠ High workout score but low recovery (${rScore})`); }
 
     let coachingTone: 'Encouraging' | 'Strict' | 'Analytical' | 'Empathetic' = 'Encouraging';
     if (rScore < 60 || adherence < 50) coachingTone = 'Empathetic';
@@ -336,7 +346,7 @@ class FitnessProgressEngine {
     else if (coachingTone === 'Analytical') coachReport.push("Metabolic adaptation detected. We may need to mathematically adjust your macros to break this plateau.");
     else coachReport.push("Outstanding momentum. Your data indicates highly optimized, balanced progress.");
 
-    return { primaryStatus, coachReport, coachingTone };
+    return { primaryStatus, coachReport, coachingTone, confidenceReasons };
   }
 
   // internal generators decoupled

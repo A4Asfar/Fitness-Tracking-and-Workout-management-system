@@ -1,5 +1,6 @@
 import { getStartOfDay, filterByDate, getCached, calculateMaintenance, calculateTargetProtein, sumWorkoutVolume } from './EngineUtils';
 import BehaviorAnalysisEngine from './BehaviorAnalysisEngine';
+import EngineDiagnostics from './EngineDiagnostics';
 
 const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
@@ -37,6 +38,8 @@ export interface PredictionResult {
     bestAdherence: number;
   };
   milestones: string[];
+  diagnostics?: any;
+  confidenceReasons?: string[];
 }
 
 class PredictionEngine {
@@ -58,6 +61,7 @@ class PredictionEngine {
 
   public generate(user: any, analytics: any, meals: any[], weightLogs: any[], dietPlan: any, workouts: any[] = []): PredictionResult {
     this.clearCache();
+    const startTime = performance.now();
 
     const today = getStartOfDay();
     const b = BehaviorAnalysisEngine.generate(user, analytics, meals, weightLogs, workouts);
@@ -97,18 +101,21 @@ class PredictionEngine {
     const habits = b.behavior.habits;
     const behavioralArchetype = b.behavior.archetype;
 
-    const goalSuccess = this.predictGoalSuccess(user, plateau, predictions, analytics, workouts);
+    const goalSuccess = this.predictGoalSuccess(user, plateau, predictions, analytics, workouts, today, b);
     const timeline = this.generateTimeline(recentMeals, analytics, today, workouts);
     const risks = this.detectRisks(plateau, burnout, recentMeals, user);
-    const personalBests = this.calculatePersonalBests(analytics, recentMeals, workouts);
+    const personalBests = this.calculatePersonalBests(analytics, recentMeals, workouts, today);
     const milestones = this.calculateMilestones(analytics, recentMeals, user, recentWeights, workouts);
 
-    return { predictions, plateau, burnout, habits, behavioralArchetype, goalSuccess, timeline, risks, personalBests, milestones };
+    const diagnostics = EngineDiagnostics.getSnapshot();
+    EngineDiagnostics.recordExecutionTime('PredictionEngine', performance.now() - startTime);
+
+    return { predictions, plateau, burnout, habits, behavioralArchetype, goalSuccess, timeline, risks, personalBests, milestones, diagnostics, confidenceReasons: goalSuccess.reasons };
   }
 
   // internal helpers that still rely on specific outputs
 
-  private predictGoalSuccess(user: any, plateau: any, predictions: any, analytics: any, workouts: any[]) {
+  private predictGoalSuccess(user: any, plateau: any, predictions: any, analytics: any, workouts: any[], today: Date, b: any) {
      const goal = user?.fitnessGoal || 'Weight Loss';
      const currentWeight = user?.weight || 70;
      const targetWeight = user?.targetWeight || 75;
@@ -122,6 +129,7 @@ class PredictionEngine {
      
      let prob = 50;
      let confidence: 'High'|'Medium'|'Low' = 'Low';
+     const reasons: string[] = [];
      
      if (isLossGoal && rate < 0) {
         prob += 20;
@@ -133,9 +141,25 @@ class PredictionEngine {
         prob -= 10;
      }
 
-     const recentWorkouts = workouts.filter(w => (new Date().getTime() - new Date(w.date).getTime()) <= 30 * 24 * 3600 * 1000);
-     if (recentWorkouts.length >= 12) { prob += 20; confidence = 'High'; }
-     if (plateau.isPlateaued) prob -= 15;
+     const recentWorkouts = workouts.filter(w => (today.getTime() - new Date(w.date).getTime()) <= 30 * 24 * 3600 * 1000);
+     if (recentWorkouts.length >= 12) { 
+        prob += 20; 
+        confidence = 'High'; 
+        reasons.push(`✓ ${recentWorkouts.length} recent workout sessions logged`);
+     } else {
+        reasons.push(`⚠ Sparse workout data (only ${recentWorkouts.length} in last 30 days)`);
+     }
+
+     if (plateau.isPlateaued) {
+        prob -= 15;
+        reasons.push(`⚠ Active metabolic plateau detected (${plateau.duration} days)`);
+     }
+
+     if (b.consistency.mealConsistency > 70) {
+        reasons.push(`✓ High meal logging consistency (${b.consistency.mealConsistency}%)`);
+     } else {
+        reasons.push(`⚠ Inconsistent nutrition tracking`);
+     }
      
      prob = Math.max(0, Math.min(100, prob));
 
@@ -146,7 +170,7 @@ class PredictionEngine {
      }
      if (Math.abs(diff) < 0.5) estFinish = 'Goal Reached';
 
-     return { probabilityPct: prob, confidence, estimatedFinish: estFinish };
+     return { probabilityPct: prob, confidence, estimatedFinish: estFinish, reasons };
   }
 
   private generateTimeline(meals: any[], analytics: any, today: Date, workouts: any[]) {
@@ -210,7 +234,7 @@ class PredictionEngine {
     });
   }
 
-  private calculatePersonalBests(analytics: any, meals: any[], workouts: any[]) {
+  private calculatePersonalBests(analytics: any, meals: any[], workouts: any[], today: Date) {
     return getCached(workouts, 'calculatePersonalBests', () => {
        let mostCals = 0;
        workouts.forEach(w => {
@@ -230,7 +254,7 @@ class PredictionEngine {
 
        // Diet Adherence (days with meals / total days active)
        const uniqueMealDays = new Set(meals.map(m => new Date(m.selectedAt || m.createdAt || m.date).toISOString().split('T')[0])).size;
-       const totalDaysActive = Math.max(1, Math.floor((new Date().getTime() - new Date(workouts[workouts.length-1]?.date || new Date()).getTime()) / (1000 * 3600 * 24)));
+       const totalDaysActive = Math.max(1, Math.floor((today.getTime() - new Date(workouts[workouts.length-1]?.date || today).getTime()) / (1000 * 3600 * 24)));
        const adherence = Math.min(100, Math.round((uniqueMealDays / Math.max(1, Math.min(totalDaysActive, 30))) * 100));
 
        return {

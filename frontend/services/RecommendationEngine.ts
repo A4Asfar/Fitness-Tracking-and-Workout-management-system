@@ -1,12 +1,14 @@
 import { getStartOfDay, filterByDate, sumMacros, getCached, calculateMaintenance, calculateTargetProtein } from './EngineUtils';
 import BehaviorAnalysisEngine from './BehaviorAnalysisEngine';
+import EngineDiagnostics from './EngineDiagnostics';
 
 export interface RecommendationResult {
   actionPlan: { task: string; reason: string; completed: boolean }[];
-  adaptiveDiet: { recommendedMeal: string; reason: string; evidence: string; expectedOutcome: string; targetMacro: string; originalMacro: string; confidenceScore: number } | null;
-  adaptiveWorkout: { recommendedWorkout: string; reason: string; evidence: string; expectedOutcome: string; confidenceScore: number } | null;
+  adaptiveDiet: { recommendedMeal: string; reason: string; evidence: string; expectedOutcome: string; targetMacro: string; originalMacro: string; confidenceScore: number; confidenceReasons?: string[] } | null;
+  adaptiveWorkout: { recommendedWorkout: string; reason: string; evidence: string; expectedOutcome: string; confidenceScore: number; confidenceReasons?: string[] } | null;
   goalAdjustment: { isUnrealistic: boolean; safeTimeline: string; reason: string } | null;
   notifications: string[];
+  diagnostics?: any;
 }
 
 class RecommendationEngine {
@@ -28,6 +30,8 @@ class RecommendationEngine {
 
   public generate(user: any, analytics: any, meals: any[], predictiveData: any, workouts: any[] = []): RecommendationResult {
     this.clearCache();
+    const startTime = performance.now();
+    const now = new Date();
     const b = BehaviorAnalysisEngine.generate(user, analytics, meals, [], workouts);
     const todayMeals = filterByDate(meals, 0);
 
@@ -35,9 +39,12 @@ class RecommendationEngine {
     const adaptiveDiet = this.generateAdaptiveDiet(user, meals, predictiveData, b);
     const adaptiveWorkout = this.generateAdaptiveWorkout(analytics, predictiveData, workouts, b);
     const goalAdjustment = this.generateGoalAdjustment(user, predictiveData);
-    const notifications = this.generateNotifications(todayMeals, analytics, user, predictiveData, meals, b);
+    const notifications = this.generateNotifications(todayMeals, analytics, user, predictiveData, meals, b, now);
 
-    return { actionPlan, adaptiveDiet, adaptiveWorkout, goalAdjustment, notifications };
+    const diagnostics = EngineDiagnostics.getSnapshot();
+    EngineDiagnostics.recordExecutionTime('RecommendationEngine', performance.now() - startTime);
+
+    return { actionPlan, adaptiveDiet, adaptiveWorkout, goalAdjustment, notifications, diagnostics };
   }
 
   private generateActionPlan(user: any, analytics: any, todayMeals: any[], predictiveData: any, b: any) {
@@ -106,7 +113,11 @@ class RecommendationEngine {
              expectedOutcome: 'Decreases daily caloric load and restores deficit.',
              targetMacro: bestMeal ? `${(bestMeal as any).protein}g Protein | ${(bestMeal as any).calories} kcal` : '30g Protein | 400 kcal',
              originalMacro: `Avg Daily Intake: ${Math.round(avgCals)} kcal`,
-             confidenceScore
+             confidenceScore,
+             confidenceReasons: [
+                `✓ High confidence derived from meal tracking consistency (${confidenceScore * 100}%)`,
+                `⚠ Sustained calorie surplus averaging ${Math.round(avgCals)} kcal`
+             ]
           };
        } else if (avgPro < targetPro - 20) {
           return {
@@ -116,7 +127,11 @@ class RecommendationEngine {
              expectedOutcome: 'Enhances muscle protein synthesis.',
              targetMacro: bestMeal ? `${(bestMeal as any).protein}g Protein` : `${targetPro}g Target Protein`,
              originalMacro: `Avg Daily Protein: ${Math.round(avgPro)}g`,
-             confidenceScore
+             confidenceScore,
+             confidenceReasons: [
+                `✓ High confidence derived from meal tracking consistency (${confidenceScore * 100}%)`,
+                `⚠ Protein intake is below muscle preservation threshold (${Math.round(avgPro)}g / ${targetPro}g)`
+             ]
           };
        }
 
@@ -135,7 +150,11 @@ class RecommendationEngine {
              reason: 'Burnout risk is critically high. Avoid intense nervous system fatigue today.',
              evidence: `Burnout score is ${predictiveData.burnout.score}. Training load is excessive relative to recovery.`,
              expectedOutcome: 'Restores Central Nervous System balance and prevents injury.',
-             confidenceScore: 0.95 
+             confidenceScore: 0.95,
+             confidenceReasons: [
+                `✓ Burnout prevention protocol overrides standard algorithm`,
+                `⚠ Critical overtraining signals detected`
+             ]
           };
        }
 
@@ -146,7 +165,11 @@ class RecommendationEngine {
              reason: 'You have missed training recently. Re-establish base strength.',
              evidence: `0 workouts logged in the last 7 days.`,
              expectedOutcome: 'Re-primes muscle fibers without causing extreme DOMS.',
-             confidenceScore
+             confidenceScore,
+             confidenceReasons: [
+                `⚠ Missing recent workout volume`,
+                `✓ Low-intensity foundation selected to prevent injury`
+             ]
           };
        }
 
@@ -159,7 +182,11 @@ class RecommendationEngine {
              reason: 'You have high strength volume but low cardiovascular conditioning.',
              evidence: `You completed ${strengthCount} strength sessions this week but 0 cardio sessions.`,
              expectedOutcome: 'Improves aerobic base and recovery capacity.',
-             confidenceScore
+             confidenceScore,
+             confidenceReasons: [
+                `✓ Historical density validates high strength volume (${strengthCount} sessions)`,
+                `⚠ 0 cardiovascular endurance conditioning detected`
+             ]
           };
        }
 
@@ -169,7 +196,11 @@ class RecommendationEngine {
              reason: 'You have high cardio volume but no resistance training.',
              evidence: `You completed ${cardioCount} cardio sessions this week but 0 strength sessions.`,
              expectedOutcome: 'Preserves muscle mass and improves metabolic rate.',
-             confidenceScore
+             confidenceScore,
+             confidenceReasons: [
+                `✓ Historical density validates high cardio volume (${cardioCount} sessions)`,
+                `⚠ 0 resistance training sessions detected`
+             ]
           };
        }
 
@@ -189,11 +220,11 @@ class RecommendationEngine {
      return null;
   }
 
-  private generateNotifications(todayMeals: any[], analytics: any, user: any, predictiveData: any, meals: any[], b: any) {
+  private generateNotifications(todayMeals: any[], analytics: any, user: any, predictiveData: any, meals: any[], b: any, now: Date) {
     return getCached(meals, 'generateNotifications', () => {
        const notifications = [];
        const hasBreakfast = todayMeals.some(m => (m.mealType || m.category) === 'Breakfast');
-       if (!hasBreakfast && new Date().getHours() > 10) {
+       if (!hasBreakfast && now.getHours() > 10) {
           notifications.push("Breakfast Missing: Fuel your morning to prevent energy crashes.");
        }
        

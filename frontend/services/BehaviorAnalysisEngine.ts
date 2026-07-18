@@ -1,4 +1,6 @@
 import { getStartOfDay, filterByDate, getCached, sumMacros, calculateMaintenance, calculateTargetProtein, sumWorkoutVolume } from './EngineUtils';
+import { EngineValidator } from './EngineValidator';
+import EngineDiagnostics from './EngineDiagnostics';
 
 export interface BehaviorAnalysis {
   nutrition: {
@@ -43,13 +45,19 @@ export interface BehaviorAnalysis {
 }
 
 export default class BehaviorAnalysisEngine {
-  public static generate(user: any, analytics: any, meals: any[], weightLogs: any[], workouts: any[]): BehaviorAnalysis {
-    return getCached(meals, 'BehaviorAnalysis', () => {
+  public static generate(user: any, analytics: any, rawMeals: any[], rawWeightLogs: any[], rawWorkouts: any[]): BehaviorAnalysis {
+    return getCached(rawMeals, 'BehaviorAnalysis', () => {
+      const startTime = performance.now();
       const today = getStartOfDay();
 
+      const safeUser = EngineValidator.sanitizeUser(user);
+      const meals = EngineValidator.sanitizeMeals(rawMeals);
+      const weightLogs = EngineValidator.sanitizeWeightLogs(rawWeightLogs);
+      const workouts = EngineValidator.sanitizeWorkouts(rawWorkouts);
+
       // --- NUTRITION ---
-      const maintenance = calculateMaintenance(user);
-      const targetPro = calculateTargetProtein(user);
+      const maintenance = calculateMaintenance(safeUser);
+      const targetPro = calculateTargetProtein(safeUser);
       
       const todayMeals = filterByDate(meals, 0);
       const recent7Meals = filterByDate(meals, 7);
@@ -170,7 +178,7 @@ export default class BehaviorAnalysisEngine {
       if (avgWeekend > avgWeekday + 800) archetype = "The Weekend Warrior";
       if (breakfastCount < (activeDays * 0.2)) archetype = "The Intermittent Faster";
 
-      return {
+      const result = {
         nutrition: {
           dailyCalories: todayMacros.calories,
           weeklyAverageCalories: weeklyAvgCals,
@@ -211,6 +219,9 @@ export default class BehaviorAnalysisEngine {
           habits
         }
       };
+      
+      EngineDiagnostics.recordExecutionTime('BehaviorAnalysisEngine', performance.now() - startTime);
+      return result;
     });
   }
 }

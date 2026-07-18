@@ -1,3 +1,6 @@
+import { FitnessRules } from './FitnessRules';
+import EngineDiagnostics from './EngineDiagnostics';
+
 const arrayCache = new WeakMap<any, Map<string, any>>();
 
 export const getCached = (anchorObj: any, key: string, compute: () => any) => {
@@ -7,7 +10,11 @@ export const getCached = (anchorObj: any, key: string, compute: () => any) => {
     objCache = new Map();
     arrayCache.set(anchorObj, objCache);
   }
-  if (objCache.has(key)) return objCache.get(key);
+  if (objCache.has(key)) {
+    EngineDiagnostics.recordCacheHit(key);
+    return objCache.get(key);
+  }
+  EngineDiagnostics.recordCacheMiss(key);
   const val = compute();
   objCache.set(key, val);
   return val;
@@ -25,16 +32,14 @@ export const getStartOfDay = (date: Date | string = new Date()): Date => {
 };
 
 export const calculateMaintenance = (user: any): number => {
-  if (!user || !user.weight) return 2500;
-  // BMR * 1.2 for sedentary maintenance approximation
-  if (user.gender === 'female') return user.weight * 22 * 1.2;
-  return user.weight * 24 * 1.2;
+  if (!user || !user.weight) return FitnessRules.DEFAULT_MAINTENANCE_CALORIES;
+  if (user.gender === 'female') return user.weight * FitnessRules.MAINTENANCE_FEMALE_MULTIPLIER * FitnessRules.SEDENTARY_ACTIVITY_MULTIPLIER;
+  return user.weight * FitnessRules.MAINTENANCE_MALE_MULTIPLIER * FitnessRules.SEDENTARY_ACTIVITY_MULTIPLIER;
 };
 
 export const calculateTargetProtein = (user: any): number => {
-  if (!user || !user.weight) return 150;
-  // Target 2g / kg for muscle preservation
-  return Math.round(user.weight * 2);
+  if (!user || !user.weight) return FitnessRules.DEFAULT_PROTEIN_TARGET;
+  return Math.round(user.weight * FitnessRules.PROTEIN_TARGET_PER_KG);
 };
 
 export const getDaysAgo = (days: number): Date => {
@@ -45,6 +50,7 @@ export const getDaysAgo = (days: number): Date => {
 
 export const filterByDate = <T extends { date?: string; selectedAt?: string; createdAt?: string }>(items: T[], daysAgo: number): T[] => {
   return getCached(items, `filterByDate_${daysAgo}`, () => {
+    EngineDiagnostics.recordTraversal('items_filterByDate', items.length);
     const cutoff = getDaysAgo(daysAgo).getTime();
     return items.filter(item => {
       const d = new Date(item.selectedAt || item.createdAt || item.date || new Date());
@@ -55,6 +61,7 @@ export const filterByDate = <T extends { date?: string; selectedAt?: string; cre
 
 export const sumMacros = (meals: any[]) => {
   return getCached(meals, `sumMacros`, () => {
+    EngineDiagnostics.recordTraversal('meals_sumMacros', meals.length);
     let calories = 0;
     let protein = 0;
     let carbs = 0;
@@ -71,6 +78,7 @@ export const sumMacros = (meals: any[]) => {
 
 export const sumWorkoutVolume = (workouts: any[]) => {
   return getCached(workouts, `sumWorkoutVolume`, () => {
+    EngineDiagnostics.recordTraversal('workouts_sumWorkoutVolume', workouts.length);
     let volume = 0;
     let sets = 0;
     let reps = 0;
