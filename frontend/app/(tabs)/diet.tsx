@@ -139,6 +139,39 @@ export default function DietScreen() {
     };
   }, [meals, calorieTarget]);
 
+  const aiCoachSuggestion = useMemo(() => {
+    const remainingCals = calorieTarget - totalCalories;
+    const remainingPro = 150 - totalProtein;
+
+    let suggestion = '';
+    let recipeName = '';
+    let recipeDetails = '';
+
+    if (totalCalories === 0) {
+      suggestion = `start your day strong with a nutritious breakfast to fuel your journey.`;
+      recipeName = 'Protein Oatmeal Bowl';
+      recipeDetails = 'Ingredients: 1/2 cup oats, 1 scoop whey protein, 1 tbsp peanut butter, almond milk.\n\nInstructions: Cook oats, stir in protein powder, top with peanut butter. (Est. 350 kcal, 30g protein)';
+    } else if (remainingCals > 500 && remainingPro > 30) {
+      suggestion = `you have ${remainingCals} kcal and ${remainingPro}g protein left. A high-protein dinner is perfect to hit your remaining targets.`;
+      recipeName = 'Grilled Chicken Quinoa Bowl';
+      recipeDetails = 'Ingredients: 150g grilled chicken breast, 1/2 cup cooked quinoa, mixed greens, olive oil.\n\nInstructions: Grill chicken, serve over quinoa and greens with 1 tbsp olive oil. (Est. 450 kcal, 40g protein)';
+    } else if (remainingCals > 300) {
+      suggestion = `you're close to your daily target! Try a light, balanced snack.`;
+      recipeName = 'Greek Yogurt & Berries';
+      recipeDetails = 'Ingredients: 1 cup low-fat greek yogurt, handful of mixed berries, 1 tsp honey.\n\nInstructions: Top yogurt with berries and a drizzle of honey. (Est. 200 kcal, 20g protein)';
+    } else if (remainingCals > 0) {
+      suggestion = `you're almost at your calorie limit. A low-calorie snack will keep you satisfied without overeating.`;
+      recipeName = 'Cucumber & Hummus';
+      recipeDetails = 'Ingredients: 1 sliced cucumber, 2 tbsp hummus.\n\nInstructions: Dip cucumber slices in hummus. (Est. 100 kcal, 3g protein)';
+    } else {
+      suggestion = `you've reached your macro targets for today! Great job staying committed.`;
+      recipeName = 'Recovery Hydration';
+      recipeDetails = 'Ingredients: 1 cup chamomile or peppermint tea.\n\nInstructions: Drink a warm cup of herbal tea before bed to aid digestion and sleep.';
+    }
+
+    return { suggestion, recipeName, recipeDetails };
+  }, [totalCalories, totalProtein, calorieTarget]);
+
   const groupedMeals = useMemo(() => {
     const groups: Record<string, { meals: Meal[], totalCal: number }> = {
       Breakfast: { meals: [], totalCal: 0 },
@@ -227,8 +260,11 @@ export default function DietScreen() {
                 <Sparkles size={20} color="#10B981" fill="#10B981" />
                 <Text style={s.aiTitle}>AI Coach Suggestion</Text>
               </View>
-              <Text style={s.aiText}>Based on your <Text style={{ color: '#F8FAFC', fontWeight: '800' }}>{currentGoal}</Text> goal, try adding a <Text style={{ color: '#10B981', fontWeight: '800' }}>High-Protein Quinoa Bowl</Text> for dinner to hit your remaining macro targets today.</Text>
-              <TouchableOpacity style={s.aiBtn}>
+              <Text style={s.aiText}>Based on your <Text style={{ color: '#F8FAFC', fontWeight: '800' }}>{currentGoal}</Text> goal, {aiCoachSuggestion.suggestion} Try <Text style={{ color: '#10B981', fontWeight: '800' }}>{aiCoachSuggestion.recipeName}</Text>.</Text>
+              <TouchableOpacity 
+                style={s.aiBtn}
+                onPress={() => Alert.alert(`Recipe: ${aiCoachSuggestion.recipeName}`, aiCoachSuggestion.recipeDetails)}
+              >
                 <Text style={s.aiBtnText}>View Recipe</Text>
                 <ChevronRight size={16} color="#0F172A" />
               </TouchableOpacity>
