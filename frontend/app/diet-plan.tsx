@@ -129,7 +129,7 @@ export default function UserDietPlanScreen() {
       <View style={s.container}>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={[s.header, { paddingTop: insets.top + 16 }]}>
-          <TouchableOpacity onPress={() => router.back()} style={s.backButton}><ArrowLeft size={20} color="#F8FAFC" /></TouchableOpacity>
+          <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/diet')} style={s.backButton}><ArrowLeft size={20} color="#F8FAFC" /></TouchableOpacity>
           <Text style={s.headerTitle}>My Diet Plan</Text>
           <View style={{ width: 40 }} />
         </View>
@@ -149,7 +149,7 @@ export default function UserDietPlanScreen() {
     <View style={s.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={[s.header, { paddingTop: insets.top + 16 }]}>
-        <TouchableOpacity onPress={() => router.back()} style={s.backButton}><ArrowLeft size={20} color="#F8FAFC" /></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/diet')} style={s.backButton}><ArrowLeft size={20} color="#F8FAFC" /></TouchableOpacity>
         <Text style={s.headerTitle}>{dietPlan.title}</Text>
         <View style={{ width: 40 }} />
       </View>
