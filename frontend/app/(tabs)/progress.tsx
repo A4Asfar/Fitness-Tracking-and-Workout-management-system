@@ -128,6 +128,7 @@ export default function IntelligenceDashboardScreen() {
 
   // Daily Calorie Balance State
   const [dailyCalorieBalance, setDailyCalorieBalance] = useState({ consumed: 0, burned: 0, net: 0, status: 'Near Maintenance', statusColor: '#F59E0B', goalFeedback: '', goalFeedbackColor: '' });
+  const [proteinAnalysis, setProteinAnalysis] = useState({ consumed: 0, target: 150, remaining: 150, isAchieved: false });
 
   const { user } = useAuth();
 
@@ -138,9 +139,13 @@ export default function IntelligenceDashboardScreen() {
     
     // Calculate consumed
     let consumed = 0;
+    let consumedPro = 0;
     rawData.meals.forEach((m: any) => {
        const mDate = new Date(m.date || m.createdAt).toDateString();
-       if (mDate === todayStr) consumed += (m.calories || 0);
+       if (mDate === todayStr) {
+           consumed += (m.calories || 0);
+           consumedPro += (m.protein || 0);
+       }
     });
 
     // Calculate burned
@@ -181,6 +186,11 @@ export default function IntelligenceDashboardScreen() {
     }
 
     setDailyCalorieBalance({ consumed, burned, net, status, statusColor, goalFeedback, goalFeedbackColor });
+
+    const targetPro = rawData.dietPlan?.protein || 150;
+    const remainingPro = Math.max(0, targetPro - consumedPro);
+    const isAchieved = consumedPro >= targetPro;
+    setProteinAnalysis({ consumed: consumedPro, target: targetPro, remaining: remainingPro, isAchieved });
   }, [rawData, user]);
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -529,6 +539,34 @@ export default function IntelligenceDashboardScreen() {
                       <Text style={{ color: dailyCalorieBalance.goalFeedbackColor, fontSize: 13, fontWeight: '800' }}>{dailyCalorieBalance.goalFeedback}</Text>
                    </View>
                 ) : null}
+             </View>
+          </View>
+
+          {/* PROTEIN ANALYSIS */}
+          <Text style={s.sectionTitle}>Protein Analysis</Text>
+          <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' }}>Consumed</Text>
+                   <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{proteinAnalysis.consumed}g</Text>
+                </View>
+                <View style={{ width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.1)' }} />
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' }}>Target</Text>
+                   <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{proteinAnalysis.target}g</Text>
+                </View>
+                <View style={{ width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.1)' }} />
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' }}>Remaining</Text>
+                   <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{proteinAnalysis.remaining}g</Text>
+                </View>
+             </View>
+             <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                {proteinAnalysis.isAchieved ? (
+                   <Text style={{ color: '#10B981', fontSize: 14, fontWeight: '800', textTransform: 'uppercase' }}>✓ Protein Goal Achieved</Text>
+                ) : (
+                   <Text style={{ color: '#F59E0B', fontSize: 14, fontWeight: '800', textTransform: 'uppercase' }}>Need {proteinAnalysis.remaining}g more protein today</Text>
+                )}
              </View>
           </View>
 
