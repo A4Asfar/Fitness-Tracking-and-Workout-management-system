@@ -131,6 +131,7 @@ export default function IntelligenceDashboardScreen() {
   const [proteinAnalysis, setProteinAnalysis] = useState({ consumed: 0, target: 150, remaining: 150, isAchieved: false });
   const [workoutAnalysis, setWorkoutAnalysis] = useState({ burned: 0, duration: 0, efficiency: '0.0', status: 'N/A', color: '#94A3B8' });
   const [mealVsWorkoutAnalysis, setMealVsWorkoutAnalysis] = useState({ consumed: 0, burned: 0, difference: 0, analysis: 'N/A', color: '#94A3B8' });
+  const [weeklyCalorieBalance, setWeeklyCalorieBalance] = useState({ chartData: [] as any[], analysis: 'N/A', color: '#94A3B8', average: 0 });
 
   const { user } = useAuth();
 
@@ -229,6 +230,66 @@ export default function IntelligenceDashboardScreen() {
         aiColor = '#EF4444';
     }
     setMealVsWorkoutAnalysis({ consumed, burned, difference: diff, analysis: aiAnalysis, color: aiColor });
+
+    // Calculate last 7 days
+    const weekData: { [key: string]: { dayName: string, net: number } } = {};
+    const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    
+    // Initialize last 7 days (including today)
+    const now = new Date();
+    const last7Days = Array.from({length: 7}).map((_, i) => {
+        const d = new Date(now);
+        d.setDate(d.getDate() - (6 - i));
+        return d;
+    });
+
+    // Populate weekData map
+    last7Days.forEach(d => {
+        const dStr = d.toDateString();
+        weekData[dStr] = { dayName: dayNames[d.getDay()], net: 0 };
+    });
+
+    // Consumed
+    rawData.meals.forEach((m: any) => {
+       const mDate = new Date(m.date || m.createdAt).toDateString();
+       if (weekData[mDate]) {
+           weekData[mDate].net += (m.calories || 0);
+       }
+    });
+
+    // Burned
+    rawData.workouts.forEach((w: any) => {
+       const wDate = new Date(w.date || w.createdAt).toDateString();
+       if (weekData[wDate]) {
+           weekData[wDate].net -= (w.caloriesBurned || 0);
+       }
+    });
+
+    const weeklyChartData = last7Days.map(d => {
+        const dStr = d.toDateString();
+        return {
+           day: weekData[dStr].dayName,
+           net: weekData[dStr].net
+        };
+    });
+
+    const totalWeeklyNet = weeklyChartData.reduce((acc, curr) => acc + curr.net, 0);
+    const avgWeeklyNet = totalWeeklyNet / 7;
+
+    let weeklyAnalysis = '';
+    let weeklyColor = '#94A3B8';
+    if (avgWeeklyNet > 300) {
+        weeklyAnalysis = 'Weekly calorie surplus detected.\nSuitable for muscle gain.';
+        weeklyColor = '#10B981';
+    } else if (avgWeeklyNet < -300) {
+        weeklyAnalysis = 'Weekly calorie deficit detected.\nSuitable for fat loss.';
+        weeklyColor = '#38BDF8';
+    } else {
+        weeklyAnalysis = 'Excellent calorie balance maintained this week.';
+        weeklyColor = '#10B981';
+    }
+
+    setWeeklyCalorieBalance({ chartData: weeklyChartData, analysis: weeklyAnalysis, color: weeklyColor, average: avgWeeklyNet });
 
   }, [rawData, user]);
   const insets = useSafeAreaInsets();
@@ -656,6 +717,30 @@ export default function IntelligenceDashboardScreen() {
              <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
                 <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' }}>AI Analysis</Text>
                 <Text style={{ color: mealVsWorkoutAnalysis.color, fontSize: 14, fontWeight: '800', textAlign: 'center', marginTop: 4 }}>{mealVsWorkoutAnalysis.analysis}</Text>
+             </View>
+          </View>
+
+          {/* WEEKLY CALORIE BALANCE */}
+          <Text style={s.sectionTitle}>Weekly Calorie Balance</Text>
+          <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+             <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 120, gap: 8, marginBottom: 24 }}>
+                {weeklyCalorieBalance.chartData.map((data, i) => {
+                   const maxAbs = Math.max(...weeklyCalorieBalance.chartData.map(d => Math.abs(d.net)), 1000);
+                   const barHeight = Math.max(10, (Math.abs(data.net) / maxAbs) * 100);
+                   const isSurplus = data.net >= 0;
+                   const barColor = isSurplus ? '#10B981' : '#38BDF8';
+                   return (
+                      <View key={i} style={{ flex: 1, alignItems: 'center', justifyContent: 'flex-end', height: '100%' }}>
+                         <Text style={{ color: '#F8FAFC', fontSize: 10, fontWeight: '800', marginBottom: 4 }}>{data.net}</Text>
+                         <View style={{ width: '100%', height: `${barHeight}%`, backgroundColor: barColor, borderRadius: 4, minHeight: 4 }} />
+                         <Text style={{ color: '#94A3B8', fontSize: 10, fontWeight: '700', marginTop: 8 }}>{data.day}</Text>
+                      </View>
+                   );
+                })}
+             </View>
+             <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>Weekly AI Analysis</Text>
+                <Text style={{ color: weeklyCalorieBalance.color, fontSize: 14, fontWeight: '800', textAlign: 'center' }}>{weeklyCalorieBalance.analysis}</Text>
              </View>
           </View>
 
