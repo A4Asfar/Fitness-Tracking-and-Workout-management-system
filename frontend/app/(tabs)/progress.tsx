@@ -133,6 +133,7 @@ export default function IntelligenceDashboardScreen() {
   const [mealVsWorkoutAnalysis, setMealVsWorkoutAnalysis] = useState({ consumed: 0, burned: 0, difference: 0, analysis: 'N/A', color: '#94A3B8' });
   const [weeklyCalorieBalance, setWeeklyCalorieBalance] = useState({ chartData: [] as any[], analysis: 'N/A', color: '#94A3B8', average: 0 });
   const [caloriesInOutAnalysis, setCaloriesInOutAnalysis] = useState({ calIn: 0, calOut: 0, netInOut: 0, color: '#10B981', msg: '' });
+  const [nutritionQuality, setNutritionQuality] = useState({ protein: 0, carbs: 0, fats: 0, calories: 0, score: 0, feedback: 'No nutrition data available today.', color: '#94A3B8' });
 
   const { user } = useAuth();
 
@@ -313,6 +314,56 @@ export default function IntelligenceDashboardScreen() {
        else { inOutColor = '#10B981'; inOutMsg = '✅ Excellent balance between food intake and exercise.'; }
     }
     setCaloriesInOutAnalysis({ calIn, calOut, netInOut, color: inOutColor, msg: inOutMsg });
+
+    // Nutrition Quality Analysis
+    let totalP = 0;
+    let totalC = 0;
+    let totalF = 0;
+    let totalCal = 0;
+    let mealsLogged = 0;
+    
+    rawData.meals.forEach((m: any) => {
+       const mDate = new Date(m.date || m.createdAt).toDateString();
+       if (mDate === todayStr) {
+           totalP += (m.protein || 0);
+           totalC += (m.carbs || 0);
+           totalF += (m.fats || 0);
+           totalCal += (m.calories || 0);
+           mealsLogged++;
+       }
+    });
+
+    const targetP = rawData.dietPlan?.protein || 150;
+    const targetCal = rawData.dietPlan?.calories || 2500;
+    const targetC = rawData.dietPlan?.carbs || 250;
+    const targetF = rawData.dietPlan?.fats || 70;
+
+    let score = 0;
+    let aiFeedback = '';
+    let aiFeedbackColor = '#94A3B8';
+
+    if (mealsLogged === 0) {
+        aiFeedback = 'No nutrition data available today.';
+    } else {
+        // Scoring Rules
+        if (totalP >= targetP * 0.8) score += 40;
+        if (totalCal >= targetCal * 0.85 && totalCal <= targetCal * 1.15) score += 25;
+        if (totalC > 0) score += 15;
+        if (totalF > 0) score += 10;
+        if (mealsLogged > 0) score += 10;
+        
+        score = Math.min(100, Math.max(0, score));
+
+        // Feedback Logic
+        if (score >= 90) { aiFeedback = '✅ Excellent nutrition quality today.'; aiFeedbackColor = '#10B981'; }
+        else if (totalP < targetP * 0.5) { aiFeedback = '⚠ Increase your protein intake.'; aiFeedbackColor = '#F59E0B'; }
+        else if (totalCal < targetCal * 0.5) { aiFeedback = '⚠ Calories are too low for recovery.'; aiFeedbackColor = '#EF4444'; }
+        else if (totalF > targetF * 1.3) { aiFeedback = '⚠ Fat intake is higher than recommended.'; aiFeedbackColor = '#EF4444'; }
+        else if (totalC < targetC * 0.5) { aiFeedback = '⚠ Carbohydrates are insufficient for workout performance.'; aiFeedbackColor = '#F59E0B'; }
+        else { aiFeedback = '⚡ Protein intake is excellent.'; aiFeedbackColor = '#38BDF8'; }
+    }
+
+    setNutritionQuality({ protein: totalP, carbs: totalC, fats: totalF, calories: totalCal, score, feedback: aiFeedback, color: aiFeedbackColor });
 
   }, [rawData, user]);
   const insets = useSafeAreaInsets();
@@ -793,6 +844,43 @@ export default function IntelligenceDashboardScreen() {
 
              <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
                 <Text style={{ color: caloriesInOutAnalysis.color, fontSize: 14, fontWeight: '800', textAlign: 'center' }}>{caloriesInOutAnalysis.msg}</Text>
+             </View>
+          </View>
+
+          {/* NUTRITION QUALITY ANALYSIS */}
+          <Text style={s.sectionTitle}>Nutrition Quality Analysis</Text>
+          <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+             <View style={{ alignItems: 'center', marginBottom: 16 }}>
+                 <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' }}>Nutrition Quality</Text>
+                 <Text style={{ color: '#F8FAFC', fontSize: 32, fontWeight: '900', marginTop: 4 }}>{nutritionQuality.score} <Text style={{ fontSize: 18, color: '#64748B' }}>/ 100</Text></Text>
+             </View>
+
+             <View style={{ width: '100%', height: 8, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 4, marginBottom: 24, overflow: 'hidden' }}>
+                <View style={{ width: `${nutritionQuality.score}%`, height: '100%', backgroundColor: nutritionQuality.score >= 80 ? '#10B981' : nutritionQuality.score >= 50 ? '#F59E0B' : '#EF4444', borderRadius: 4 }} />
+             </View>
+
+             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
+                 <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8 }}>
+                     <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>🥩 Protein</Text>
+                     <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '900', marginTop: 4 }}>{nutritionQuality.protein} g</Text>
+                 </View>
+                 <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8 }}>
+                     <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>🍚 Carbs</Text>
+                     <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '900', marginTop: 4 }}>{nutritionQuality.carbs} g</Text>
+                 </View>
+                 <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8 }}>
+                     <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>🥑 Fats</Text>
+                     <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '900', marginTop: 4 }}>{nutritionQuality.fats} g</Text>
+                 </View>
+                 <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8 }}>
+                     <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>🔥 Calories</Text>
+                     <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '900', marginTop: 4 }}>{nutritionQuality.calories} kcal</Text>
+                 </View>
+             </View>
+
+             <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>AI Feedback</Text>
+                <Text style={{ color: nutritionQuality.color, fontSize: 14, fontWeight: '800', textAlign: 'center' }}>{nutritionQuality.feedback}</Text>
              </View>
           </View>
 
