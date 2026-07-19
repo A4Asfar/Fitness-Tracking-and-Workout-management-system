@@ -129,7 +129,7 @@ export default function UserDietPlanScreen() {
       <View style={s.container}>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={[s.header, { paddingTop: insets.top + 16 }]}>
-          <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/diet')} style={s.backButton}><ArrowLeft size={20} color="#F8FAFC" /></TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/diet')} style={[s.backButton, { zIndex: 999 }]}><ArrowLeft size={20} color="#F8FAFC" pointerEvents="none" /></TouchableOpacity>
           <Text style={s.headerTitle}>My Diet Plan</Text>
           <View style={{ width: 40 }} />
         </View>
@@ -137,7 +137,7 @@ export default function UserDietPlanScreen() {
           <HeartPulse size={48} color="#64748B" />
           <Text style={s.emptyTitle}>No Diet Plan Assigned</Text>
           <Text style={s.emptySub}>Your trainer hasn't assigned a structured plan yet. Continue using Food Records to track your meals manually.</Text>
-          <TouchableOpacity style={s.logBtn} onPress={() => router.push('/(tabs)/diet')}>
+          <TouchableOpacity style={[s.logBtn, { zIndex: 999 }]} onPress={() => router.push('/diet')}>
              <Text style={s.logBtnText}>Go to Food Records</Text>
           </TouchableOpacity>
         </View>
@@ -149,7 +149,7 @@ export default function UserDietPlanScreen() {
     <View style={s.container}>
       <Stack.Screen options={{ headerShown: false }} />
       <View style={[s.header, { paddingTop: insets.top + 16 }]}>
-        <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/(tabs)/diet')} style={s.backButton}><ArrowLeft size={20} color="#F8FAFC" /></TouchableOpacity>
+        <TouchableOpacity onPress={() => router.push('/diet')} style={[s.backButton, { zIndex: 999 }]}><ArrowLeft size={20} color="#F8FAFC" pointerEvents="none" /></TouchableOpacity>
         <Text style={s.headerTitle}>{dietPlan.title}</Text>
         <View style={{ width: 40 }} />
       </View>
