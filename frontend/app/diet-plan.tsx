@@ -113,7 +113,47 @@ export default function UserDietPlanScreen() {
        case 'Partially Followed': return { text: 'Partially Followed', color: '#F59E0B', Icon: AlertCircle };
        case 'Skipped': return { text: 'Skipped', color: '#EF4444', Icon: AlertCircle };
        default: return { text: 'Remaining', color: '#94A3B8', Icon: Circle };
-     }
+      }
+  };
+
+  const handleQuickLog = async (mealKey: string, meal: DietPlanMeal) => {
+    if (!adherence?.isToday) {
+       alert("You can only quick-log meals for today's plan.");
+       return;
+    }
+    const statusText = getMealStatusUI(mealKey).text;
+    if (statusText === 'Completed' || statusText === 'Partially Followed') {
+       alert("This meal is already logged.");
+       return;
+    }
+    
+    try {
+      setRefreshing(true);
+      const mealTypeMap: Record<string, 'Breakfast' | 'Lunch' | 'Dinner' | 'Snack'> = {
+        breakfast: 'Breakfast',
+        lunch: 'Lunch',
+        dinner: 'Dinner',
+        snack1: 'Snack',
+        snack2: 'Snack'
+      };
+      
+      const mealItemsStr = meal.foods?.map(f => `${f.quantity}x ${f.serving} ${f.name}`).join(', ') || '';
+      
+      await MealService.logMeal({
+        mealType: mealTypeMap[mealKey] || 'Snack',
+        selectedMeal: meal.mealName || mealItemsStr,
+        calories: meal.calories || 0,
+        protein: meal.protein || 0,
+        carbs: meal.carbs || 0,
+        fats: meal.fat || 0
+      });
+      
+      onRefresh();
+    } catch (e) {
+      console.error(e);
+      alert("Failed to log meal.");
+      setRefreshing(false);
+    }
   };
 
   if (loading && !refreshing) {
@@ -212,10 +252,10 @@ export default function UserDietPlanScreen() {
                      <View key={mealKey} style={[SharedStyles.card, s.mealCard, { width: width >= 768 ? '48%' : '100%' }, { borderColor: statusUI.color === '#94A3B8' ? 'transparent' : `${statusUI.color}40`, borderWidth: 1 }]}>
                         <View style={s.mealHeader}>
                            <Text style={s.mealTitle}>{meal.mealName || logCat}</Text>
-                           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                           <TouchableOpacity style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }} onPress={() => handleQuickLog(mealKey, meal)}>
                              <Text style={[s.mealStatus, { color: statusUI.color }]}>{statusUI.text}</Text>
                              <statusUI.Icon size={20} color={statusUI.color} />
-                           </View>
+                           </TouchableOpacity>
                         </View>
                         
                         <View style={s.mealMacrosRow}>
