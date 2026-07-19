@@ -98,14 +98,27 @@ const generatePlanForGoal = (goal, userId) => {
     snacks[0] = { mealName: 'Peanut Butter Toast', foods: [{ name: 'Bread', serving: 'slices', quantity: 2 }, { name: 'Peanut Butter', serving: 'tbsp', quantity: 2 }], calories: 350, protein: 12, carbs: 30, fat: 16 };
   }
 
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((d, index) => ({
-    dayOfWeek: d,
-    breakfast: breakfasts[index % breakfasts.length],
-    lunch: lunches[index % lunches.length],
-    dinner: dinners[index % dinners.length],
-    snack1: snacks[index % snacks.length],
-    ...(goal === 'Muscle Gain' ? { snack2: snacks[(index + 1) % snacks.length] } : {})
-  }));
+  const daysConfig = [
+    { b: 0, l: 0, d: 0, s: 0 }, // Monday
+    { b: 1, l: 1, d: 1, s: 1 }, // Tuesday
+    { b: 2, l: 2, d: 2, s: 2 }, // Wednesday
+    { b: 0, l: 1, d: 2, s: 1 }, // Thursday
+    { b: 1, l: 2, d: 0, s: 2 }, // Friday
+    { b: 2, l: 0, d: 1, s: 0 }, // Saturday
+    { b: 1, l: 0, d: 2, s: 1 }  // Sunday
+  ];
+
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((d, index) => {
+    const conf = daysConfig[index];
+    return {
+      dayOfWeek: d,
+      breakfast: breakfasts[conf.b],
+      lunch: lunches[conf.l],
+      dinner: dinners[conf.d],
+      snack1: snacks[conf.s],
+      ...(goal === 'Muscle Gain' ? { snack2: snacks[(conf.s + 1) % snacks.length] } : {})
+    };
+  });
 
   return new DietPlan({
     title,
@@ -116,7 +129,7 @@ const generatePlanForGoal = (goal, userId) => {
     carbs,
     fat,
     waterTarget: 3.0,
-    notes: `Auto-generated diverse plan optimized for ${goal}`,
+    notes: `Auto-generated dynamic plan optimized for ${goal}`,
     days,
     trainerId: userId,
     status: 'Active',
@@ -137,7 +150,7 @@ exports.getMyDietPlan = asyncHandler(async (req, res) => {
        return res.status(201).json(newPlan);
     }
     return res.status(200).json(null); // No plan assigned
-  } else if (plan.notes && plan.notes.includes('Auto-generated') && !plan.notes.includes('diverse')) {
+  } else if (plan.notes && plan.notes.includes('Auto-generated') && !plan.notes.includes('dynamic')) {
     // Force regenerate the old static plan with the new diverse plan
     await DietPlan.findByIdAndDelete(plan._id);
     const newPlan = generatePlanForGoal(plan.goal || 'Maintain', req.userId);
