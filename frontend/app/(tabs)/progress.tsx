@@ -126,6 +126,43 @@ export default function IntelligenceDashboardScreen() {
   const [simPro, setSimPro] = useState(150);
   const [simCal, setSimCal] = useState(2500);
 
+  // Daily Calorie Balance State
+  const [dailyCalorieBalance, setDailyCalorieBalance] = useState({ consumed: 0, burned: 0, net: 0, status: 'Near Maintenance', statusColor: '#F59E0B' });
+
+  useEffect(() => {
+    if (!rawData || !rawData.meals || !rawData.workouts) return;
+    
+    const todayStr = new Date().toDateString();
+    
+    // Calculate consumed
+    let consumed = 0;
+    rawData.meals.forEach((m: any) => {
+       const mDate = new Date(m.date || m.createdAt).toDateString();
+       if (mDate === todayStr) consumed += (m.calories || 0);
+    });
+
+    // Calculate burned
+    let burned = 0;
+    rawData.workouts.forEach((w: any) => {
+       const wDate = new Date(w.date || w.createdAt).toDateString();
+       if (wDate === todayStr) burned += (w.caloriesBurned || 0);
+    });
+
+    const net = consumed - burned;
+    let status = 'Near Maintenance';
+    let statusColor = '#F59E0B'; // Orange
+    
+    if (net > 100) {
+       status = 'Calorie Surplus';
+       statusColor = '#10B981'; // Green
+    } else if (net < -100) {
+       status = 'Calorie Deficit';
+       statusColor = '#38BDF8'; // Blue
+    }
+
+    setDailyCalorieBalance({ consumed, burned, net, status, statusColor });
+  }, [rawData]);
+
   const { user } = useAuth();
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -450,6 +487,27 @@ export default function IntelligenceDashboardScreen() {
         ) : null}
 
         <View style={s.content}>
+
+          {/* DAILY CALORIE BALANCE */}
+          <Text style={s.sectionTitle}>Daily Calorie Balance</Text>
+          <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' }}>Calories Consumed</Text>
+                   <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{dailyCalorieBalance.consumed} kcal</Text>
+                </View>
+                <View style={{ width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.1)' }} />
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' }}>Calories Burned</Text>
+                   <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{dailyCalorieBalance.burned} kcal</Text>
+                </View>
+             </View>
+             <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' }}>Net Calories</Text>
+                <Text style={{ color: '#F8FAFC', fontSize: 24, fontWeight: '900', marginVertical: 4 }}>{dailyCalorieBalance.net} kcal</Text>
+                <Text style={{ color: dailyCalorieBalance.statusColor, fontSize: 14, fontWeight: '800', textTransform: 'uppercase' }}>{dailyCalorieBalance.status}</Text>
+             </View>
+          </View>
 
           {/* AI ACHIEVEMENTS */}
           {achState.loading ? <SkeletonCard /> : achievementData && achievementData.length > 0 ? (
