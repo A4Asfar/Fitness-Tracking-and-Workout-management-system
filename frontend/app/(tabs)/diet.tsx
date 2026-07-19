@@ -20,6 +20,8 @@ interface Meal {
   protein?: number;
   carbs?: number;
   fats?: number;
+  selectedAt?: string;
+  createdAt?: string;
 }
 
 // Mock image mapping for premium UI
@@ -57,6 +59,23 @@ export default function DietScreen() {
 
   const currentGoal = user?.fitnessGoal || 'Fat Loss';
   const calorieTarget = (user as any)?.dailyCalorieTarget || 2200;
+
+  const [dateOffset, setDateOffset] = useState(0);
+
+  const selectedDate = useMemo(() => {
+    const d = new Date();
+    d.setDate(d.getDate() + dateOffset);
+    d.setHours(0, 0, 0, 0);
+    return d;
+  }, [dateOffset]);
+
+  const getDateLabel = (offset: number) => {
+    if (offset === 0) return 'Today';
+    if (offset === -1) return 'Yesterday';
+    const d = new Date();
+    d.setDate(d.getDate() + offset);
+    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+  };
 
   const fetchMeals = useCallback(async () => {
     setError(null);
@@ -112,7 +131,7 @@ export default function DietScreen() {
         protein: protein || 0,
         carbs: carbs || 0,
         fats: fats || 0,
-        selectedAt: new Date().toISOString(),
+        selectedAt: dateOffset === 0 ? new Date().toISOString() : selectedDate.toISOString(),
       });
       setMeals(prev => [data, ...prev]);
     } catch (err: any) {
@@ -120,9 +139,19 @@ export default function DietScreen() {
     }
   };
 
+  const currentDayMeals = useMemo(() => {
+    return meals.filter(m => {
+      const dateStr = m.selectedAt || (m as any).createdAt;
+      if (!dateStr) return false;
+      const d = new Date(dateStr);
+      d.setHours(0, 0, 0, 0);
+      return d.getTime() === selectedDate.getTime();
+    });
+  }, [meals, selectedDate]);
+
   const { totalCalories, totalProtein, totalCarbs, totalFat, calPercent, proPercent, carbPercent, fatPercent } = useMemo(() => {
     let cals = 0, pro = 0, crb = 0, fat = 0;
-    meals.forEach(m => {
+    currentDayMeals.forEach(m => {
       cals += m.calories || 0;
       pro += m.protein || 0;
       crb += m.carbs || 0;
@@ -138,7 +167,7 @@ export default function DietScreen() {
       carbPercent: Math.min(crb / 250, 1),
       fatPercent: Math.min(fat / 70, 1)
     };
-  }, [meals, calorieTarget]);
+  }, [currentDayMeals, calorieTarget]);
 
   const aiCoachSuggestion = useMemo(() => {
     const remainingCals = calorieTarget - totalCalories;
@@ -180,14 +209,14 @@ export default function DietScreen() {
       Dinner: { meals: [], totalCal: 0 },
       Snack: { meals: [], totalCal: 0 },
     };
-    meals.forEach(m => {
+    currentDayMeals.forEach(m => {
       if (groups[m.mealType]) {
         groups[m.mealType].meals.push(m);
         groups[m.mealType].totalCal += m.calories || 0;
       }
     });
     return groups;
-  }, [meals]);
+  }, [currentDayMeals]);
 
   if (loading && !refreshing) {
     return (
@@ -214,6 +243,23 @@ export default function DietScreen() {
         <LinearGradient colors={['#1E293B', '#0F172A']} style={[s.heroSection, { paddingTop: insets.top + 16 }]}>
           <Text style={s.headerSubtitle}>Nutrition Center</Text>
           <Text style={s.headerTitle}>Food Records</Text>
+
+          {/* DATE SELECTOR */}
+          <View style={s.dateSelectorRow}>
+            <TouchableOpacity onPress={() => setDateOffset(prev => prev - 1)} style={s.dateArrowBtn}>
+               <Text style={s.dateArrowText}>{'<'}</Text>
+            </TouchableOpacity>
+            
+            <Text style={s.dateLabel}>{getDateLabel(dateOffset)}</Text>
+            
+            <TouchableOpacity 
+               onPress={() => setDateOffset(prev => prev + 1)} 
+               style={[s.dateArrowBtn, dateOffset >= 0 && { opacity: 0.3 }]}
+               disabled={dateOffset >= 0}
+            >
+               <Text style={s.dateArrowText}>{'>'}</Text>
+            </TouchableOpacity>
+          </View>
 
           {/* DAILY NUTRITION SUMMARY */}
           <View style={[SharedStyles.card, s.summaryCard]}>
@@ -301,7 +347,7 @@ export default function DietScreen() {
 
           {/* MEAL LOGS */}
           <View style={s.mealsHeaderRow}>
-            <Text style={s.sectionTitle}>Today's Meals</Text>
+            <Text style={s.sectionTitle}>{getDateLabel(dateOffset)}'s Meals</Text>
             <TouchableOpacity onPress={() => { setActiveType('Breakfast'); setIsModalVisible(true); }}>
               <Text style={s.addMealLink}>+ Add Log</Text>
             </TouchableOpacity>
@@ -409,9 +455,14 @@ const s = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0F172A' },
   heroSection: { paddingHorizontal: 24, paddingBottom: 32, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
   headerSubtitle: { flexShrink: 1,  color: '#94A3B8', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
-  headerTitle: { color: '#F8FAFC', fontSize: 32, fontWeight: '900', letterSpacing: -1, marginBottom: 24 },
+  headerTitle: { color: '#F8FAFC', fontSize: 28, fontWeight: '900', letterSpacing: -0.5, marginBottom: 20 },
 
-  summaryCard: { padding: 24 },
+  dateSelectorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24, paddingHorizontal: 4, backgroundColor: 'rgba(255,255,255,0.03)', paddingVertical: 8, borderRadius: 16 },
+  dateArrowBtn: { width: 44, height: 44, borderRadius: 22, backgroundColor: 'rgba(56, 189, 248, 0.1)', justifyContent: 'center', alignItems: 'center' },
+  dateArrowText: { color: '#38BDF8', fontSize: 20, fontWeight: '900' },
+  dateLabel: { color: '#F8FAFC', fontSize: 16, fontWeight: '800' },
+
+  summaryCard: { backgroundColor: 'rgba(15,23,42,0.4)', padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' },
   calRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: 20 },
   calLeft: { flex: 1 },
   calLabel: { color: '#94A3B8', fontSize: 14, fontWeight: '700', marginBottom: 4 },
