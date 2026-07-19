@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef, useMemo } from 'react';
-import { View, StyleSheet, Alert, ScrollView, Text, TouchableOpacity, ImageBackground, Animated, useWindowDimensions } from 'react-native';
+import { View, StyleSheet, Modal, Alert, ScrollView, Text, TouchableOpacity, ImageBackground, Animated, useWindowDimensions } from 'react-native';
 import { useAuth } from '@/context/AuthContext';
 import { MealService } from '@/services/mealService';
 import { 
@@ -50,6 +50,7 @@ export default function DietScreen() {
   const [error, setError] = useState<string | null>(null);
   
   const [isModalVisible, setIsModalVisible] = useState(false);
+  const [recipeModalVisible, setRecipeModalVisible] = useState(false);
   const [activeType, setActiveType] = useState<'Breakfast' | 'Lunch' | 'Dinner' | 'Snack'>('Breakfast');
 
   const progressAnim = useRef(new Animated.Value(0)).current;
@@ -263,7 +264,7 @@ export default function DietScreen() {
               <Text style={s.aiText}>Based on your <Text style={{ color: '#F8FAFC', fontWeight: '800' }}>{currentGoal}</Text> goal, {aiCoachSuggestion.suggestion} Try <Text style={{ color: '#10B981', fontWeight: '800' }}>{aiCoachSuggestion.recipeName}</Text>.</Text>
               <TouchableOpacity 
                 style={s.aiBtn}
-                onPress={() => Alert.alert(`Recipe: ${aiCoachSuggestion.recipeName}`, aiCoachSuggestion.recipeDetails)}
+                onPress={() => setRecipeModalVisible(true)}
               >
                 <Text style={s.aiBtnText}>View Recipe</Text>
                 <ChevronRight size={16} color="#0F172A" />
@@ -373,11 +374,38 @@ export default function DietScreen() {
         onAdd={handleAddMeal}
         defaultType={activeType}
       />
+
+      {/* AI Recipe Modal */}
+      <Modal visible={recipeModalVisible} transparent animationType="fade">
+        <View style={s.modalOverlay}>
+          <View style={s.modalContent}>
+            <View style={s.modalHeader}>
+              <Sparkles size={20} color="#10B981" fill="#10B981" />
+              <Text style={s.modalTitle}>{aiCoachSuggestion.recipeName}</Text>
+            </View>
+            <ScrollView style={s.modalBody} showsVerticalScrollIndicator={false}>
+              <Text style={s.modalText}>{aiCoachSuggestion.recipeDetails}</Text>
+            </ScrollView>
+            <TouchableOpacity style={s.modalCloseBtn} onPress={() => setRecipeModalVisible(false)}>
+              <Text style={s.modalCloseBtnText}>Got it</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
 
 const s = StyleSheet.create({
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(15,23,42,0.8)', justifyContent: 'center', alignItems: 'center', padding: 20 },
+  modalContent: { backgroundColor: '#1E293B', width: '100%', maxWidth: 400, borderRadius: 24, overflow: 'hidden', borderWidth: 1, borderColor: '#334155' },
+  modalHeader: { flexDirection: 'row', alignItems: 'center', padding: 20, borderBottomWidth: 1, borderBottomColor: '#334155', backgroundColor: 'rgba(16,185,129,0.05)' },
+  modalTitle: { color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginLeft: 12, flex: 1 },
+  modalBody: { padding: 20, maxHeight: 400 },
+  modalText: { color: '#CBD5E1', fontSize: 15, lineHeight: 24, fontWeight: '500' },
+  modalCloseBtn: { backgroundColor: '#10B981', margin: 20, padding: 16, borderRadius: 16, alignItems: 'center' },
+  modalCloseBtnText: { color: '#0F172A', fontSize: 16, fontWeight: '900' },
+
   container: { flex: 1, backgroundColor: '#0F172A' },
   heroSection: { paddingHorizontal: 24, paddingBottom: 32, borderBottomLeftRadius: 32, borderBottomRightRadius: 32, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 },
   headerSubtitle: { flexShrink: 1,  color: '#94A3B8', fontSize: 13, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 },
