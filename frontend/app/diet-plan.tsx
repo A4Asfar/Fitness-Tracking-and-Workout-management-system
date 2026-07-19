@@ -196,13 +196,11 @@ export default function UserDietPlanScreen() {
                  </View>
               </View>
            )}
-        </LinearGradient>
-
-        <View style={s.content}>
+        </LinearGradient>         <View style={s.content}>
            {!selectedDayData ? (
              <Text style={s.emptyText}>No plan configured for {selectedDay}</Text>
            ) : (
-             <>
+             <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'space-between' }}>
                {['breakfast', 'snack1', 'lunch', 'snack2', 'dinner'].map((mealKey) => {
                   const meal: DietPlanMeal = (selectedDayData as any)[mealKey];
                   if (!meal || !meal.foods || meal.foods.length === 0) return null;
@@ -211,7 +209,7 @@ export default function UserDietPlanScreen() {
                   const statusUI = getMealStatusUI(mealKey);
 
                   return (
-                     <View key={mealKey} style={[SharedStyles.card, s.mealCard, { borderColor: statusUI.color === '#94A3B8' ? 'transparent' : `${statusUI.color}40`, borderWidth: 1 }]}>
+                     <View key={mealKey} style={[SharedStyles.card, s.mealCard, { width: width >= 768 ? '48%' : '100%' }, { borderColor: statusUI.color === '#94A3B8' ? 'transparent' : `${statusUI.color}40`, borderWidth: 1 }]}>
                         <View style={s.mealHeader}>
                            <Text style={s.mealTitle}>{meal.mealName || logCat}</Text>
                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -244,7 +242,7 @@ export default function UserDietPlanScreen() {
                        const extraName = extraKey.replace('extra_', '');
                        const statusUI = getMealStatusUI(extraKey, true);
                        return (
-                         <View key={extraKey} style={[SharedStyles.card, s.mealCard, { borderColor: `${statusUI.color}40`, borderWidth: 1 }]}>
+                         <View key={extraKey} style={[SharedStyles.card, s.mealCard, { width: width >= 768 ? '48%' : '100%' }, { borderColor: `${statusUI.color}40`, borderWidth: 1 }]}>
                             <View style={s.mealHeader}>
                                <Text style={s.mealTitle}>{extraName}</Text>
                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
@@ -257,9 +255,9 @@ export default function UserDietPlanScreen() {
                        );
                     })
                )}
-             </>
+             </View>
            )}
-        </View>
+         </View>
       </ScrollView>
     </View>
   );
