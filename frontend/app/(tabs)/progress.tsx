@@ -134,6 +134,7 @@ export default function IntelligenceDashboardScreen() {
   const [weeklyCalorieBalance, setWeeklyCalorieBalance] = useState({ chartData: [] as any[], analysis: 'N/A', color: '#94A3B8', average: 0 });
   const [caloriesInOutAnalysis, setCaloriesInOutAnalysis] = useState({ calIn: 0, calOut: 0, netInOut: 0, color: '#10B981', msg: '' });
   const [nutritionQuality, setNutritionQuality] = useState({ protein: 0, carbs: 0, fats: 0, calories: 0, score: 0, feedback: 'No nutrition data available today.', color: '#94A3B8' });
+  const [aiCoachInsights, setAiCoachInsights] = useState<{text: string, type: 'positive' | 'suggestion' | 'warning', icon: string}[]>([]);
 
   const { user } = useAuth();
 
@@ -364,6 +365,64 @@ export default function IntelligenceDashboardScreen() {
     }
 
     setNutritionQuality({ protein: totalP, carbs: totalC, fats: totalF, calories: totalCal, score, feedback: aiFeedback, color: aiFeedbackColor });
+
+    // AI Coach Insights
+    const insights: { text: string, type: 'positive' | 'suggestion' | 'warning', icon: string }[] = [];
+    const recentWorkouts = rawData.workouts.filter((w: any) => {
+        const d = new Date(w.date || w.createdAt);
+        return (new Date().getTime() - d.getTime()) < 7 * 24 * 60 * 60 * 1000;
+    });
+
+    if (rawData.workouts.length === 0 && rawData.meals.length === 0) {
+        // Not enough data
+    } else {
+        // Insight 1: Workout consistency
+        if (recentWorkouts.length >= 4) {
+            insights.push({ text: 'You trained consistently this week. Great job!', type: 'positive', icon: '🏋️' });
+        } else if (recentWorkouts.length >= 1) {
+            insights.push({ text: 'You had a few workouts this week. Try to increase frequency.', type: 'suggestion', icon: '⚡' });
+        } else {
+            insights.push({ text: 'No workouts recorded this week. Time to get moving!', type: 'warning', icon: '⚠' });
+        }
+
+        // Insight 2: Protein
+        if (totalP >= targetP * 0.9) {
+            insights.push({ text: 'Protein intake is excellent today. Ideal for muscle recovery.', type: 'positive', icon: '🥩' });
+        } else if (totalP >= targetP * 0.5) {
+            insights.push({ text: 'Your protein intake is okay, but could be higher.', type: 'suggestion', icon: '💡' });
+        } else {
+            insights.push({ text: 'Your protein intake needs improvement today.', type: 'warning', icon: '⚠' });
+        }
+
+        // Insight 3: Calorie Balance
+        if (userGoal === 'Weight Loss') {
+            if (avgWeeklyNet < -800) insights.push({ text: 'Your weekly calorie deficit is very aggressive. Watch your recovery.', type: 'warning', icon: '⚠' });
+            else if (avgWeeklyNet <= -200) insights.push({ text: 'Your calorie deficit is ideal for fat loss.', type: 'positive', icon: '🔥' });
+            else insights.push({ text: 'You need a larger calorie deficit for effective weight loss.', type: 'suggestion', icon: '💡' });
+        } else if (userGoal === 'Muscle Gain') {
+            if (avgWeeklyNet >= 200 && avgWeeklyNet <= 600) insights.push({ text: 'Great muscle-gain surplus maintained this week.', type: 'positive', icon: '⚡' });
+            else if (avgWeeklyNet > 600) insights.push({ text: 'Weekly surplus is quite high. Watch for excessive fat gain.', type: 'warning', icon: '⚠' });
+            else insights.push({ text: 'You need a calorie surplus to effectively build muscle.', type: 'suggestion', icon: '💡' });
+        } else {
+            if (Math.abs(avgWeeklyNet) < 200) insights.push({ text: 'Excellent calorie balance maintained this week.', type: 'positive', icon: '🎯' });
+            else insights.push({ text: 'Try to align your calorie intake closer to maintenance.', type: 'suggestion', icon: '💡' });
+        }
+
+        // Insight 4: Progress Status
+        if (score >= 80 && recentWorkouts.length >= 3) {
+            insights.push({ text: "You're on track to achieve your goal. Keep it up!", type: 'positive', icon: '🎯' });
+        } else if (score < 50) {
+            insights.push({ text: "Nutrition quality is low. Try focusing on whole foods.", type: 'suggestion', icon: '🥗' });
+        }
+
+        // Insight 5: Recovery
+        if (recentWorkouts.length >= 6) {
+            insights.push({ text: 'High workout volume detected. Consider taking a rest day for recovery.', type: 'warning', icon: '😴' });
+        } else {
+            insights.push({ text: 'Recovery seems adequate based on training volume.', type: 'positive', icon: '🔋' });
+        }
+    }
+    setAiCoachInsights(insights.slice(0, 5));
 
   }, [rawData, user]);
   const insets = useSafeAreaInsets();
@@ -882,6 +941,45 @@ export default function IntelligenceDashboardScreen() {
                 <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>AI Feedback</Text>
                 <Text style={{ color: nutritionQuality.color, fontSize: 14, fontWeight: '800', textAlign: 'center' }}>{nutritionQuality.feedback}</Text>
              </View>
+          </View>
+
+          {/* AI COACH INSIGHTS */}
+          <Text style={s.sectionTitle}>AI Coach Insights</Text>
+          <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+             {aiCoachInsights.length === 0 ? (
+                <View style={{ alignItems: 'center', padding: 20 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '700' }}>Not enough data to generate AI insights yet.</Text>
+                </View>
+             ) : (
+                <View style={{ gap: 12 }}>
+                   {aiCoachInsights.map((insight, index) => {
+                      let bgColor = 'rgba(255,255,255,0.03)';
+                      let borderColor = 'rgba(255,255,255,0.05)';
+                      let textColor = '#F8FAFC';
+                      
+                      if (insight.type === 'positive') {
+                          bgColor = 'rgba(16, 185, 129, 0.1)';
+                          borderColor = 'rgba(16, 185, 129, 0.2)';
+                          textColor = '#10B981';
+                      } else if (insight.type === 'warning') {
+                          bgColor = 'rgba(239, 68, 68, 0.1)';
+                          borderColor = 'rgba(239, 68, 68, 0.2)';
+                          textColor = '#EF4444';
+                      } else if (insight.type === 'suggestion') {
+                          bgColor = 'rgba(245, 158, 11, 0.1)';
+                          borderColor = 'rgba(245, 158, 11, 0.2)';
+                          textColor = '#F59E0B';
+                      }
+
+                      return (
+                         <View key={index} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: bgColor, padding: 16, borderRadius: 12, borderWidth: 1, borderColor }}>
+                            <Text style={{ fontSize: 20, marginRight: 16 }}>{insight.icon}</Text>
+                            <Text style={{ color: textColor, fontSize: 14, fontWeight: '700', flex: 1, lineHeight: 20 }}>{insight.text}</Text>
+                         </View>
+                      );
+                   })}
+                </View>
+             )}
           </View>
 
           {/* AI ACHIEVEMENTS */}
