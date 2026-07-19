@@ -129,6 +129,7 @@ export default function IntelligenceDashboardScreen() {
   // Daily Calorie Balance State
   const [dailyCalorieBalance, setDailyCalorieBalance] = useState({ consumed: 0, burned: 0, net: 0, status: 'Near Maintenance', statusColor: '#F59E0B', goalFeedback: '', goalFeedbackColor: '' });
   const [proteinAnalysis, setProteinAnalysis] = useState({ consumed: 0, target: 150, remaining: 150, isAchieved: false });
+  const [workoutAnalysis, setWorkoutAnalysis] = useState({ burned: 0, duration: 0, efficiency: '0.0', status: 'N/A', color: '#94A3B8' });
 
   const { user } = useAuth();
 
@@ -150,9 +151,13 @@ export default function IntelligenceDashboardScreen() {
 
     // Calculate burned
     let burned = 0;
+    let duration = 0;
     rawData.workouts.forEach((w: any) => {
        const wDate = new Date(w.date || w.createdAt).toDateString();
-       if (wDate === todayStr) burned += (w.caloriesBurned || 0);
+       if (wDate === todayStr) {
+           burned += (w.caloriesBurned || 0);
+           duration += (w.durationMinutes || w.duration || 0);
+       }
     });
 
     const net = consumed - burned;
@@ -191,6 +196,18 @@ export default function IntelligenceDashboardScreen() {
     const remainingPro = Math.max(0, targetPro - consumedPro);
     const isAchieved = consumedPro >= targetPro;
     setProteinAnalysis({ consumed: consumedPro, target: targetPro, remaining: remainingPro, isAchieved });
+
+    const efficiency = duration > 0 ? (burned / duration) : 0;
+    let effStatus = 'N/A';
+    let effColor = '#94A3B8';
+    if (duration > 0) {
+        if (efficiency >= 10) { effStatus = 'Excellent'; effColor = '#10B981'; } // > 10
+        else if (efficiency >= 7) { effStatus = 'Good'; effColor = '#38BDF8'; } // 7-10
+        else if (efficiency >= 4) { effStatus = 'Average'; effColor = '#F59E0B'; } // 4-7
+        else { effStatus = 'Poor'; effColor = '#EF4444'; } // < 4
+    }
+    setWorkoutAnalysis({ burned, duration, efficiency: efficiency.toFixed(1), status: effStatus, color: effColor });
+
   }, [rawData, user]);
   const insets = useSafeAreaInsets();
   const router = useRouter();
@@ -567,6 +584,31 @@ export default function IntelligenceDashboardScreen() {
                 ) : (
                    <Text style={{ color: '#F59E0B', fontSize: 14, fontWeight: '800', textTransform: 'uppercase' }}>Need {proteinAnalysis.remaining}g more protein today</Text>
                 )}
+             </View>
+          </View>
+
+          {/* WORKOUT EFFICIENCY ANALYSIS */}
+          <Text style={s.sectionTitle}>Workout Efficiency</Text>
+          <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center' }}>Burned</Text>
+                   <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{workoutAnalysis.burned} kcal</Text>
+                </View>
+                <View style={{ width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.1)' }} />
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center' }}>Duration</Text>
+                   <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{workoutAnalysis.duration} min</Text>
+                </View>
+                <View style={{ width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.1)' }} />
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center' }}>Efficiency</Text>
+                   <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{workoutAnalysis.efficiency} c/m</Text>
+                </View>
+             </View>
+             <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' }}>Efficiency Rating</Text>
+                <Text style={{ color: workoutAnalysis.color, fontSize: 16, fontWeight: '800', textTransform: 'uppercase', marginTop: 4 }}>{workoutAnalysis.status}</Text>
              </View>
           </View>
 
