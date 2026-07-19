@@ -137,6 +137,7 @@ export default function IntelligenceDashboardScreen() {
   const [aiCoachInsights, setAiCoachInsights] = useState<{text: string, type: 'positive' | 'suggestion' | 'warning', icon: string}[]>([]);
   const [predictionAnalysis, setPredictionAnalysis] = useState<{ progress: number, estWeeks: number, pace: string, probability: number, probColor: string, trend: string, text: string } | null>(null);
   const [healthRiskAnalysis, setHealthRiskAnalysis] = useState<{ level: string, color: string, risks: { name: string, reason: string, fix: string }[] } | null>(null);
+  const [weeklyPerformanceReport, setWeeklyPerformanceReport] = useState<{ grade: string, gradeColor: string, achievement: string, mistake: string, strongHabit: string, weakHabit: string, nextFocus: string, summary: string } | null>(null);
 
   const { user } = useAuth();
 
@@ -520,6 +521,53 @@ export default function IntelligenceDashboardScreen() {
             level: riskLevel,
             color: riskColor,
             risks: topRisks
+        });
+    }
+
+    // AI Weekly Performance Report
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+    const workouts7d = rawData.workouts.filter((w: any) => new Date(w.date || w.createdAt) >= sevenDaysAgo);
+    const meals7d = rawData.meals.filter((m: any) => new Date(m.date || m.createdAt) >= sevenDaysAgo);
+
+    if (workouts7d.length === 0 && meals7d.length === 0) {
+        setWeeklyPerformanceReport(null);
+    } else {
+        let reportScore = (workouts7d.length * 10) + (meals7d.length * 2);
+        let grade = 'F';
+        let gradeColor = '#EF4444';
+        if (reportScore >= 60) { grade = 'A+'; gradeColor = '#10B981'; }
+        else if (reportScore >= 50) { grade = 'A'; gradeColor = '#10B981'; }
+        else if (reportScore >= 40) { grade = 'B'; gradeColor = '#38BDF8'; }
+        else if (reportScore >= 30) { grade = 'C'; gradeColor = '#F59E0B'; }
+        else if (reportScore >= 15) { grade = 'D'; gradeColor = '#F97316'; }
+
+        let achievement = 'Maintained consistent meal logging.';
+        if (workouts7d.length >= 4) achievement = `Completed ${workouts7d.length} workouts this week.`;
+        else if (avgWeeklyNet <= -200 && userGoal === 'Weight Loss') achievement = 'Maintained perfect calorie deficit.';
+
+        let mistake = 'Did not log meals consistently.';
+        if (workouts7d.length < 2) mistake = 'Skipped workouts most of the week.';
+        else if (totalP < targetP * 0.6) mistake = 'Protein intake remained below target.';
+
+        let strongHabit = 'Meal tracking consistency.';
+        if (workouts7d.length >= 3) strongHabit = 'Consistent workout routine.';
+
+        let weakHabit = 'Irregular meal logging.';
+        if (workouts7d.length < 3) weakHabit = 'Irregular workouts.';
+        else if (totalP < targetP * 0.7) weakHabit = 'Low daily protein intake.';
+
+        let nextFocus = 'Try to log all your meals this week.';
+        if (workouts7d.length < 3) nextFocus = 'Train one extra day.';
+        else if (totalP < targetP * 0.8) nextFocus = 'Increase protein by 20g daily.';
+
+        let summary = `This week you logged ${workouts7d.length} workouts and ${meals7d.length} meals. `;
+        if (reportScore >= 50) summary += 'Excellent consistency overall. Keep maintaining this routine to reach your goal faster.';
+        else summary += 'There is room for improvement. Focus on building daily habits for better results next week.';
+
+        setWeeklyPerformanceReport({
+            grade, gradeColor, achievement, mistake, strongHabit, weakHabit, nextFocus, summary
         });
     }
 
@@ -1161,6 +1209,70 @@ export default function IntelligenceDashboardScreen() {
                              ))}
                          </View>
                      )}
+                 </>
+             )}
+          </View>
+
+          {/* AI WEEKLY PERFORMANCE REPORT */}
+          <Text style={s.sectionTitle}>AI Weekly Performance Report</Text>
+          <View style={[SharedStyles.card, { padding: 20, marginBottom: 40 }]}>
+             {!weeklyPerformanceReport ? (
+                 <View style={{ alignItems: 'center', padding: 20 }}>
+                     <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '700', textAlign: 'center' }}>Complete one week of tracking to receive your AI Weekly Report.</Text>
+                 </View>
+             ) : (
+                 <>
+                     <View style={{ alignItems: 'center', marginBottom: 24, padding: 16, backgroundColor: 'rgba(255,255,255,0.03)', borderRadius: 16, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                         <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Overall Grade</Text>
+                         <Text style={{ color: weeklyPerformanceReport.gradeColor, fontSize: 48, fontWeight: '900' }}>{weeklyPerformanceReport.grade}</Text>
+                     </View>
+
+                     <View style={{ gap: 12, marginBottom: 20 }}>
+                         <View style={{ flexDirection: 'row', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+                             <Text style={{ fontSize: 24, marginRight: 16 }}>🏆</Text>
+                             <View style={{ flex: 1 }}>
+                                 <Text style={{ color: '#10B981', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Biggest Achievement</Text>
+                                 <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '700', lineHeight: 20 }}>{weeklyPerformanceReport.achievement}</Text>
+                             </View>
+                         </View>
+
+                         <View style={{ flexDirection: 'row', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.2)' }}>
+                             <Text style={{ fontSize: 24, marginRight: 16 }}>⚠</Text>
+                             <View style={{ flex: 1 }}>
+                                 <Text style={{ color: '#EF4444', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Biggest Mistake</Text>
+                                 <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '700', lineHeight: 20 }}>{weeklyPerformanceReport.mistake}</Text>
+                             </View>
+                         </View>
+
+                         <View style={{ flexDirection: 'row', backgroundColor: 'rgba(56, 189, 248, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.2)' }}>
+                             <Text style={{ fontSize: 24, marginRight: 16 }}>💪</Text>
+                             <View style={{ flex: 1 }}>
+                                 <Text style={{ color: '#38BDF8', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Strongest Habit</Text>
+                                 <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '700', lineHeight: 20 }}>{weeklyPerformanceReport.strongHabit}</Text>
+                             </View>
+                         </View>
+
+                         <View style={{ flexDirection: 'row', backgroundColor: 'rgba(245, 158, 11, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(245, 158, 11, 0.2)' }}>
+                             <Text style={{ fontSize: 24, marginRight: 16 }}>📉</Text>
+                             <View style={{ flex: 1 }}>
+                                 <Text style={{ color: '#F59E0B', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Weakest Habit</Text>
+                                 <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '700', lineHeight: 20 }}>{weeklyPerformanceReport.weakHabit}</Text>
+                             </View>
+                         </View>
+
+                         <View style={{ flexDirection: 'row', backgroundColor: 'rgba(168, 85, 247, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(168, 85, 247, 0.2)' }}>
+                             <Text style={{ fontSize: 24, marginRight: 16 }}>🎯</Text>
+                             <View style={{ flex: 1 }}>
+                                 <Text style={{ color: '#A855F7', fontSize: 12, fontWeight: '800', textTransform: 'uppercase', marginBottom: 4 }}>Focus For Next Week</Text>
+                                 <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '700', lineHeight: 20 }}>{weeklyPerformanceReport.nextFocus}</Text>
+                             </View>
+                         </View>
+                     </View>
+
+                     <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                         <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>Overall Summary</Text>
+                         <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '700', lineHeight: 22 }}>{weeklyPerformanceReport.summary}</Text>
+                     </View>
                  </>
              )}
           </View>
