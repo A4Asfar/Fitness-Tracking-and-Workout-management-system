@@ -135,6 +135,7 @@ export default function IntelligenceDashboardScreen() {
   const [caloriesInOutAnalysis, setCaloriesInOutAnalysis] = useState({ calIn: 0, calOut: 0, netInOut: 0, color: '#10B981', msg: '' });
   const [nutritionQuality, setNutritionQuality] = useState({ protein: 0, carbs: 0, fats: 0, calories: 0, score: 0, feedback: 'No nutrition data available today.', color: '#94A3B8' });
   const [aiCoachInsights, setAiCoachInsights] = useState<{text: string, type: 'positive' | 'suggestion' | 'warning', icon: string}[]>([]);
+  const [predictionAnalysis, setPredictionAnalysis] = useState<{ progress: number, estWeeks: number, pace: string, probability: number, probColor: string, trend: string, text: string } | null>(null);
 
   const { user } = useAuth();
 
@@ -423,6 +424,62 @@ export default function IntelligenceDashboardScreen() {
         }
     }
     setAiCoachInsights(insights.slice(0, 5));
+
+    // AI Progress Prediction
+    const currentWeight = user?.weight || 0;
+    const targetWeight = user?.targetWeight || 0;
+    const startWeight = user?.startWeight || (currentWeight > 0 ? currentWeight + (userGoal === 'Weight Loss' ? 5 : -5) : 0);
+
+    let currentProgress = 0;
+    if (startWeight > 0 && targetWeight > 0 && startWeight !== targetWeight) {
+        currentProgress = Math.max(0, Math.min(100, Math.abs((startWeight - currentWeight) / (startWeight - targetWeight)) * 100));
+    }
+
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    const workouts30d = rawData.workouts.filter((w: any) => new Date(w.date || w.createdAt) >= thirtyDaysAgo);
+    const meals30d = rawData.meals.filter((m: any) => new Date(m.date || m.createdAt) >= thirtyDaysAgo);
+
+    if (workouts30d.length === 0 && meals30d.length === 0) {
+        setPredictionAnalysis(null);
+    } else {
+        let pace = 'Slow';
+        let probability = 40;
+        let trend = 'Stable';
+        let estWeeks = 12;
+
+        if (workouts30d.length >= 15 && meals30d.length >= 45) {
+            pace = 'Excellent'; probability = 95; trend = 'Improving'; estWeeks = 4;
+        } else if (workouts30d.length >= 8 && meals30d.length >= 20) {
+            pace = 'Good'; probability = 80; trend = 'Improving'; estWeeks = 8;
+        } else if (workouts30d.length >= 4 && meals30d.length >= 10) {
+            pace = 'Average'; probability = 60; trend = 'Stable'; estWeeks = 16;
+        } else {
+            pace = 'Slow'; probability = 45; trend = 'Declining'; estWeeks = 24;
+        }
+
+        let probColor = '#EF4444';
+        if (probability >= 90) probColor = '#10B981';
+        else if (probability >= 70) probColor = '#38BDF8';
+        else if (probability >= 50) probColor = '#F59E0B';
+
+        let aiPredictionText = '';
+        if (probability >= 90) aiPredictionText = '✅ You are likely to reach your goal within 8 weeks if you maintain your current routine.';
+        else if (probability >= 70) aiPredictionText = '⚡ Your consistency has improved significantly this month.';
+        else if (probability >= 50) aiPredictionText = '⚠ Your current pace is slower than required to reach your goal on time.';
+        else aiPredictionText = '⚠ Missing workouts are delaying your progress.';
+
+        setPredictionAnalysis({
+            progress: Math.round(currentProgress) || 0,
+            estWeeks,
+            pace,
+            probability,
+            probColor,
+            trend,
+            text: aiPredictionText
+        });
+    }
 
   }, [rawData, user]);
   const insets = useSafeAreaInsets();
@@ -979,6 +1036,53 @@ export default function IntelligenceDashboardScreen() {
                       );
                    })}
                 </View>
+             )}
+          </View>
+
+          {/* AI PROGRESS PREDICTION */}
+          <Text style={s.sectionTitle}>AI Progress Prediction</Text>
+          <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+             {!predictionAnalysis ? (
+                 <View style={{ alignItems: 'center', padding: 20 }}>
+                     <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '700', textAlign: 'center' }}>Not enough historical data to predict future progress.</Text>
+                 </View>
+             ) : (
+                 <>
+                     <View style={{ marginBottom: 20 }}>
+                         <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>🎯 Goal Progress</Text>
+                         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                             <Text style={{ color: '#F8FAFC', fontSize: 24, fontWeight: '900' }}>Current Progress</Text>
+                             <Text style={{ color: '#10B981', fontSize: 24, fontWeight: '900' }}>{predictionAnalysis.progress}%</Text>
+                         </View>
+                         <View style={{ width: '100%', height: 6, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 3, marginTop: 12, overflow: 'hidden' }}>
+                            <View style={{ width: `${predictionAnalysis.progress}%`, height: '100%', backgroundColor: '#10B981', borderRadius: 3 }} />
+                         </View>
+                     </View>
+
+                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8 }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>Estimated Goal Completion</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '900', marginTop: 4 }}>{predictionAnalysis.estWeeks} Weeks</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8 }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>Current Pace</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '900', marginTop: 4 }}>{predictionAnalysis.pace}</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8 }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>Success Probability</Text>
+                             <Text style={{ color: predictionAnalysis.probColor, fontSize: 16, fontWeight: '900', marginTop: 4 }}>{predictionAnalysis.probability}%</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 12, borderRadius: 8 }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700' }}>Progress Trend</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '900', marginTop: 4 }}>{predictionAnalysis.trend}</Text>
+                         </View>
+                     </View>
+
+                     <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                         <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>AI Coach Prediction</Text>
+                         <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '700', lineHeight: 22 }}>{predictionAnalysis.text}</Text>
+                     </View>
+                 </>
              )}
           </View>
 
