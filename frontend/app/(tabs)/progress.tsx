@@ -130,6 +130,7 @@ export default function IntelligenceDashboardScreen() {
   const [dailyCalorieBalance, setDailyCalorieBalance] = useState({ consumed: 0, burned: 0, net: 0, status: 'Near Maintenance', statusColor: '#F59E0B', goalFeedback: '', goalFeedbackColor: '' });
   const [proteinAnalysis, setProteinAnalysis] = useState({ consumed: 0, target: 150, remaining: 150, isAchieved: false });
   const [workoutAnalysis, setWorkoutAnalysis] = useState({ burned: 0, duration: 0, efficiency: '0.0', status: 'N/A', color: '#94A3B8' });
+  const [mealVsWorkoutAnalysis, setMealVsWorkoutAnalysis] = useState({ consumed: 0, burned: 0, difference: 0, analysis: 'N/A', color: '#94A3B8' });
 
   const { user } = useAuth();
 
@@ -207,6 +208,27 @@ export default function IntelligenceDashboardScreen() {
         else { effStatus = 'Poor'; effColor = '#EF4444'; } // < 4
     }
     setWorkoutAnalysis({ burned, duration, efficiency: efficiency.toFixed(1), status: effStatus, color: effColor });
+
+    const diff = consumed - burned;
+    let aiAnalysis = 'N/A';
+    let aiColor = '#94A3B8';
+    if (diff > 700) {
+        aiAnalysis = '⚠ You consumed much more calories than you burned today.';
+        aiColor = '#EF4444';
+    } else if (diff > 300) {
+        aiAnalysis = 'Good surplus. Suitable for muscle gain.';
+        aiColor = '#10B981';
+    } else if (diff >= -300) {
+        aiAnalysis = 'Excellent calorie balance.';
+        aiColor = '#38BDF8';
+    } else if (diff >= -800) {
+        aiAnalysis = 'Healthy calorie deficit.';
+        aiColor = '#10B981';
+    } else {
+        aiAnalysis = 'Warning: Large calorie deficit may affect recovery.';
+        aiColor = '#EF4444';
+    }
+    setMealVsWorkoutAnalysis({ consumed, burned, difference: diff, analysis: aiAnalysis, color: aiColor });
 
   }, [rawData, user]);
   const insets = useSafeAreaInsets();
@@ -609,6 +631,31 @@ export default function IntelligenceDashboardScreen() {
              <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
                 <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' }}>Efficiency Rating</Text>
                 <Text style={{ color: workoutAnalysis.color, fontSize: 16, fontWeight: '800', textTransform: 'uppercase', marginTop: 4 }}>{workoutAnalysis.status}</Text>
+             </View>
+          </View>
+
+          {/* MEAL VS WORKOUT ANALYSIS */}
+          <Text style={s.sectionTitle}>Meal vs Workout</Text>
+          <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center' }}>Calories Eaten</Text>
+                   <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{mealVsWorkoutAnalysis.consumed} kcal</Text>
+                </View>
+                <View style={{ width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.1)' }} />
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center' }}>Calories Burned</Text>
+                   <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{mealVsWorkoutAnalysis.burned} kcal</Text>
+                </View>
+                <View style={{ width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.1)' }} />
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center' }}>Difference</Text>
+                   <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{mealVsWorkoutAnalysis.difference} kcal</Text>
+                </View>
+             </View>
+             <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' }}>AI Analysis</Text>
+                <Text style={{ color: mealVsWorkoutAnalysis.color, fontSize: 14, fontWeight: '800', textAlign: 'center', marginTop: 4 }}>{mealVsWorkoutAnalysis.analysis}</Text>
              </View>
           </View>
 
