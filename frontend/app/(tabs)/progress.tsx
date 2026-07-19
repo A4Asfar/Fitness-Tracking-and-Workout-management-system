@@ -136,6 +136,7 @@ export default function IntelligenceDashboardScreen() {
   const [nutritionQuality, setNutritionQuality] = useState({ protein: 0, carbs: 0, fats: 0, calories: 0, score: 0, feedback: 'No nutrition data available today.', color: '#94A3B8' });
   const [aiCoachInsights, setAiCoachInsights] = useState<{text: string, type: 'positive' | 'suggestion' | 'warning', icon: string}[]>([]);
   const [predictionAnalysis, setPredictionAnalysis] = useState<{ progress: number, estWeeks: number, pace: string, probability: number, probColor: string, trend: string, text: string } | null>(null);
+  const [healthRiskAnalysis, setHealthRiskAnalysis] = useState<{ level: string, color: string, risks: { name: string, reason: string, fix: string }[] } | null>(null);
 
   const { user } = useAuth();
 
@@ -478,6 +479,47 @@ export default function IntelligenceDashboardScreen() {
             probColor,
             trend,
             text: aiPredictionText
+        });
+    }
+
+    // Health Risk Detection
+    const healthRisks: { name: string, reason: string, fix: string }[] = [];
+    const recoveryScore = Math.max(0, 100 - (workouts30d.length * 2.5));
+
+    if (workouts30d.length === 0 && meals30d.length === 0) {
+        setHealthRiskAnalysis(null);
+    } else {
+        if (workouts30d.length >= 24 && recoveryScore < 50) {
+            healthRisks.push({ name: 'Overtraining Risk', reason: `Workout frequency is very high (${workouts30d.length} this month).`, fix: 'Take 1–2 rest days to allow muscle recovery.' });
+        }
+        if (avgWeeklyNet > 600) {
+            healthRisks.push({ name: 'Overeating Risk', reason: 'Calories are consistently above maintenance level.', fix: 'Reduce daily calorie intake slightly or increase activity.' });
+        }
+        if (totalP < targetP * 0.7) {
+            healthRisks.push({ name: 'Low Protein Risk', reason: `Protein intake (${totalP}g) is below 70% of target.`, fix: 'Add more lean meats, eggs, or protein supplements.' });
+        }
+        if (avgWeeklyNet < -600 && totalP < targetP * 0.7) {
+            healthRisks.push({ name: 'Muscle Loss Risk', reason: 'Large calorie deficit combined with low protein.', fix: 'Reduce calorie deficit and prioritize protein intake.' });
+        }
+        if (recoveryScore < 40) {
+            healthRisks.push({ name: 'Poor Recovery', reason: `Recovery score is estimated at ${Math.round(recoveryScore)}%.`, fix: 'Improve sleep quality and schedule mandatory rest days.' });
+        }
+        if (workouts30d.length < 10) {
+            healthRisks.push({ name: 'Inconsistent Routine', reason: `Only ${workouts30d.length} workouts logged in the last 30 days.`, fix: 'Try to schedule at least 3 workouts per week.' });
+        }
+
+        const topRisks = healthRisks.slice(0, 5);
+
+        let riskLevel = 'Low';
+        let riskColor = '#10B981'; // Green
+        if (topRisks.length >= 4) { riskLevel = 'Critical'; riskColor = '#EF4444'; } // Red
+        else if (topRisks.length === 3) { riskLevel = 'High'; riskColor = '#F97316'; } // Orange
+        else if (topRisks.length >= 1) { riskLevel = 'Moderate'; riskColor = '#EAB308'; } // Yellow
+
+        setHealthRiskAnalysis({
+            level: riskLevel,
+            color: riskColor,
+            risks: topRisks
         });
     }
 
@@ -1082,6 +1124,43 @@ export default function IntelligenceDashboardScreen() {
                          <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>AI Coach Prediction</Text>
                          <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '700', lineHeight: 22 }}>{predictionAnalysis.text}</Text>
                      </View>
+                 </>
+             )}
+          </View>
+
+          {/* HEALTH RISK DETECTION */}
+          <Text style={s.sectionTitle}>Health Risk Detection</Text>
+          <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+             {!healthRiskAnalysis ? (
+                 <View style={{ alignItems: 'center', padding: 20 }}>
+                     <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '700', textAlign: 'center' }}>Not enough data to evaluate health risks.</Text>
+                 </View>
+             ) : (
+                 <>
+                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                         <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' }}>Overall Risk Level</Text>
+                         <View style={{ backgroundColor: `${healthRiskAnalysis.color}20`, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 100, borderWidth: 1, borderColor: `${healthRiskAnalysis.color}50` }}>
+                             <Text style={{ color: healthRiskAnalysis.color, fontSize: 14, fontWeight: '900', textTransform: 'uppercase' }}>{healthRiskAnalysis.level}</Text>
+                         </View>
+                     </View>
+
+                     {healthRiskAnalysis.risks.length === 0 ? (
+                         <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+                             <Text style={{ color: '#10B981', fontSize: 14, fontWeight: '700', lineHeight: 22 }}>✅ No major health risks detected. Keep following your current routine.</Text>
+                         </View>
+                     ) : (
+                         <View style={{ gap: 16 }}>
+                             {healthRiskAnalysis.risks.map((risk, index) => (
+                                 <View key={index} style={{ backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                                     <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '800', marginBottom: 8 }}>⚠ {risk.name}</Text>
+                                     <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '700', marginBottom: 4 }}>Reason:</Text>
+                                     <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '600', marginBottom: 12 }}>{risk.reason}</Text>
+                                     <Text style={{ color: '#94A3B8', fontSize: 13, fontWeight: '700', marginBottom: 4 }}>Recommendation:</Text>
+                                     <Text style={{ color: '#10B981', fontSize: 14, fontWeight: '600' }}>{risk.fix}</Text>
+                                 </View>
+                             ))}
+                         </View>
+                     )}
                  </>
              )}
           </View>
