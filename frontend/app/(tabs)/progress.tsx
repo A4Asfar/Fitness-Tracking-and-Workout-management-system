@@ -132,6 +132,7 @@ export default function IntelligenceDashboardScreen() {
   const [workoutAnalysis, setWorkoutAnalysis] = useState({ burned: 0, duration: 0, efficiency: '0.0', status: 'N/A', color: '#94A3B8' });
   const [mealVsWorkoutAnalysis, setMealVsWorkoutAnalysis] = useState({ consumed: 0, burned: 0, difference: 0, analysis: 'N/A', color: '#94A3B8' });
   const [weeklyCalorieBalance, setWeeklyCalorieBalance] = useState({ chartData: [] as any[], analysis: 'N/A', color: '#94A3B8', average: 0 });
+  const [caloriesInOutAnalysis, setCaloriesInOutAnalysis] = useState({ calIn: 0, calOut: 0, netInOut: 0, color: '#10B981', msg: '' });
 
   const { user } = useAuth();
 
@@ -290,6 +291,28 @@ export default function IntelligenceDashboardScreen() {
     }
 
     setWeeklyCalorieBalance({ chartData: weeklyChartData, analysis: weeklyAnalysis, color: weeklyColor, average: avgWeeklyNet });
+
+    const calIn = consumed || 0;
+    const calOut = burned || 0;
+    const netInOut = calIn - calOut;
+    let inOutColor = '#10B981';
+    let inOutMsg = '✅ Excellent balance between food intake and exercise.';
+    if (userGoal === 'Weight Loss') {
+       if (netInOut < -800) { inOutColor = '#EF4444'; inOutMsg = '⚠ Your calorie deficit is too aggressive.'; }
+       else if (netInOut <= -300) { inOutColor = '#10B981'; inOutMsg = '⚡ Perfect fat-loss range.'; }
+       else if (netInOut < 0) { inOutColor = '#F59E0B'; inOutMsg = '⚠ Small deficit, consider increasing activity.'; }
+       else { inOutColor = '#EF4444'; inOutMsg = "⚠ You're eating more than you're burning today."; }
+    } else if (userGoal === 'Muscle Gain') {
+       if (netInOut > 800) { inOutColor = '#EF4444'; inOutMsg = "⚠ You're eating too much today."; }
+       else if (netInOut >= 300) { inOutColor = '#10B981'; inOutMsg = '⚡ Great muscle-gain surplus.'; }
+       else if (netInOut > 0) { inOutColor = '#F59E0B'; inOutMsg = '⚠ Small surplus, consider eating a bit more.'; }
+       else { inOutColor = '#EF4444'; inOutMsg = '⚠ You are in a deficit, bad for muscle gain.'; }
+    } else {
+       if (netInOut > 300) { inOutColor = '#EF4444'; inOutMsg = "⚠ You're eating more than you're burning today."; }
+       else if (netInOut < -300) { inOutColor = '#EF4444'; inOutMsg = '⚠ Your calorie deficit is too aggressive.'; }
+       else { inOutColor = '#10B981'; inOutMsg = '✅ Excellent balance between food intake and exercise.'; }
+    }
+    setCaloriesInOutAnalysis({ calIn, calOut, netInOut, color: inOutColor, msg: inOutMsg });
 
   }, [rawData, user]);
   const insets = useSafeAreaInsets();
@@ -741,6 +764,35 @@ export default function IntelligenceDashboardScreen() {
              <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
                 <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>Weekly AI Analysis</Text>
                 <Text style={{ color: weeklyCalorieBalance.color, fontSize: 14, fontWeight: '800', textAlign: 'center' }}>{weeklyCalorieBalance.analysis}</Text>
+             </View>
+          </View>
+
+          {/* CALORIES IN VS OUT */}
+          <Text style={s.sectionTitle}>Calories In vs Calories Out</Text>
+          <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+             <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center' }}>Calories In</Text>
+                   <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{caloriesInOutAnalysis.calIn} kcal</Text>
+                </View>
+                <View style={{ width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.1)' }} />
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center' }}>Calories Out</Text>
+                   <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{caloriesInOutAnalysis.calOut} kcal</Text>
+                </View>
+                <View style={{ width: 1, height: '100%', backgroundColor: 'rgba(255,255,255,0.1)' }} />
+                <View style={{ alignItems: 'center', flex: 1 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center' }}>Net</Text>
+                   <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{caloriesInOutAnalysis.netInOut} kcal</Text>
+                </View>
+             </View>
+
+             <View style={{ width: '100%', height: 6, backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 3, marginVertical: 16, overflow: 'hidden' }}>
+                <View style={{ width: `${Math.min(100, Math.max(0, (caloriesInOutAnalysis.calIn / ((caloriesInOutAnalysis.calIn + caloriesInOutAnalysis.calOut) || 1)) * 100))}%`, height: '100%', backgroundColor: caloriesInOutAnalysis.color, borderRadius: 3 }} />
+             </View>
+
+             <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                <Text style={{ color: caloriesInOutAnalysis.color, fontSize: 14, fontWeight: '800', textAlign: 'center' }}>{caloriesInOutAnalysis.msg}</Text>
              </View>
           </View>
 
