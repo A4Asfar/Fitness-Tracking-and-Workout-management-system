@@ -119,14 +119,6 @@ export default function DietScreen() {
     }
   };
 
-  if (loading && !refreshing) {
-    return (
-      <View style={[s.container, { paddingTop: insets.top }]}>
-        <View style={{ padding: 24 }}><SkeletonCard /><SkeletonCard /><SkeletonCard /></View>
-      </View>
-    );
-  }
-
   const { totalCalories, totalProtein, totalCarbs, totalFat, calPercent, proPercent, carbPercent, fatPercent } = useMemo(() => {
     let cals = 0, pro = 0, crb = 0, fat = 0;
     meals.forEach(m => {
@@ -147,11 +139,6 @@ export default function DietScreen() {
     };
   }, [meals, calorieTarget]);
 
-  const calWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${calPercent * 100}%`] });
-  const proWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${proPercent * 100}%`] });
-  const carbWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${carbPercent * 100}%`] });
-  const fatWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${fatPercent * 100}%`] });
-
   const groupedMeals = useMemo(() => {
     const groups: Record<string, { meals: Meal[], totalCal: number }> = {
       Breakfast: { meals: [], totalCal: 0 },
@@ -167,6 +154,19 @@ export default function DietScreen() {
     });
     return groups;
   }, [meals]);
+
+  if (loading && !refreshing) {
+    return (
+      <View style={[s.container, { paddingTop: insets.top }]}>
+        <View style={{ padding: 24 }}><SkeletonCard /><SkeletonCard /><SkeletonCard /></View>
+      </View>
+    );
+  }
+
+  const calWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${calPercent * 100}%`] });
+  const proWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${proPercent * 100}%`] });
+  const carbWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${carbPercent * 100}%`] });
+  const fatWidth = progressAnim.interpolate({ inputRange: [0, 1], outputRange: ['0%', `${fatPercent * 100}%`] });
 
   return (
     <View style={s.container}>
