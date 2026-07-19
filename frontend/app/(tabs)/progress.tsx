@@ -142,6 +142,7 @@ export default function IntelligenceDashboardScreen() {
   const [aiDailyCoach, setAiDailyCoach] = useState<any>(null);
   const [detailedCaloriesBalance, setDetailedCaloriesBalance] = useState<any>(null);
   const [recoveryEnergyBalance, setRecoveryEnergyBalance] = useState<any>(null);
+  const [workoutPerformanceAnalytics, setWorkoutPerformanceAnalytics] = useState<any>(null);
 
   const { user } = useAuth();
 
@@ -761,6 +762,103 @@ export default function IntelligenceDashboardScreen() {
             energyStatus,
             energyColor,
             aiMessage
+        });
+    }
+
+    // Workout Performance Analytics
+    if (workouts7d.length === 0) {
+        setWorkoutPerformanceAnalytics(null);
+    } else {
+        const totalWorkouts = workouts7d.length;
+        let totalDuration = 0;
+        let totalBurned = 0;
+        let totalVolume = 0;
+        const exerciseCount: Record<string, number> = {};
+        const dayVolume: Record<string, number> = {};
+
+        workouts7d.forEach((w: any) => {
+            totalDuration += w.duration || 0;
+            totalBurned += w.burnedCalories || 0;
+            
+            const dayStr = new Date(w.date || w.createdAt).toLocaleDateString('en-US', { weekday: 'long' });
+            if (!dayVolume[dayStr]) dayVolume[dayStr] = 0;
+
+            if (w.exercises && Array.isArray(w.exercises)) {
+                w.exercises.forEach((ex: any) => {
+                    const exName = ex.exerciseId?.name || ex.name || 'Unknown Exercise';
+                    exerciseCount[exName] = (exerciseCount[exName] || 0) + 1;
+                    
+                    if (ex.sets && Array.isArray(ex.sets)) {
+                        ex.sets.forEach((set: any) => {
+                            const weight = set.weight || 0;
+                            const reps = set.reps || 0;
+                            const vol = weight * reps;
+                            totalVolume += vol;
+                            dayVolume[dayStr] += vol;
+                        });
+                    }
+                });
+            }
+        });
+
+        const avgDuration = Math.round(totalDuration / totalWorkouts);
+        const avgBurned = Math.round(totalBurned / totalWorkouts);
+        
+        let strongestDay = 'N/A';
+        let maxVol = -1;
+        Object.keys(dayVolume).forEach(day => {
+            if (dayVolume[day] > maxVol) {
+                maxVol = dayVolume[day];
+                strongestDay = day;
+            }
+        });
+
+        let favExercise = 'N/A';
+        let maxExCount = 0;
+        Object.keys(exerciseCount).forEach(ex => {
+            if (exerciseCount[ex] > maxExCount) {
+                maxExCount = exerciseCount[ex];
+                favExercise = ex;
+            }
+        });
+
+        const consistency = Math.min(100, Math.round((totalWorkouts / 5) * 100));
+
+        let rating = 'Needs Improvement';
+        let ratingColor = '#EF4444';
+        if (consistency >= 80) {
+            rating = 'Excellent';
+            ratingColor = '#10B981';
+        } else if (consistency >= 60) {
+            rating = 'Good';
+            ratingColor = '#38BDF8';
+        } else if (consistency >= 40) {
+            rating = 'Average';
+            ratingColor = '#F59E0B';
+        }
+
+        const lastWeekStart = new Date();
+        lastWeekStart.setDate(lastWeekStart.getDate() - 14);
+        const lastWeekEnd = new Date();
+        lastWeekEnd.setDate(lastWeekEnd.getDate() - 7);
+        const workoutsLast7d = rawData.workouts.filter((w: any) => {
+            const d = new Date(w.date || w.createdAt);
+            return d >= lastWeekStart && d < lastWeekEnd;
+        });
+
+        let weeklyTrend = 'Stable';
+        if (totalWorkouts > workoutsLast7d.length) weeklyTrend = 'Improving ↗';
+        else if (totalWorkouts < workoutsLast7d.length) weeklyTrend = 'Declining ↘';
+
+        let aiMessage = "You are training regularly with balanced intensity.";
+        if (rating === 'Excellent') aiMessage = "Excellent workout consistency this week. Keep it up!";
+        else if (weeklyTrend.includes('Declining')) aiMessage = "Workout frequency has decreased this week. Try to get back on track.";
+        else if (totalVolume > 5000) aiMessage = "Strength training volume is improving significantly.";
+
+        setWorkoutPerformanceAnalytics({
+            totalWorkouts, totalDuration, totalBurned, totalVolume,
+            avgDuration, avgBurned, strongestDay, favExercise,
+            consistency, weeklyTrend, rating, ratingColor, aiMessage
         });
     }
 
@@ -1421,6 +1519,71 @@ export default function IntelligenceDashboardScreen() {
                      <View style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(16, 185, 129, 0.2)' }}>
                          <Text style={{ color: '#10B981', fontSize: 12, fontWeight: '900', textTransform: 'uppercase', marginBottom: 8 }}>🤖 AI Coach Message</Text>
                          <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '700', lineHeight: 22 }}>"{recoveryEnergyBalance.aiMessage}"</Text>
+                     </View>
+                 </>
+             )}
+          </View>
+
+          {/* WORKOUT PERFORMANCE ANALYTICS */}
+          <Text style={s.sectionTitle}>🏋️‍♂️ Workout Performance Analytics</Text>
+          <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+             {!workoutPerformanceAnalytics ? (
+                 <View style={{ alignItems: 'center', padding: 20 }}>
+                     <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '700', textAlign: 'center' }}>No workout data available yet.</Text>
+                 </View>
+             ) : (
+                 <>
+                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                        <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '700', textTransform: 'uppercase' }}>Performance Rating</Text>
+                        <Text style={{ color: workoutPerformanceAnalytics.ratingColor, fontSize: 18, fontWeight: '900' }}>{workoutPerformanceAnalytics.rating}</Text>
+                     </View>
+
+                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Total Workouts</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 20, fontWeight: '900' }}>{workoutPerformanceAnalytics.totalWorkouts}</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Total Duration</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 20, fontWeight: '900' }}>{workoutPerformanceAnalytics.totalDuration} min</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Calories Burned</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 20, fontWeight: '900' }}>{workoutPerformanceAnalytics.totalBurned} kcal</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Training Volume</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 20, fontWeight: '900' }}>{workoutPerformanceAnalytics.totalVolume} kg</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Avg Duration</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 20, fontWeight: '900' }}>{workoutPerformanceAnalytics.avgDuration} min</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Avg Burned</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 20, fontWeight: '900' }}>{workoutPerformanceAnalytics.avgBurned} kcal</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Strongest Day</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '900' }}>{workoutPerformanceAnalytics.strongestDay}</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Consistency</Text>
+                             <Text style={{ color: workoutPerformanceAnalytics.ratingColor, fontSize: 20, fontWeight: '900' }}>{workoutPerformanceAnalytics.consistency}%</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '100%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Weekly Trend</Text>
+                             <Text style={{ color: workoutPerformanceAnalytics.weeklyTrend.includes('Improving') ? '#10B981' : workoutPerformanceAnalytics.weeklyTrend.includes('Declining') ? '#EF4444' : '#F8FAFC', fontSize: 18, fontWeight: '900' }}>{workoutPerformanceAnalytics.weeklyTrend}</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '100%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Favorite Exercise</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900' }}>{workoutPerformanceAnalytics.favExercise}</Text>
+                         </View>
+                     </View>
+
+                     <View style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.2)' }}>
+                         <Text style={{ color: '#38BDF8', fontSize: 12, fontWeight: '900', textTransform: 'uppercase', marginBottom: 8 }}>🤖 AI Coach Analysis</Text>
+                         <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '700', lineHeight: 22 }}>"{workoutPerformanceAnalytics.aiMessage}"</Text>
                      </View>
                  </>
              )}
