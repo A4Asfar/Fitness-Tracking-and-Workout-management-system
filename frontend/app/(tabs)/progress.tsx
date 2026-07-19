@@ -144,6 +144,7 @@ export default function IntelligenceDashboardScreen() {
   const [recoveryEnergyBalance, setRecoveryEnergyBalance] = useState<any>(null);
   const [workoutPerformanceAnalytics, setWorkoutPerformanceAnalytics] = useState<any>(null);
   const [nutritionPerformanceAnalytics, setNutritionPerformanceAnalytics] = useState<any>(null);
+  const [caloriesInOutComparison, setCaloriesInOutComparison] = useState<any>(null);
 
   const { user } = useAuth();
 
@@ -434,9 +435,9 @@ export default function IntelligenceDashboardScreen() {
     setAiCoachInsights(insights.slice(0, 5));
 
     // AI Progress Prediction
-    const currentWeight = user?.weight || 0;
-    const targetWeight = user?.targetWeight || 0;
-    const startWeight = user?.startWeight || (currentWeight > 0 ? currentWeight + (userGoal === 'Weight Loss' ? 5 : -5) : 0);
+    const currentWeight = (user as any)?.weight || 0;
+    const targetWeight = (user as any)?.targetWeight || 0;
+    const startWeight = (user as any)?.startWeight || (currentWeight > 0 ? currentWeight + (userGoal === 'Weight Loss' ? 5 : -5) : 0);
 
     let currentProgress = 0;
     if (startWeight > 0 && targetWeight > 0 && startWeight !== targetWeight) {
@@ -606,7 +607,7 @@ export default function IntelligenceDashboardScreen() {
         recoveryScore, recoveryStatus,
         goalProgress: Math.round(currentProgress) || 0, goalRemaining: 100 - (Math.round(currentProgress) || 0),
         currentWeight: currentWeight || '--', weeklyWeightChange: '--',
-        healthBalanceIndex, riskLevel,
+        healthBalanceIndex, riskLevel: 'Low',
         workoutCompletedToday,
         caloriesConsumed: totalCal, targetCal,
         proteinConsumed: totalP, targetP,
@@ -674,10 +675,10 @@ export default function IntelligenceDashboardScreen() {
     }
 
     // Detailed Calories Balance
-    if (totalCal === 0 && workoutBurnedToday === 0) {
+    if (totalCal === 0 && burned === 0) {
         setDetailedCaloriesBalance(null);
     } else {
-        const netCals = totalCal - workoutBurnedToday;
+        const netCals = totalCal - burned;
         const remainingCals = targetCal - netCals;
         let progressPct = (netCals / targetCal) * 100;
         if (progressPct < 0) progressPct = 0;
@@ -699,13 +700,13 @@ export default function IntelligenceDashboardScreen() {
             analysisMsg = 'You are far above your calorie target.';
         }
 
-        if (workoutBurnedToday > 0 && progressPct <= 100 && totalCal > 0) {
+        if (burned > 0 && progressPct <= 100 && totalCal > 0) {
             analysisMsg = 'Workout helped offset today\'s intake. Great job!';
         }
 
         setDetailedCaloriesBalance({
             calIn: totalCal,
-            calOut: workoutBurnedToday,
+            calOut: burned,
             net: netCals,
             target: targetCal,
             remaining: remainingCals,
@@ -716,10 +717,10 @@ export default function IntelligenceDashboardScreen() {
     }
 
     // Recovery & Energy Balance
-    if (totalCal === 0 && workoutBurnedToday === 0) {
+    if (totalCal === 0 && burned === 0 && rawData.workouts.filter((w: any) => new Date(w.date || w.createdAt).toDateString() === todayStr).length === 0) {
         setRecoveryEnergyBalance(null);
     } else {
-        const netCals = totalCal - workoutBurnedToday;
+        const netCalories = totalCal - burned;
         
         let recoveryStateStatus = 'Rest Day';
         let recoveryColor = '#94A3B8';
@@ -736,7 +737,7 @@ export default function IntelligenceDashboardScreen() {
             }
         }
 
-        const diff = netCals - targetCal;
+        const diff = netCalories - targetCal;
         let energyStatus = 'Balanced';
         let energyColor = '#10B981';
         if (diff > 300) {
@@ -751,13 +752,13 @@ export default function IntelligenceDashboardScreen() {
         if (recoveryStateStatus === 'Poor') {
             aiMessage = "Your calorie deficit is high today. Increase protein intake and prioritize recovery.";
         } else if (workoutCompletedToday && totalCal > 0) {
-            aiMessage = `You burned ${workoutBurnedToday} kcal and consumed ${totalCal} kcal. Recovery looks good. Keep protein high for muscle repair.`;
+            aiMessage = `You burned ${burned} kcal and consumed ${totalCal} kcal. Recovery looks good. Keep protein high for muscle repair.`;
         }
 
         setRecoveryEnergyBalance({
             consumed: totalCal,
-            burned: workoutBurnedToday,
-            net: netCals,
+            burned: burned,
+            netCalories: netCalories,
             recoveryStatus: recoveryStateStatus,
             recoveryColor,
             energyStatus,
@@ -857,9 +858,19 @@ export default function IntelligenceDashboardScreen() {
         else if (totalVolume > 5000) aiMessage = "Strength training volume is improving significantly.";
 
         setWorkoutPerformanceAnalytics({
-            totalWorkouts, totalDuration, totalBurned, totalVolume,
-            avgDuration, avgBurned, strongestDay, favExercise,
-            consistency, weeklyTrend, rating, ratingColor, aiMessage
+            totalWorkouts: workouts7d.length,
+            totalDuration,
+            totalBurned: burned,
+            totalVolume,
+            avgDuration,
+            avgBurned,
+            strongestDay,
+            favExercise,
+            consistency,
+            weeklyTrend,
+            rating,
+            ratingColor,
+            aiMessage
         });
     }
 
@@ -879,7 +890,7 @@ export default function IntelligenceDashboardScreen() {
         const avgDailyCalories = loggedDays.size > 0 ? Math.round(weeklyCalories / loggedDays.size) : 0;
         const proteinTargetAchievement = Math.min(100, targetP > 0 ? Math.round((totalP / targetP) * 100) : 0);
         const maintenanceCalories = targetCal;
-        const netCalories = totalCal - workoutBurnedToday;
+        const netCalories = totalCal - burned;
         
         let nutritionStatus = 'Maintenance';
         const diffStatus = netCalories - maintenanceCalories;
@@ -908,18 +919,47 @@ export default function IntelligenceDashboardScreen() {
 
         setNutritionPerformanceAnalytics({
             todayCalories: totalCal,
-            weeklyCalories,
-            avgDailyCalories,
+            weeklyCalories: weeklyCalories,
+            avgDailyCalories: avgDailyCalories,
             protein: totalP,
             carbs: totalC,
             fats: totalF,
-            proteinTargetAchievement,
-            maintenanceCalories,
-            netCalories,
+            proteinTargetAchievement: Math.min(100, Math.round((totalP / (targetP || 1)) * 100)),
+            maintenanceCalories: targetCal,
+            netCalories: totalCal - burned,
             nutritionStatus,
             rating,
             ratingColor,
             aiMessage
+        });
+    }
+
+    // Calories In vs Calories Out Comparison
+    if (totalCal === 0 && burned === 0) {
+        setCaloriesInOutComparison(null);
+    } else {
+        const netCalories = totalCal - burned;
+        const maintenanceCalories = targetCal;
+        
+        let statusBadge = 'Maintenance';
+        let badgeColor = '#38BDF8'; // Blue
+        
+        const diffStatus = netCalories - maintenanceCalories;
+        if (diffStatus > 300) {
+            statusBadge = 'Calorie Surplus';
+            badgeColor = '#F59E0B'; // Orange
+        } else if (diffStatus < -300) {
+            statusBadge = 'Calorie Deficit';
+            badgeColor = '#10B981'; // Green
+        }
+
+        setCaloriesInOutComparison({
+            caloriesIn: totalCal,
+            caloriesOut: burned,
+            netCalories,
+            maintenanceCalories,
+            statusBadge,
+            badgeColor
         });
     }
 
@@ -1489,8 +1529,47 @@ export default function IntelligenceDashboardScreen() {
                 <View style={{ alignItems: 'center', flex: 1 }}>
                    <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', textAlign: 'center' }}>Difference</Text>
                    <Text style={{ color: '#F8FAFC', fontSize: 18, fontWeight: '900', marginTop: 4 }}>{mealVsWorkoutAnalysis.difference} kcal</Text>
-<Text style={{ color: mealVsWorkoutAnalysis.color, fontSize: 14, fontWeight: '800', textAlign: 'center', marginTop: 4 }}>{mealVsWorkoutAnalysis.analysis}</Text>
+                   <Text style={{ color: mealVsWorkoutAnalysis.color, fontSize: 14, fontWeight: '800', textAlign: 'center', marginTop: 4 }}>{mealVsWorkoutAnalysis.analysis}</Text>
+                </View>
              </View>
+          </View>
+
+          {/* CALORIES IN VS CALORIES OUT COMPARISON */}
+          <Text style={s.sectionTitle}>⚖️ Calories In vs Calories Out</Text>
+          <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+             {!caloriesInOutComparison ? (
+                 <View style={{ alignItems: 'center', padding: 20 }}>
+                     <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '700', textAlign: 'center' }}>No meal or workout data available today.</Text>
+                 </View>
+             ) : (
+                 <>
+                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 }}>
+                        <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '700', textTransform: 'uppercase' }}>Current Status</Text>
+                        <View style={{ backgroundColor: `${caloriesInOutComparison.badgeColor}20`, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: `${caloriesInOutComparison.badgeColor}40` }}>
+                            <Text style={{ color: caloriesInOutComparison.badgeColor, fontSize: 14, fontWeight: '900', textTransform: 'uppercase' }}>{caloriesInOutComparison.statusBadge}</Text>
+                        </View>
+                     </View>
+
+                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Calories In</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 24, fontWeight: '900' }}>{caloriesInOutComparison.caloriesIn} <Text style={{ fontSize: 14, color: '#94A3B8' }}>kcal</Text></Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Calories Out</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 24, fontWeight: '900' }}>{caloriesInOutComparison.caloriesOut} <Text style={{ fontSize: 14, color: '#94A3B8' }}>kcal</Text></Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Net Calories</Text>
+                             <Text style={{ color: caloriesInOutComparison.badgeColor, fontSize: 24, fontWeight: '900' }}>{caloriesInOutComparison.netCalories} <Text style={{ fontSize: 14, color: '#94A3B8' }}>kcal</Text></Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Maintenance</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 24, fontWeight: '900' }}>{caloriesInOutComparison.maintenanceCalories} <Text style={{ fontSize: 14, color: '#94A3B8' }}>kcal</Text></Text>
+                         </View>
+                     </View>
+                 </>
+             )}
           </View>
 
           {/* DETAILED CALORIES BALANCE */}
