@@ -48,13 +48,30 @@ const generatePlanForGoal = (goal, userId) => {
   let fat = 75;
   let dbGoal = 'Maintain';
   
-  // Base meals
-  const defaultMeals = {
-    breakfast: { mealName: 'Oatmeal & Eggs', foods: [{ name: 'Oats', serving: 'cup', quantity: 1 }, { name: 'Eggs', serving: 'large', quantity: 3 }], calories: 450, protein: 30, carbs: 50, fat: 15 },
-    lunch: { mealName: 'Chicken Rice Bowl', foods: [{ name: 'Chicken Breast', serving: 'oz', quantity: 6 }, { name: 'Brown Rice', serving: 'cup', quantity: 1 }], calories: 600, protein: 50, carbs: 45, fat: 10 },
-    dinner: { mealName: 'Salmon & Asparagus', foods: [{ name: 'Salmon', serving: 'oz', quantity: 6 }, { name: 'Asparagus', serving: 'spears', quantity: 10 }], calories: 500, protein: 40, carbs: 10, fat: 25 },
-    snack1: { mealName: 'Protein Shake', foods: [{ name: 'Whey Protein', serving: 'scoop', quantity: 1 }], calories: 120, protein: 25, carbs: 3, fat: 2 }
-  };
+  // Maintain variations
+  const breakfasts = [
+    { mealName: 'Oatmeal & Eggs', foods: [{ name: 'Oats', serving: 'cup', quantity: 1 }, { name: 'Eggs', serving: 'large', quantity: 3 }], calories: 450, protein: 30, carbs: 50, fat: 15 },
+    { mealName: 'Greek Yogurt & Berries', foods: [{ name: 'Greek Yogurt', serving: 'cup', quantity: 1 }, { name: 'Berries', serving: 'cup', quantity: 1 }, { name: 'Honey', serving: 'tbsp', quantity: 1 }], calories: 350, protein: 25, carbs: 40, fat: 5 },
+    { mealName: 'Protein Pancakes', foods: [{ name: 'Protein Mix', serving: 'scoop', quantity: 2 }, { name: 'Milk', serving: 'cup', quantity: 0.5 }], calories: 400, protein: 35, carbs: 45, fat: 10 }
+  ];
+  
+  const lunches = [
+    { mealName: 'Chicken Rice Bowl', foods: [{ name: 'Chicken Breast', serving: 'oz', quantity: 6 }, { name: 'Brown Rice', serving: 'cup', quantity: 1 }], calories: 600, protein: 50, carbs: 45, fat: 10 },
+    { mealName: 'Turkey Wrap', foods: [{ name: 'Turkey Breast', serving: 'oz', quantity: 5 }, { name: 'Tortilla', serving: 'large', quantity: 1 }], calories: 550, protein: 40, carbs: 50, fat: 15 },
+    { mealName: 'Tuna Salad Sandwich', foods: [{ name: 'Tuna', serving: 'can', quantity: 1 }, { name: 'Whole Wheat Bread', serving: 'slices', quantity: 2 }], calories: 500, protein: 45, carbs: 40, fat: 12 }
+  ];
+  
+  const dinners = [
+    { mealName: 'Salmon & Asparagus', foods: [{ name: 'Salmon', serving: 'oz', quantity: 6 }, { name: 'Asparagus', serving: 'spears', quantity: 10 }], calories: 500, protein: 40, carbs: 10, fat: 25 },
+    { mealName: 'Lean Beef Stir Fry', foods: [{ name: 'Lean Beef', serving: 'oz', quantity: 6 }, { name: 'Mixed Veggies', serving: 'cup', quantity: 2 }], calories: 550, protein: 45, carbs: 20, fat: 20 },
+    { mealName: 'Baked Cod & Quinoa', foods: [{ name: 'Cod', serving: 'oz', quantity: 6 }, { name: 'Quinoa', serving: 'cup', quantity: 1 }], calories: 450, protein: 40, carbs: 40, fat: 10 }
+  ];
+  
+  const snacks = [
+    { mealName: 'Protein Shake', foods: [{ name: 'Whey Protein', serving: 'scoop', quantity: 1 }], calories: 120, protein: 25, carbs: 3, fat: 2 },
+    { mealName: 'Almonds & Apple', foods: [{ name: 'Almonds', serving: 'oz', quantity: 1 }, { name: 'Apple', serving: 'medium', quantity: 1 }], calories: 250, protein: 6, carbs: 25, fat: 14 },
+    { mealName: 'Cottage Cheese', foods: [{ name: 'Cottage Cheese', serving: 'cup', quantity: 1 }], calories: 200, protein: 25, carbs: 10, fat: 5 }
+  ];
 
   if (goal === 'Weight Loss') {
     title = 'AI Fat Loss Protocol';
@@ -63,8 +80,11 @@ const generatePlanForGoal = (goal, userId) => {
     protein = 150;
     carbs = 150;
     fat = 60;
-    defaultMeals.lunch = { mealName: 'Grilled Chicken Salad', foods: [{ name: 'Chicken', serving: 'oz', quantity: 6 }, { name: 'Greens', serving: 'cups', quantity: 3 }], calories: 400, protein: 50, carbs: 10, fat: 15 };
-    defaultMeals.dinner = { mealName: 'White Fish & Broccoli', foods: [{ name: 'Tilapia', serving: 'oz', quantity: 6 }, { name: 'Broccoli', serving: 'cup', quantity: 1 }], calories: 350, protein: 45, carbs: 15, fat: 5 };
+    
+    breakfasts[0] = { mealName: 'Egg White Omelette', foods: [{ name: 'Egg Whites', serving: 'cup', quantity: 1 }, { name: 'Spinach', serving: 'cup', quantity: 1 }], calories: 250, protein: 30, carbs: 5, fat: 5 };
+    lunches[0] = { mealName: 'Grilled Chicken Salad', foods: [{ name: 'Chicken', serving: 'oz', quantity: 6 }, { name: 'Greens', serving: 'cups', quantity: 3 }], calories: 400, protein: 50, carbs: 10, fat: 15 };
+    dinners[0] = { mealName: 'White Fish & Broccoli', foods: [{ name: 'Tilapia', serving: 'oz', quantity: 6 }, { name: 'Broccoli', serving: 'cup', quantity: 1 }], calories: 350, protein: 45, carbs: 15, fat: 5 };
+    snacks[0] = { mealName: 'Cucumber & Hummus', foods: [{ name: 'Cucumber', serving: 'cup', quantity: 1 }, { name: 'Hummus', serving: 'tbsp', quantity: 2 }], calories: 100, protein: 3, carbs: 10, fat: 5 };
   } else if (goal === 'Muscle Gain') {
     title = 'AI Mass Builder Protocol';
     dbGoal = 'Muscle Gain';
@@ -72,14 +92,19 @@ const generatePlanForGoal = (goal, userId) => {
     protein = 180;
     carbs = 350;
     fat = 90;
-    defaultMeals.lunch = { mealName: 'Double Chicken Rice Bowl', foods: [{ name: 'Chicken', serving: 'oz', quantity: 8 }, { name: 'Rice', serving: 'cups', quantity: 2 }], calories: 800, protein: 65, carbs: 90, fat: 15 };
-    defaultMeals.dinner = { mealName: 'Steak & Sweet Potato', foods: [{ name: 'Steak', serving: 'oz', quantity: 8 }, { name: 'Sweet Potato', serving: 'large', quantity: 1 }], calories: 750, protein: 60, carbs: 50, fat: 30 };
-    defaultMeals.snack2 = { mealName: 'Peanut Butter Toast', foods: [{ name: 'Bread', serving: 'slices', quantity: 2 }, { name: 'Peanut Butter', serving: 'tbsp', quantity: 2 }], calories: 350, protein: 12, carbs: 30, fat: 16 };
+    
+    lunches[0] = { mealName: 'Double Chicken Rice Bowl', foods: [{ name: 'Chicken', serving: 'oz', quantity: 8 }, { name: 'Rice', serving: 'cups', quantity: 2 }], calories: 800, protein: 65, carbs: 90, fat: 15 };
+    dinners[0] = { mealName: 'Steak & Sweet Potato', foods: [{ name: 'Steak', serving: 'oz', quantity: 8 }, { name: 'Sweet Potato', serving: 'large', quantity: 1 }], calories: 750, protein: 60, carbs: 50, fat: 30 };
+    snacks[0] = { mealName: 'Peanut Butter Toast', foods: [{ name: 'Bread', serving: 'slices', quantity: 2 }, { name: 'Peanut Butter', serving: 'tbsp', quantity: 2 }], calories: 350, protein: 12, carbs: 30, fat: 16 };
   }
 
-  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map(d => ({
+  const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'].map((d, index) => ({
     dayOfWeek: d,
-    ...defaultMeals
+    breakfast: breakfasts[index % breakfasts.length],
+    lunch: lunches[index % lunches.length],
+    dinner: dinners[index % dinners.length],
+    snack1: snacks[index % snacks.length],
+    ...(goal === 'Muscle Gain' ? { snack2: snacks[(index + 1) % snacks.length] } : {})
   }));
 
   return new DietPlan({
@@ -91,7 +116,7 @@ const generatePlanForGoal = (goal, userId) => {
     carbs,
     fat,
     waterTarget: 3.0,
-    notes: `Auto-generated plan optimized for ${goal}`,
+    notes: `Auto-generated diverse plan optimized for ${goal}`,
     days,
     trainerId: userId,
     status: 'Active',
