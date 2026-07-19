@@ -138,6 +138,8 @@ export default function IntelligenceDashboardScreen() {
   const [predictionAnalysis, setPredictionAnalysis] = useState<{ progress: number, estWeeks: number, pace: string, probability: number, probColor: string, trend: string, text: string } | null>(null);
   const [healthRiskAnalysis, setHealthRiskAnalysis] = useState<{ level: string, color: string, risks: { name: string, reason: string, fix: string }[] } | null>(null);
   const [weeklyPerformanceReport, setWeeklyPerformanceReport] = useState<{ grade: string, gradeColor: string, achievement: string, mistake: string, strongHabit: string, weakHabit: string, nextFocus: string, summary: string } | null>(null);
+  const [aiFitnessDashboard, setAiFitnessDashboard] = useState<any>(null);
+  const [aiDailyCoach, setAiDailyCoach] = useState<any>(null);
 
   const { user } = useAuth();
 
@@ -571,7 +573,112 @@ export default function IntelligenceDashboardScreen() {
         });
     }
 
+    // AI Fitness Dashboard (Top Level Summary)
+    const workoutScore = Math.min(100, Math.round((workouts30d.length / 20) * 100));
+    const workoutStatus = workoutScore >= 80 ? 'Excellent' : workoutScore >= 50 ? 'Good' : 'Needs Work';
+    const recoveryStatus = recoveryScore >= 80 ? 'Optimal' : recoveryScore >= 50 ? 'Adequate' : 'Poor';
+    const healthBalanceIndex = Math.round((workoutScore + score + recoveryScore) / 3) || 0;
+    const workoutCompletedToday = rawData.workouts.some((w: any) => new Date(w.date || w.createdAt).toDateString() === todayStr);
+
+    let probabilitySafe = 50; 
+    if (workouts30d.length >= 8 && meals30d.length >= 20) probabilitySafe = 80;
+
+    let aiSummaryText = '';
+    if (workoutScore >= 70) aiSummaryText += '• Excellent consistency in training.\n';
+    else aiSummaryText += '• Training frequency needs improvement.\n';
+
+    if (totalP >= targetP * 0.8) aiSummaryText += '• Protein intake is well aligned with target.\n';
+    else aiSummaryText += '• Focus on increasing daily protein.\n';
+
+    if (recoveryScore >= 70) aiSummaryText += '• Recovery status is looking good.\n';
+    else aiSummaryText += '• Consider taking more rest for recovery.\n';
+
+    if (probabilitySafe >= 70) aiSummaryText += '• Goal completion probability is high.';
+    else aiSummaryText += '• Adjust routine to stay on track for your goal.';
+
+    setAiFitnessDashboard({
+        workoutScore, workoutStatus,
+        nutritionScore: score,
+        recoveryScore, recoveryStatus,
+        goalProgress: Math.round(currentProgress) || 0, goalRemaining: 100 - (Math.round(currentProgress) || 0),
+        currentWeight: currentWeight || '--', weeklyWeightChange: '--',
+        healthBalanceIndex, riskLevel,
+        workoutCompletedToday,
+        caloriesConsumed: totalCal, targetCal,
+        proteinConsumed: totalP, targetP,
+        aiSummaryText
+    });
+
+    // AI Daily Coach
+    const hour = new Date().getHours();
+    let greeting = 'Good Evening';
+    if (hour < 12) greeting = 'Good Morning';
+    else if (hour < 18) greeting = 'Good Afternoon';
+
+    if (totalCal === 0 && !workoutCompletedToday) {
+        setAiDailyCoach(null);
+    } else {
+        let mission = 'Complete your daily workout to stay on track.';
+        if (workoutCompletedToday) {
+            if (totalP < targetP) mission = `Eat at least ${targetP}g protein.`;
+            else mission = 'Maintain your excellent calorie balance today.';
+        } else if (recoveryScore < 50) {
+            mission = 'Take a recovery day to optimize muscle repair.';
+        }
+
+        const priorities: { text: string, done: boolean }[] = [];
+        
+        priorities.push({ text: 'Finish workout', done: workoutCompletedToday });
+        priorities.push({ text: 'Reach protein target', done: totalP >= targetP * 0.9 });
+        priorities.push({ text: 'Stay under calorie target', done: totalCal > 0 && totalCal <= targetCal });
+        priorities.push({ text: 'Stay hydrated', done: totalCal > 0 }); 
+        priorities.push({ text: 'Get enough sleep', done: recoveryScore >= 60 });
+
+        let motivation = 'Consistency beats perfection. Keep showing up.';
+        if (workoutCompletedToday) motivation = "You're one step closer to becoming stronger. Great job today!";
+        else if (probabilitySafe > 80) motivation = "Small daily improvements create massive long-term results.";
+
+        let warning = "✅ You're doing great today.";
+        if (recoveryScore < 40) warning = '⚠ Recovery score is low.';
+        else if (totalP < targetP * 0.5 && totalCal > targetCal * 0.5) warning = '⚠ Protein intake is below target.';
+        else if (totalCal > targetCal * 1.15) warning = '⚠ Calories are exceeding maintenance.';
+        
+        const yesterday = new Date();
+        yesterday.setDate(yesterday.getDate() - 1);
+        const dayBefore = new Date();
+        dayBefore.setDate(dayBefore.getDate() - 2);
+        
+        const wrkYesterday = rawData.workouts.some((w: any) => new Date(w.date || w.createdAt).toDateString() === yesterday.toDateString());
+        const wrkDayBefore = rawData.workouts.some((w: any) => new Date(w.date || w.createdAt).toDateString() === dayBefore.toDateString());
+        
+        if (!workoutCompletedToday && !wrkYesterday && !wrkDayBefore) {
+            warning = '⚠ You have skipped workouts for 2 days.';
+        }
+
+        let expectedResult = "Meeting today's targets will maintain your positive momentum.";
+        if (!workoutCompletedToday) expectedResult = `If today's workout is completed, your consistency will increase and boost goal probability.`;
+        else if (totalP >= targetP * 0.9) expectedResult = "Meeting today's nutrition target increases goal success probability by 3%.";
+
+        setAiDailyCoach({
+            greeting: `${greeting}, ${user?.name?.split(' ')[0] || 'Athlete'} 👋`,
+            mission,
+            priorities: priorities.slice(0, 5),
+            motivation,
+            warning,
+            expectedResult
+        });
+    }
+
   }, [rawData, user]);
+
+  const getColor = (val: number | string) => {
+      if (typeof val !== 'number') return '#94A3B8';
+      if (val >= 90) return '#10B981';
+      if (val >= 70) return '#38BDF8';
+      if (val >= 50) return '#F59E0B';
+      return '#EF4444';
+  };
+
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -860,6 +967,142 @@ export default function IntelligenceDashboardScreen() {
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 100, maxWidth: 1000, width: '100%', alignSelf: 'center' }} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#38BDF8" />}>
         <ErrorBoundary fallbackMessage="The dashboard core engine encountered an error.">
         {/* HERO SECTION */}
+
+        {/* AI FITNESS DASHBOARD */}
+        {aiFitnessDashboard && (
+           <View style={{ marginBottom: 32 }}>
+              <Text style={[s.sectionTitle, { fontSize: 22, color: '#38BDF8', textAlign: 'center', marginBottom: 16 }]}>AI Fitness Dashboard</Text>
+              
+              {/* 6 Summary Cards */}
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 20 }}>
+                  {/* Workout */}
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                      <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>🏋 Workout</Text>
+                      <Text style={{ color: getColor(aiFitnessDashboard.workoutScore), fontSize: 24, fontWeight: '900' }}>{aiFitnessDashboard.workoutScore}%</Text>
+                      <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '600', marginTop: 4 }}>{aiFitnessDashboard.workoutStatus}</Text>
+                  </View>
+
+                  {/* Nutrition */}
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                      <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>🥗 Nutrition</Text>
+                      <Text style={{ color: getColor(aiFitnessDashboard.nutritionScore), fontSize: 24, fontWeight: '900' }}>{aiFitnessDashboard.nutritionScore}%</Text>
+                      <Text style={{ color: '#F8FAFC', fontSize: 12, fontWeight: '600', marginTop: 4 }}>Cal: {aiFitnessDashboard.caloriesConsumed} / {aiFitnessDashboard.targetCal}</Text>
+                      <Text style={{ color: '#F8FAFC', fontSize: 12, fontWeight: '600' }}>Pro: {aiFitnessDashboard.proteinConsumed} / {aiFitnessDashboard.targetP}g</Text>
+                  </View>
+
+                  {/* Recovery */}
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                      <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>😴 Recovery</Text>
+                      <Text style={{ color: getColor(aiFitnessDashboard.recoveryScore), fontSize: 24, fontWeight: '900' }}>{Math.round(aiFitnessDashboard.recoveryScore)}%</Text>
+                      <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '600', marginTop: 4 }}>{aiFitnessDashboard.recoveryStatus}</Text>
+                  </View>
+
+                  {/* Goal */}
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                      <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>🎯 Goal</Text>
+                      <Text style={{ color: getColor(aiFitnessDashboard.goalProgress), fontSize: 24, fontWeight: '900' }}>{aiFitnessDashboard.goalProgress}%</Text>
+                      <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '600', marginTop: 4 }}>Remaining: {aiFitnessDashboard.goalRemaining}%</Text>
+                  </View>
+
+                  {/* Body */}
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                      <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>⚖ Body</Text>
+                      <Text style={{ color: '#F8FAFC', fontSize: 24, fontWeight: '900' }}>{aiFitnessDashboard.currentWeight} kg</Text>
+                      <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '600', marginTop: 4 }}>Change: {aiFitnessDashboard.weeklyWeightChange}</Text>
+                  </View>
+
+                  {/* Health */}
+                  <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                      <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>❤️ Health</Text>
+                      <Text style={{ color: getColor(aiFitnessDashboard.healthBalanceIndex), fontSize: 24, fontWeight: '900' }}>{aiFitnessDashboard.healthBalanceIndex}</Text>
+                      <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '600', marginTop: 4 }}>Risk: {aiFitnessDashboard.riskLevel}</Text>
+                  </View>
+              </View>
+
+              {/* Today's Summary */}
+              <View style={[SharedStyles.card, { padding: 20, marginBottom: 20 }]}>
+                  <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 16 }}>Today's Summary</Text>
+                  
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                      <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '700' }}>Workout Completed</Text>
+                      <Text style={{ fontSize: 16 }}>{aiFitnessDashboard.workoutCompletedToday ? '✅' : '❌'}</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                      <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '700' }}>Calories</Text>
+                      <Text style={{ color: '#38BDF8', fontSize: 16, fontWeight: '900' }}>{aiFitnessDashboard.caloriesConsumed} <Text style={{ color: '#94A3B8', fontSize: 14 }}>/ {aiFitnessDashboard.targetCal}</Text></Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                      <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '700' }}>Protein</Text>
+                      <Text style={{ color: '#10B981', fontSize: 16, fontWeight: '900' }}>{aiFitnessDashboard.proteinConsumed} <Text style={{ color: '#94A3B8', fontSize: 14 }}>/ {aiFitnessDashboard.targetP}g</Text></Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                      <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '700' }}>Recovery</Text>
+                      <Text style={{ color: getColor(aiFitnessDashboard.recoveryScore), fontSize: 16, fontWeight: '900' }}>{Math.round(aiFitnessDashboard.recoveryScore)}%</Text>
+                  </View>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+                      <Text style={{ color: '#F8FAFC', fontSize: 16, fontWeight: '700' }}>Goal Progress</Text>
+                      <Text style={{ color: getColor(aiFitnessDashboard.goalProgress), fontSize: 16, fontWeight: '900' }}>{aiFitnessDashboard.goalProgress}%</Text>
+                  </View>
+              </View>
+
+              {/* AI Summary */}
+              <View style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.2)' }}>
+                  <Text style={{ color: '#38BDF8', fontSize: 12, fontWeight: '900', textTransform: 'uppercase', marginBottom: 8 }}>🤖 AI Summary</Text>
+                  <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '700', lineHeight: 24 }}>{aiFitnessDashboard.aiSummaryText}</Text>
+              </View>
+           </View>
+        )}
+
+        {/* AI DAILY COACH */}
+        <Text style={s.sectionTitle}>🤖 AI Daily Coach</Text>
+        <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+           {!aiDailyCoach ? (
+               <View style={{ alignItems: 'center', padding: 20 }}>
+                   <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '700', textAlign: 'center' }}>Track today's meals and workouts to receive your personalized AI Daily Coach.</Text>
+               </View>
+           ) : (
+               <>
+                   <Text style={{ color: '#38BDF8', fontSize: 20, fontWeight: '900', marginBottom: 24 }}>{aiDailyCoach.greeting}</Text>
+
+                   <View style={{ marginBottom: 24 }}>
+                       <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>🎯 Today's Mission</Text>
+                       <View style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.2)' }}>
+                           <Text style={{ color: '#38BDF8', fontSize: 16, fontWeight: '800' }}>{aiDailyCoach.mission}</Text>
+                       </View>
+                   </View>
+
+                   <View style={{ marginBottom: 24 }}>
+                       <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 12 }}>📋 Today's Priorities</Text>
+                       <View style={{ gap: 12 }}>
+                           {aiDailyCoach.priorities.map((item: any, i: number) => (
+                               <View key={i} style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: item.done ? 'rgba(16, 185, 129, 0.2)' : 'rgba(255,255,255,0.05)' }}>
+                                   <Text style={{ fontSize: 20, marginRight: 12 }}>{item.done ? '☑' : '☐'}</Text>
+                                   <Text style={{ color: item.done ? '#10B981' : '#F8FAFC', fontSize: 14, fontWeight: '700' }}>{item.text}</Text>
+                               </View>
+                           ))}
+                       </View>
+                   </View>
+
+                   <View style={{ marginBottom: 24 }}>
+                       <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>🔥 Today's Motivation</Text>
+                       <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '700', fontStyle: 'italic', lineHeight: 22 }}>"{aiDailyCoach.motivation}"</Text>
+                   </View>
+
+                   <View style={{ marginBottom: 24 }}>
+                       <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>⚡ Warning / Status</Text>
+                       <View style={{ backgroundColor: aiDailyCoach.warning.includes('⚠') ? 'rgba(239, 68, 68, 0.1)' : 'rgba(16, 185, 129, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: aiDailyCoach.warning.includes('⚠') ? 'rgba(239, 68, 68, 0.2)' : 'rgba(16, 185, 129, 0.2)' }}>
+                           <Text style={{ color: aiDailyCoach.warning.includes('⚠') ? '#EF4444' : '#10B981', fontSize: 14, fontWeight: '800' }}>{aiDailyCoach.warning}</Text>
+                       </View>
+                   </View>
+
+                   <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                       <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 8 }}>📈 Today's Expected Result</Text>
+                       <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '700', lineHeight: 22 }}>{aiDailyCoach.expectedResult}</Text>
+                   </View>
+               </>
+           )}
+        </View>
+
         {overallState.loading ? (
           <View style={{ paddingTop: insets.top + 16, paddingHorizontal: 24, paddingBottom: 24 }}><SkeletonCard /></View>
         ) : overallData ? (
