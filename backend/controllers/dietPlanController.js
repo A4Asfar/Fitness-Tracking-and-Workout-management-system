@@ -137,7 +137,14 @@ exports.getMyDietPlan = asyncHandler(async (req, res) => {
        return res.status(201).json(newPlan);
     }
     return res.status(200).json(null); // No plan assigned
+  } else if (plan.notes && plan.notes.includes('Auto-generated') && !plan.notes.includes('diverse')) {
+    // Force regenerate the old static plan with the new diverse plan
+    await DietPlan.findByIdAndDelete(plan._id);
+    const newPlan = generatePlanForGoal(plan.goal || 'Maintain', req.userId);
+    await newPlan.save();
+    return res.status(201).json(newPlan);
   }
+  
   res.json(plan);
 });
 
