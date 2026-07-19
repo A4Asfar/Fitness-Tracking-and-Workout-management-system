@@ -127,7 +127,9 @@ export default function IntelligenceDashboardScreen() {
   const [simCal, setSimCal] = useState(2500);
 
   // Daily Calorie Balance State
-  const [dailyCalorieBalance, setDailyCalorieBalance] = useState({ consumed: 0, burned: 0, net: 0, status: 'Near Maintenance', statusColor: '#F59E0B' });
+  const [dailyCalorieBalance, setDailyCalorieBalance] = useState({ consumed: 0, burned: 0, net: 0, status: 'Near Maintenance', statusColor: '#F59E0B', goalFeedback: '', goalFeedbackColor: '' });
+
+  const { user } = useAuth();
 
   useEffect(() => {
     if (!rawData || !rawData.meals || !rawData.workouts) return;
@@ -160,10 +162,26 @@ export default function IntelligenceDashboardScreen() {
        statusColor = '#38BDF8'; // Blue
     }
 
-    setDailyCalorieBalance({ consumed, burned, net, status, statusColor });
-  }, [rawData]);
+    let goalFeedback = '';
+    let goalFeedbackColor = '';
+    const userGoal = user?.fitnessGoal || 'Maintain Fitness';
 
-  const { user } = useAuth();
+    if (userGoal === 'Weight Loss') {
+       if (net < -100) { goalFeedback = '✓ Perfect for Weight Loss'; goalFeedbackColor = '#10B981'; }
+       else if (net > 100) { goalFeedback = '⚠ Eating too much'; goalFeedbackColor = '#EF4444'; }
+       else { goalFeedback = '⚠ Need more deficit'; goalFeedbackColor = '#F59E0B'; }
+    } else if (userGoal === 'Muscle Gain') {
+       if (net > 100) { goalFeedback = '✓ Good for Muscle Gain'; goalFeedbackColor = '#10B981'; }
+       else if (net < -100) { goalFeedback = '⚠ Eating too little'; goalFeedbackColor = '#EF4444'; }
+       else { goalFeedback = '⚠ Need more calories'; goalFeedbackColor = '#F59E0B'; }
+    } else {
+       if (net >= -100 && net <= 100) { goalFeedback = '✓ Perfect for Maintenance'; goalFeedbackColor = '#10B981'; }
+       else if (net > 100) { goalFeedback = '⚠ Eating too much'; goalFeedbackColor = '#EF4444'; }
+       else if (net < -100) { goalFeedback = '⚠ Eating too little'; goalFeedbackColor = '#EF4444'; }
+    }
+
+    setDailyCalorieBalance({ consumed, burned, net, status, statusColor, goalFeedback, goalFeedbackColor });
+  }, [rawData, user]);
   const insets = useSafeAreaInsets();
   const router = useRouter();
 
@@ -505,7 +523,12 @@ export default function IntelligenceDashboardScreen() {
              <View style={{ backgroundColor: 'rgba(15,23,42,0.6)', padding: 16, borderRadius: 12, alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
                 <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase' }}>Net Calories</Text>
                 <Text style={{ color: '#F8FAFC', fontSize: 24, fontWeight: '900', marginVertical: 4 }}>{dailyCalorieBalance.net} kcal</Text>
-                <Text style={{ color: dailyCalorieBalance.statusColor, fontSize: 14, fontWeight: '800', textTransform: 'uppercase' }}>{dailyCalorieBalance.status}</Text>
+                <Text style={{ color: dailyCalorieBalance.statusColor, fontSize: 14, fontWeight: '800', textTransform: 'uppercase', marginBottom: 8 }}>{dailyCalorieBalance.status}</Text>
+                {dailyCalorieBalance.goalFeedback ? (
+                   <View style={{ backgroundColor: 'rgba(0,0,0,0.3)', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 100 }}>
+                      <Text style={{ color: dailyCalorieBalance.goalFeedbackColor, fontSize: 13, fontWeight: '800' }}>{dailyCalorieBalance.goalFeedback}</Text>
+                   </View>
+                ) : null}
              </View>
           </View>
 
