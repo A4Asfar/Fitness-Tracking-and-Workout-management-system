@@ -143,6 +143,7 @@ export default function IntelligenceDashboardScreen() {
   const [detailedCaloriesBalance, setDetailedCaloriesBalance] = useState<any>(null);
   const [recoveryEnergyBalance, setRecoveryEnergyBalance] = useState<any>(null);
   const [workoutPerformanceAnalytics, setWorkoutPerformanceAnalytics] = useState<any>(null);
+  const [nutritionPerformanceAnalytics, setNutritionPerformanceAnalytics] = useState<any>(null);
 
   const { user } = useAuth();
 
@@ -859,6 +860,66 @@ export default function IntelligenceDashboardScreen() {
             totalWorkouts, totalDuration, totalBurned, totalVolume,
             avgDuration, avgBurned, strongestDay, favExercise,
             consistency, weeklyTrend, rating, ratingColor, aiMessage
+        });
+    }
+
+    // Nutrition Performance Analytics
+    if (meals30d.length === 0 && totalCal === 0) {
+        setNutritionPerformanceAnalytics(null);
+    } else {
+        let weeklyCalories = 0;
+        const loggedDays = new Set<string>();
+        
+        meals7d.forEach((m: any) => {
+            const dateStr = new Date(m.date || m.createdAt).toDateString();
+            loggedDays.add(dateStr);
+            weeklyCalories += m.calories || 0;
+        });
+
+        const avgDailyCalories = loggedDays.size > 0 ? Math.round(weeklyCalories / loggedDays.size) : 0;
+        const proteinTargetAchievement = Math.min(100, targetP > 0 ? Math.round((totalP / targetP) * 100) : 0);
+        const maintenanceCalories = targetCal;
+        const netCalories = totalCal - workoutBurnedToday;
+        
+        let nutritionStatus = 'Maintenance';
+        const diffStatus = netCalories - maintenanceCalories;
+        if (diffStatus > 300) nutritionStatus = 'Surplus';
+        else if (diffStatus < -300) nutritionStatus = 'Deficit';
+
+        let rating = 'Needs Improvement';
+        let ratingColor = '#EF4444';
+        
+        if (proteinTargetAchievement >= 90 && Math.abs(diffStatus) <= 500) {
+            rating = 'Excellent';
+            ratingColor = '#10B981';
+        } else if (proteinTargetAchievement >= 70 && Math.abs(diffStatus) <= 800) {
+            rating = 'Good';
+            ratingColor = '#38BDF8';
+        } else if (proteinTargetAchievement >= 50) {
+            rating = 'Average';
+            ratingColor = '#F59E0B';
+        }
+
+        let aiMessage = "You maintained balanced macronutrients.";
+        if (proteinTargetAchievement >= 90) aiMessage = "Excellent protein intake today. Keep it up!";
+        else if (proteinTargetAchievement < 50) aiMessage = "Protein intake is below your target. Add more lean protein.";
+        else if (nutritionStatus === 'Deficit') aiMessage = "You maintained a healthy calorie deficit.";
+        else if (nutritionStatus === 'Surplus') aiMessage = "Your calorie intake is higher than maintenance.";
+
+        setNutritionPerformanceAnalytics({
+            todayCalories: totalCal,
+            weeklyCalories,
+            avgDailyCalories,
+            protein: totalP,
+            carbs: totalC,
+            fats: totalF,
+            proteinTargetAchievement,
+            maintenanceCalories,
+            netCalories,
+            nutritionStatus,
+            rating,
+            ratingColor,
+            aiMessage
         });
     }
 
@@ -1584,6 +1645,71 @@ export default function IntelligenceDashboardScreen() {
                      <View style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.2)' }}>
                          <Text style={{ color: '#38BDF8', fontSize: 12, fontWeight: '900', textTransform: 'uppercase', marginBottom: 8 }}>🤖 AI Coach Analysis</Text>
                          <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '700', lineHeight: 22 }}>"{workoutPerformanceAnalytics.aiMessage}"</Text>
+                     </View>
+                 </>
+             )}
+          </View>
+
+          {/* NUTRITION PERFORMANCE ANALYTICS */}
+          <Text style={s.sectionTitle}>🥗 Nutrition Performance Analytics</Text>
+          <View style={[SharedStyles.card, { padding: 20, marginBottom: 24 }]}>
+             {!nutritionPerformanceAnalytics ? (
+                 <View style={{ alignItems: 'center', padding: 20 }}>
+                     <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '700', textAlign: 'center' }}>No nutrition data available yet.</Text>
+                 </View>
+             ) : (
+                 <>
+                     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                        <Text style={{ color: '#94A3B8', fontSize: 14, fontWeight: '700', textTransform: 'uppercase' }}>Nutrition Rating</Text>
+                        <Text style={{ color: nutritionPerformanceAnalytics.ratingColor, fontSize: 18, fontWeight: '900' }}>{nutritionPerformanceAnalytics.rating}</Text>
+                     </View>
+
+                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 24 }}>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Today's Calories</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 20, fontWeight: '900' }}>{nutritionPerformanceAnalytics.todayCalories} kcal</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Weekly Calories</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 20, fontWeight: '900' }}>{nutritionPerformanceAnalytics.weeklyCalories} kcal</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Avg Daily Calories</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 20, fontWeight: '900' }}>{nutritionPerformanceAnalytics.avgDailyCalories} kcal</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Protein</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 20, fontWeight: '900' }}>{nutritionPerformanceAnalytics.protein} g</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Carbs</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 20, fontWeight: '900' }}>{nutritionPerformanceAnalytics.carbs} g</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Fats</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 20, fontWeight: '900' }}>{nutritionPerformanceAnalytics.fats} g</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Protein Target</Text>
+                             <Text style={{ color: nutritionPerformanceAnalytics.ratingColor, fontSize: 20, fontWeight: '900' }}>{nutritionPerformanceAnalytics.proteinTargetAchievement}%</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Maintenance</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 20, fontWeight: '900' }}>{nutritionPerformanceAnalytics.maintenanceCalories} kcal</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Net Calories</Text>
+                             <Text style={{ color: '#F8FAFC', fontSize: 20, fontWeight: '900' }}>{nutritionPerformanceAnalytics.netCalories} kcal</Text>
+                         </View>
+                         <View style={{ flex: 1, minWidth: '45%', backgroundColor: 'rgba(255,255,255,0.03)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)' }}>
+                             <Text style={{ color: '#94A3B8', fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Nutrition Status</Text>
+                             <Text style={{ color: nutritionPerformanceAnalytics.nutritionStatus === 'Surplus' ? '#F59E0B' : nutritionPerformanceAnalytics.nutritionStatus === 'Deficit' ? '#38BDF8' : '#10B981', fontSize: 18, fontWeight: '900' }}>{nutritionPerformanceAnalytics.nutritionStatus}</Text>
+                         </View>
+                     </View>
+
+                     <View style={{ backgroundColor: 'rgba(56, 189, 248, 0.1)', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: 'rgba(56, 189, 248, 0.2)' }}>
+                         <Text style={{ color: '#38BDF8', fontSize: 12, fontWeight: '900', textTransform: 'uppercase', marginBottom: 8 }}>🤖 AI Coach Analysis</Text>
+                         <Text style={{ color: '#F8FAFC', fontSize: 14, fontWeight: '700', lineHeight: 22 }}>"{nutritionPerformanceAnalytics.aiMessage}"</Text>
                      </View>
                  </>
              )}
